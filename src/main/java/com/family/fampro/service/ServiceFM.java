@@ -12,8 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -39,7 +37,7 @@ public class ServiceFM {
     }
 
     public Collection<FamilyMemberDto> getAllFamilyMembers() {
-        log.info("Коллекия выдана");       //    Map<String,Object> property=Map.of(GraphSemantic.LOAD.getJakartaHintName(),entityManager.getEntityGraph("ListOfOne"));
+        log.info("Коллекия выдана");
         return familyMemberMapper.collectionEntityToCollectionDto(familyRepo.findAll());
     }
 
@@ -98,8 +96,6 @@ public class ServiceFM {
                 list.add(ss.readValue(newFM, FamilyMember.class));
                 newFM=fr.readLine();
             }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
