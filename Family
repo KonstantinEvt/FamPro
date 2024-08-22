@@ -1,0 +1,3 @@
+FamilyMember(id=1, firstname=Sergey, lastname=Evtushenko, middlename=Pavlovich, sex=true, birthday=1948-05-07T00:00, mother=null, father=null)
+FamilyMember(id=2, firstname=Olga, lastname=Evtushenko, middlename=Vladimirovna, sex=false, birthday=1948-01-27T00:00, mother=null, father=null)
+FamilyMember(id=3, firstname=Konstantin, lastname=Evtushenko, middlename=Sergeevich, sex=null, birthday=null, mother=null, father=null)
