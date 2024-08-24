@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: "FamPro-storage"
+    datasource:
+      url: "jdbc:postgresql://localhost:5432/postgres"
+      username: "postgres"
+      password: "postkata"
+
+
+  # Hibernate properties
+
+  jpa:
+    properties:
+      hibernate:
+        #        dialect: "org.hibernate.dialect.PostgreSQL12Dialect"
+        show_sql: "true"
+        hbm2ddl.auto: "update"
+        order_inserts: true
+        order_updates: true
+        jdbc:
+          batch_size: 50
+          batch_versioned_data: true
+  mvc:
+    hiddenmethod.filter.enabled: true
+
+server:
+  port: 8888
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    preferIpAddress: true
+ #   instance-id: ${spring.cloud.client.hostname}:${spring.application.name}:${spring.application.instance_id:${random.value}}
+  server:
+    enable-self-preservation: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info
