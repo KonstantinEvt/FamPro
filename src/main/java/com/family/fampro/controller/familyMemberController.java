@@ -34,17 +34,7 @@ public class familyMemberController {
         return serviceFM.removeFamilyMember(id);
     }
     @PatchMapping("")
-    public ResponseEntity<FamilyMemberDto> editFamilyMember(@RequestBody FamilyMemberDto familyMemberDto){
+    public ResponseEntity<FamilyMemberDto> editFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
         return ResponseEntity.ok(serviceFM.updateFamilyMember(familyMemberDto));
-    }
-    @GetMapping("/save{filename}")
-    public ResponseEntity<String> saveDataInFile(@PathVariable String filename){
-        serviceFM.saveDataToFile(filename);
-        return ResponseEntity.status(222).body("File is saved");
-    }
-    @GetMapping("/recover{filename}")
-    public  ResponseEntity<String> recoverBasefromFile(@PathVariable String filename){
-        serviceFM.recoverBaseFromFile(filename);
-        return ResponseEntity.status(223).body("base is good");
     }
 }

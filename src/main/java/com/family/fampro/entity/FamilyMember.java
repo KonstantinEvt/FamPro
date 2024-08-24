@@ -1,11 +1,12 @@
 package com.family.fampro.entity;
 
 import jakarta.persistence.*;
+import jakarta.websocket.Extension;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
+import org.springframework.data.repository.query.Parameters;
 
 import java.sql.Date;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -22,7 +23,10 @@ import java.util.Objects;
 @Table(name = "FamilyMembers")
 public class FamilyMember {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqFamMem")
+    @SequenceGenerator(
+            name = "genSeqFamMem",
+            sequenceName ="FamMem", initialValue = 1,allocationSize = 50)
     private Long id;
     @Column(name = "Name", length = 20)
     private String firstname;
@@ -35,11 +39,11 @@ public class FamilyMember {
     @Column(name = "Birthday")
     private Date birthday;
 
-    @OneToOne(fetch = FetchType.EAGER,cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.PERSIST)
     @JoinColumn(name = "mother")
     private FamilyMember mother;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "father")
     private FamilyMember father;
 

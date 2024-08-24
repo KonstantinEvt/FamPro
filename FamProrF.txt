@@ -1,3 +1,0 @@
-{"id":1,"firstname":"Sergey","lastname":"Evtushenko","middlename":"Pavlovich","sex":true,"birthday":-683348400000,"mother":null,"father":null}
-{"id":2,"firstname":"Olga","lastname":"Evtushenko","middlename":"Vladimirovna","sex":false,"birthday":-692074800000,"mother":null,"father":null}
-{"id":3,"firstname":"Kostya","lastname":"Evtushenko","middlename":"Sergeevich","sex":true,"birthday":234133200000,"mother":{"id":2,"firstname":"Olga","lastname":"Evtushenko","middlename":"Vladimirovna","sex":false,"birthday":-692074800000,"mother":null,"father":null},"father":{"id":1,"firstname":"Sergey","lastname":"Evtushenko","middlename":"Pavlovich","sex":true,"birthday":-683348400000,"mother":null,"father":null}}

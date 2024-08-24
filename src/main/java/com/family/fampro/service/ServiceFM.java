@@ -5,13 +5,10 @@ import com.family.fampro.entity.FamilyMember;
 import com.family.fampro.mapper.FamilyMemberMapper;
 import com.family.fampro.repository.FamilyRepo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
 import java.util.*;
 
 @Service
@@ -20,30 +17,72 @@ import java.util.*;
 public class ServiceFM {
     private final FamilyMemberMapper familyMemberMapper;
     private final FamilyRepo familyRepo;
-    EntityManager entityManager;
+    static final FamilyMember unknown = FamilyMember.builder()
+            .id(-1L)
+            .firstname("unknown")
+            .lastname("unknown")
+            .middlename("unknown")
+            .build();
 
     public FamilyMemberDto getFamilyMember(Long id) {
+
         Optional<FamilyMember> familyMember = familyRepo.findById(id);
-        return familyMemberMapper.entityToDto(familyMember.orElseGet(() ->
-                FamilyMember.builder()
-                        .firstname("unknown")
-                        .lastname("unknown")
-                        .middlename("unknown")
-                        .build()));
+        FamilyMemberDto familyMemberDto = familyMemberMapper.entityToDto(familyMember.orElse(unknown));
+        if ((familyMember.orElse(unknown).getFather() != null))
+            familyMemberDto.setFather_id(familyMember.orElse(unknown).getFather().getId());
+
+        if ((familyMember.orElse(unknown).getMother() != null))
+            familyMemberDto.setMother_id(familyMember.orElse(unknown).getMother().getId());
+
+        return familyMemberDto;
     }
 
     public FamilyMemberDto saveNewFamilyMember(FamilyMemberDto familyMemberDto) {
-        return familyMemberMapper.entityToDto(familyRepo.save(familyMemberMapper.dtoToEntity(familyMemberDto)));
+        FamilyMember familyMember=familyMemberMapper.dtoToEntity(familyMemberDto);
+        Optional<FamilyMember> father = familyRepo.findById(familyMemberDto.getFather_id());
+        if (father.isPresent() && father.get().getSex()) familyMember.setFather(father.get());
+
+        if (familyMemberDto.getMother_id()!=null) {
+        Optional<FamilyMember> mother = familyRepo.findById(familyMemberDto.getMother_id());
+        if (mother.isPresent() && mother.get().getSex()) familyMember.setMother(mother.get());
+    }
+        return familyMemberMapper.entityToDto(familyRepo.save(familyMember));
     }
 
     public Collection<FamilyMemberDto> getAllFamilyMembers() {
         log.info("Коллекия выдана");
-        return familyMemberMapper.collectionEntityToCollectionDto(familyRepo.findAll());
+        List<FamilyMember> familyMemberList = familyRepo.findAll();
+        List<FamilyMemberDto> familyMemberDtoList = new ArrayList<>();
+        for (FamilyMember familyMember : familyMemberList) {
+            FamilyMemberDto familyMemberDto = familyMemberMapper.entityToDto(familyMember);
+            if (familyMember.getFather() != null) familyMemberDto.setFather_id(familyMember.getFather().getId());
+            if (familyMember.getMother() != null) familyMemberDto.setMother_id(familyMember.getMother().getId());
+            familyMemberDtoList.add(familyMemberDto);
+        }
+        return familyMemberDtoList;
     }
 
-    public FamilyMemberDto updateFamilyMember(FamilyMemberDto familyMemberDto) {
-
-        return familyMemberMapper.entityToDto(familyRepo.save(familyMemberMapper.updateEntity(familyMemberDto, familyRepo.findById(familyMemberDto.getId()).get())));
+    public FamilyMemberDto updateFamilyMember(FamilyMemberDto familyMemberDto)  {
+        Long dtoId = familyMemberDto.getId();
+        if (dtoId == null) return familyMemberMapper.entityToDto(unknown);
+        Optional<FamilyMember> familyMember = familyRepo.findById(dtoId);
+        if (familyMember.isEmpty()) return familyMemberMapper.entityToDto(unknown);
+        FamilyMember fm=familyMember.get();
+        if (familyMemberDto.getSex()!=null) fm.setSex(familyMemberDto.getSex());
+        if (familyMemberDto.getFirstname()!=null) fm.setFirstname(familyMemberDto.getFirstname());
+        if (familyMemberDto.getBirthday()!=null) fm.setBirthday(familyMemberDto.getBirthday());
+        if (familyMemberDto.getLastname()!=null) fm.setLastname(familyMemberDto.getLastname());
+        if (familyMemberDto.getMiddlename()!=null) fm.setMiddlename(familyMemberDto.getMiddlename());
+        if (familyMemberDto.getFather_id()!=null) {
+            Optional<FamilyMember> father = familyRepo.findById(familyMemberDto.getFather_id());
+            if (father.isPresent() && father.get().getSex()) fm.setFather(father.get());
+        }
+        if (familyMemberDto.getMother_id()!=null) {
+            Optional<FamilyMember> mother = familyRepo.findById(familyMemberDto.getMother_id());
+            if (mother.isPresent() && mother.get().getSex()) fm.setMother(mother.get());
+        }
+        familyRepo.save(fm);
+        return familyMemberMapper.entityToDto(fm);
     }
 
     public String removeFamilyMember(Long id) {
@@ -62,7 +101,6 @@ public class ServiceFM {
                 fm.setMother(null);
             }
         }
-
         if (remFM.isPresent()) {
             familyRepo.deleteById(id);
             return String.format("Член семьи: %s %s %s удален",
@@ -72,35 +110,6 @@ public class ServiceFM {
         } else return "Член семьи не найден";
     }
 
-    public void saveDataToFile(String filename) {
-        try (FileWriter fr = new FileWriter(new File("c:/FamPro"+filename+".txt"))) {
-            List<FamilyMember> list=familyRepo.findAll();
-            ObjectMapper objectMapper=new ObjectMapper();
-            for (FamilyMember fm:list) {
-                fr.write(objectMapper.writeValueAsString(fm));
-                fr.write('\n');
-            }
-        } catch (IOException e) {
-            log.warn("file is not saved:%s",e);
-            throw new RuntimeException(e);
-        }
-    }
-    public void recoverBaseFromFile(String filename){
-        List<FamilyMember> list=new ArrayList<>();
-        try (BufferedReader fr=new BufferedReader(new FileReader(new File(filename)))){
-            String newFM=fr.readLine();
-
-            System.out.println(newFM);
-            ObjectMapper ss = new ObjectMapper();
-            while (newFM!=null) {
-                list.add(ss.readValue(newFM, FamilyMember.class));
-                newFM=fr.readLine();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        familyRepo.saveAll(list);
-    }
 
 }
 

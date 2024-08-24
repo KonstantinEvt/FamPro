@@ -1,6 +1,5 @@
 package com.family.fampro.dto;
 
-import com.family.fampro.entity.FamilyMember;
 import lombok.Data;
 
 import java.sql.Date;
@@ -12,6 +11,6 @@ public class FamilyMemberDto  {
     private String middlename;
     private Boolean sex;
     private Date birthday;
-    private FamilyMember mother;
-    private FamilyMember father;
+    private Long mother_id;
+    private Long father_id;
 }
