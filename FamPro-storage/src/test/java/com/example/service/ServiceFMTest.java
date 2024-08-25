@@ -1,7 +1,7 @@
 package com.example.service;
 
 import com.example.entity.FamilyMember;
-import com.example.mapper.FamilyMemberMapper;
+import com.example.mappers.FamilyMemberMapper;
 import com.example.repository.FamilyRepo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

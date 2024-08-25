@@ -1,6 +1,8 @@
-package com.example.controller;
+package com.example.controllers;
 
 import com.example.service.ServiceOfStorageBD;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,10 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @AllArgsConstructor
+@Tag(name="Операции со всеми данными")
 @RequestMapping("/Storage/")
 public class StorageController {
     ServiceOfStorageBD serviceOfStorageBD;
     @GetMapping("/save{filename}")
+    @Operation(method="Сохранить все данные в файл", description = "Данные в файл", summary = "Сохранить базу в файл")
     public ResponseEntity<String> saveDataInFile(@PathVariable String filename){
         serviceOfStorageBD.saveDataToFile(filename);
         return ResponseEntity.status(222).body("File is saved");

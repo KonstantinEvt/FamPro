@@ -1,4 +1,4 @@
-package com.example.mapper;
+package com.example.mappers;
 
 import org.mapstruct.MapperConfig;
 import org.mapstruct.MappingTarget;

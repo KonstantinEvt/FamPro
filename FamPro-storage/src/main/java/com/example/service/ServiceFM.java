@@ -1,8 +1,8 @@
 package com.example.service;
 
-import com.example.dto.FamilyMemberDto;
+import com.example.dtos.FamilyMemberDto;
 import com.example.entity.FamilyMember;
-import com.example.mapper.FamilyMemberMapper;
+import com.example.mappers.FamilyMemberMapper;
 import com.example.repository.FamilyRepo;
 
 import lombok.AllArgsConstructor;

@@ -1,6 +1,6 @@
-package com.example.mapper;
+package com.example.mappers;
 
-import com.example.dto.FamilyMemberDto;
+import com.example.dtos.FamilyMemberDto;
 import com.example.entity.FamilyMember;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;

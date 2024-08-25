@@ -1,6 +1,6 @@
-package com.example.controller;
+package com.example.controllers;
 
-import com.example.dto.FamilyMemberDto;
+import com.example.dtos.FamilyMemberDto;
 import com.example.service.ServiceFM;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;

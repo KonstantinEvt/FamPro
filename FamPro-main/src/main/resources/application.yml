@@ -7,3 +7,11 @@ eureka:
   client:
     registerWithEureka: false
     fetchRegistry: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info
+springdoc:
+   swagger-ui:
+      path: /swagger
