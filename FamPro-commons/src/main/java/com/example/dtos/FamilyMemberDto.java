@@ -1,5 +1,6 @@
 package com.example.dtos;
 
+import com.example.enums.Sex;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -15,7 +16,7 @@ public class FamilyMemberDto  {
     @Schema(description ="Отчество")
     private String middlename;
     @Schema(description ="Пол")
-    private Boolean sex;
+    private Sex sex;
     @Schema(description ="День рождения")
     private Date birthday;
     @Schema(description ="Идентфикатор матери")

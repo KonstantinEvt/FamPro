@@ -2,6 +2,7 @@ package com.example.service;
 
 import com.example.dtos.FamilyMemberDto;
 import com.example.entity.FamilyMember;
+import com.example.enums.Sex;
 import com.example.mappers.FamilyMemberMapper;
 import com.example.repository.FamilyRepo;
 
@@ -40,11 +41,11 @@ public class ServiceFM {
     public FamilyMemberDto saveNewFamilyMember(FamilyMemberDto familyMemberDto) {
         FamilyMember familyMember=familyMemberMapper.dtoToEntity(familyMemberDto);
         Optional<FamilyMember> father = familyRepo.findById(familyMemberDto.getFather_id());
-        if (father.isPresent() && father.get().getSex()) familyMember.setFather(father.get());
+        if (father.isPresent() && father.get().getSex()== Sex.MALE) familyMember.setFather(father.get());
 
         if (familyMemberDto.getMother_id()!=null) {
         Optional<FamilyMember> mother = familyRepo.findById(familyMemberDto.getMother_id());
-        if (mother.isPresent() && mother.get().getSex()) familyMember.setMother(mother.get());
+        if (mother.isPresent() && mother.get().getSex()==Sex.FEMALE) familyMember.setMother(mother.get());
     }
         return familyMemberMapper.entityToDto(familyRepo.save(familyMember));
     }
@@ -75,11 +76,11 @@ public class ServiceFM {
         if (familyMemberDto.getMiddlename()!=null) fm.setMiddlename(familyMemberDto.getMiddlename());
         if (familyMemberDto.getFather_id()!=null) {
             Optional<FamilyMember> father = familyRepo.findById(familyMemberDto.getFather_id());
-            if (father.isPresent() && father.get().getSex()) fm.setFather(father.get());
+            if (father.isPresent() && father.get().getSex()==Sex.MALE) fm.setFather(father.get());
         }
         if (familyMemberDto.getMother_id()!=null) {
             Optional<FamilyMember> mother = familyRepo.findById(familyMemberDto.getMother_id());
-            if (mother.isPresent() && mother.get().getSex()) fm.setMother(mother.get());
+            if (mother.isPresent() && mother.get().getSex()==Sex.FEMALE) fm.setMother(mother.get());
         }
         familyRepo.save(fm);
         return familyMemberMapper.entityToDto(fm);
@@ -87,14 +88,14 @@ public class ServiceFM {
 
     public String removeFamilyMember(Long id) {
         Optional<FamilyMember> remFM = familyRepo.findById(id);
-        if (remFM.isPresent() && remFM.get().getSex()) {
+        if (remFM.isPresent() && remFM.get().getSex()==Sex.MALE) {
             Set<FamilyMember> link1 = familyRepo.findAllByFather_Id(id);
             for (FamilyMember fm : link1
             ) {
                 fm.setFather(null);
             }
         }
-        if (remFM.isPresent() && !remFM.get().getSex()) {
+        if (remFM.isPresent() && remFM.get().getSex()==Sex.FEMALE) {
             Set<FamilyMember> link2 = familyRepo.findAllByMother_Id(id);
             for (FamilyMember fm : link2
             ) {

@@ -1,7 +1,10 @@
 package com.example.entity;
 
+import com.example.enums.Sex;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.sql.Date;
 import java.util.Objects;
@@ -31,17 +34,24 @@ public class FamilyMember {
     private String lastname;
     @Column(name = "Fathername", length = 100)
     private String middlename;
+    @Enumerated(EnumType.STRING)
     @Column(name="sex")
-    private Boolean sex;
+    private Sex sex;
     @Column(name = "Birthday")
     private Date birthday;
+    @Column(name = "DeathDay")
+    private Date deathday;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name="info_id")
+    private FamilyMemberInfo familyMemberInfo;
 
     @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "mother")
+    @JoinColumn(name = "mother_id")
     private FamilyMember mother;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "father")
+    @JoinColumn(name = "father_id")
     private FamilyMember father;
 
     @Override
