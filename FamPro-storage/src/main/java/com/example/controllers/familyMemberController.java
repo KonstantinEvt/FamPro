@@ -11,8 +11,8 @@ import java.util.Collection;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/FamilyMembers/")
-public class familyMemberController {
-    ServiceFM serviceFM;
+public class FamilyMemberController {
+    private final ServiceFM serviceFM;
 
     @GetMapping("/{id}")
     public FamilyMemberDto getFamilyMember(@PathVariable Long id) {
@@ -21,7 +21,7 @@ public class familyMemberController {
 
     @PostMapping("")
     public ResponseEntity<FamilyMemberDto> addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
-        return ResponseEntity.ok(serviceFM.saveNewFamilyMember(familyMemberDto));
+        return ResponseEntity.ok(serviceFM.addFamilyMember(familyMemberDto));
     }
 
     @GetMapping("")

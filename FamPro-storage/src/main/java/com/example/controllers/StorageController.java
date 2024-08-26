@@ -18,12 +18,12 @@ public class StorageController {
     ServiceOfStorageBD serviceOfStorageBD;
     @GetMapping("/save{filename}")
     @Operation(method="Сохранить все данные в файл", description = "Данные в файл", summary = "Сохранить базу в файл")
-    public ResponseEntity<String> saveDataInFile(@PathVariable String filename){
+    public ResponseEntity<String> saveDataToFile(@PathVariable String filename){
         serviceOfStorageBD.saveDataToFile(filename);
         return ResponseEntity.status(222).body("File is saved");
     }
     @GetMapping("/recover{filename}")
-    public  ResponseEntity<String> recoverBasefromFile(@PathVariable String filename){
+    public  ResponseEntity<String> recoverBaseFromFile(@PathVariable String filename){
         serviceOfStorageBD.recoverBaseFromFile(filename);
         return ResponseEntity.status(223).body("base is good");
     }

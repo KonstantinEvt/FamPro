@@ -38,7 +38,7 @@ public class ServiceFM {
         return familyMemberDto;
     }
 
-    public FamilyMemberDto saveNewFamilyMember(FamilyMemberDto familyMemberDto) {
+    public FamilyMemberDto addFamilyMember(FamilyMemberDto familyMemberDto) {
         FamilyMember familyMember=familyMemberMapper.dtoToEntity(familyMemberDto);
         Optional<FamilyMember> father = familyRepo.findById(familyMemberDto.getFather_id());
         if (father.isPresent() && father.get().getSex()== Sex.MALE) familyMember.setFather(father.get());

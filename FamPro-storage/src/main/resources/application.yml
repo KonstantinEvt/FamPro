@@ -1,20 +1,23 @@
 spring:
+  flyway:
+    enabled: true
+    default-schema: fam_pro
+    locations: "db/migration"
+    out-of-order: true
   application:
-    name: "FamPro-storage"
+    name: famPro-storage"
     datasource:
-      url: "jdbc:postgresql://localhost:5432/postgres"
-      username: "postgres"
-      password: "postkata"
-
-
-  # Hibernate properties
-
+      username: postgres
+      password: postkata
+      url: jdbc:postgresql://localhost:5432/FamPro_db?currentSchema=${spring.application.datasource.default-schema}
+      default-schema: fam_pro
   jpa:
     properties:
       hibernate:
-        #        dialect: "org.hibernate.dialect.PostgreSQL12Dialect"
+        #        dialect: "org.hibernate.dialect.PostgreSQL10Dialect"
         show_sql: "true"
         hbm2ddl.auto: "update"
+        default_schema: fam_pro
         order_inserts: true
         order_updates: true
         jdbc:

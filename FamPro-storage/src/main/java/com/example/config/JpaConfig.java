@@ -2,6 +2,7 @@ package com.example.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,13 @@ public class JpaConfig {
                 .username(username)
                 .password(password)
                 .build();
+    }
+    @Bean
+    FlywayMigrationStrategy flywayMigrationStrategy() {
+        return flyway -> {
+            flyway.repair();
+            flyway.migrate();
+        };
     }
 
 }

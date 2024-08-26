@@ -1,5 +1,6 @@
 package com.example.entity;
 
+
 import com.example.enums.Sex;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,7 +21,7 @@ import java.util.Objects;
 //        attributeNodes = {@NamedAttributeNode("mother"),
 //                @NamedAttributeNode("father")}),
 //        @NamedEntityGraph(name = "WithoutParents")})
-@Table(name = "FamilyMembers")
+@Table(name = "family_members")
 public class FamilyMember {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqFamMem")
@@ -30,9 +31,9 @@ public class FamilyMember {
     private Long id;
     @Column(name = "Name", length = 20)
     private String firstname;
-    @Column(name = "Familiya", length = 20)
+    @Column(name = "Familiya", length = 50)
     private String lastname;
-    @Column(name = "Fathername", length = 100)
+    @Column(name = "Fathername", length = 50)
     private String middlename;
     @Enumerated(EnumType.STRING)
     @Column(name="sex")

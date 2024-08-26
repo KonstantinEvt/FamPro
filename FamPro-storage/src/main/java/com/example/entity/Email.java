@@ -14,7 +14,7 @@ import java.util.Objects;
 @Getter
 @Builder
 @ToString
-@Table(name = "Emails")
+@Table(name = "emails")
 public class Email {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genEmailSeq")

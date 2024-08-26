@@ -8,7 +8,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>FamPro-main</artifactId>
+    <artifactId>famPro-main</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>FamPro-main</name>
     <description>Main</description>

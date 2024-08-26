@@ -13,7 +13,7 @@ import java.util.Objects;
 @Getter
 @Builder
 @ToString
-@Table(name = "Member_info")
+@Table(name = "members_info")
 public class FamilyMemberInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "MemberInfoSeq")
@@ -22,19 +22,19 @@ public class FamilyMemberInfo {
     )
     private Long id;
     @OneToOne(cascade = CascadeType.PERSIST)
-    @PrimaryKeyJoinColumn(name = "email_id")
+    @JoinColumn(name = "email_id")
     private Email mainEmail;
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(name = "emailsOfFamilyMember")
     private List<Email> emails;
     @OneToOne(cascade = CascadeType.PERSIST)
-    @PrimaryKeyJoinColumn(name = "phone_id")
+    @JoinColumn(name = "phone_id")
     private Phone mainPhone;
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(name = "phonesOfFamilyMember")
     private List<Phone> phones;
     @OneToOne(cascade = CascadeType.PERSIST)
-    @PrimaryKeyJoinColumn(name = "address_id")
+    @JoinColumn(name = "address_id")
     private Address mainAddress;
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(name = "addressesOfFamilyMember")

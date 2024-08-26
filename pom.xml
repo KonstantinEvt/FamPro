@@ -16,9 +16,9 @@
     <packaging>pom</packaging>
     <url/>
     <modules>
-        <module>FamPro-main</module>
-        <module>FamPro-storage</module>
-        <module>FamPro-commons</module>
+        <module>famPro-main</module>
+        <module>famPro-storage</module>
+        <module>famPro-commons</module>
     </modules>
     <licenses>
         <license/>
@@ -44,7 +44,7 @@
     <dependencies>
         <dependency>
         <groupId>com.family</groupId>
-        <artifactId>FamPro-commons</artifactId>
+        <artifactId>famPro-commons</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>

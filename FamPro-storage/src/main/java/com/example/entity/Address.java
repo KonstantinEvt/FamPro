@@ -12,7 +12,7 @@ import java.util.Objects;
 @Getter
 @Builder
 @ToString
-@Table(name = "Addresses")
+@Table(name = "addresses")
 public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqAddress")
@@ -21,52 +21,52 @@ public class Address {
             sequenceName = "seqAddress", initialValue = 1, allocationSize = 50)
     private Long id;
     /**
-     * Полный адрес.
+     * Полный адрес
      */
     @Column(name = "full_address", length = 500)
     private String fullAddress;
     /**
-     * Название улицы.
+     * Название улицы
      */
     @Column(name = "street", length = 50)
     private String street;
     /**
-     * Номер дома.
+     * Номер дома
      */
     @Column(name = "house", length = 50)
     private String house;
     /**
-     * Почтовый индекс.
+     * Почтовый индекс
      */
     @Column(name = "postcode", length = 50)
     private String index;
     /**
-     * Корпус здания.
+     * Корпус здания
      */
     @Column(name = "housing", length = 50)
     private String housing;
     /**
-     * Строение здания.
+     * Строение здания
      */
     @Column(name = "building", length = 50)
     private String building;
     /**
-     * Город.
+     * Город
      */
     @Column(name = "city", length = 50)
     private String city;
     /**
-     * Регион или область.
+     * Регион или область
      */
     @Column(name = "region", length = 50)
     private String region;
     /**
-     * Страна.
+     * Страна
      */
     @Column(name = "country", length = 50)
     private String country;
     /**
-     * Номер квартиры.
+     * Номер квартиры
      */
     @Column(name = "flat", length = 50)
     private String flat;
