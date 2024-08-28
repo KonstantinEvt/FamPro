@@ -5,7 +5,7 @@ spring:
     locations: "db/migration"
     out-of-order: true
   application:
-    name: famPro-storage"
+    name: famPro-storage
     datasource:
       username: postgres
       password: postkata
@@ -27,7 +27,7 @@ spring:
     hiddenmethod.filter.enabled: true
 
 server:
-  port: 8888
+  port: 0
 eureka:
   client:
     serviceUrl:

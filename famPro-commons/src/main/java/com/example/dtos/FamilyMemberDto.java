@@ -4,9 +4,10 @@ import com.example.enums.Sex;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.sql.Date;
 @Data
-public class FamilyMemberDto  {
+public class FamilyMemberDto implements Serializable {
     @Schema(description ="Идентификатор члена семьи")
     private Long id;
     @Schema(description ="Имя")

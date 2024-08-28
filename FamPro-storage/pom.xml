@@ -6,8 +6,8 @@
         <groupId>com.family</groupId>
         <artifactId>FamPro</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-
     </parent>
+
     <artifactId>famPro-storage</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>FamPro-storage</name>
@@ -32,13 +32,9 @@
     </properties>
     <dependencies>
         <dependency>
-            <groupId>com.netflix.eureka</groupId>
-            <artifactId>eureka-client-jersey3</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.10</version>
+            <version>42.7.3</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>

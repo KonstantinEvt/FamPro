@@ -1,14 +1,15 @@
-package com.example.feign;
+package com.example.famprometa.feign;
 
 import com.example.dtos.FamilyMemberDto;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 
-@FeignClient(name = "famPro-storage")
+@FeignClient(name = "FAMPRO-STORAGE")
 public interface FamilyMemberClient {
-    @GetMapping("/{id}")
+    @GetMapping("/FamilyMembers/{id}")
     FamilyMemberDto  getFamilyMember(@PathVariable Long id);
 
     @PostMapping("")
@@ -22,4 +23,9 @@ public interface FamilyMemberClient {
 
     @PatchMapping("")
     FamilyMemberDto updateFamilyMember(@RequestBody FamilyMemberDto familyMemberDto);
+    @GetMapping("/save{filename}")
+    ResponseEntity<String> saveDataToFile(@PathVariable String filename);
+
+    @GetMapping("/recover{filename}")
+    ResponseEntity<String> recoverBaseFromFile(@PathVariable String filename);
 }
