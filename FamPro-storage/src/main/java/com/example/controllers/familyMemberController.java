@@ -33,6 +33,7 @@ public class FamilyMemberController {
     public String removeFamilyMember(@PathVariable Long id) {
         return serviceFM.removeFamilyMember(id);
     }
+
     @PatchMapping("")
     public ResponseEntity<FamilyMemberDto> editFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
         return ResponseEntity.ok(serviceFM.updateFamilyMember(familyMemberDto));

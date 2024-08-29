@@ -24,4 +24,6 @@ public class FamilyMemberDto implements Serializable {
     private Long mother_id;
     @Schema(description ="Идентификатор отца")
     private Long father_id;
+    @Schema(description ="Расширенная информация")
+    private FamilyMemberInfoDto familyMemberInfo;
 }

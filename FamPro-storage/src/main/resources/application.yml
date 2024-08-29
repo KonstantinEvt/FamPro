@@ -8,8 +8,8 @@ spring:
     name: famPro-storage
     datasource:
       username: postgres
-      password: postkata
-      url: jdbc:postgresql://localhost:5432/FamPro_db?currentSchema=${spring.application.datasource.default-schema}
+      password: pass
+      url: jdbc:postgresql://localhost:5433/FamPro_db?currentSchema=${spring.application.datasource.default-schema}
       default-schema: fam_pro
   jpa:
     properties:
@@ -27,7 +27,7 @@ spring:
     hiddenmethod.filter.enabled: true
 
 server:
-  port: 0
+  port: 7777
 eureka:
   client:
     serviceUrl:

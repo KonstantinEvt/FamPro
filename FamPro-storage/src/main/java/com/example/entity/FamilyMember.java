@@ -4,8 +4,7 @@ package com.example.entity;
 import com.example.enums.Sex;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
+
 
 import java.sql.Date;
 import java.util.Objects;
@@ -60,7 +59,7 @@ public class FamilyMember {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FamilyMember that = (FamilyMember) o;
-        return Objects.equals(id, that.id) && Objects.equals(firstname, that.firstname) && Objects.equals(lastname, that.lastname) && Objects.equals(middlename, that.middlename);
+        return Objects.equals(id, that.id) && Objects.equals(firstname, that.firstname) && Objects.equals(lastname, that.lastname) && Objects.equals(middlename, that.middlename) && sex == that.sex && Objects.equals(birthday, that.birthday) && Objects.equals(deathday, that.deathday);
     }
 
     @Override

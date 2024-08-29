@@ -24,20 +24,26 @@ public class FamilyMemberInfo {
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "email_id")
     private Email mainEmail;
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(name = "emailsOfFamilyMember")
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinTable(name = "emailsOfFamilyMember",
+            joinColumns = @JoinColumn(name="member_info_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name="email_id",referencedColumnName = "id"))
     private List<Email> emails;
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "phone_id")
     private Phone mainPhone;
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(name = "phonesOfFamilyMember")
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinTable(name = "phonesOfFamilyMember",
+        joinColumns = @JoinColumn(name="member_info_id", referencedColumnName = "id"),
+        inverseJoinColumns = @JoinColumn(name="phone_id",referencedColumnName = "id"))
     private List<Phone> phones;
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "address_id")
     private Address mainAddress;
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(name = "addressesOfFamilyMember")
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinTable(name = "addressesOfFamilyMember",
+    joinColumns = @JoinColumn(name="member_info_id", referencedColumnName = "id"),
+    inverseJoinColumns = @JoinColumn(name="address_id",referencedColumnName = "id"))
     private List<Address> addresses;
 
     @Override
