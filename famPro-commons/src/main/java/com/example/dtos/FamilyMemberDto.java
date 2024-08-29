@@ -21,9 +21,10 @@ public class FamilyMemberDto implements Serializable {
     @Schema(description ="День рождения")
     private Date birthday;
     @Schema(description ="Идентфикатор матери")
-    private Long mother_id;
+    private Long motherId;
     @Schema(description ="Идентификатор отца")
-    private Long father_id;
+    private Long fatherId;
     @Schema(description ="Расширенная информация")
-    private FamilyMemberInfoDto familyMemberInfo;
+    private FamilyMemberInfoDto memberInfo;
 }
+
