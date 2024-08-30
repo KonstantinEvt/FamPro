@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -18,7 +19,7 @@ public class FamilyMemberInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "MemberInfoSeq")
     @SequenceGenerator(name = "MemberInfoSeq",
-            sequenceName = "FamInfo", initialValue = 1, allocationSize = 50
+            sequenceName = "FamInfo", initialValue = 1, allocationSize = 20
     )
     private Long id;
     @OneToOne(cascade = CascadeType.PERSIST)
@@ -26,24 +27,24 @@ public class FamilyMemberInfo {
     private Email mainEmail;
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinTable(name = "emailsOfFamilyMember",
-            joinColumns = @JoinColumn(name="member_info_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name="email_id",referencedColumnName = "id"))
-    private List<Email> emails;
+            joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "email_id", referencedColumnName = "id"))
+    private Set<Email> emails;
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "phone_id")
     private Phone mainPhone;
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinTable(name = "phonesOfFamilyMember",
-        joinColumns = @JoinColumn(name="member_info_id", referencedColumnName = "id"),
-        inverseJoinColumns = @JoinColumn(name="phone_id",referencedColumnName = "id"))
+            joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "phone_id", referencedColumnName = "id"))
     private List<Phone> phones;
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "address_id")
     private Address mainAddress;
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinTable(name = "addressesOfFamilyMember",
-    joinColumns = @JoinColumn(name="member_info_id", referencedColumnName = "id"),
-    inverseJoinColumns = @JoinColumn(name="address_id",referencedColumnName = "id"))
+            joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "address_id", referencedColumnName = "id"))
     private List<Address> addresses;
 
     @Override

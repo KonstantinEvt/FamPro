@@ -18,7 +18,7 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqAddress")
     @SequenceGenerator(
             name = "genSeqAddress",
-            sequenceName = "seqAddress", initialValue = 1, allocationSize = 50)
+            sequenceName = "seqAddress", initialValue = 1, allocationSize = 5)
     private Long id;
     /**
      * Полный адрес

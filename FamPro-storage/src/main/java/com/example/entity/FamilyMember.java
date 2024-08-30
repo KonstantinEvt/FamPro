@@ -26,7 +26,7 @@ public class FamilyMember {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqFamMem")
     @SequenceGenerator(
             name = "genSeqFamMem",
-            sequenceName ="FamMem", initialValue = 1,allocationSize = 50)
+            sequenceName ="FamMem", initialValue = 1,allocationSize = 20)
     private Long id;
     @Column(name = "Name", length = 20)
     private String firstname;
@@ -42,7 +42,7 @@ public class FamilyMember {
     @Column(name = "DeathDay")
     private Date deathday;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name="info_id")
     private FamilyMemberInfo familyMemberInfo;
 

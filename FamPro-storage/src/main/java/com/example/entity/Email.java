@@ -20,9 +20,9 @@ public class Email {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genEmailSeq")
     @SequenceGenerator(
             name = "genEmailSeq",
-            sequenceName = "EmailSeq", initialValue = 1, allocationSize = 50)
+            sequenceName = "EmailSeq", initialValue = 1, allocationSize = 5)
     private Long id;
-    private String email;
+    private String emailName;
     private String description;
     @Enumerated(EnumType.STRING)
     private Assignment assignment;
@@ -34,7 +34,7 @@ public class Email {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Email email1 = (Email) o;
-        return Objects.equals(id, email1.id) && Objects.equals(email, email1.email);
+        return Objects.equals(id, email1.id) && Objects.equals(emailName, email1.emailName);
     }
 
     @Override

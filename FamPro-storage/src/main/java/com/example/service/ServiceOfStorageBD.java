@@ -51,11 +51,11 @@ public class ServiceOfStorageBD {
         familyRepo.saveAll(listFM);
         for (FamilyMemberDto fm : map.values()) {
             FamilyMember familyMember = familyMemberMapper.dtoToEntity(fm);
-            if (fm.getFather_id() != null && map.containsKey(fm.getFather_id())) {
-                familyMember.setFather(familyMemberMapper.dtoToEntity(map.get(fm.getFather_id())));
+            if (fm.getFatherId() != null && map.containsKey(fm.getFatherId())) {
+                familyMember.setFather(familyMemberMapper.dtoToEntity(map.get(fm.getFatherId())));
             }
-            if (fm.getMother_id() != null && map.containsKey(fm.getMother_id())) {
-                familyMember.setMother(familyMemberMapper.dtoToEntity(map.get(fm.getMother_id())));
+            if (fm.getMotherId() != null && map.containsKey(fm.getMotherId())) {
+                familyMember.setMother(familyMemberMapper.dtoToEntity(map.get(fm.getMotherId())));
             }
             familyRepo.save(familyMember);
         }

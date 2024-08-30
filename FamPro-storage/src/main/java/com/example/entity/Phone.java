@@ -20,7 +20,7 @@ public class Phone {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqPhone")
     @SequenceGenerator(
             name = "genSeqPhone",
-            sequenceName = "MemPhone", initialValue = 1, allocationSize = 50)
+            sequenceName = "MemPhone", initialValue = 1, allocationSize = 5)
     private Long id;
     private String phoneNumber;
     private String description;

@@ -1,14 +1,13 @@
 package com.example.service;
 
 import com.example.dtos.FamilyMemberDto;
-import com.example.entity.FamilyMember;
-import com.example.entity.FamilyMemberInfo;
+import com.example.entity.*;
 import com.example.enums.Sex;
 import com.example.exceptions.ProblemWithId;
 import com.example.exceptions.FamilyMemberNotFound;
 import com.example.mappers.*;
+import com.example.repository.AddressRepo;
 import com.example.repository.FamilyRepo;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,16 +21,23 @@ public class ServiceFM {
     private final FamilyMemberMapper familyMemberMapper;
     private final FamilyMemberInfoMapper familyMemberInfoMapper;
     private final FamilyRepo familyRepo;
+    private final EmailService emailService;
+    private final AddressRepo addressRepo;
+    private final PhoneService phoneService;
 
     public FamilyMemberDto getFamilyMember(Long id) {
 
         Optional<FamilyMember> familyMember = familyRepo.findById(id);
         FamilyMemberDto familyMemberDto = familyMemberMapper.entityToDto(familyMember.orElseThrow(() -> new FamilyMemberNotFound("Человек с ID: ".concat(String.valueOf(id)).concat(" не найден"))));
-        if ((familyMember.get().getFather() != null))
-            familyMemberDto.setFather_id(familyMember.get().getFather().getId());
+        if ((familyMember.get().getFather() != null)) {
+            familyMemberDto.setFatherId(familyMember.get().getFather().getId());
+            log.info("Отец установлен");
+        }
 
-        if ((familyMember.get().getMother() != null))
-            familyMemberDto.setMother_id(familyMember.get().getMother().getId());
+        if ((familyMember.get().getMother() != null)) {
+            familyMemberDto.setMotherId(familyMember.get().getMother().getId());
+            log.info("Мать установлена");
+        }
         return familyMemberDto;
     }
 
@@ -44,6 +50,7 @@ public class ServiceFM {
                 throw new ProblemWithId("Такой человек уже есть в базе. Если Вы хотите его отредактировать - воспользуйтесь Patch-методом. ID человека: ".concat(String.valueOf(fm.getId())));
             }
         }
+        log.info("Первичная информация установлена");
         extractExtensionOfFamilyMember(familyMemberDto, familyMember);
         return familyMemberMapper.entityToDto(familyRepo.save(familyMember));
     }
@@ -53,11 +60,11 @@ public class ServiceFM {
         List<FamilyMemberDto> familyMemberDtoList = new ArrayList<>();
         for (FamilyMember familyMember : familyMemberList) {
             FamilyMemberDto familyMemberDto = familyMemberMapper.entityToDto(familyMember);
-            if (familyMember.getFather() != null) familyMemberDto.setFather_id(familyMember.getFather().getId());
-            if (familyMember.getMother() != null) familyMemberDto.setMother_id(familyMember.getMother().getId());
+            if (familyMember.getFather() != null) familyMemberDto.setFatherId(familyMember.getFather().getId());
+            if (familyMember.getMother() != null) familyMemberDto.setMotherId(familyMember.getMother().getId());
             familyMemberDtoList.add(familyMemberDto);
         }
-        log.info("Коллекия выдана");
+        log.info("Коллекия всех людей из базы выдана");
         return familyMemberDtoList;
     }
 
@@ -73,22 +80,50 @@ public class ServiceFM {
         if (familyMemberDto.getMiddlename() != null) fm.setMiddlename(familyMemberDto.getMiddlename());
         extractExtensionOfFamilyMember(familyMemberDto, fm);
         familyRepo.save(fm);
+
         return familyMemberMapper.entityToDto(fm);
     }
 
     private void extractExtensionOfFamilyMember(FamilyMemberDto familyMemberDto, FamilyMember fm) {
-        if (familyMemberDto.getFather_id() != null) {
-            Optional<FamilyMember> father = familyRepo.findById(familyMemberDto.getFather_id());
+        if (familyMemberDto.getFatherId() != null) {
+            Optional<FamilyMember> father = familyRepo.findById(familyMemberDto.getFatherId());
             if (father.isPresent() && father.get().getSex() == Sex.MALE) fm.setFather(father.get());
+            else log.warn("Предъявляенное fatherId не соответствует базе. Данная позиция игнорирована");
         }
-        if (familyMemberDto.getMother_id() != null) {
-            Optional<FamilyMember> mother = familyRepo.findById(familyMemberDto.getMother_id());
+        if (familyMemberDto.getMotherId() != null) {
+            Optional<FamilyMember> mother = familyRepo.findById(familyMemberDto.getMotherId());
             if (mother.isPresent() && mother.get().getSex() == Sex.FEMALE) fm.setMother(mother.get());
+            else log.warn("Предъявляенное motherId не соответствует базе. Данная позиция игнорирована");
         }
-        if (familyMemberDto.getFamilyMemberInfo() != null) {
-            FamilyMemberInfo fmi = familyMemberInfoMapper.dtoToEntity(familyMemberDto.getFamilyMemberInfo());
+        if (familyMemberDto.getMemberInfo() != null) {
+            FamilyMemberInfo fmi = familyMemberInfoMapper.dtoToEntity(familyMemberDto.getMemberInfo());
+            Set<Email> emailSet= fmi.getEmails();
+            String mainEmail = fmi.getMainEmail().getEmailName();
+            if (mainEmail != null) {
+                emailSet.add(fmi.getMainEmail());
+                Email email = emailService.getEmailbyEmailName(mainEmail);
+                if (email != null) fmi.setMainEmail(email);
+            }
+
+            Set<Email> resultEmails = new HashSet<>();
+            if (emailSet != null) {
+                for (Email mail : emailSet) {
+                    Email oneEmail = emailService.getEmailbyEmailName(mail.getEmailName());
+                    if (oneEmail != null) resultEmails.add(oneEmail);
+                }
+                fmi.setEmails(resultEmails);
+
+            }
+
+            String mainPhone = fmi.getMainPhone().getPhoneNumber();
+            if (mainPhone != null) {
+                Phone phone = phoneService.getPhoneByPhoneNumber(mainPhone);
+                if (phone != null) fmi.setMainPhone(phone);
+            }
+            Address mainAddress = fmi.getMainAddress();
             fm.setFamilyMemberInfo(fmi);
         }
+        log.info("Расширенная информация проверена и установлена");
     }
 
     public String removeFamilyMember(Long id) {

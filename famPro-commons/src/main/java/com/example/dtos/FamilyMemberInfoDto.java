@@ -3,6 +3,8 @@ package com.example.dtos;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Set;
+
 @Data
 public class FamilyMemberInfoDto {
 
@@ -11,7 +13,7 @@ public class FamilyMemberInfoDto {
 
     private EmailDto mainEmail;
 
-    private List<EmailDto> emails;
+    private Set<EmailDto> emails;
 
     private PhoneDto mainPhone;
 

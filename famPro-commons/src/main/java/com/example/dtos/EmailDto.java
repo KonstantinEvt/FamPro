@@ -11,7 +11,7 @@ import lombok.Data;
 @Schema(description = "Идентификатор эл.почты")
 public class EmailDto {
     private Long id;
-    private String email;
+    private String emailName;
     private String description;
     private Assignment assignment;
     private Status status;
