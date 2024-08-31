@@ -7,7 +7,6 @@ create table if not exists addresses
     flat         varchar(50),
     full_address varchar(500),
     house        varchar(50),
-    housing      varchar(50),
     postcode     varchar(50),
     region       varchar(50),
     street       varchar(50)

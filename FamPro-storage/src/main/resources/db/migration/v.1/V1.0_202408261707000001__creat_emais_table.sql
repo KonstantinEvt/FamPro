@@ -6,7 +6,7 @@ create table if not exists emails
             check ((assignment)::text = ANY
                    ((ARRAY ['WORK'::character varying, 'HOME'::character varying, 'MOBILE'::character varying])::text[])),
     description varchar(255),
-    email       varchar(255),
+    emailName       varchar(255),
     status      varchar(255)
         constraint emails_status_check
             check ((status)::text = ANY

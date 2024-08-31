@@ -7,8 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 @AllArgsConstructor
 @Slf4j
@@ -16,19 +14,18 @@ public class EmailService {
     private final EmailMapper emailMapper;
     private final EmailRepo emailRepo;
 
-    void addEmail(Email email) {
-        emailRepo.save(email);
+    public Email mergeEmail(Email newEmail, Email oldEmail) {
+        if (newEmail.getAssignment() != null) oldEmail.setAssignment(newEmail.getAssignment());
+        if (newEmail.getStatus() != null) oldEmail.setStatus(newEmail.getStatus());
+        if (newEmail.getDescription() != null) oldEmail.setDescription(newEmail.getDescription());
+        return oldEmail;
     }
 
-    Optional<Email> getEmailById(Long id) {
-        return emailRepo.findById(id);
-    }
-
-    Email getEmailbyEmailName(String emailName) {
+    public Email getEmailbyEmailName(String emailName) {
         return emailRepo.findEmailByEmailName(emailName);
     }
 
-    void removeEmail(Long id) {
-        emailRepo.deleteById(id);
+    public Email checkEmail(Email email) {
+        return email;
     }
 }

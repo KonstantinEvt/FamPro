@@ -13,7 +13,18 @@ import org.springframework.stereotype.Service;
 public class PhoneService {
     private final PhoneMapper phoneMapper;
     private final PhoneRepo phoneRepo;
-    Phone getPhoneByPhoneNumber(String phoneNumber) {
+
+    public Phone getPhoneByPhoneNumber(String phoneNumber) {
         return phoneRepo.findPhoneByPhoneNumber(phoneNumber);
+    }
+
+    public Phone mergePhone(Phone newPhone, Phone oldPhone) {
+        if (newPhone.getAssignment() != null) oldPhone.setAssignment(newPhone.getAssignment());
+        if (newPhone.getStatus() != null) oldPhone.setStatus(newPhone.getStatus());
+        if (newPhone.getDescription() != null) oldPhone.setDescription(newPhone.getDescription());
+        return oldPhone;
+    }
+    public Phone checkPhone(Phone phone) {
+        return phone;
     }
 }

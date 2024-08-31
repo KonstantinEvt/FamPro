@@ -18,8 +18,6 @@ public class AddressDto {
     @Schema(description = "Почтовый индекс")
     private String index;
     @Schema(description = "Корпус здания")
-    private String housing;
-    @Schema(description = "Строение здания")
     private String building;
     @Schema(description = "Город")
     private String city;

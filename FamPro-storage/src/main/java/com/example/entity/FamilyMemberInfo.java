@@ -37,7 +37,7 @@ public class FamilyMemberInfo {
     @JoinTable(name = "phonesOfFamilyMember",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "phone_id", referencedColumnName = "id"))
-    private List<Phone> phones;
+    private Set<Phone> phones;
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "address_id")
     private Address mainAddress;
@@ -45,7 +45,7 @@ public class FamilyMemberInfo {
     @JoinTable(name = "addressesOfFamilyMember",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "address_id", referencedColumnName = "id"))
-    private List<Address> addresses;
+    private Set<Address> addresses;
 
     @Override
     public boolean equals(Object o) {

@@ -1,5 +1,6 @@
 package com.example.service;
 
+import com.example.entity.Address;
 import com.example.mappers.AddressMapper;
 import com.example.repository.AddressRepo;
 import lombok.AllArgsConstructor;
@@ -12,4 +13,22 @@ import org.springframework.stereotype.Service;
 public class AddressService {
     private final AddressMapper addressMapper;
     private final AddressRepo addressRepo;
+
+    public Address getAddressByFullName(String address) {
+        return addressRepo.findAddressByFullAddress(address);
+    }
+
+    public Address mergeAddress(Address newAddress, Address oldAddress) {
+        return oldAddress;
+    }
+
+    public Address checkAddress(Address address) {
+        if (address.getFullAddress() == null) address.setFullAddress(resolveFullAddress(address));
+        return address;
+    }
+
+    public String resolveFullAddress(Address address) {
+        return String.join(", ", address.getCountry(), address.getCity(), address.getStreet(), address.getHouse(), address.getBuilding(), address.getFlat());
+
+    }
 }

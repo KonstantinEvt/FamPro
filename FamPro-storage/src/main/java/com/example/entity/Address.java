@@ -43,11 +43,6 @@ public class Address {
     /**
      * Корпус здания
      */
-    @Column(name = "housing", length = 50)
-    private String housing;
-    /**
-     * Строение здания
-     */
     @Column(name = "building", length = 50)
     private String building;
     /**
@@ -76,7 +71,7 @@ public class Address {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Address address = (Address) o;
-        return Objects.equals(id, address.id) && Objects.equals(street, address.street) && Objects.equals(house, address.house) && Objects.equals(index, address.index) && Objects.equals(housing, address.housing) && Objects.equals(building, address.building) && Objects.equals(city, address.city) && Objects.equals(country, address.country) && Objects.equals(flat, address.flat);
+        return Objects.equals(id, address.id) && Objects.equals(street, address.street) && Objects.equals(house, address.house) && Objects.equals(index, address.index) && Objects.equals(building, address.building) && Objects.equals(city, address.city) && Objects.equals(country, address.country) && Objects.equals(flat, address.flat);
     }
 
     @Override

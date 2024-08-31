@@ -17,9 +17,9 @@ public class FamilyMemberInfoDto {
 
     private PhoneDto mainPhone;
 
-    private List<PhoneDto> phones;
+    private Set<PhoneDto> phones;
 
     private AddressDto mainAddress;
 
-    private List<AddressDto> addresses;
+    private Set<AddressDto> addresses;
 }

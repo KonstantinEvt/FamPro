@@ -15,6 +15,7 @@ spring:
     properties:
       hibernate:
         #        dialect: "org.hibernate.dialect.PostgreSQL10Dialect"
+
         show_sql: "true"
         hbm2ddl.auto: "update"
         default_schema: fam_pro

@@ -6,7 +6,6 @@ import com.example.enums.Sex;
 import com.example.exceptions.ProblemWithId;
 import com.example.exceptions.FamilyMemberNotFound;
 import com.example.mappers.*;
-import com.example.repository.AddressRepo;
 import com.example.repository.FamilyRepo;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,11 +18,8 @@ import java.util.*;
 @Slf4j
 public class ServiceFM {
     private final FamilyMemberMapper familyMemberMapper;
-    private final FamilyMemberInfoMapper familyMemberInfoMapper;
     private final FamilyRepo familyRepo;
-    private final EmailService emailService;
-    private final AddressRepo addressRepo;
-    private final PhoneService phoneService;
+    private final FamilyMemberInfoService familyMemberInfoService;
 
     public FamilyMemberDto getFamilyMember(Long id) {
 
@@ -37,11 +33,13 @@ public class ServiceFM {
         if ((familyMember.get().getMother() != null)) {
             familyMemberDto.setMotherId(familyMember.get().getMother().getId());
             log.info("Мать установлена");
+
         }
         return familyMemberDto;
     }
 
     public FamilyMemberDto addFamilyMember(FamilyMemberDto familyMemberDto) {
+        if (familyMemberDto.getId() != null) throw new ProblemWithId("Удалите ID нового человека");
         FamilyMember familyMember = familyMemberMapper.dtoToEntity(familyMemberDto);
         String familiya = familyMember.getLastname();
         List<FamilyMember> familyMemberList = familyRepo.findAllByLastname(familiya);
@@ -78,9 +76,10 @@ public class ServiceFM {
         if (familyMemberDto.getBirthday() != null) fm.setBirthday(familyMemberDto.getBirthday());
         if (familyMemberDto.getLastname() != null) fm.setLastname(familyMemberDto.getLastname());
         if (familyMemberDto.getMiddlename() != null) fm.setMiddlename(familyMemberDto.getMiddlename());
+        log.info("Первичная информация установлена");
         extractExtensionOfFamilyMember(familyMemberDto, fm);
-        familyRepo.save(fm);
 
+        familyRepo.save(fm);
         return familyMemberMapper.entityToDto(fm);
     }
 
@@ -96,32 +95,9 @@ public class ServiceFM {
             else log.warn("Предъявляенное motherId не соответствует базе. Данная позиция игнорирована");
         }
         if (familyMemberDto.getMemberInfo() != null) {
-            FamilyMemberInfo fmi = familyMemberInfoMapper.dtoToEntity(familyMemberDto.getMemberInfo());
-            Set<Email> emailSet= fmi.getEmails();
-            String mainEmail = fmi.getMainEmail().getEmailName();
-            if (mainEmail != null) {
-                emailSet.add(fmi.getMainEmail());
-                Email email = emailService.getEmailbyEmailName(mainEmail);
-                if (email != null) fmi.setMainEmail(email);
-            }
-
-            Set<Email> resultEmails = new HashSet<>();
-            if (emailSet != null) {
-                for (Email mail : emailSet) {
-                    Email oneEmail = emailService.getEmailbyEmailName(mail.getEmailName());
-                    if (oneEmail != null) resultEmails.add(oneEmail);
-                }
-                fmi.setEmails(resultEmails);
-
-            }
-
-            String mainPhone = fmi.getMainPhone().getPhoneNumber();
-            if (mainPhone != null) {
-                Phone phone = phoneService.getPhoneByPhoneNumber(mainPhone);
-                if (phone != null) fmi.setMainPhone(phone);
-            }
-            Address mainAddress = fmi.getMainAddress();
-            fm.setFamilyMemberInfo(fmi);
+            if (familyMemberDto.getMemberInfo().getId() != null && familyMemberDto.getId()==null)
+                throw new ProblemWithId(" ID информации человека при его добавлении должно быть null");
+            fm.setFamilyMemberInfo(familyMemberInfoService.merge(familyMemberDto));
         }
         log.info("Расширенная информация проверена и установлена");
     }
