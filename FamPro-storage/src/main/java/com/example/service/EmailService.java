@@ -7,6 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
+
 @Service
 @AllArgsConstructor
 @Slf4j
@@ -24,6 +28,7 @@ public class EmailService {
     public Email getEmailbyEmailName(String emailName) {
         return emailRepo.findEmailByEmailName(emailName);
     }
+    public Set<Email> getAllEmailsByEmailsNames(Set<String> names){return emailRepo.findAllByEmailNameIn(names);}
 
     public Email checkEmail(Email email) {
         return email;

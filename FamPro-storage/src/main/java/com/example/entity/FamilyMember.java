@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.sql.Date;
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @NoArgsConstructor
@@ -16,26 +17,37 @@ import java.util.Objects;
 @Getter
 @Builder
 @ToString
-//@NamedEntityGraphs({@NamedEntityGraph(name = "ListOfOne",
-//        attributeNodes = {@NamedAttributeNode("mother"),
-//                @NamedAttributeNode("father")}),
-//        @NamedEntityGraph(name = "WithoutParents")})
+@NamedEntityGraphs(
+        {@NamedEntityGraph(name = "ListForSave",
+                attributeNodes = {
+                        @NamedAttributeNode("mother"),
+                        @NamedAttributeNode("father"),
+                        @NamedAttributeNode(value = "familyMemberInfo", subgraph = "links")},
+                subgraphs = {@NamedSubgraph(name = "links",
+                        attributeNodes = {
+                                @NamedAttributeNode("phones"),
+                                @NamedAttributeNode("emails"),
+                                @NamedAttributeNode("addresses")})}),
+        @NamedEntityGraph(name = "WithoutParents")})
+
 @Table(name = "family_members")
 public class FamilyMember {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqFamMem")
     @SequenceGenerator(
             name = "genSeqFamMem",
-            sequenceName ="FamMem", initialValue = 1,allocationSize = 20)
+            sequenceName = "FamMem", initialValue = 1, allocationSize = 20)
     private Long id;
+    @Column(name="UUID", unique = true)
+    private UUID uuid;
     @Column(name = "Name", length = 20)
-    private String firstname;
+    private String firstName;
     @Column(name = "Familiya", length = 50)
-    private String lastname;
+    private String lastName;
     @Column(name = "Fathername", length = 50)
-    private String middlename;
+    private String middleName;
     @Enumerated(EnumType.STRING)
-    @Column(name="sex")
+    @Column(name = "sex")
     private Sex sex;
     @Column(name = "Birthday")
     private Date birthday;
@@ -43,10 +55,10 @@ public class FamilyMember {
     private Date deathday;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    @JoinColumn(name="info_id")
+    @JoinColumn(name = "info_id")
     private FamilyMemberInfo familyMemberInfo;
 
-    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "mother_id")
     private FamilyMember mother;
 
@@ -59,7 +71,7 @@ public class FamilyMember {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FamilyMember that = (FamilyMember) o;
-        return Objects.equals(id, that.id) && Objects.equals(firstname, that.firstname) && Objects.equals(lastname, that.lastname) && Objects.equals(middlename, that.middlename) && sex == that.sex && Objects.equals(birthday, that.birthday) && Objects.equals(deathday, that.deathday);
+        return Objects.equals(id, that.id) && Objects.equals(firstName, that.firstName) && Objects.equals(lastName, that.lastName) && Objects.equals(middleName, that.middleName) && sex == that.sex && Objects.equals(birthday, that.birthday) && Objects.equals(deathday, that.deathday);
     }
 
     @Override

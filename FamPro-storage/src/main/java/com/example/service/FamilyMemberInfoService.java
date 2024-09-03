@@ -5,7 +5,7 @@ import com.example.entity.Address;
 import com.example.entity.Email;
 import com.example.entity.FamilyMemberInfo;
 import com.example.entity.Phone;
-import com.example.exceptions.ProblemWithId;
+import com.example.exceptions.UncorrectedInformation;
 import com.example.mappers.FamilyMemberInfoMapper;
 import com.example.repository.FamilyMemberInfoRepo;
 import lombok.AllArgsConstructor;
@@ -26,49 +26,70 @@ public class FamilyMemberInfoService {
     private final AddressService addressService;
 
     FamilyMemberInfo merge(FamilyMemberDto familyMemberDto) {
-        FamilyMemberInfo fmiFromBase;
+
         FamilyMemberInfo fmi = familyMemberInfoMapper.dtoToEntity(familyMemberDto.getMemberInfo());
-        if (fmi.getId() != null)
-            fmiFromBase = familyMemberInfoRepo.findById(fmi.getId()).orElseThrow(() -> new ProblemWithId("ID информации человека не соответстует базе"));
-        else fmiFromBase = new FamilyMemberInfo();
+        FamilyMemberInfo fmiFromBase = familyMemberInfoRepo.findFamilyMemberInfoByUuid(fmi.getUuid());
+        if (fmiFromBase == null) fmiFromBase = new FamilyMemberInfo();
+
 
 // Установка и проверка Emails
         if (fmi.getEmails() != null || fmi.getMainEmail() != null) {
-            if (fmi.getEmails() == null) fmi.setEmails(new HashSet<>());
+            Set<String> namesEmails = new HashSet<>();
             if (fmi.getMainEmail() == null) fmi.setMainEmail(new Email());
-            else fmi.setMainEmail(emailService.checkEmail(fmi.getMainEmail()));
-            // Установка основного Email
-            String mainEmail = fmi.getMainEmail().getEmailName();
-            if (fmi.getMainEmail().getId() != null) {
-                fmi.getMainEmail().setId(null);
-                log.warn("Предоставленная информация об основном Email имела ID, ID обнулен");
-            }
-            if (mainEmail != null) {
-                Email emailFromBase = emailService.getEmailbyEmailName(mainEmail);
-                if (emailFromBase != null)
-                    fmi.setMainEmail(emailService.mergeEmail(fmi.getMainEmail(), emailFromBase));
-            } else fmi.setMainEmail(fmiFromBase.getMainEmail());
-
-            // Установка списка Emails
-            Set<Email> resultEmail = new HashSet<>();
-            resultEmail.add(fmi.getMainEmail());
-
-            for (Email rawEmail : fmi.getEmails()) {
-                Email email = emailService.checkEmail(rawEmail);
-                String emailName = email.getEmailName();
-                if (email.getId() != null) {
-                    email.setId(null);
-                    log.warn("Предоставленная информация об Email имела ID, ID обнулен");
+            else {
+                fmi.setMainEmail(emailService.checkEmail(fmi.getMainEmail()));
+                namesEmails.add(fmi.getMainEmail().getEmailName());
+                if (fmi.getMainEmail().getId() != null) {
+                    fmi.getMainEmail().setId(null);
+                    log.warn("Предоставленная информация об основном Email имела ID, ID обнулен");
                 }
-                if (emailName != null) {
-                    Email emailFromBase = emailService.getEmailbyEmailName(emailName);
-                    if (emailFromBase != null)
-                        resultEmail.add(emailService.mergeEmail(email, emailFromBase));
-                    else resultEmail.add(email);
+                if (fmi.getMainEmail().getEmailName().equals("uncorrected")) {
+                    fmi.setMainEmail(null);
+                    log.warn("Предоставленная информация об основном Email некорректна, основной Email обнулен");
                 }
             }
-            if (fmiFromBase.getEmails() != null) resultEmail.addAll(fmiFromBase.getEmails());
-            fmi.setEmails(resultEmail);
+
+            if (fmi.getEmails() == null) fmi.setEmails(new HashSet<>());
+            else {
+                for (Email email : fmi.getEmails()) {
+                    Email checked = emailService.checkEmail(email);
+                    namesEmails.add(checked.getEmailName());
+                    email.setEmailName(checked.getEmailName());
+                    if (email.getId() != null) {
+                        email.setId(null);
+                        log.warn("Предоставленная информация об Email имела ID, ID обнулен");
+                    }
+                }
+            }
+            fmi.getEmails().add(fmi.getMainEmail());
+            if (namesEmails.contains("uncorrected") && namesEmails.size() == 1) {
+                throw new UncorrectedInformation("Все введенные Emails некорректны");
+            } else namesEmails.remove("uncorrected");
+
+            Set<Email> emailsFromBase = emailService.getAllEmailsByEmailsNames(namesEmails);
+
+            Set<Email> resultEmails = new HashSet<>();
+            Set<String> namesFromBase = new HashSet<>();
+            for (Email email : emailsFromBase) {
+                Email res = emailService.mergeEmail(fmi.getMainEmail(), email);
+                if (email.getEmailName().equals(fmi.getMainEmail().getEmailName())) {
+                    fmi.setMainEmail(res);
+                }
+                resultEmails.add(res);
+                namesFromBase.add(res.getEmailName());
+            }
+            if (fmi.getMainEmail() == null && fmiFromBase.getMainEmail() != null)
+                fmi.setMainEmail(fmiFromBase.getMainEmail());
+
+            if (fmiFromBase.getEmails() != null) resultEmails.addAll(fmiFromBase.getEmails());
+            for (String name : namesEmails) {
+                if (!namesFromBase.contains(name)) {
+                    for (Email em : fmi.getEmails()) {
+                        if (em.getEmailName().equals(name)) resultEmails.add(em);
+                    }
+                }
+            }
+            fmi.setEmails(resultEmails);
             log.info("Email(s) установлен(ы)");
         }
 

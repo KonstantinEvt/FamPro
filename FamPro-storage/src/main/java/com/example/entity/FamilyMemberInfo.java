@@ -6,6 +6,7 @@ import lombok.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @NoArgsConstructor
@@ -22,6 +23,8 @@ public class FamilyMemberInfo {
             sequenceName = "FamInfo", initialValue = 1, allocationSize = 20
     )
     private Long id;
+    @Column(name="UUID", unique = true)
+    private UUID uuid;
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "email_id")
     private Email mainEmail;

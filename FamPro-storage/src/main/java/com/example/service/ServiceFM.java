@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.dtos.FamilyMemberDto;
+import com.example.dtos.FioDto;
 import com.example.entity.*;
 import com.example.enums.Sex;
 import com.example.exceptions.ProblemWithId;
@@ -18,6 +19,7 @@ import java.util.*;
 @Slf4j
 public class ServiceFM {
     private final FamilyMemberMapper familyMemberMapper;
+    private final FamilyMemberInfoMapper familyMemberInfoMapper;
     private final FamilyRepo familyRepo;
     private final FamilyMemberInfoService familyMemberInfoService;
 
@@ -26,14 +28,17 @@ public class ServiceFM {
         Optional<FamilyMember> familyMember = familyRepo.findById(id);
         FamilyMemberDto familyMemberDto = familyMemberMapper.entityToDto(familyMember.orElseThrow(() -> new FamilyMemberNotFound("Человек с ID: ".concat(String.valueOf(id)).concat(" не найден"))));
         if ((familyMember.get().getFather() != null)) {
-            familyMemberDto.setFatherId(familyMember.get().getFather().getId());
+            familyMemberDto.setFatherFio(new FioDto(familyMember.get().getFather().getUuid(), familyMember.get().getFather().getFirstName(), familyMember.get().getFather().getLastName(), familyMember.get().getFather().getMiddleName(), familyMember.get().getFather().getBirthday()));
             log.info("Отец установлен");
         }
 
         if ((familyMember.get().getMother() != null)) {
-            familyMemberDto.setMotherId(familyMember.get().getMother().getId());
+            familyMemberDto.setMotherFio(new FioDto(familyMember.get().getMother().getUuid(), familyMember.get().getMother().getFirstName(), familyMember.get().getMother().getLastName(), familyMember.get().getMother().getMiddleName(), familyMember.get().getMother().getBirthday()));
             log.info("Мать установлена");
 
+        }
+        if (familyMember.get().getFamilyMemberInfo() != null) {
+            familyMemberDto.setMemberInfo(familyMemberInfoMapper.entityToDto(familyMember.get().getFamilyMemberInfo()));
         }
         return familyMemberDto;
     }
@@ -41,12 +46,11 @@ public class ServiceFM {
     public FamilyMemberDto addFamilyMember(FamilyMemberDto familyMemberDto) {
         if (familyMemberDto.getId() != null) throw new ProblemWithId("Удалите ID нового человека");
         FamilyMember familyMember = familyMemberMapper.dtoToEntity(familyMemberDto);
-        String familiya = familyMember.getLastname();
-        List<FamilyMember> familyMemberList = familyRepo.findAllByLastname(familiya);
-        for (FamilyMember fm : familyMemberList) {
-            if (familyMember.getFirstname().equals(fm.getFirstname()) && familyMember.getMiddlename().equals(fm.getMiddlename()) && familyMember.getBirthday().toLocalDate().equals(fm.getBirthday().toLocalDate())) {
-                throw new ProblemWithId("Такой человек уже есть в базе. Если Вы хотите его отредактировать - воспользуйтесь Patch-методом. ID человека: ".concat(String.valueOf(fm.getId())));
-            }
+        familyMember.setUuid(genarateUUID(familyMember));
+        familyMemberDto.getMemberInfo().setUuid(familyMember.getUuid());
+        Optional<FamilyMember> fm = familyRepo.findFamilyMemberByUuid(familyMember.getUuid());
+        if (fm.isPresent()) {
+            throw new ProblemWithId("Такой человек уже есть в базе. Если Вы хотите его отредактировать - воспользуйтесь Patch-методом. ID человека: ".concat(String.valueOf(fm.get().getId())));
         }
         log.info("Первичная информация установлена");
         extractExtensionOfFamilyMember(familyMemberDto, familyMember);
@@ -58,8 +62,10 @@ public class ServiceFM {
         List<FamilyMemberDto> familyMemberDtoList = new ArrayList<>();
         for (FamilyMember familyMember : familyMemberList) {
             FamilyMemberDto familyMemberDto = familyMemberMapper.entityToDto(familyMember);
-            if (familyMember.getFather() != null) familyMemberDto.setFatherId(familyMember.getFather().getId());
-            if (familyMember.getMother() != null) familyMemberDto.setMotherId(familyMember.getMother().getId());
+            if (familyMember.getFather() != null)
+                familyMemberDto.setFatherFio(new FioDto(familyMember.getFather().getUuid(), familyMember.getFather().getFirstName(), familyMember.getFather().getLastName(), familyMember.getFather().getMiddleName(), familyMember.getFather().getBirthday()));
+            if (familyMember.getMother() != null)
+                familyMemberDto.setMotherFio(new FioDto(familyMember.getMother().getUuid(), familyMember.getMother().getFirstName(), familyMember.getMother().getLastName(), familyMember.getMother().getMiddleName(), familyMember.getMother().getBirthday()));
             familyMemberDtoList.add(familyMemberDto);
         }
         log.info("Коллекия всех людей из базы выдана");
@@ -72,10 +78,11 @@ public class ServiceFM {
         Optional<FamilyMember> familyMember = familyRepo.findById(dtoId);
         FamilyMember fm = familyMember.orElseThrow(() -> new FamilyMemberNotFound("Попытка изменить человека, которого нет в базе"));
         if (familyMemberDto.getSex() != null) fm.setSex(familyMemberDto.getSex());
-        if (familyMemberDto.getFirstname() != null) fm.setFirstname(familyMemberDto.getFirstname());
+        if (familyMemberDto.getFirstName() != null) fm.setFirstName(familyMemberDto.getFirstName());
         if (familyMemberDto.getBirthday() != null) fm.setBirthday(familyMemberDto.getBirthday());
-        if (familyMemberDto.getLastname() != null) fm.setLastname(familyMemberDto.getLastname());
-        if (familyMemberDto.getMiddlename() != null) fm.setMiddlename(familyMemberDto.getMiddlename());
+        if (familyMemberDto.getLastName() != null) fm.setLastName(familyMemberDto.getLastName());
+        if (familyMemberDto.getMiddleName() != null) fm.setMiddleName(familyMemberDto.getMiddleName());
+        fm.setUuid(genarateUUID(fm));
         log.info("Первичная информация установлена");
         extractExtensionOfFamilyMember(familyMemberDto, fm);
 
@@ -83,20 +90,28 @@ public class ServiceFM {
         return familyMemberMapper.entityToDto(fm);
     }
 
+    private UUID genarateUUID(FamilyMember familyMember) {
+        String str = familyMember.getFirstName().strip()
+                .concat(familyMember.getMiddleName().strip())
+                .concat(familyMember.getLastName().strip())
+                .concat(String.valueOf(familyMember.getBirthday().toLocalDate())).toLowerCase();
+        log.info("новый UUID человека сгенерирован");
+        return UUID.nameUUIDFromBytes(str.getBytes());
+    }
+
     private void extractExtensionOfFamilyMember(FamilyMemberDto familyMemberDto, FamilyMember fm) {
-        if (familyMemberDto.getFatherId() != null) {
-            Optional<FamilyMember> father = familyRepo.findById(familyMemberDto.getFatherId());
+        if (familyMemberDto.getFatherFio() != null) {
+            Optional<FamilyMember> father = familyRepo.findFamilyMemberByUuid(familyMemberDto.getFatherFio().getUuid());
             if (father.isPresent() && father.get().getSex() == Sex.MALE) fm.setFather(father.get());
             else log.warn("Предъявляенное fatherId не соответствует базе. Данная позиция игнорирована");
         }
-        if (familyMemberDto.getMotherId() != null) {
-            Optional<FamilyMember> mother = familyRepo.findById(familyMemberDto.getMotherId());
+        if (familyMemberDto.getMotherFio() != null) {
+            Optional<FamilyMember> mother = familyRepo.findFamilyMemberByUuid(familyMemberDto.getMotherFio().getUuid());
             if (mother.isPresent() && mother.get().getSex() == Sex.FEMALE) fm.setMother(mother.get());
             else log.warn("Предъявляенное motherId не соответствует базе. Данная позиция игнорирована");
         }
         if (familyMemberDto.getMemberInfo() != null) {
-            if (familyMemberDto.getMemberInfo().getId() != null && familyMemberDto.getId()==null)
-                throw new ProblemWithId(" ID информации человека при его добавлении должно быть null");
+            familyMemberDto.getMemberInfo().setId(null) ;
             fm.setFamilyMemberInfo(familyMemberInfoService.merge(familyMemberDto));
         }
         log.info("Расширенная информация проверена и установлена");
@@ -122,12 +137,9 @@ public class ServiceFM {
         }
         familyRepo.deleteById(id);
         return String.format("Человек: %s %s %s удален, из базы",
-                remFM.get().getFirstname(),
-                remFM.get().getMiddlename(),
-                remFM.get().getLastname());
-
+                remFM.get().getFirstName(),
+                remFM.get().getMiddleName(),
+                remFM.get().getLastName());
     }
-
-
 }
 

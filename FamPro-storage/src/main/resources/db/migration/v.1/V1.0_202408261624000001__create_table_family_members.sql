@@ -1,6 +1,7 @@
 create table if not exists family_members
 (
     id         bigint not null primary key,
+    uuid       uuid unique,
     birthday   date,
     death_day  date,
     name       varchar(20),
