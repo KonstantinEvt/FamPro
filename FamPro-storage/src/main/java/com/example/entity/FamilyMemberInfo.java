@@ -25,10 +25,10 @@ public class FamilyMemberInfo {
     private Long id;
     @Column(name="UUID", unique = true)
     private UUID uuid;
-    @OneToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "email_id")
-    private Email mainEmail;
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+
+    @Column(name = "main_email")
+    private String mainEmail;
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinTable(name = "emailsOfFamilyMember",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "email_id", referencedColumnName = "id"))

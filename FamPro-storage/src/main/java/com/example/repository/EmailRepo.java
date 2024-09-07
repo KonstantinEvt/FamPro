@@ -9,7 +9,6 @@ import java.util.Set;
 
 @Repository
 public interface EmailRepo extends JpaRepository<Email,Long> {
-    Email findEmailByEmailName(String email);
 
     Set<Email> findAllByEmailNameIn(Set<String> set);
 }

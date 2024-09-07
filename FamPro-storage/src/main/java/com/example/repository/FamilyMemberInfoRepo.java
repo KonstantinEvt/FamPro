@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface FamilyMemberInfoRepo extends JpaRepository<FamilyMemberInfo,Long> {
-    FamilyMemberInfo findFamilyMemberInfoByUuid(UUID uuid);
+    Optional<FamilyMemberInfo> findFamilyMemberInfoByUuid(UUID uuid);
 }

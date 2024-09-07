@@ -4,6 +4,7 @@ package com.example.entity;
 import com.example.enums.Sex;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.lang.NonNull;
 
 
 import java.sql.Date;
@@ -28,7 +29,7 @@ import java.util.UUID;
                                 @NamedAttributeNode("phones"),
                                 @NamedAttributeNode("emails"),
                                 @NamedAttributeNode("addresses")})}),
-        @NamedEntityGraph(name = "WithoutParents")})
+                @NamedEntityGraph(name = "WithoutParents")})
 
 @Table(name = "family_members")
 public class FamilyMember {
@@ -38,14 +39,14 @@ public class FamilyMember {
             name = "genSeqFamMem",
             sequenceName = "FamMem", initialValue = 1, allocationSize = 20)
     private Long id;
-    @Column(name="UUID", unique = true)
+    @Column(name = "UUID", unique = true)
     private UUID uuid;
     @Column(name = "Name", length = 20)
     private String firstName;
-    @Column(name = "Familiya", length = 50)
-    private String lastName;
     @Column(name = "Fathername", length = 50)
     private String middleName;
+    @Column(name = "Familiya", length = 50)
+    private String lastName;
     @Enumerated(EnumType.STRING)
     @Column(name = "sex")
     private Sex sex;
@@ -53,16 +54,20 @@ public class FamilyMember {
     private Date birthday;
     @Column(name = "DeathDay")
     private Date deathday;
+    @Column(name = "father_info")
+    private String fatherInfo;
+    @Column(name = "mother_info")
+    private String motherInfo;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "info_id")
     private FamilyMemberInfo familyMemberInfo;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "mother_id")
     private FamilyMember mother;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "father_id")
     private FamilyMember father;
 

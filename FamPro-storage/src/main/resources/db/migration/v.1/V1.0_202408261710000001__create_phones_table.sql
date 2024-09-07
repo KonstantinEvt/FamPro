@@ -2,12 +2,13 @@ create table if not exists phones
 (
     id           bigint not null
         primary key,
+    phone_number varchar(255),
     assignment   varchar(255)
         constraint phones_assignment_check
             check ((assignment)::text = ANY
                    ((ARRAY ['WORK'::character varying, 'HOME'::character varying, 'MOBILE'::character varying])::text[])),
     description  varchar(255),
-    phone_number varchar(255),
+
     status       varchar(255)
         constraint phones_status_check
             check ((status)::text = ANY

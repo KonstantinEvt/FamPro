@@ -1,6 +1,5 @@
 package com.example.dtos;
 
-import com.example.enums.Sex;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -12,14 +11,18 @@ import java.util.UUID;
 @AllArgsConstructor
 @RequiredArgsConstructor
 public class FioDto {
-    @Schema(description ="Уникальный идентификатор члена семьи")
-    private UUID uuid;
-    @Schema(description ="Имя")
+    @Schema(description ="Идентификатор члена семьи")
+    private Long id;
+    @Schema(description = "Имя")
     private String firstName;
-    @Schema(description ="Фамилия")
-    private String lastName;
-    @Schema(description ="Отчество")
+    @Schema(description = "Отчество")
     private String middleName;
-    @Schema(description ="День рождения")
+    @Schema(description = "Фамилия")
+    private String lastName;
+    @Schema(description = "День рождения")
     private Date birthday;
+    @Schema(description = "Уникальный идентификатор члена семьи")
+    private UUID uuid;
 }
+
+

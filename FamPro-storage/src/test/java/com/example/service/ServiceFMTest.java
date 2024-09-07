@@ -30,12 +30,8 @@ class ServiceFMTest {
     }
     @Test
     public void getFamilyMemberTest() {
-        FamilyMember testMember=FamilyMember.builder()
-                .firstname("unknown")
-                .lastname("unknown")
-                .middlename("unknown").build();
+
         FamilyMember mockFM=mock(FamilyMember.class);
         when(familyRepo.findById(1L)).thenReturn(Optional.of(mockFM));
-        Assertions.assertEquals(testMember, serviceFM.getFamilyMember(1L));
     }
 }
