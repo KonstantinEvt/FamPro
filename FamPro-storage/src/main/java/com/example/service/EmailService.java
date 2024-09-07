@@ -19,22 +19,19 @@ public class EmailService extends InternServiceImp<Email> {
     private final EmailRepo emailRepo;
 
     @Override
-    public Email merge(Email oldEmail, Email newEmail) {
-        if (newEmail.getAssignment() != null) oldEmail.setAssignment(newEmail.getAssignment());
-        if (newEmail.getStatus() != null) oldEmail.setStatus(newEmail.getStatus());
-        if (newEmail.getDescription() != null) oldEmail.setDescription(newEmail.getDescription());
-        return oldEmail;
-    }
-
-    @Override
     public Set<Email> getAllInternEntityByNames(Set<String> names) {
         return emailRepo.findAllByEmailNameIn(names);
     }
 
     @Override
     public void check(Email email) {
-        if (email.getEmailName() == null) email.setEmailName("uncorrected");
-        super.check(email);
+        if (email.getEmailName() != null) {
+            email.setTechString(email.getEmailName());
+            super.check(email);
+        } else email.setTechString("uncorrected");
+    }
+
+    public void checkingSet(Set<String> str, Set<Email> emails) {
     }
 
     @Override
@@ -43,46 +40,38 @@ public class EmailService extends InternServiceImp<Email> {
         Email mainEmail = new Email();
         if (newFmi.getMainEmail() != null) {
             mainEmail.setEmailName(newFmi.getMainEmail());
-            check(mainEmail);
-            if (mainEmail.getEmailName().equals("uncorrected")) {
-                newFmi.setMainEmail(null);
-                log.warn("Предоставленная информация об основном Email некорректна, основной Email обнулен");
-            } else {
-                newFmi.setMainEmail(mainEmail.getEmailName());
-                namesEmails.add(newFmi.getMainEmail());
+            if (!newFmi.getEmails().add(mainEmail)) {
+                newFmi.getEmails().remove(mainEmail);
+                newFmi.getEmails().add(mainEmail);
             }
         }
-
-        if (newFmi.getEmails() == null) newFmi.setEmails(new HashSet<>());
-        else {
+        if (!newFmi.getEmails().isEmpty())
+//            checkingSet(namesEmails,newFmi.getEmails());
             for (Email email : newFmi.getEmails()) {
                 check(email);
-                if (!email.getEmailName().equals("uncorrected")) {
+                if (!email.getTechString().equals("uncorrected")) {
                     namesEmails.add(email.getEmailName());
                     if (email.getId() != null) {
                         email.setId(null);
-                        log.warn("Предоставленная информация об Email имела ID, ID обнулен");
                     }
                 }
             }
-        }
-        if (newFmi.getMainEmail() != null) newFmi.getEmails().add(mainEmail);
+        if (!mainEmail.getTechString().equals("uncorrected")) newFmi.setMainEmail(mainEmail.getEmailName());
+        else log.warn("Предоставленная информация об основном Email некорректна, основной Email обнулен");
 
-        if (newFmi.getMainEmail() == null && fmiFromBase.getMainEmail() != null)
+        if (newFmi.getMainEmail() == null && fmiFromBase.getMainEmail() != null) {
             newFmi.setMainEmail(fmiFromBase.getMainEmail());
-
-        Map<String, Email> resultMap = new HashMap<>();
-        Set<Email> emailsFromBase = getAllInternEntityByNames(namesEmails);
-        if (fmiFromBase.getEmails() != null && !fmiFromBase.getEmails().isEmpty())
-            for (Email email : fmiFromBase.getEmails()) resultMap.put(email.getEmailName(), email);
-        if (!emailsFromBase.isEmpty())
-            for (Email email : emailsFromBase) resultMap.putIfAbsent(email.getEmailName(), email);
-        for (Email email : newFmi.getEmails()) if (!email.getEmailName().equals("uncorrected")) resultMap.merge(email.getEmailName(), email, this::merge);
-        newFmi.setEmails(new HashSet<>());
-        for (Email email : resultMap.values()
-        ) {
-            newFmi.getEmails().add(email);
+            log.info("Основной Email взят из старой записи, т.к. валидной информцаии об основном Email в новой записи нет");
         }
+
+        Set<Email> emailsFromBase;
+        if (!namesEmails.isEmpty()) emailsFromBase = getAllInternEntityByNames(namesEmails);
+        else emailsFromBase = new HashSet<>();
+
+        Collection<Email> resultList = mergeSetsOfInterns(newFmi.getEmails(), fmiFromBase.getEmails(), emailsFromBase);
+
+        newFmi.setEmails(new HashSet<>());
+        for (Email email : resultList) newFmi.getEmails().add(email);
         log.info("Email(s) установлен(ы)");
     }
 }

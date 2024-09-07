@@ -4,6 +4,8 @@ import com.example.enums.Assignment;
 import com.example.enums.Status;
 import lombok.*;
 
+import java.util.UUID;
+
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Setter

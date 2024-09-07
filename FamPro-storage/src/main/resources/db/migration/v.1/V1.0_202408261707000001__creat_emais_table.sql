@@ -18,5 +18,6 @@ create table if not exists emails
                    ((ARRAY ['CHECKED'::character varying, 'UNCHECKED'::character varying])::text[])),
 
     uuid         uuid,
-    description  varchar(255)
+    description  varchar(255),
+    tech_string  varchar(255)
 );

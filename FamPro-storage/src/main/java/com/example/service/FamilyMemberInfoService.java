@@ -1,7 +1,9 @@
 package com.example.service;
 
 import com.example.dtos.FamilyMemberDto;
+import com.example.dtos.FamilyMemberInfoDto;
 import com.example.entity.Address;
+import com.example.entity.FamilyMember;
 import com.example.entity.FamilyMemberInfo;
 import com.example.mappers.FamilyMemberInfoMapper;
 import com.example.repository.FamilyMemberInfoRepo;
@@ -33,12 +35,9 @@ public class FamilyMemberInfoService {
             fmiFromBase = Optional.of(familyMemberInfoRepo.findFamilyMemberInfoByUuid(oldUUID)).get().orElse(new FamilyMemberInfo());
         else fmiFromBase = new FamilyMemberInfo();
         fmi.setId(fmiFromBase.getId());
+        fmi.setUuid(familyMemberDto.getUuid());
 // Установка и проверка Emails
-//        for (InternService<?> service:internServiceImp
-//             ) {
-//
-//        }
-        if (fmi.getEmails() != null || fmi.getMainEmail() != null || fmiFromBase.getMainEmail() != null || fmiFromBase.getEmails() != null) {
+        if (fmi.getMainEmail() != null || fmi.getEmails() != null ||  fmiFromBase.getMainEmail() != null || fmiFromBase.getEmails() != null) {
             emailService.checkMergeAndSetUp(fmi, fmiFromBase);
         }
 
@@ -84,7 +83,8 @@ public class FamilyMemberInfoService {
             fmi.setAddresses(resultAddress);
             log.info("Адрес(ы) установлен(ы)");
         }
-        fmi.setUuid(familyMemberDto.getUuid());
+
         return fmi;
     }
+    public FamilyMemberInfoDto getMemberInfo(FamilyMember familyMember){return familyMemberInfoMapper.entityToDto(familyMember.getFamilyMemberInfo());}
 }

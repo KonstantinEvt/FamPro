@@ -12,7 +12,6 @@ import java.io.Serializable;
 @Setter
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class EmailDto  {
+public class EmailDto extends InternDto {
     private String emailName;
-
 }

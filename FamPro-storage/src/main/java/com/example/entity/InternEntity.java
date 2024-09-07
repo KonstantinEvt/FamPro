@@ -3,10 +3,7 @@ package com.example.entity;
 import com.example.enums.Assignment;
 import com.example.enums.CheckStatus;
 import com.example.enums.Status;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,4 +26,6 @@ public class InternEntity {
     private String description;
     @Column(name = "UUID")
     private UUID uuid;
+    @Column(name="tech_string")
+    private String techString;
 }

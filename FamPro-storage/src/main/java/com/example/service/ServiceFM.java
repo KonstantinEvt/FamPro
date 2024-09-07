@@ -22,11 +22,8 @@ import java.util.*;
 @Slf4j
 public class ServiceFM {
     private final FamilyMemberMapper familyMemberMapper;
-    private final FamilyMemberInfoMapper familyMemberInfoMapper;
     private final FamilyRepo familyRepo;
     private final FamilyMemberInfoService familyMemberInfoService;
-    @PersistenceContext
-    private final EntityManager entityManager;
 
     public FamilyMemberDto getFamilyMember(Long id) {
 
@@ -34,7 +31,7 @@ public class ServiceFM {
                 .orElseThrow(() -> new FamilyMemberNotFound("Человек с ID: ".concat(String.valueOf(id)).concat(" не найден")));
         FamilyMemberDto familyMemberDto = familyMemberMapper.entityToDto(familyMember);
         if (familyMember.getFamilyMemberInfo() != null) {
-            familyMemberDto.setMemberInfo(familyMemberInfoMapper.entityToDto(familyMember.getFamilyMemberInfo()));
+            familyMemberDto.setMemberInfo(familyMemberInfoService.getMemberInfo(familyMember));
         }
         return familyMemberDto;
     }
@@ -84,12 +81,12 @@ public class ServiceFM {
         if (familyMemberDto.getMiddleName() != null) fm.setMiddleName(familyMemberDto.getMiddleName());
         if (familyMemberDto.getSex() != null && childrenOfFamilyMember.isEmpty())
             fm.setSex(familyMemberDto.getSex());
-        else if (familyMemberDto.getSex() != null && familyMemberDto.getSex() != fm.getSex()){
-            System.out.println(childrenOfFamilyMember);
-            throw new UncorrectedInformation("Изменить пол человека, у которого в базе имеются дети, невозможно");}
+        else if (familyMemberDto.getSex() != null && familyMemberDto.getSex() != fm.getSex()) {
+            throw new UncorrectedInformation("Изменить пол человека, у которого в базе имеются дети, невозможно");
+        }
         familyMemberDto.setUuid(generateUUID(fm));
 
-// НЕ ЗАБЫТЬ ПРОВЕРИТЬ ИЗМЕНЕНИЯ В БАЗЕ!!!
+
         if (!childrenOfFamilyMember.isEmpty()) {
             String infoParents = generateFamilyMemberStringInfo(fm);
             if (fm.getSex() == Sex.MALE) {
@@ -98,6 +95,7 @@ public class ServiceFM {
         }
         log.info("Первичная информация установлена");
         extractExtensionOfFamilyMember(familyMemberDto, fm);
+        fm.setUuid(familyMemberDto.getUuid());
         familyRepo.save(fm);
         return familyMemberMapper.entityToDto(fm);
     }
@@ -106,7 +104,8 @@ public class ServiceFM {
         String str = familyMember.getFirstName().strip()
                 .concat(familyMember.getMiddleName().strip())
                 .concat(familyMember.getLastName().strip())
-                .concat(String.valueOf(familyMember.getBirthday().toLocalDate())).toLowerCase();
+                .concat(String.valueOf(familyMember.getBirthday().toLocalDate())).toLowerCase()
+                .concat("Rainbow");
         log.info("новый UUID человека сгенерирован");
         return UUID.nameUUIDFromBytes(str.getBytes());
     }
@@ -116,7 +115,7 @@ public class ServiceFM {
     }
 
     public String generateFamilyMemberStringInfo(FamilyMember familyMember) {
-        return String.join(" ", familyMember.getFirstName(), familyMember.getMiddleName(), familyMember.getLastName(), "дата рождения: ", String.valueOf(familyMember.getBirthday().toLocalDate()));
+        return String.join(" ", familyMember.getFirstName(), familyMember.getMiddleName(), familyMember.getLastName(), ". Дата рождения: ", String.valueOf(familyMember.getBirthday().toLocalDate()));
     }
 
     private void extractExtensionOfFamilyMember(FamilyMemberDto familyMemberDto, FamilyMember fm) {
