@@ -24,7 +24,7 @@ public class Address {
      * Полный адрес
      */
     @Column(name = "full_address", length = 500)
-    private String fullAddress;
+    private String internName;
     /**
      * Название улицы
      */
@@ -71,7 +71,7 @@ public class Address {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Address address = (Address) o;
-        return Objects.equals(id, address.id) && Objects.equals(street, address.street) && Objects.equals(house, address.house) && Objects.equals(index, address.index) && Objects.equals(building, address.building) && Objects.equals(city, address.city) && Objects.equals(country, address.country) && Objects.equals(flat, address.flat);
+        return Objects.equals(id, address.id) && Objects.equals(internName, address.internName);
     }
 
     @Override

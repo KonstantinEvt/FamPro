@@ -15,7 +15,7 @@ public class AddressService {
     private final AddressRepo addressRepo;
 
     public Address getAddressByFullName(String address) {
-        return addressRepo.findAddressByFullAddress(address);
+        return addressRepo.findAddressByInternName(address);
     }
 
     public Address mergeAddress(Address newAddress, Address oldAddress) {
@@ -23,7 +23,7 @@ public class AddressService {
     }
 
     public Address checkAddress(Address address) {
-        if (address.getFullAddress() == null) address.setFullAddress(resolveFullAddress(address));
+        if (address.getInternName() == null) address.setInternName(resolveFullAddress(address));
         return address;
     }
 

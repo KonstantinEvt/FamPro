@@ -15,26 +15,22 @@ import java.util.Objects;
 @Builder
 @ToString
 @Table(name = "emails")
-public class Email {
+public class Email extends InternEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genEmailSeq")
     @SequenceGenerator(
             name = "genEmailSeq",
             sequenceName = "EmailSeq", initialValue = 1, allocationSize = 5)
     private Long id;
+    @Column(name="email_name")
     private String emailName;
-    private String description;
-    @Enumerated(EnumType.STRING)
-    private Assignment assignment;
-    @Enumerated(EnumType.STRING)
-    private Status status;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Email email1 = (Email) o;
-        return Objects.equals(id, email1.id) && Objects.equals(emailName, email1.emailName);
+        Email email = (Email) o;
+        return Objects.equals(id, email.id) && Objects.equals(emailName, email.emailName);
     }
 
     @Override
