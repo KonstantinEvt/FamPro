@@ -2,97 +2,68 @@ package com.example.service;
 
 import com.example.entity.FamilyMemberInfo;
 import com.example.entity.Phone;
-import com.example.exceptions.UncorrectedInformation;
-import com.example.mappers.PhoneMapper;
-import com.example.repository.PhoneRepo;
-import lombok.AllArgsConstructor;
+import com.example.repository.InternRepo;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Service
-@AllArgsConstructor
 @Slf4j
-public class PhoneService implements InternService<Phone> {
-    private final PhoneMapper phoneMapper;
-    private final PhoneRepo phoneRepo;
-
-    @Override
-    public Phone merge(Phone newPhone, Phone oldPhone) {
-        if (newPhone.getAssignment() != null) oldPhone.setAssignment(newPhone.getAssignment());
-        if (newPhone.getStatus() != null) oldPhone.setStatus(newPhone.getStatus());
-        if (newPhone.getDescription() != null) oldPhone.setDescription(newPhone.getDescription());
-    return oldPhone;
+public class PhoneService extends InternServiceImp<Phone> {
+    public PhoneService(@Qualifier("phoneRepo")InternRepo<Phone> internRepo) {
+        super(internRepo);
     }
 
     @Override
     public void check(Phone phone) {
+        if (phone.getInternName() != null) {
+            phone.setTechString(phone.getInternName());
+            super.check(phone);
+        } else phone.setTechString("uncorrected");
     }
 
     @Override
     public void checkMergeAndSetUp(FamilyMemberInfo newFmi, FamilyMemberInfo fmiFromBase) {
         Set<String> namesPhones = new HashSet<>();
-        if (newFmi.getMainPhone() == null) newFmi.setMainPhone(new Phone());
-        else {
-            check(newFmi.getMainPhone());
-            namesPhones.add(newFmi.getMainPhone().getPhoneNumber());
-            if (newFmi.getMainPhone().getId() != null) {
-                newFmi.getMainPhone().setId(null);
-                log.warn("Предоставленная информация об основном телефоне имела ID, ID обнулен");
-            }
-            if (newFmi.getMainPhone().getPhoneNumber().equals("uncorrected")) {
-                newFmi.setMainPhone(null);
-                log.warn("Предоставленная информация об основном телефоне некорректна, основной Email обнулен");
-            }
+        Phone mainPhone = new Phone();
+        if (newFmi.getMainPhone() != null) {
+            mainPhone.setInternName(newFmi.getMainPhone());
+            check(mainPhone);
+            if (!mainPhone.getTechString().equals("uncorrected")) newFmi.setMainEmail(mainPhone.getInternName());
+            namesPhones.add(mainPhone.getInternName());
         }
-
-        if (newFmi.getPhones() == null) newFmi.setPhones(new HashSet<>());
-        else {
+        if (newFmi.getPhones() != null && !newFmi.getPhones().isEmpty()) {
             for (Phone phone : newFmi.getPhones()) {
                 check(phone);
-                namesPhones.add(phone.getPhoneNumber());
-                phone.setPhoneNumber(phone.getPhoneNumber());
-                if (phone.getId() != null) {
-                    phone.setId(null);
-                    log.warn("Предоставленная информация об телефоне имела ID, ID обнулен");
+                if (!phone.getTechString().equals("uncorrected")) {
+                    namesPhones.add(phone.getInternName());
+                    if (phone.getId() != null) phone.setId(null);
                 }
             }
         }
-        newFmi.getPhones().add(newFmi.getMainPhone());
-        if (namesPhones.contains("uncorrected") && namesPhones.size() == 1) {
-            throw new UncorrectedInformation("Все введенные телефоны некорректны");
-        } else namesPhones.remove("uncorrected");
-
-        Set<Phone> phonesFromBase = getAllInternEntityByNames(namesPhones);
-        Set<Phone> resultPhones = new HashSet<>();
-        Set<String> namesFromBase = new HashSet<>();
-        for (Phone phone : phonesFromBase) {
-            merge(newFmi.getMainPhone(), phone);
-            if (phone.getPhoneNumber().equals(newFmi.getMainPhone().getPhoneNumber())) {
-                newFmi.setMainPhone(phone);
-            }
-            resultPhones.add(phone);
-            namesFromBase.add(phone.getPhoneNumber());
-        }
-        if (newFmi.getMainPhone() == null && fmiFromBase.getMainEmail() != null)
+        if (newFmi.getMainPhone() == null && fmiFromBase.getMainPhone() != null) {
             newFmi.setMainPhone(fmiFromBase.getMainPhone());
-
-        if (fmiFromBase.getPhones() != null) resultPhones.addAll(fmiFromBase.getPhones());
-        for (String name : namesPhones) {
-            if (!namesFromBase.contains(name)) {
-                for (Phone em : newFmi.getPhones()) {
-                    if (em.getPhoneNumber().equals(name)) resultPhones.add(em);
-                }
-            }
+            log.info("Основной телефон взят из старой записи, т.к. валидной информцаии об основном телефоне в новой записи нет");
         }
-        newFmi.setPhones(resultPhones);
-        log.info("телефон(ы) установлен(ы)");
-    }
 
-    @Override
-    public Set<Phone> getAllInternEntityByNames(Set<String> names) {
-        return phoneRepo.findAllByPhoneNumberIn(names);
+        Set<Phone> phonesFromBase;
+        if (!namesPhones.isEmpty()) phonesFromBase = getAllInternEntityByNames(namesPhones);
+        else phonesFromBase = new HashSet<>();
+
+        Map<String, Phone> resultList = mergeSetsOfInterns(newFmi.getPhones(), fmiFromBase.getPhones(), phonesFromBase);
+        if (!resultList.containsKey(mainPhone.getInternName())) {
+            mainPhone.setDescription("Основной телефон");
+            mainPhone.setId(null);
+            mainPhone.setUuid(newFmi.getUuid());
+            mainPhone.setTechString("ONE USER");
+            resultList.put(mainPhone.getInternName(), mainPhone);
+        }
+        newFmi.setPhones(new HashSet<>());
+        for (Phone phone : resultList.values()) newFmi.getPhones().add(phone);
+        log.info("Телефон(ы) установлен(ы)");
     }
 }

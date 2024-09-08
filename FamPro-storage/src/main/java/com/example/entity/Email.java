@@ -21,15 +21,13 @@ public class Email extends InternEntity{
             name = "genEmailSeq",
             sequenceName = "EmailSeq", allocationSize = 5)
     private Long id;
-    @Column(name="email_name")
-    private String internName;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Email email = (Email) o;
-        return Objects.equals(id, email.id) && Objects.equals(internName, email.internName);
+        return Objects.equals(id, email.id) && Objects.equals(super.getInternName(),email.getInternName());
     }
 
     @Override

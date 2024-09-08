@@ -2,15 +2,15 @@ package com.example.dtos;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-public class AddressDto {
-    @NotNull
-    @Schema(description = "Идентификатор адреса")
-    private Long id;
-    @Schema(description = "Полный адрес")
-    private String fullAddress;
+@Getter
+@Setter
+@AllArgsConstructor
+@RequiredArgsConstructor
+public class AddressDto extends InternDto{
+    private String internName;
     @Schema(description = "Название улицы")
     private String street;
     @Schema(description = "Номер дома")

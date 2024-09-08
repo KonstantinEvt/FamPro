@@ -2,18 +2,20 @@ package com.example.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Objects;
 
 @Entity
-@NoArgsConstructor
+
+@RequiredArgsConstructor
 @AllArgsConstructor
 @Setter
 @Getter
-@Builder
+@SuperBuilder
 @ToString
 @Table(name = "addresses")
-public class Address {
+public class Address extends InternEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqAddress")
     @SequenceGenerator(
@@ -23,6 +25,7 @@ public class Address {
     /**
      * Полный адрес
      */
+    @Access(AccessType.PROPERTY)
     @Column(name = "full_address", length = 500)
     private String internName;
     /**

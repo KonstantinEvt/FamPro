@@ -4,8 +4,6 @@ package com.example.entity;
 import com.example.enums.Sex;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.lang.NonNull;
-
 
 import java.sql.Date;
 import java.util.Objects;
@@ -63,11 +61,11 @@ public class FamilyMember {
     @JoinColumn(name = "info_id")
     private FamilyMemberInfo familyMemberInfo;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mother_id")
     private FamilyMember mother;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "father_id")
     private FamilyMember father;
 

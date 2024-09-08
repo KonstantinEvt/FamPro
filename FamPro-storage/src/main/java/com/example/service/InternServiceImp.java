@@ -10,10 +10,9 @@ import com.example.utils.StringValidation;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.stereotype.Service;
 
 import java.util.*;
-@Service
+
 @AllArgsConstructor
 @Getter
 @Setter
@@ -51,7 +50,10 @@ public class InternServiceImp<T extends InternEntity> implements InternService<T
         if (fromBase != null && !fromBase.isEmpty())
             for (T intern : fromBase) resultMap.put(intern.getInternName(), intern);
         if (!findInBase.isEmpty())
-            for (T intern : findInBase) {checkForCommunity(intern); resultMap.putIfAbsent(intern.getInternName(), intern);}
+            for (T intern : findInBase) {
+                checkForCommunity(intern);
+                resultMap.putIfAbsent(intern.getInternName(), intern);
+            }
         for (T intern : fromDto)
             if (!intern.getTechString().equals("uncorrected"))
                 resultMap.merge(intern.getInternName(), intern, this::merge);

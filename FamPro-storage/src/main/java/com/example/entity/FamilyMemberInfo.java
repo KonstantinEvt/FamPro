@@ -23,28 +23,31 @@ public class FamilyMemberInfo {
             sequenceName = "FamInfo", initialValue = 1, allocationSize = 20
     )
     private Long id;
-    @Column(name="UUID", unique = true)
+    @Column(name = "UUID", unique = true)
     private UUID uuid;
 
     @Column(name = "main_email")
     private String mainEmail;
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "emailsOfFamilyMember",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "email_id", referencedColumnName = "id"))
     private Set<Email> emails;
-    @OneToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "phone_id")
-    private Phone mainPhone;
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+
+    @Column(name = "main_phone")
+    private String mainPhone;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "phonesOfFamilyMember",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "phone_id", referencedColumnName = "id"))
     private Set<Phone> phones;
-    @OneToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "address_id")
-    private Address mainAddress;
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+
+
+    @Column(name = "main_address")
+    private String mainAddress;
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "addressesOfFamilyMember",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "address_id", referencedColumnName = "id"))

@@ -4,6 +4,7 @@ import com.example.enums.Assignment;
 import com.example.enums.CheckStatus;
 import com.example.enums.Status;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;
 
@@ -11,7 +12,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Setter
 @Getter
-
 public class InternDto {
     private Long id;
     private String description;

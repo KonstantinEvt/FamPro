@@ -1,7 +1,7 @@
 create table if not exists emails
 (
     id           bigint not null primary key,
-    email_name   varchar(255),
+    intern_name  varchar(255),
     assignment   varchar(255)
         constraint emails_assignment_check
             check ((assignment)::text = ANY
@@ -17,7 +17,7 @@ create table if not exists emails
             check ((check_status)::text = ANY
                    ((ARRAY ['CHECKED'::character varying, 'UNCHECKED'::character varying])::text[])),
 
-    uuid         uuid,
+    owner_uuid   uuid,
     description  varchar(255),
     tech_string  varchar(255)
 );

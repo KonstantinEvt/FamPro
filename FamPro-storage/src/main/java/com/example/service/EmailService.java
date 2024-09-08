@@ -2,11 +2,10 @@ package com.example.service;
 
 import com.example.entity.Email;
 import com.example.entity.FamilyMemberInfo;
-import com.example.mappers.EmailMapper;
-import com.example.repository.EmailRepo;
 import com.example.repository.InternRepo;
-import lombok.AllArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -14,16 +13,10 @@ import java.util.*;
 @Service
 @Slf4j
 public class EmailService extends InternServiceImp<Email> {
-    public EmailService(InternRepo<Email> internRepo) {
+
+    public EmailService(@Qualifier("emailRepo")InternRepo<Email> internRepo) {
         super(internRepo);
     }
-//    private final EmailMapper emailMapper;
-//    private final EmailRepo emailRepo;
-
-//    @Override
-//    public Set<Email> getAllInternEntityByNames(Set<String> names) {
-//        return emailRepo.findAllByInternNameIn(names);
-//    }
 
     @Override
     public void check(Email email) {

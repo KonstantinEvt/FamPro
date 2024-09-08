@@ -1,7 +1,5 @@
 package com.example.entity;
 
-import com.example.enums.Assignment;
-import com.example.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -16,26 +14,21 @@ import java.util.Objects;
 @ToString
 @SuperBuilder
 @Table(name = "phones")
-public class Phone {
+public class Phone  extends InternEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqPhone")
     @SequenceGenerator(
             name = "genSeqPhone",
             sequenceName = "MemPhone", initialValue = 1, allocationSize = 5)
     private Long id;
-    private String phoneNumber;
-    private String description;
-    @Enumerated(EnumType.STRING)
-    private Assignment assignment;
-    @Enumerated(EnumType.STRING)
-    private Status status;
+    private String internName;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Phone phone = (Phone) o;
-        return Objects.equals(id, phone.id) && Objects.equals(phoneNumber, phone.phoneNumber);
+        return Objects.equals(id, phone.id) && Objects.equals(internName, phone.internName);
     }
 
     @Override

@@ -10,12 +10,13 @@ import lombok.experimental.SuperBuilder;
 import java.util.UUID;
 
 @MappedSuperclass
-@NoArgsConstructor
+@RequiredArgsConstructor
 @AllArgsConstructor
 @Setter
 @Getter
 @SuperBuilder
 public class InternEntity {
+    @Access(AccessType.PROPERTY)
     private String internName;
     @Enumerated(EnumType.STRING)
     private Assignment assignment;
@@ -28,4 +29,5 @@ public class InternEntity {
     private UUID uuid;
     @Column(name="tech_string")
     private String techString;
+
 }
