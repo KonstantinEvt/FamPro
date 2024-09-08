@@ -4,10 +4,8 @@ import com.example.enums.Assignment;
 import com.example.enums.CheckStatus;
 import com.example.enums.Status;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;
 
@@ -16,7 +14,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @Setter
 @Getter
+@SuperBuilder
 public class InternEntity {
+    private String internName;
     @Enumerated(EnumType.STRING)
     private Assignment assignment;
     @Enumerated(EnumType.STRING)

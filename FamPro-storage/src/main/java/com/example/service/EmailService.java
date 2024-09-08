@@ -2,9 +2,9 @@ package com.example.service;
 
 import com.example.entity.Email;
 import com.example.entity.FamilyMemberInfo;
-import com.example.exceptions.UncorrectedInformation;
 import com.example.mappers.EmailMapper;
 import com.example.repository.EmailRepo;
+import com.example.repository.InternRepo;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,26 +12,25 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-@AllArgsConstructor
 @Slf4j
 public class EmailService extends InternServiceImp<Email> {
-    private final EmailMapper emailMapper;
-    private final EmailRepo emailRepo;
-
-    @Override
-    public Set<Email> getAllInternEntityByNames(Set<String> names) {
-        return emailRepo.findAllByEmailNameIn(names);
+    public EmailService(InternRepo<Email> internRepo) {
+        super(internRepo);
     }
+//    private final EmailMapper emailMapper;
+//    private final EmailRepo emailRepo;
+
+//    @Override
+//    public Set<Email> getAllInternEntityByNames(Set<String> names) {
+//        return emailRepo.findAllByInternNameIn(names);
+//    }
 
     @Override
     public void check(Email email) {
-        if (email.getEmailName() != null) {
-            email.setTechString(email.getEmailName());
+        if (email.getInternName() != null) {
+            email.setTechString(email.getInternName());
             super.check(email);
         } else email.setTechString("uncorrected");
-    }
-
-    public void checkingSet(Set<String> str, Set<Email> emails) {
     }
 
     @Override
@@ -39,26 +38,20 @@ public class EmailService extends InternServiceImp<Email> {
         Set<String> namesEmails = new HashSet<>();
         Email mainEmail = new Email();
         if (newFmi.getMainEmail() != null) {
-            mainEmail.setEmailName(newFmi.getMainEmail());
-            if (!newFmi.getEmails().add(mainEmail)) {
-                newFmi.getEmails().remove(mainEmail);
-                newFmi.getEmails().add(mainEmail);
-            }
+            mainEmail.setInternName(newFmi.getMainEmail());
+            check(mainEmail);
+            if (!mainEmail.getTechString().equals("uncorrected")) newFmi.setMainEmail(mainEmail.getInternName());;
+            namesEmails.add(mainEmail.getInternName());
         }
-        if (!newFmi.getEmails().isEmpty())
-//            checkingSet(namesEmails,newFmi.getEmails());
+        if (newFmi.getEmails() != null && !newFmi.getEmails().isEmpty()) {
             for (Email email : newFmi.getEmails()) {
                 check(email);
                 if (!email.getTechString().equals("uncorrected")) {
-                    namesEmails.add(email.getEmailName());
-                    if (email.getId() != null) {
-                        email.setId(null);
-                    }
+                    namesEmails.add(email.getInternName());
+                    if (email.getId() != null) email.setId(null);
                 }
             }
-        if (!mainEmail.getTechString().equals("uncorrected")) newFmi.setMainEmail(mainEmail.getEmailName());
-        else log.warn("Предоставленная информация об основном Email некорректна, основной Email обнулен");
-
+        }
         if (newFmi.getMainEmail() == null && fmiFromBase.getMainEmail() != null) {
             newFmi.setMainEmail(fmiFromBase.getMainEmail());
             log.info("Основной Email взят из старой записи, т.к. валидной информцаии об основном Email в новой записи нет");
@@ -68,10 +61,16 @@ public class EmailService extends InternServiceImp<Email> {
         if (!namesEmails.isEmpty()) emailsFromBase = getAllInternEntityByNames(namesEmails);
         else emailsFromBase = new HashSet<>();
 
-        Collection<Email> resultList = mergeSetsOfInterns(newFmi.getEmails(), fmiFromBase.getEmails(), emailsFromBase);
-
+        Map<String, Email> resultList = mergeSetsOfInterns(newFmi.getEmails(), fmiFromBase.getEmails(), emailsFromBase);
+        if (!resultList.containsKey(mainEmail.getInternName())) {
+            mainEmail.setDescription("Основной Email");
+            mainEmail.setId(null);
+            mainEmail.setUuid(newFmi.getUuid());
+            mainEmail.setTechString("ONE USER");
+            resultList.put(mainEmail.getInternName(), mainEmail);
+        }
         newFmi.setEmails(new HashSet<>());
-        for (Email email : resultList) newFmi.getEmails().add(email);
+        for (Email email : resultList.values()) newFmi.getEmails().add(email);
         log.info("Email(s) установлен(ы)");
     }
 }

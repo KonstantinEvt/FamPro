@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.Set;
 
 @Repository
-public interface EmailRepo extends JpaRepository<Email,Long> {
-
-    Set<Email> findAllByEmailNameIn(Set<String> set);
+public interface EmailRepo extends JpaRepository<Email, Long>, InternRepo<Email> {
+@Override
+    Set<Email> findAllByInternNameIn(Set<String> set);
 }

@@ -4,6 +4,7 @@ import com.example.enums.Assignment;
 import com.example.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Objects;
 
@@ -12,8 +13,8 @@ import java.util.Objects;
 @AllArgsConstructor
 @Setter
 @Getter
-@Builder
 @ToString
+@SuperBuilder
 @Table(name = "phones")
 public class Phone {
     @Id
