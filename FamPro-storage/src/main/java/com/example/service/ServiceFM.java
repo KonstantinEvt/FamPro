@@ -66,10 +66,15 @@ public class ServiceFM {
     public FamilyMemberDto updateFamilyMember(FamilyMemberDto familyMemberDto) {
         log.info("--------ИЗМЕНЯЕМ ЧЕЛОВЕКА-------");
         Long dtoId = familyMemberDto.getId();
-        if (dtoId == null) throw new ProblemWithId("Id не указан");
+        FamilyMember fm;
+        if (dtoId != null) {
+             fm = familyRepo.findById(dtoId).orElseThrow(() ->
+                    new FamilyMemberNotFound("Попытка изменить человека по Id, которого нет в базе"));
+        }else if (familyMemberDto.getUuid()!=null) {
+             fm = familyRepo.findFamilyMemberByUuid(familyMemberDto.getUuid()).orElseThrow(() ->
+                    new FamilyMemberNotFound("Попытка изменить человека по UUID, которого нет в базе"));
+        }else throw new ProblemWithId("Ни Id, ни UUID не указан для поиска/изменения человека");
         checkFio(familyMemberDto);
-        FamilyMember fm = familyRepo.findById(dtoId).orElseThrow(() -> new FamilyMemberNotFound("Попытка изменить человека, которого нет в базе"));
-
         Set<FamilyMember> childrenOfFamilyMember;
         if (fm.getSex() == Sex.MALE)
             childrenOfFamilyMember = familyRepo.findAllByFatherInfo(generateFamilyMemberStringInfo(fm));

@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @RequiredArgsConstructor
 public class AddressDto extends InternDto{
+    @Schema(description = "Полный адрес")
     private String internName;
     @Schema(description = "Название улицы")
     private String street;

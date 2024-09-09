@@ -23,6 +23,7 @@ public class ServiceOfStorageBD {
     private final FamilyMemberMapper familyMemberMapper;
     private final FamilyMemberInfoMapper familyMemberInfoMapper;
     private final EntityManager entityManager;
+    private final ServiceFM serviceFM;
 
     @Transactional(readOnly = true)
     public void saveDataToFile(String filename) {
@@ -55,6 +56,8 @@ public class ServiceOfStorageBD {
             ObjectMapper ss = new ObjectMapper();
             while (newFM != null) {
                 FamilyMemberDto familyMemberDto = ss.readValue(newFM, FamilyMemberDto.class);
+                familyMemberDto.setId(null);
+                if (familyMemberDto.getMemberInfo()!=null) familyMemberDto.getMemberInfo().setId(null);
                 map.put(familyMemberDto.getUuid(), familyMemberDto);
                 newFM = fr.readLine();
             }
@@ -63,24 +66,10 @@ public class ServiceOfStorageBD {
         }
 
         Collection<FamilyMember> listFM = familyMemberMapper.collectionDtoToCollectionEntity(map.values());
-familyRepo.saveAll(listFM);
-
+        familyRepo.saveAll(listFM);
 
         for (FamilyMemberDto fm : map.values()) {
-            FamilyMember familyMember = familyMemberMapper.dtoToEntity(fm);
-            if (fm.getFatherFio() != null && map.containsKey(fm.getFatherFio().getUuid())) {
-                familyMember.setFather(familyMemberMapper.dtoToEntity(map.get(fm.getFatherFio().getUuid())));
-                familyMember.getFather().setId(null);
-            }
-            if (fm.getMotherFio() != null && map.containsKey(fm.getMotherFio().getUuid())) {
-                familyMember.setMother(familyMemberMapper.dtoToEntity(map.get(fm.getMotherFio().getUuid())));
-                familyMember.getMother().setId(null);
-            }
-            if (fm.getMemberInfo() != null) {
-                familyMember.setFamilyMemberInfo(familyMemberInfoMapper.dtoToEntity(fm.getMemberInfo()));
-                familyMember.getFamilyMemberInfo().setId(null);
-            }
-            familyRepo.save(familyMember);
+            serviceFM.updateFamilyMember(fm);
         }
     }
 }

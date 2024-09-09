@@ -2,7 +2,6 @@ package com.example.dtos;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 
 
 import java.util.Set;

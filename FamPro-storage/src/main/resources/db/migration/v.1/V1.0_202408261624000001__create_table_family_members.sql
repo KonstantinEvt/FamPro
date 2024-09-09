@@ -5,10 +5,10 @@ create table if not exists family_members
     fathername  varchar(50),
     familiya    varchar(50),
     father_id   bigint
-        CONSTRAINT family_member_farther REFERENCES family_members (id),
+        constraint family_member_farther references family_members (id),
     father_info varchar(255),
     mother_id   bigint
-        constraint family_member_mother REFERENCES family_members (id),
+        constraint family_member_mother references family_members (id),
     mother_info varchar(255),
     birthday    date,
     death_day   date,

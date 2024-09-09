@@ -14,7 +14,7 @@ import java.util.*;
 @Slf4j
 public class EmailService extends InternServiceImp<Email> {
 
-    public EmailService(@Qualifier("emailRepo")InternRepo<Email> internRepo) {
+    public EmailService(@Qualifier("emailRepo") InternRepo<Email> internRepo) {
         super(internRepo);
     }
 
@@ -33,8 +33,10 @@ public class EmailService extends InternServiceImp<Email> {
         if (newFmi.getMainEmail() != null) {
             mainEmail.setInternName(newFmi.getMainEmail());
             check(mainEmail);
-            if (!mainEmail.getTechString().equals("uncorrected")) newFmi.setMainEmail(mainEmail.getInternName());;
-            namesEmails.add(mainEmail.getInternName());
+            if (!mainEmail.getTechString().equals("uncorrected")) {
+                newFmi.setMainEmail(mainEmail.getInternName());
+                namesEmails.add(mainEmail.getInternName());
+            } else newFmi.setMainEmail(null);
         }
         if (newFmi.getEmails() != null && !newFmi.getEmails().isEmpty()) {
             for (Email email : newFmi.getEmails()) {
@@ -55,7 +57,7 @@ public class EmailService extends InternServiceImp<Email> {
         else emailsFromBase = new HashSet<>();
 
         Map<String, Email> resultList = mergeSetsOfInterns(newFmi.getEmails(), fmiFromBase.getEmails(), emailsFromBase);
-        if (!resultList.containsKey(mainEmail.getInternName())) {
+        if (mainEmail.getInternName() != null && !mainEmail.getTechString().equals("uncorrected")  && !resultList.containsKey(mainEmail.getInternName()) ) {
             mainEmail.setDescription("Основной Email");
             mainEmail.setId(null);
             mainEmail.setUuid(newFmi.getUuid());
