@@ -14,7 +14,7 @@ import java.util.Set;
 @Service
 @Slf4j
 public class PhoneService extends InternServiceImp<Phone> {
-    public PhoneService(@Qualifier("phoneRepo")InternRepo<Phone> internRepo) {
+    public PhoneService(@Qualifier("phoneRepo") InternRepo<Phone> internRepo) {
         super(internRepo);
     }
 
@@ -33,8 +33,10 @@ public class PhoneService extends InternServiceImp<Phone> {
         if (newFmi.getMainPhone() != null) {
             mainPhone.setInternName(newFmi.getMainPhone());
             check(mainPhone);
-            if (!mainPhone.getTechString().equals("uncorrected")) newFmi.setMainEmail(mainPhone.getInternName());
-            namesPhones.add(mainPhone.getInternName());
+            if (!mainPhone.getTechString().equals("uncorrected")) {
+                newFmi.setMainEmail(mainPhone.getInternName());
+                namesPhones.add(mainPhone.getInternName());
+            } else newFmi.setMainPhone(null);
         }
         if (newFmi.getPhones() != null && !newFmi.getPhones().isEmpty()) {
             for (Phone phone : newFmi.getPhones()) {
@@ -55,7 +57,7 @@ public class PhoneService extends InternServiceImp<Phone> {
         else phonesFromBase = new HashSet<>();
 
         Map<String, Phone> resultList = mergeSetsOfInterns(newFmi.getPhones(), fmiFromBase.getPhones(), phonesFromBase);
-        if (!resultList.containsKey(mainPhone.getInternName())) {
+        if (mainPhone.getInternName() != null && !mainPhone.getTechString().equals("uncorrected") && !resultList.containsKey(mainPhone.getInternName())) {
             mainPhone.setDescription("Основной телефон");
             mainPhone.setId(null);
             mainPhone.setUuid(newFmi.getUuid());

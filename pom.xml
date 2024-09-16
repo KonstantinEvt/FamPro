@@ -20,6 +20,8 @@
         <module>famPro-storage</module>
         <module>famPro-commons</module>
         <module>famPro-meta</module>
+        <module>famPro-integration</module>
+        <module>famPro-notification</module>
     </modules>
     <licenses>
         <license/>

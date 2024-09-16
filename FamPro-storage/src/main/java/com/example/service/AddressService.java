@@ -34,9 +34,10 @@ public class AddressService extends InternServiceImp<Address> {
         if (newFmi.getMainAddress() != null) {
             mainAddress.setInternName(newFmi.getMainAddress());
             check(mainAddress);
-            if (!mainAddress.getTechString().equals("uncorrected")) newFmi.setMainAddress(mainAddress.getInternName());
-            ;
-            namesAddresses.add(mainAddress.getInternName());
+            if (!mainAddress.getTechString().equals("uncorrected")) {
+                newFmi.setMainAddress(mainAddress.getInternName());
+                namesAddresses.add(mainAddress.getInternName());
+            } else newFmi.setMainPhone(null);
         }
         if (newFmi.getAddresses() != null && !newFmi.getAddresses().isEmpty()) {
             for (Address address : newFmi.getAddresses()) {
@@ -58,7 +59,7 @@ public class AddressService extends InternServiceImp<Address> {
         else addressesFromBase = new HashSet<>();
 
         Map<String, Address> resultList = mergeSetsOfInterns(newFmi.getAddresses(), fmiFromBase.getAddresses(), addressesFromBase);
-        if (!resultList.containsKey(mainAddress.getInternName())) {
+        if (mainAddress.getInternName() != null && !mainAddress.getTechString().equals("uncorrected") && !resultList.containsKey(mainAddress.getInternName())) {
             mainAddress.setDescription("Основной адрес");
             mainAddress.setId(null);
             mainAddress.setUuid(newFmi.getUuid());
