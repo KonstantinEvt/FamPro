@@ -11,7 +11,7 @@
     <artifactId>famPro-storage</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>FamPro-storage</name>
-    <description>FamProSto</description>
+    <description>Module for operation and storage main entity to database</description>
     <url/>
     <licenses>
         <license/>

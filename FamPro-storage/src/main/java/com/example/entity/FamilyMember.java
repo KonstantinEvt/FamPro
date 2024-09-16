@@ -50,7 +50,7 @@ public class FamilyMember {
     private Sex sex;
     @Column(name = "Birthday")
     private Date birthday;
-    @Column(name = "DeathDay")
+    @Column(name = "Death_Day")
     private Date deathday;
     @Column(name = "father_info")
     private String fatherInfo;

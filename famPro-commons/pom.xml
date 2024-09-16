@@ -7,7 +7,7 @@
     <artifactId>famPro-commons</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>FamPro-commons</name>
-    <description>Module of common code</description>
+    <description>Module of common code to all module</description>
     <packaging>jar</packaging>
 
     <properties>

@@ -26,7 +26,7 @@ public class Address extends InternEntity{
      * Полный адрес
      */
     @Access(AccessType.PROPERTY)
-    @Column(name = "full_address", length = 500)
+    @Column(name = "intern_name", length = 500)
     private String internName;
     /**
      * Название улицы

@@ -13,17 +13,14 @@ import java.util.Properties;
 public class MailConfig {
     @Value("${spring.mail.host}")
     private String sendingHost;
-
-    // порты
     @Value("${spring.mail.port}")
     private Integer portOutput;
 
-    //setups
     @Value("${spring.mail.properties.mail.smtp.auth}")
     private String authSmpt;
     @Value("${spring.mail.properties.mail.smtp.starttls.enable}")
     private String starttlsSmpt;
-    //Креденшены
+
     @Value("${spring.mail.username}")
     private String username;
     @Value("${spring.mail.password}")

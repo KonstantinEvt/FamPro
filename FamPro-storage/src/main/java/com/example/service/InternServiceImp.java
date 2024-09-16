@@ -11,7 +11,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @AllArgsConstructor
 @Getter
@@ -26,7 +28,8 @@ public class InternServiceImp<T extends InternEntity> implements InternService<T
         else StringValidation.checkForSwears(t.getDescription());
         t.setCheckStatus(CheckStatus.UNCHECKED);
     }
-    void checkForCommunity(T t){}
+    @Override
+    public void checkForCommunity(T t){}
 
     @Override
     public void checkMergeAndSetUp(FamilyMemberInfo newFmi, FamilyMemberInfo fmiFromBase) {

@@ -14,6 +14,7 @@ import jakarta.persistence.PersistenceContext;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -24,7 +25,7 @@ public class ServiceFM {
     private final FamilyMemberMapper familyMemberMapper;
     private final FamilyRepo familyRepo;
     private final FamilyMemberInfoService familyMemberInfoService;
-
+    @Transactional(readOnly = true)
     public FamilyMemberDto getFamilyMember(Long id) {
 
         FamilyMember familyMember = familyRepo.findById(id)
@@ -35,7 +36,7 @@ public class ServiceFM {
         }
         return familyMemberDto;
     }
-
+    @Transactional
     public FamilyMemberDto addFamilyMember(FamilyMemberDto familyMemberDto) {
         log.info("--------ВНОСИМ НОВОГО ЧЕЛОВЕКА-------");
         if (familyMemberDto.getId() != null) throw new ProblemWithId("Удалите ID нового человека");
@@ -52,7 +53,7 @@ public class ServiceFM {
         extractExtensionOfFamilyMember(familyMemberDto, familyMember);
         return familyMemberMapper.entityToDto(familyRepo.save(familyMember));
     }
-
+    @Transactional(readOnly = true)
     public Collection<FamilyMemberDto> getAllFamilyMembers() {
         List<FamilyMember> familyMemberList = familyRepo.findAll();
         List<FamilyMemberDto> familyMemberDtoList = new ArrayList<>();
@@ -62,7 +63,7 @@ public class ServiceFM {
         log.info("Коллекия всех людей из базы выдана");
         return familyMemberDtoList;
     }
-
+    @Transactional
     public FamilyMemberDto updateFamilyMember(FamilyMemberDto familyMemberDto) {
         log.info("--------ИЗМЕНЯЕМ ЧЕЛОВЕКА-------");
         Long dtoId = familyMemberDto.getId();

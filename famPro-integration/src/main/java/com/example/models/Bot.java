@@ -1,12 +1,11 @@
 package com.example.models;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
+// пока тут потом перемещу/изменю
 @Component
 @Data
 @PropertySource("classpath:application.yml")

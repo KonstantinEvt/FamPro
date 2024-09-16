@@ -28,7 +28,7 @@ spring:
     hiddenmethod.filter.enabled: true
 
 server:
-  port: 7777
+  port: 0
 eureka:
   client:
     serviceUrl:

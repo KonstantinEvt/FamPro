@@ -53,7 +53,7 @@ public class InputEmailTransformer extends AbstractMailMessageTransformer<Email>
 
         private String getTextFromMimeMultipart(MimeMultipart mimeMultipart) throws IOException, MessagingException {
             int count = mimeMultipart.getCount();
-            if (count == 0) throw new MessagingException("Multipart with no body parts not supported.");
+            if (count == 0) throw new MessagingException("body parts not founding");
 
             boolean multipartAlt = new ContentType(mimeMultipart.getContentType()).match("multipart/alternative");
             if (multipartAlt) {

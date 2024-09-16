@@ -51,7 +51,7 @@ public class AddressService extends InternServiceImp<Address> {
         }
         if (newFmi.getMainAddress() == null && fmiFromBase.getMainAddress() != null) {
             newFmi.setMainAddress(fmiFromBase.getMainAddress());
-            log.info("Основной адрес взят из старой записи, т.к. валидной информцаии об основном адресе в новой записи нет");
+            log.info("Основной адрес взят из старой записи, т.к. валидной информацаии об основном адресе в новой записи нет");
         }
 
         Set<Address> addressesFromBase;

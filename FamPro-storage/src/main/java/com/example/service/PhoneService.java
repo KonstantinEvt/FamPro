@@ -49,7 +49,7 @@ public class PhoneService extends InternServiceImp<Phone> {
         }
         if (newFmi.getMainPhone() == null && fmiFromBase.getMainPhone() != null) {
             newFmi.setMainPhone(fmiFromBase.getMainPhone());
-            log.info("Основной телефон взят из старой записи, т.к. валидной информцаии об основном телефоне в новой записи нет");
+            log.info("Основной телефон взят из старой записи, т.к. валидной информации об основном телефоне в новой записи нет");
         }
 
         Set<Phone> phonesFromBase;

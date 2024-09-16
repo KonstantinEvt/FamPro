@@ -12,12 +12,12 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 @Component
 @Slf4j
-public class BotInit {
+public class TelegramBotInit {
 
     private final TelegramBot telegramBot;
 
 
-    public BotInit(TelegramBot telegramBot) {
+    public TelegramBotInit(TelegramBot telegramBot) {
         this.telegramBot = telegramBot;
     }
 

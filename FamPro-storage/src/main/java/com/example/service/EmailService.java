@@ -49,7 +49,7 @@ public class EmailService extends InternServiceImp<Email> {
         }
         if (newFmi.getMainEmail() == null && fmiFromBase.getMainEmail() != null) {
             newFmi.setMainEmail(fmiFromBase.getMainEmail());
-            log.info("Основной Email взят из старой записи, т.к. валидной информцаии об основном Email в новой записи нет");
+            log.info("Основной Email взят из старой записи, т.к. валидной информации об основном Email в новой записи нет");
         }
 
         Set<Email> emailsFromBase;

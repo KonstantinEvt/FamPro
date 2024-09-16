@@ -11,7 +11,7 @@
     <artifactId>famPro-main</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>FamPro-main</name>
-    <description>Main</description>
+    <description>Main module. Setup discovery server. Starting first </description>
     <url/>
     <licenses>
         <license/>

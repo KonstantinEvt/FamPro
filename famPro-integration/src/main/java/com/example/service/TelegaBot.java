@@ -4,9 +4,7 @@ package com.example.service;
 import com.example.models.Bot;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -18,14 +16,13 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 @Log4j2
 public class TelegaBot extends TelegramLongPollingBot {
 
-
-    Bot bot;
+    private Bot bot;
 
 
     /**
-     * Method for receiving messages.
+     * Метод получения сообщений телеграм-Ботом
      *
-     * @param update Contains a message from the user.
+     * @param update cодержит message от бота
      */
     @Override
     public void onUpdateReceived(Update update) {
@@ -36,10 +33,10 @@ public class TelegaBot extends TelegramLongPollingBot {
     }
 
     /**
-     * Method for creating a message and sending it.
+     * Создание и отправка сообщения
      *
      * @param chatId chat id
-     * @param s      The String that you want to send as a message.
+     * @param s      Строка сообщения.
      */
     public synchronized void sendMsg(String chatId, String s) {
         SendMessage sendMessage = new SendMessage();
@@ -54,7 +51,7 @@ public class TelegaBot extends TelegramLongPollingBot {
     }
 
     /**
-     * This method returns the bot's name, which was specified during registration.
+     * Имя бота
      *
      * @return bot name
      */
@@ -64,9 +61,9 @@ public class TelegaBot extends TelegramLongPollingBot {
     }
 
     /**
-     * This method returns the bot's token for communicating with the Telegram server
+     * Токен бота
      *
-     * @return the bot's token
+     * @return token бота
      */
     @Override
     public String getBotToken() {

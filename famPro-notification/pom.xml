@@ -8,10 +8,10 @@
         <version>0.0.1-SNAPSHOT</version>
 
     </parent>
-    <artifactId>FamPro-notification</artifactId>
+    <artifactId>famPro-notification</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>FamPro-notification</name>
-    <description>FamPro-notification</description>
+    <description>Module for generate, checks end proceeding some notification</description>
     <url/>
     <licenses>
         <license/>

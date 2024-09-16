@@ -30,7 +30,7 @@ public class FamilyMemberInfo {
     private String mainEmail;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "emailsOfFamilyMember",
+    @JoinTable(name = "emails_Of_Family_Member",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "email_id", referencedColumnName = "id"))
     private Set<Email> emails;
@@ -39,7 +39,7 @@ public class FamilyMemberInfo {
     private String mainPhone;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "phonesOfFamilyMember",
+    @JoinTable(name = "phones_Of_Family_Member",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "phone_id", referencedColumnName = "id"))
     private Set<Phone> phones;
@@ -48,7 +48,7 @@ public class FamilyMemberInfo {
     @Column(name = "main_address")
     private String mainAddress;
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "addressesOfFamilyMember",
+    @JoinTable(name = "addresses_Of_Family_Member",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "address_id", referencedColumnName = "id"))
     private Set<Address> addresses;

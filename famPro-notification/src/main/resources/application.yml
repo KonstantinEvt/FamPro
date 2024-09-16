@@ -1,8 +1,20 @@
 spring:
   application:
-    name: famPro-meta
-  main:
-    allow-bean-definition-overriding: true
+    name: famPro-notification
+  mail:
+    host: smtp.mail.ru
+    port: "465"
+    username: kyevt@bk.ru
+    password: xxxxxxxxxxxxxxx
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            trust:  "*"
+
 server:
   port: 0
 eureka:
@@ -12,13 +24,5 @@ eureka:
   instance:
     preferIpAddress: true
     instance-id: ${spring.cloud.client.hostname}:${spring.application.name}:${spring.application.instance_id:${random.value}}
-  server:
-    enable-self-preservation: false
-management:
-  endpoints:
-    web:
-      exposure:
-        include: info
-springdoc:
-  swagger-ui:
-    path: /swagger
+
+

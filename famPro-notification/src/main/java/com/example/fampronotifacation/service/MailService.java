@@ -16,13 +16,9 @@ public class MailService {
         message.setRecipients(
                 Message.RecipientType.TO, InternetAddress.parse("k-s-y@yandex.ru"));
         message.setSubject("Mail Subject");
-        System.out.println("tyt2");
-
-        String msg = "This is my first email using JavaMailer";
-
+        String msg = "Email is going out from service: Notification";
         MimeBodyPart mimeBodyPart = new MimeBodyPart();
         mimeBodyPart.setContent(msg, "text/html; charset=utf-8");
-        System.out.println("tyt1");
         Multipart multipart = new MimeMultipart();
         multipart.addBodyPart(mimeBodyPart);
         message.setContent(multipart);
