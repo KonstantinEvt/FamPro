@@ -1,6 +1,14 @@
 spring:
   application:
     name: famPro-meta
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      enabled: true
+      discovery:
+        enabled: true
+        service-id: FAMPRO-CONFIG
   main:
     allow-bean-definition-overriding: true
 server:
@@ -22,3 +30,5 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger
+  api-docs:
+    enabled: true

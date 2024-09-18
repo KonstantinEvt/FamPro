@@ -1,20 +1,14 @@
 spring:
   application:
     name: famPro-notification
-  mail:
-    host: smtp.mail.ru
-    port: "465"
-    username: kyevt@bk.ru
-    password: xxxxxxxxxxxxxxx
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          ssl:
-            trust:  "*"
-
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      enabled: true
+      discovery:
+        enabled: true
+        service-id: FAMPRO-CONFIG
 server:
   port: 0
 eureka:
@@ -25,4 +19,13 @@ eureka:
     preferIpAddress: true
     instance-id: ${spring.cloud.client.hostname}:${spring.application.name}:${spring.application.instance_id:${random.value}}
 
-
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info
+springdoc:
+  swagger-ui:
+    path: /swagger
+  api-docs:
+    enabled: true

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 // пока тут потом перемещу/изменю
 @Component
 @Data
-@PropertySource("classpath:application.yml")
+@PropertySource("classpath:bootstrap.yml")
 public class Bot {
 
     String name="FamPro_v1_bot";

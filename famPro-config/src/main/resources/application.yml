@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: famPro-config
+  profiles:
+    active: native
+  cloud:
+    config:
+       discovery:
+          enabled: true
+       server:
+         native:
+           search-locations:
+            - c:/FamPro/configs_fam_pro/famPro-integration
+            - c:/FamPro/configs_fam_pro/famPro-integration/test
+            - c:/FamPro/configs_fam_pro/famPro-storage/test
+            - c:/FamPro/configs_fam_pro/famPro-meta/test
+            - c:/FamPro/configs_fam_pro/famPro-notification/test
+  main:
+    allow-bean-definition-overriding: true
+server:
+  port: 8555
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    preferIpAddress: true
+    instance-id: ${spring.cloud.client.hostname}:${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+#logging:
+#  level:
+#    root: debug
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info

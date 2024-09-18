@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: famPro-integration
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      enabled: true
+      discovery:
+        enabled: true
+        service-id: FAMPRO-CONFIG
+
+server:
+  port: 0
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    preferIpAddress: true
+    instance-id: ${spring.cloud.client.hostname}:${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info
+springdoc:
+  swagger-ui:
+    path: /swagger
+  api-docs:
+    enabled: true
+#logging:
+#  level:
+#    root: INFO
+#    org.springframework.integration: DEBUG
