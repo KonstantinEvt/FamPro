@@ -2,6 +2,7 @@ package com.example.service;
 
 import com.example.entity.Email;
 import com.example.entity.FamilyMemberInfo;
+import com.example.enums.CheckStatus;
 import com.example.repository.InternRepo;
 
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +22,10 @@ public class EmailService extends InternServiceImp<Email> {
     @Override
     public void check(Email email) {
         if (email.getInternName() != null) {
-            email.setTechString(email.getInternName());
-            super.check(email);
+            if (email.getCheckStatus() != CheckStatus.CHECKED) {
+                if (email.getTechString() == null) email.setTechString("ONE USER");
+                super.check(email);
+            }
         } else email.setTechString("uncorrected");
     }
 
@@ -42,6 +45,7 @@ public class EmailService extends InternServiceImp<Email> {
             for (Email email : newFmi.getEmails()) {
                 check(email);
                 if (!email.getTechString().equals("uncorrected")) {
+                    email.setUuid(newFmi.getUuid());
                     namesEmails.add(email.getInternName());
                     if (email.getId() != null) email.setId(null);
                 }
@@ -57,12 +61,17 @@ public class EmailService extends InternServiceImp<Email> {
         else emailsFromBase = new HashSet<>();
 
         Map<String, Email> resultList = mergeSetsOfInterns(newFmi.getEmails(), fmiFromBase.getEmails(), emailsFromBase);
-        if (mainEmail.getInternName() != null && !mainEmail.getTechString().equals("uncorrected")  && !resultList.containsKey(mainEmail.getInternName()) ) {
-            mainEmail.setDescription("Основной Email");
-            mainEmail.setId(null);
-            mainEmail.setUuid(newFmi.getUuid());
-            mainEmail.setTechString("ONE USER");
-            resultList.put(mainEmail.getInternName(), mainEmail);
+        if (mainEmail.getInternName() != null && !resultList.containsKey(mainEmail.getInternName())) {
+            if (!emailsFromBase.isEmpty() && !mainEmail.getTechString().equals("uncorrected"))
+                this.checkForCommunity(mainEmail, fmiFromBase.getEmails(), emailsFromBase);
+            if (!mainEmail.getTechString().equals("uncorrected")) {
+                if (!mainEmail.getTechString().equals("COMMUNITY")) {
+                    mainEmail.setDescription("Основной Email");
+                    mainEmail.setUuid(newFmi.getUuid());
+                }
+                mainEmail.setId(null);
+                resultList.put(mainEmail.getInternName(), mainEmail);
+            }
         }
         newFmi.setEmails(new HashSet<>());
         for (Email email : resultList.values()) newFmi.getEmails().add(email);

@@ -29,7 +29,6 @@ public class FamilyMemberInfoService {
 
     public FamilyMemberInfo merge(FamilyMemberDto familyMemberDto, UUID oldUUID) {
         FamilyMemberInfo fmi = familyMemberInfoMapper.dtoToEntity(familyMemberDto.getMemberInfo());
-        System.out.println(fmi);
         FamilyMemberInfo fmiFromBase;
         if (familyMemberDto.getUuid() != oldUUID)
             fmiFromBase = Optional.of(familyMemberInfoRepo.findFamilyMemberInfoByUuid(oldUUID)).get().orElse(new FamilyMemberInfo());

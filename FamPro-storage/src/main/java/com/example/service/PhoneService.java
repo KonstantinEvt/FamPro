@@ -2,6 +2,7 @@ package com.example.service;
 
 import com.example.entity.FamilyMemberInfo;
 import com.example.entity.Phone;
+import com.example.enums.CheckStatus;
 import com.example.repository.InternRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,8 +22,10 @@ public class PhoneService extends InternServiceImp<Phone> {
     @Override
     public void check(Phone phone) {
         if (phone.getInternName() != null) {
-            phone.setTechString(phone.getInternName());
-            super.check(phone);
+            if (phone.getCheckStatus() != CheckStatus.CHECKED) {
+                if (phone.getTechString() == null) phone.setTechString("ONE USER");
+                super.check(phone);
+            }
         } else phone.setTechString("uncorrected");
     }
 
@@ -34,7 +37,7 @@ public class PhoneService extends InternServiceImp<Phone> {
             mainPhone.setInternName(newFmi.getMainPhone());
             check(mainPhone);
             if (!mainPhone.getTechString().equals("uncorrected")) {
-                newFmi.setMainEmail(mainPhone.getInternName());
+                newFmi.setMainPhone(mainPhone.getInternName());
                 namesPhones.add(mainPhone.getInternName());
             } else newFmi.setMainPhone(null);
         }
@@ -42,6 +45,7 @@ public class PhoneService extends InternServiceImp<Phone> {
             for (Phone phone : newFmi.getPhones()) {
                 check(phone);
                 if (!phone.getTechString().equals("uncorrected")) {
+                    phone.setUuid(newFmi.getUuid());
                     namesPhones.add(phone.getInternName());
                     if (phone.getId() != null) phone.setId(null);
                 }
@@ -57,12 +61,17 @@ public class PhoneService extends InternServiceImp<Phone> {
         else phonesFromBase = new HashSet<>();
 
         Map<String, Phone> resultList = mergeSetsOfInterns(newFmi.getPhones(), fmiFromBase.getPhones(), phonesFromBase);
-        if (mainPhone.getInternName() != null && !mainPhone.getTechString().equals("uncorrected") && !resultList.containsKey(mainPhone.getInternName())) {
-            mainPhone.setDescription("Основной телефон");
-            mainPhone.setId(null);
-            mainPhone.setUuid(newFmi.getUuid());
-            mainPhone.setTechString("ONE USER");
-            resultList.put(mainPhone.getInternName(), mainPhone);
+        if (mainPhone.getInternName() != null && !resultList.containsKey(mainPhone.getInternName())) {
+            if (!phonesFromBase.isEmpty() && !mainPhone.getTechString().equals("uncorrected"))
+                this.checkForCommunity(mainPhone, fmiFromBase.getPhones(), phonesFromBase);
+            if (!mainPhone.getTechString().equals("uncorrected")) {
+                if (!mainPhone.getTechString().equals("COMMUNITY")) {
+                    mainPhone.setDescription("Основной телефон");
+                    mainPhone.setUuid(newFmi.getUuid());
+                }
+                mainPhone.setId(null);
+                resultList.put(mainPhone.getInternName(), mainPhone);
+            }
         }
         newFmi.setPhones(new HashSet<>());
         for (Phone phone : resultList.values()) newFmi.getPhones().add(phone);

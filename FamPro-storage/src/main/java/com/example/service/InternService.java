@@ -39,8 +39,8 @@ public interface InternService<T> {
      */
     Map<String,T> mergeSetsOfInterns(Set<T> fromDto, Set<T> fromBase, Set<T> findInBase);
     /**
-     *Проверка сущности, на соответствие иным сущностям ходящимся в базе данных
+     *Проверка сущности, на соответствие нескольким иным лицам ходящимся в базе данных
      * @param t новая сущность
      */
-    void checkForCommunity(T t);
+    void checkForCommunity(T t, Set<T> fromBase, Set<T> findInBase);
 }

@@ -4,7 +4,7 @@ import com.example.dtos.FamilyMemberDto;
 import com.example.entity.*;
 import com.example.mappers.FamilyMemberInfoMapper;
 import com.example.mappers.FamilyMemberMapper;
-import com.example.repository.FamilyRepo;
+import com.example.repository.FamilyMemberRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.*;
 @AllArgsConstructor
 @Slf4j
 public class ServiceOfStorageBD {
-    private final FamilyRepo familyRepo;
+    private final FamilyMemberRepo familyMemberRepo;
     private final FamilyMemberMapper familyMemberMapper;
     private final FamilyMemberInfoMapper familyMemberInfoMapper;
     private final EntityManager entityManager;
@@ -50,7 +50,7 @@ public class ServiceOfStorageBD {
 
     @Transactional
     public void recoverBaseFromFile(String filename) {
-        Map<UUID, FamilyMemberDto> map = new HashMap<>();
+        Set<FamilyMemberDto> set = new HashSet<>();
         try (BufferedReader fr = new BufferedReader(new FileReader("c:/Family/" + filename + ".txt"))) {
             String newFM = fr.readLine();
             ObjectMapper ss = new ObjectMapper();
@@ -58,17 +58,19 @@ public class ServiceOfStorageBD {
                 FamilyMemberDto familyMemberDto = ss.readValue(newFM, FamilyMemberDto.class);
                 familyMemberDto.setId(null);
                 if (familyMemberDto.getMemberInfo()!=null) familyMemberDto.getMemberInfo().setId(null);
-                map.put(familyMemberDto.getUuid(), familyMemberDto);
+                if (familyMemberDto.getFatherInfo()!=null && familyMemberDto.getFatherInfo().charAt(familyMemberDto.getFatherInfo().length()-1)!=')') familyMemberDto.setFatherInfo(familyMemberDto.getFatherInfo().concat(" (Absent in base)"));
+                if (familyMemberDto.getMotherInfo()!=null && familyMemberDto.getMotherInfo().charAt(familyMemberDto.getMotherInfo().length()-1)!=')') familyMemberDto.setMotherInfo(familyMemberDto.getMotherInfo().concat(" (Absent in base)"));
+                set.add(familyMemberDto);
                 newFM = fr.readLine();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        Collection<FamilyMember> listFM = familyMemberMapper.collectionDtoToCollectionEntity(map.values());
-        familyRepo.saveAll(listFM);
+        Collection<FamilyMember> listFM = familyMemberMapper.collectionDtoToCollectionEntity(set);
+        familyMemberRepo.saveAll(listFM);
 
-        for (FamilyMemberDto fm : map.values()) {
+        for (FamilyMemberDto fm : set) {
             serviceFM.updateFamilyMember(fm);
         }
     }

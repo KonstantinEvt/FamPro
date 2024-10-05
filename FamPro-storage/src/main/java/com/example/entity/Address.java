@@ -7,7 +7,6 @@ import lombok.experimental.SuperBuilder;
 import java.util.Objects;
 
 @Entity
-
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Setter
@@ -25,7 +24,6 @@ public class Address extends InternEntity{
     /**
      * Полный адрес
      */
-    @Access(AccessType.PROPERTY)
     @Column(name = "intern_name", length = 500)
     private String internName;
     /**

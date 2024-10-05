@@ -1,12 +1,14 @@
 package com.example.entity;
 
 
+import com.example.dtos.FioDto;
 import com.example.enums.Sex;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.sql.Date;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -57,7 +59,11 @@ public class FamilyMember {
     @Column(name = "mother_info")
     private String motherInfo;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="member_id")
+    private Set<Fio> oldNames;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "info_id")
     private FamilyMemberInfo familyMemberInfo;
 
@@ -68,6 +74,18 @@ public class FamilyMember {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "father_id")
     private FamilyMember father;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @JoinTable(name = "parents_childs",
+            joinColumns = @JoinColumn(name = "parent_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "child_id", referencedColumnName = "id"))
+    private Set<FamilyMember> childs;
+
+    @ManyToMany(mappedBy = "parents")
+    private Set<Family> familyWhereParent;
+
+    @ManyToMany(mappedBy = "children")
+    private Set<Family> familyWhereChild;
 
     @Override
     public boolean equals(Object o) {

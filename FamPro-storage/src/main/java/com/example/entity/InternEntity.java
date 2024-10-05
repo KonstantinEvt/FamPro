@@ -24,6 +24,7 @@ public class InternEntity {
     private Status status;
     @Enumerated(EnumType.STRING)
     private CheckStatus checkStatus;
+    @Column(name = "description")
     private String description;
     @Column(name = "UUID")
     private UUID uuid;

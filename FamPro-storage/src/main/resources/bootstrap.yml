@@ -10,7 +10,7 @@ spring:
         enabled: true
         service-id: FAMPRO-CONFIG
 server:
-  port: 0
+  port: 9999
 eureka:
   client:
     serviceUrl:
