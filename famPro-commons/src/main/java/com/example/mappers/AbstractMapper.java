@@ -11,4 +11,5 @@ public interface AbstractMapper<Dto, Entity> {
     Entity dtoToEntity(Dto dto);
 
     Collection<Entity> collectionDtoToCollectionEntity(Collection<Dto> dtoCollection);
+    Collection<Dto> collectionEntityToCollectionDto(Collection<Entity> dtoCollection);
 }

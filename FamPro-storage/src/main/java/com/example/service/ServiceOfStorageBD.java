@@ -23,7 +23,7 @@ public class ServiceOfStorageBD {
     private final FamilyMemberMapper familyMemberMapper;
     private final FamilyMemberInfoMapper familyMemberInfoMapper;
     private final EntityManager entityManager;
-    private final ServiceFM serviceFM;
+    private final FamilyMemberService familyMemberService;
 
     @Transactional(readOnly = true)
     public void saveDataToFile(String filename) {
@@ -71,7 +71,7 @@ public class ServiceOfStorageBD {
         familyMemberRepo.saveAll(listFM);
 
         for (FamilyMemberDto fm : set) {
-            serviceFM.updateFamilyMember(fm);
+            familyMemberService.updateFamilyMember(fm);
         }
     }
 }

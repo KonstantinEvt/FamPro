@@ -3,18 +3,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.family</groupId>
+        <groupId>com.example</groupId>
         <artifactId>FamPro</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
-    <groupId>com.example</groupId>
+
     <artifactId>famPro-integration</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>famPro-integration</name>
     <description>Module for integration with other apps</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>19</java.version>
         <integration.version>6.3.3</integration.version>
     </properties>
     <dependencies>

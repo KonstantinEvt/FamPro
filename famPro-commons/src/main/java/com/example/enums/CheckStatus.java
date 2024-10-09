@@ -1,13 +1,17 @@
 package com.example.enums;
 
 public enum CheckStatus {
-    CHECKED("проверен"), UNCHECKED("не проверен");
-    private final String rusStatus;
-    CheckStatus(String rus) {
-        this.rusStatus=rus;
+    ABSENT("(Absent in base) "), NOT_FULLY("(Info not fully) "), CHECKED("checked"), UNCHECKED("unchecked");
+    private final String comment;
+
+    CheckStatus(String comment) {
+        this.comment = comment;
     }
+
     /**
-     * Получение поля с русским названием статуса
+     * Получение поля с комментарием статуса
      */
-    public String getRus(String rus) {return rusStatus;}
+    public String getComment() {
+        return comment;
+    }
 }

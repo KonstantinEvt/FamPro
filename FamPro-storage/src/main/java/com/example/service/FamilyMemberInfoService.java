@@ -2,19 +2,15 @@ package com.example.service;
 
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.FamilyMemberInfoDto;
-import com.example.entity.Address;
 import com.example.entity.FamilyMember;
 import com.example.entity.FamilyMemberInfo;
 import com.example.mappers.FamilyMemberInfoMapper;
 import com.example.repository.FamilyMemberInfoRepo;
-import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 @Service

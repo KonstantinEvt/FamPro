@@ -4,12 +4,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.family</groupId>
+        <groupId>com.example</groupId>
         <artifactId>FamPro</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.example</groupId>
     <artifactId>famPro-meta</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>famPro-meta</name>
@@ -28,7 +27,7 @@
         <url/>
     </scm>
     <properties>
-        <java.version>17</java.version>
+        <java.version>19</java.version>
     </properties>
     <repositories>
         <repository>

@@ -1,7 +1,7 @@
 package com.example.controllers;
 
 import com.example.dtos.FamilyMemberDto;
-import com.example.service.ServiceFM;
+import com.example.service.FamilyMemberService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,30 +12,30 @@ import java.util.Collection;
 @AllArgsConstructor
 @RequestMapping("/FamilyMembers/")
 public class FamilyMemberController {
-    private final ServiceFM serviceFM;
+    private final FamilyMemberService familyMemberService;
 
     @GetMapping("/{id}")
     public FamilyMemberDto getFamilyMember(@PathVariable Long id) {
-        return serviceFM.getFamilyMember(id);
+        return familyMemberService.getFamilyMember(id);
     }
 
     @PostMapping("")
     public ResponseEntity<FamilyMemberDto> addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
-        return ResponseEntity.ok(serviceFM.addFamilyMember(familyMemberDto));
+        return ResponseEntity.ok(familyMemberService.addFamilyMember(familyMemberDto));
     }
 
     @GetMapping("")
     public Collection<FamilyMemberDto> getAllFamilyMember() {
-        return serviceFM.getAllFamilyMembers();
+        return familyMemberService.getAllFamilyMembers();
     }
 
     @DeleteMapping("/{id}")
     public String removeFamilyMember(@PathVariable Long id) {
-        return serviceFM.removeFamilyMember(id);
+        return familyMemberService.removeFamilyMember(id);
     }
 
     @PatchMapping("")
     public ResponseEntity<FamilyMemberDto> editFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
-        return ResponseEntity.ok(serviceFM.updateFamilyMember(familyMemberDto));
+        return ResponseEntity.ok(familyMemberService.updateFamilyMember(familyMemberDto));
     }
 }
