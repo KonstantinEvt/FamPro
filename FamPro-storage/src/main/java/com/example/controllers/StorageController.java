@@ -17,13 +17,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/Storage/")
 public class StorageController {
     private final ServiceOfStorageBD serviceOfStorageBD;
-    @GetMapping("/save{filename}")
+    @GetMapping("/database/save{filename}")
     @Operation(method="Сохранить все данные в файл", description = "Данные в файл", summary = "Сохранить базу в файл")
     public ResponseEntity<String> saveDataToFile(@PathVariable String filename){
         serviceOfStorageBD.saveDataToFile(filename);
         return ResponseEntity.status(222).body("File is saved");
     }
-    @GetMapping("/recover{filename}")
+    @GetMapping("/database/recover{filename}")
     public  ResponseEntity<String> recoverBaseFromFile(@PathVariable String filename){
         serviceOfStorageBD.recoverBaseFromFile(filename);
         return ResponseEntity.status(223).body("base is good");

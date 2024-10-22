@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +29,7 @@ public class OldFioService extends FioServiceImp<OldFio> {
         this.oldNamesMapper = oldNamesMapper;
     }
 
+    @Transactional
     public Set<OldFio> addAllNewOldNames(Set<FioDto> oldFios, FamilyMember familyMember) {
         Set<OldFio> enteringFio = new HashSet<>();
         for (FioDto oldName :
@@ -58,5 +60,14 @@ public class OldFioService extends FioServiceImp<OldFio> {
         }
         if (!resultSet.isEmpty()) fioRepo.saveAll(resultSet);
         return resultSet;
+    }
+
+    public void changeOldFiosBirthday(FamilyMember fm) {
+        for (OldFio o :
+                fm.getOtherNames()) {
+            o.setBirthday(fm.getBirthday());
+            o.setUuid(generateUUIDFromFio(o));
+            o.setFullName(generateFioStringInfo(o));
+        }
     }
 }

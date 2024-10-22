@@ -1,9 +1,9 @@
 create table if not exists family_members
 (
     id           bigint not null primary key,
-    first_name         varchar(20),
-    middle_name   varchar(55),
-    last_name     varchar(55),
+    first_name   varchar(20),
+    middle_name  varchar(55),
+    last_name    varchar(55),
     father_id    bigint
         constraint family_member_farther references family_members (id),
     father_info  varchar(255),
@@ -20,6 +20,6 @@ create table if not exists family_members
     check_status varchar(50)
         constraint family_members_check
             check ((check_status)::text = ANY
-                   ((ARRAY ['ABSENT'::character varying, 'OTHER'::character varying])::text[]))
+                   ((ARRAY ['OTHER'::character varying, 'MODERATE'::character varying,'CHECKED'::character varying,'UNCHECKED'::character varying])::text[]))
 );
 CREATE INDEX uuid_fm ON family_members (uuid);

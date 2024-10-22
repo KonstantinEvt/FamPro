@@ -18,5 +18,5 @@ public interface LosingParentsRepo extends JpaRepository<LosingParent,Long> {
     Optional<LosingParent> findFioByUuidAndMember(UUID uuid, FamilyMember familyMember);
     List<LosingParent> findAllByUuid(UUID uuid);
     Set<LosingParent> findAllByUuidIn(Set<UUID> uuidSet);
-    void deleteByLosingUUID(UUID uuid);
+    void deleteByLosingUUIDAndMember(UUID uuid, FamilyMember fm);
 }

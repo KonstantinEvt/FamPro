@@ -2,15 +2,12 @@ package com.example.service;
 
 
 import com.example.dtos.FamilyMemberDto;
-import com.example.dtos.FioDto;
 import com.example.entity.FamilyMember;
 import com.example.entity.OldFio;
-import com.example.enums.CheckStatus;
 import com.example.enums.Sex;
 import com.example.exceptions.FamilyMemberNotFound;
 import com.example.exceptions.ProblemWithId;
 import com.example.exceptions.UncorrectedInformation;
-import com.example.exceptions.UncorrectedOrNewInformation;
 import com.example.mappers.FamilyMemberMapper;
 import com.example.mappers.FioMapper;
 import com.example.repository.FamilyMemberRepo;
@@ -95,9 +92,15 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                     new FamilyMemberNotFound("Попытка изменить человека по UUID, которого нет в базе"));
         } else throw new ProblemWithId("Ни Id, ни UUID не указан для поиска/изменения человека");
         Set<FamilyMember> currentChildrenOfFamilyMember = fm.getChilds();
-// нужно учесть смену дня рождения в Альтернативных именах
         if (familyMemberDto.getFirstName() != null) fm.setFirstName(familyMemberDto.getFirstName());
-        if (familyMemberDto.getBirthday() != null) fm.setBirthday(familyMemberDto.getBirthday());
+        if (familyMemberDto.getBirthday() != null && (currentChildrenOfFamilyMember == null || currentChildrenOfFamilyMember.isEmpty())) {
+            fm.setBirthday(familyMemberDto.getBirthday());
+            if (fm.getOtherNames() != null && !fm.getOtherNames().isEmpty())
+                oldFioService.changeOldFiosBirthday(fm);
+        }
+        if (familyMemberDto.getBirthday() != null && familyMemberDto.getBirthday().toLocalDate() != fm.getBirthday().toLocalDate()) {
+            throw new UncorrectedInformation("Изменить день рождения человека, у которого в базе имеются подтвержденные дети, невозможно");
+        }
         if (familyMemberDto.getLastName() != null) fm.setLastName(familyMemberDto.getLastName());
         if (familyMemberDto.getMiddleName() != null) fm.setMiddleName(familyMemberDto.getMiddleName());
         if (familyMemberDto.getSex() != null && (currentChildrenOfFamilyMember == null || currentChildrenOfFamilyMember.isEmpty()))
@@ -113,10 +116,6 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         fm.setUuid(familyMemberDto.getUuid());
         familyMemberRepo.save(fm);
         addChangingToBase(familyMemberDto, fm);
-        if (fm.getChilds() != null && !fm.getChilds().isEmpty()) {
-            if (currentChildrenOfFamilyMember != null && !currentChildrenOfFamilyMember.isEmpty())
-                fm.getChilds().addAll(currentChildrenOfFamilyMember);
-        } else fm.setChilds(currentChildrenOfFamilyMember);
         if (fm.getChilds() != null) addChangesInParensInfo(fm.getChilds(), fm);
         familyMemberRepo.save(fm);
         return familyMemberMapper.entityToDto(fm);
@@ -145,35 +144,14 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         }
     }
 
-    private void extractExtensionOfFamilyMember(FamilyMemberDto familyMemberDto, FamilyMember fm) {
+    @Transactional
+    public void extractExtensionOfFamilyMember(FamilyMemberDto familyMemberDto, FamilyMember fm) {
         fm.setFullName(generateFioStringInfo(fm));
         if (familyMemberDto.getFatherFio() != null) {
-            if (fm.getFatherInfo() != null && fm.getFatherInfo().charAt(1) == 'A')
-                losingParentsService.removeParentByLosingUuid(generateUUIDFromFullName(fm.getFatherInfo()));
-            try {
-                FamilyMember father = getParentOfFamilyMember(familyMemberDto.getFatherFio());
-                fm.setFather(father);
-                fm.setFatherInfo(father.getFullName());
-            } catch (FamilyMemberNotFound e) {
-                log.warn(e.getMessage());
-            } catch (UncorrectedOrNewInformation | UncorrectedInformation e) {
-                fm.setFatherInfo(e.getMessage().concat(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getFatherFio()))));
-            }
-            log.info("Информация об отце установлена");
+            losingParentsService.setUpFather(familyMemberDto.getFatherFio(), fm);
         }
         if (familyMemberDto.getMotherFio() != null) {
-            if (fm.getMotherInfo() != null && fm.getMotherInfo().charAt(1) == 'A')
-                losingParentsService.removeParentByLosingUuid(generateUUIDFromFullName(fm.getMotherInfo()));
-            try {
-                FamilyMember mother = getParentOfFamilyMember(familyMemberDto.getMotherFio());
-                fm.setMother(mother);
-                fm.setMotherInfo(mother.getFullName());
-            } catch (FamilyMemberNotFound e) {
-                log.warn(e.getMessage());
-            } catch (UncorrectedOrNewInformation | UncorrectedInformation e) {
-                fm.setMotherInfo(e.getMessage().concat(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio()))));
-            }
-            log.info("Информация о матери установлена");
+            losingParentsService.setUpMother(familyMemberDto.getMotherFio(), fm);
         }
         if (familyMemberDto.getMemberInfo() != null) {
             familyMemberDto.getMemberInfo().setId(null);
@@ -182,27 +160,6 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         log.info("Расширенная информация проверена и установлена");
     }
 
-    private FamilyMember getParentOfFamilyMember(FioDto fio) {
-
-        if (fio.getId() != null)
-            return familyMemberRepo.findById(fio.getId()).orElseThrow(() -> new FamilyMemberNotFound("Parent not found by Id"));
-        if (fio.getUuid() != null)
-            return familyMemberRepo.findFioByUuid(fio.getUuid()).orElseThrow(() -> new FamilyMemberNotFound("Parent not found by UUID"));
-        if (fio.getFirstName() != null
-                && fio.getMiddleName() != null
-                && fio.getLastName() != null
-                && fio.getBirthday() != null) {
-            UUID uuid = generateUUIDFromFio(fioMapper.dtoToEntity(fio));
-            Optional<FamilyMember> findFM = familyMemberRepo.findFioByUuid(uuid);
-            if (findFM.isPresent()) return findFM.get();
-            Optional<OldFio> findFio = oldFioService.getFioRepo().findFioByUuid(uuid);
-            if (findFio.isPresent()) {
-                return findFio.get().getMember();
-            } else
-                throw new UncorrectedOrNewInformation(CheckStatus.ABSENT.getComment());
-        } else
-            throw new UncorrectedInformation(CheckStatus.NOT_FULLY.getComment());
-    }
 
     //remove must be change
     public String removeFamilyMember(Long id) {
@@ -230,6 +187,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 remFM.get().getLastName());
     }
 
+    @Transactional
     public void addChangingToBase(FamilyMemberDto familyMemberDto, FamilyMember familyMember) {
         Set<FamilyMember> childrenOfFamilyMember = losingParentsService.checkForAdditionalChilds(familyMember.getUuid(), familyMember);
         if (familyMemberDto.getFioDtos() != null) {
@@ -240,15 +198,18 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 else familyMember.setOtherNames(oldFios);
             }
         }
-        if (childrenOfFamilyMember != null) familyMember.setChilds(childrenOfFamilyMember);
+        if (childrenOfFamilyMember != null)
+            if (familyMember.getChilds() != null && !familyMember.getChilds().isEmpty()) {
+                familyMember.getChilds().addAll(childrenOfFamilyMember);
+            } else familyMember.setChilds(childrenOfFamilyMember);
 
         if (familyMember.getFather() == null &&
-                familyMemberDto.getFatherFio() != null &&
+                familyMemberDto.getFatherFio() != null && familyMember.getFatherInfo() != null &&
                 familyMember.getFatherInfo().charAt(1) == 'A') {
             losingParentsService.addLosingParent(familyMemberDto.getFatherFio(), familyMember, Sex.MALE);
         }
         if (familyMember.getMother() == null &&
-                familyMemberDto.getMotherFio() != null &&
+                familyMemberDto.getMotherFio() != null && familyMember.getMotherInfo() != null &&
                 familyMember.getMotherInfo().charAt(1) == 'A') {
             losingParentsService.addLosingParent(familyMemberDto.getMotherFio(), familyMember, Sex.FEMALE);
         }

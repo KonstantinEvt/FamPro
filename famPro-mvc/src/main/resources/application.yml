@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: famPro-mvc
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8282/realms/FamPro/protocol/openid-connect/certs
+  main:
+    allow-bean-definition-overriding: true
+server:
+  port: 7777
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    preferIpAddress: true
+    instance-id: ${spring.cloud.client.hostname}:${spring.application.name}:${spring.application.instance_id:${random.value}}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info
+
+springdoc:
+  swagger-ui:
+    path: /swagger
+  api-docs:
+    enabled: true

@@ -1,7 +1,13 @@
 package com.example.enums;
 
 public enum CheckStatus {
-    ABSENT("(Absent in base) "), NOT_FULLY("(Info not fully) "), CHECKED("checked"), UNCHECKED("unchecked");
+    OTHER("Generate by other user"),
+    MODERATE("Generate by moderator"),
+    ABSENT("(Absent in base) "),
+    NOT_FULLY("(Info not fully) "),
+    UNCORRECTED("(Uncorrected Information)"),
+    CHECKED("checked"),
+    UNCHECKED("unchecked");
     private final String comment;
 
     CheckStatus(String comment) {

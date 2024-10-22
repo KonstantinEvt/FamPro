@@ -14,6 +14,7 @@ import java.util.Objects;
 @Setter
 @ToString
 @SuperBuilder
+@Cacheable
 @Table(name = "old_fio")
 public class OldFio extends Fio {
     @Id

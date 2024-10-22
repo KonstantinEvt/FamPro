@@ -3,17 +3,41 @@ spring:
     name: FamPro-Main
   main:
     allow-bean-definition-overriding: true
+
 server:
   port: 8761
+#  ssl:
+#    enabled: true
+#    client-auth: need
+#    key-store: classpath:fampro_main.jks
+#    key-store-password: kostya
+#    key-alias: fampro_main
+#    trust-store: classpath:fampro_main.jks
+#    trust-password: kostya
+#security:
+#  require-ssl: true
+
 eureka:
+  instance:
+    hostname: localhost
+    securePort: ${server.port}
+    securePortEnabled: true
+    nonSecurePortEnabled: false
+    secureVirtualHostName: ${spring.application.name}
+    homePageUrl: https://${eureka.instance.hostname}:${server.port}/
+    statusPageUrl: https://${eureka.instance.hostname}:${server.port}/admin/info
+    metadataMap:
+      hostname: ${eureka.instance.hostname}
+      securePort: ${server.port}
   client:
     registerWithEureka: false
     fetchRegistry: false
+
 management:
   endpoints:
     web:
       exposure:
         include: info
 springdoc:
-   swagger-ui:
-      path: /swagger
+  swagger-ui:
+    path: /swagger

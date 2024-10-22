@@ -9,23 +9,23 @@ import java.util.Collection;
 
 @FeignClient(name = "FAMPRO-STORAGE")
 public interface FamilyMemberClient {
-    @GetMapping("/FamilyMembers/{id}")
+    @GetMapping("/database/FamilyMembers/{id}")
     FamilyMemberDto getFamilyMember(@PathVariable Long id);
 
-    @PostMapping("")
+    @PostMapping("/database")
     FamilyMemberDto addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto);
 
-    @GetMapping("")
+    @GetMapping("/database")
     Collection<FamilyMemberDto> getAllFamilyMembers();
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/database/{id}")
     String removeFamilyMember(@PathVariable Long id);
 
-    @PatchMapping("")
+    @PatchMapping("/database")
     FamilyMemberDto updateFamilyMember(@RequestBody FamilyMemberDto familyMemberDto);
-    @GetMapping("/save{filename}")
+    @GetMapping("/database/save{filename}")
     ResponseEntity<String> saveDataToFile(@PathVariable String filename);
 
-    @GetMapping("/recover{filename}")
+    @GetMapping("/database/recover{filename}")
     ResponseEntity<String> recoverBaseFromFile(@PathVariable String filename);
 }

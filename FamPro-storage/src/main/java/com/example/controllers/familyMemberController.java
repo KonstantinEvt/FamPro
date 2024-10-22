@@ -14,27 +14,28 @@ import java.util.Collection;
 public class FamilyMemberController {
     private final FamilyMemberService familyMemberService;
 
-    @GetMapping("/{id}")
+    @GetMapping("/database/{id}")
     public FamilyMemberDto getFamilyMember(@PathVariable Long id) {
         return familyMemberService.getFamilyMember(id);
     }
 
-    @PostMapping("")
+
+    @PostMapping("/database")
     public ResponseEntity<FamilyMemberDto> addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
         return ResponseEntity.ok(familyMemberService.addFamilyMember(familyMemberDto));
     }
 
-    @GetMapping("")
+    @GetMapping("/database")
     public Collection<FamilyMemberDto> getAllFamilyMember() {
         return familyMemberService.getAllFamilyMembers();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/database/{id}")
     public String removeFamilyMember(@PathVariable Long id) {
         return familyMemberService.removeFamilyMember(id);
     }
 
-    @PatchMapping("")
+    @PatchMapping("/database")
     public ResponseEntity<FamilyMemberDto> editFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
         return ResponseEntity.ok(familyMemberService.updateFamilyMember(familyMemberDto));
     }

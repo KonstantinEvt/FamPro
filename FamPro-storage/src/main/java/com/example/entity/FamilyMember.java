@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import java.sql.Date;
 import java.util.Objects;
 import java.util.Set;
@@ -16,6 +19,7 @@ import java.util.Set;
 @Getter
 @SuperBuilder
 @ToString
+@Cache (usage = CacheConcurrencyStrategy.READ_WRITE)
 @NamedEntityGraphs(
         {@NamedEntityGraph(name = "ListForSave",
                 attributeNodes = {
@@ -77,6 +81,7 @@ public class FamilyMember extends Fio {
 
     @ManyToMany(mappedBy = "children")
     private Set<Family> familyWhereChild;
+
     @Column(name = "Death_Day")
     private Date deathday;
 

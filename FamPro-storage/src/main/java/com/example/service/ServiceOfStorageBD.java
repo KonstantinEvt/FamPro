@@ -29,7 +29,7 @@ public class ServiceOfStorageBD {
     public void saveDataToFile(String filename) {
 
 
-        List<FamilyMember> resultList = entityManager.createQuery("from FamilyMember a left join fetch a.familyMemberInfo b left join fetch b.phones left join fetch b.addresses left join fetch b.emails"
+        List<FamilyMember> resultList = entityManager.createQuery("from FamilyMember a left join fetch a.familyMemberInfo b left join fetch a.father y  left join fetch a.mother x left join fetch a.otherNames n left join fetch b.phones left join fetch b.addresses left join fetch b.emails"
                 , FamilyMember.class).getResultList();
 
         try (FileWriter fr = new FileWriter("c:/Family/" + filename + ".txt")) {
@@ -58,9 +58,7 @@ public class ServiceOfStorageBD {
                 FamilyMemberDto familyMemberDto = ss.readValue(newFM, FamilyMemberDto.class);
                 familyMemberDto.setId(null);
                 if (familyMemberDto.getMemberInfo()!=null) familyMemberDto.getMemberInfo().setId(null);
-                if (familyMemberDto.getFatherInfo()!=null && familyMemberDto.getFatherInfo().charAt(familyMemberDto.getFatherInfo().length()-1)!=')') familyMemberDto.setFatherInfo(familyMemberDto.getFatherInfo().concat(" (Absent in base)"));
-                if (familyMemberDto.getMotherInfo()!=null && familyMemberDto.getMotherInfo().charAt(familyMemberDto.getMotherInfo().length()-1)!=')') familyMemberDto.setMotherInfo(familyMemberDto.getMotherInfo().concat(" (Absent in base)"));
-                set.add(familyMemberDto);
+               set.add(familyMemberDto);
                 newFM = fr.readLine();
             }
         } catch (IOException e) {

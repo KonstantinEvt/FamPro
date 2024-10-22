@@ -18,6 +18,6 @@ public interface OldFioRepo extends JpaRepository<OldFio,Long> {
     Set<OldFio> findAllByUuidIn(Set<UUID> uuidSet);
     public Optional<OldFio> findFioByUuid(UUID uuid);
     public Optional<OldFio> findFioByUuidAndMember(UUID uuid, FamilyMember familyMember);
-    List<OldFio> findAllByUuid(UUID uuid);
+    Set<OldFio> findAllByMember(FamilyMember familyMember);
 
 }

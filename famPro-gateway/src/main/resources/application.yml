@@ -1,0 +1,84 @@
+app:
+  config:
+    keycloak:
+      url: http://localhost:8282
+      realm: FamPro
+spring:
+  cloud:
+    gateway:
+      default-filters:
+        - TokenRelay=
+      routes:
+        - id: FAMPRO-MAIN
+          uri: http://localhost:8761
+          predicates:
+            - Path=/eureka/**
+#          filters:
+#            - name: RequestRateLimiter
+#              args:
+#                redis-rate-limiter.replenishRate: 20
+#                redis-rate-limiter.burstCapacity: 40
+#                redis-rate-limiter.requestedTokens: 1
+        - id: FAMPRO-CONFIG
+          uri: http://localhost:8555
+          predicates:
+            - Path=/apiv/**
+        - id: FAMPRO-MVC
+          uri: http://localhost:7777/api/me
+          predicates:
+            - Path=/api/**
+          filters:
+            - TokenRelay=
+  application:
+    name: FamPro-gateway
+  main:
+    allow-bean-definition-overriding: true
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${app.config.keycloak.url}/realms/${app.config.keycloak.realm}
+#            token-uri: ${app.config.keycloak.url}/realms/${app.config.keycloak.realm}/protocol/openid-connect/token
+#            authorization-uri: ${app.config.keycloak.url}/realms/${app.config.keycloak.realm}/protocol/openid-connect/auth
+#            user-name-attribute: preferred_username
+#            user-info-uri: ${app.config.keycloak.url}/realms/${app.config.keycloak.realm}/protocol/openid-connect/userinfo
+#            jwk-set-uri: ${app.config.keycloak.url}/realms/${app.config.keycloak.realm}/protocol/openid-connect/certs
+#            user-info-authentication-method: header
+        registration:
+          backend:
+            provider: keycloak
+            client-id: backend
+            client-secret: SgPp3KWoFUyporrNJFbcsWovP4yfNROV
+            authorization-grant-type: authorization_code
+#            redirect-uri:  http://localhost:8282
+            scope: openid
+
+      resourceserver:
+        jwt:
+          issuer-uri: ${app.config.keycloak.url}/realms/${app.config.keycloak.realm}
+          jwk-set-uri: ${app.config.keycloak.url}/realms/${app.config.keycloak.realm}/protocol/openid-connect/certs
+server:
+  port: 9898
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    preferIpAddress: true
+    instance-id: ${spring.cloud.client.hostname}:${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info
+springdoc:
+   swagger-ui:
+      path: /swagger
+#encrypt:
+#  keyStore:
+#    location: classpath:/fampro_main.jks
+#    password: kostya
+#    alias: configserver
+#    secret: kostya

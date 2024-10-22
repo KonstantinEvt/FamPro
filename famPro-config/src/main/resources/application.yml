@@ -1,6 +1,11 @@
 spring:
   application:
     name: famPro-config
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8282/realms/FamPro/protocol/openid-connect/certs
   profiles:
     active: native
   cloud:

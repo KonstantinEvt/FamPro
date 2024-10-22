@@ -15,6 +15,7 @@ import java.util.UUID;
 @Getter
 @Builder
 @ToString
+@Cacheable
 @Table(name = "members_info")
 public class FamilyMemberInfo {
     @Id
