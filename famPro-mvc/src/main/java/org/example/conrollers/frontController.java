@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 public class frontController {
-    @GetMapping("/me")
+    @GetMapping("/token")
     public Authentication whoAmI() {
         SecurityContext context = SecurityContextHolder.getContext();
         return context.getAuthentication();
