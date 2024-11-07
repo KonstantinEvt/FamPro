@@ -8,7 +8,7 @@
         <version>0.0.2-SNAPSHOT</version>
     </parent>
 
-    <artifactId>famPro-main</artifactId>
+    <artifactId>famPro-discovery</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>FamPro-main</name>
     <description>Main module. Setup discovery server. Starting first</description>

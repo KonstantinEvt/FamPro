@@ -1,19 +1,18 @@
 package org.example.conrollers;
 
+import com.example.dtos.TokenUser;
 import lombok.AllArgsConstructor;
-import org.example.dtos.TokenUser;
-import org.example.services.KeyCloakService;
 import org.example.services.TokenService;
-import org.springframework.boot.actuate.autoconfigure.observation.ObservationProperties;
-import org.springframework.boot.actuate.web.exchanges.HttpExchange;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 
 @Controller
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 @AllArgsConstructor
 public class FrontContr {
     private TokenService tokenService;
-    private KeyCloakService keyCloakService;
 
 
     @GetMapping("/token")
@@ -35,15 +33,23 @@ public class FrontContr {
         model.addAllAttributes(tokenService.getTokenUser().getClaims());
         return "welcome";
     }
+
     @GetMapping("/create")
     public String createUser() {
+
         return "create-user";
     }
 
+    @PreAuthorize("hasAuthority('BaseUser')")
     @PostMapping("/create")
-    public String createUser(@RequestBody TokenUser userRequestDTO) {
-        keyCloakService.addUser(userRequestDTO);
-        return "redirect:/work/me";
+    public String createUser(@RequestBody TokenUser tokenUser) {
+        tokenService.addUser(tokenUser);
+        return "redirect:welcome";
     }
 
+    @GetMapping("/pr")
+    public String getToken() {
+        tokenService.getToken();
+        return "welcome";
+    }
 }

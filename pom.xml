@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
     <url/>
     <modules>
-        <module>famPro-main</module>
+        <module>famPro-discovery</module>
         <module>famPro-storage</module>
         <module>famPro-commons</module>
         <module>famPro-meta</module>
@@ -24,6 +24,7 @@
         <module>famPro-config</module>
         <module>famPro-mvc</module>
         <module>famPro-gateway</module>
+        <module>famPro-key</module>
     </modules>
     <licenses>
         <license/>

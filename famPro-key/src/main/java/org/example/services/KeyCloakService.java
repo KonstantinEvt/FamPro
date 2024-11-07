@@ -1,7 +1,7 @@
 package org.example.services;
 
+import com.example.dtos.TokenUser;
 import lombok.Data;
-import org.example.dtos.TokenUser;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.RoleMappingResource;
