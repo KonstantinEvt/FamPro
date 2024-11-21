@@ -10,6 +10,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -41,10 +42,12 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, JwtConverter.Jwt2AuthenticationConverter authenticationConverter) throws Exception {
         http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(jwt -> jwt
-                        .jwtAuthenticationConverter(authenticationConverter)));
-
+                        .jwtAuthenticationConverter(authenticationConverter)))
+                .sessionManagement((session) -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }
+
     @Bean
     @LoadBalanced
     public WebClient webClient() {
@@ -52,31 +55,4 @@ public class SecurityConfig {
                 .filter(new ServletBearerExchangeFilterFunction())
                 .build();
     }
-//    @Bean
-//    protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
-//        return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
-//    }
-//@Bean
-//@SuppressWarnings("unchecked")
-//public GrantedAuthoritiesMapper userAuthoritiesMapper() {
-//
-//    return (authorities) -> {
-//        Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
-//        authorities.forEach(authority -> {
-//            if (authority instanceof OidcUserAuthority oidcUserAuthority) {
-//                OidcUserInfo userInfo = oidcUserAuthority.getUserInfo();
-//                Map<String, Object> realmAccess = userInfo.getClaim("realm_access");
-//                Collection<String> realmRoles;
-//                if (realmAccess != null
-//                        && (realmRoles = (Collection<String>) realmAccess.get("roles")) != null) {
-//                    realmRoles
-//                            .forEach(role -> mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
-//                }
-//            }
-//        });
-//            mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + "BaseUser"));
-//        return mappedAuthorities;
-//    };
-//}
-
 }

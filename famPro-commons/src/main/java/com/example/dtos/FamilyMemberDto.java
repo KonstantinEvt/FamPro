@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
+import java.sql.Date;
 import java.util.Set;
 
 
@@ -27,8 +28,11 @@ public class FamilyMemberDto extends FioDto implements Serializable {
     @Schema(description ="Расширенная информация")
     private FamilyMemberInfoDto memberInfo;
     @Schema(description ="Старые имена")
-    public Set<FioDto> fioDtos;
-
+    private Set<FioDto> fioDtos;
+    @Schema(description ="Дата смерти")
+    private Date deathday;
+    @Schema(description ="Выбранная локализцаия")
+    private String localisation;
 }
 
 

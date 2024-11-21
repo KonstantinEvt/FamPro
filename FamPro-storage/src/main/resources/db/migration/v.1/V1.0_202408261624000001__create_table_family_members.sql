@@ -4,6 +4,7 @@ create table if not exists family_members
     first_name   varchar(20),
     middle_name  varchar(55),
     last_name    varchar(55),
+    creator      varchar(55),
     father_id    bigint
         constraint family_member_farther references family_members (id),
     father_info  varchar(255),

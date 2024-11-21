@@ -16,6 +16,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
+
     ports:
       - "5435:5432"
 #    volumes:
@@ -46,7 +47,9 @@ services:
         target: /opt/keycloak/data/import/realm-export.json
         read_only: true
     ports:
-      - 8282:8080
+      - "8282:8080"
+    expose:
+      - "8282"
     depends_on:
       - keycloak-postgres
 #      keycloak-postgres:

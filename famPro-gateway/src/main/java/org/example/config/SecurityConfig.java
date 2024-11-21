@@ -54,9 +54,5 @@ public class SecurityConfig {
                 .map(ctx -> ctx.getAuthentication()
                         .getPrincipal().toString());
     }
-    @Bean
-    protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
-        return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
-    }
 }
 

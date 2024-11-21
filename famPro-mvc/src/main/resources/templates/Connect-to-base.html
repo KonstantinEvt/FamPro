@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work with base</title>
+</head>
+<body>
+<h2><span th:text="${nickname}"></span>, what do you want to receive from base?</h2>
+<p><a th:href="@{/base/family_member/add}">Create new person in the base </a></p>
+<p><a th:href="@{/base/family_member/edit}">Edit person in the base</a></p>
+<p><a th:href="@{/base/family_member}">Find person</a></p>
+<br>
+
+<p><a th:href="@{/cabinet/me}">Return into working cabinet</a></p>
+<p><a th:href="@{/}">Return to Home Page</a></p>
+</body>
+
+</html>

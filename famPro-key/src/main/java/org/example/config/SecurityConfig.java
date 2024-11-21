@@ -2,15 +2,22 @@ package org.example.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.oauth2.server.resource.web.reactive.function.client.ServletBearerExchangeFilterFunction;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.List;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -22,11 +29,23 @@ import static org.springframework.security.config.Customizer.withDefaults;
 )
 public class SecurityConfig {
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtConverter.Jwt2AuthenticationConverter authenticationConverter) throws Exception {
+
         http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
                 .oauth2Login(withDefaults())
-                .oauth2ResourceServer((oauth2) -> oauth2.jwt(withDefaults()));
-
+                .oauth2ResourceServer((oauth2) -> oauth2.jwt(jwt -> jwt
+                        .jwtAuthenticationConverter(authenticationConverter)))
+                .sessionManagement((session) -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.csrf(AbstractHttpConfigurer::disable);
+//                .cors(cors -> cors.configurationSource(request -> {
+//                    var corsConfiguration = new CorsConfiguration();
+//                    corsConfiguration.setAllowedOriginPatterns(List.of("*"));
+//                    corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//                    corsConfiguration.setAllowedHeaders(List.of("*"));
+//                    corsConfiguration.setAllowCredentials(true);
+//                    return corsConfiguration;
+//                }));
         return http.build();
     }
 
@@ -38,29 +57,7 @@ public class SecurityConfig {
     }
 
 //    @Bean
-//    @SuppressWarnings("unchecked")
-//    public GrantedAuthoritiesMapper userAuthoritiesMapper() {
-//
-//        return (authorities) -> {
-//            Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
-//            authorities.forEach(authority -> {
-//                if (authority instanceof OidcUserAuthority oidcUserAuthority) {
-//                    OidcUserInfo userInfo = oidcUserAuthority.getUserInfo();
-//                    Map<String, Object> realmAccess = userInfo.getClaim("realm_access");
-//                    Collection<String> realmRoles;
-//                    if (realmAccess != null
-//                            && (realmRoles = (Collection<String>) realmAccess.get("roles")) != null) {
-//                        realmRoles
-//                                .forEach(role -> mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
-//                    }
-//                }
-//            });
-//            return mappedAuthorities;
-//        };
+//    protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
+//        return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
 //    }
-
-    @Bean
-    protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
-        return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
-    }
 }

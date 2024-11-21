@@ -30,7 +30,9 @@ public class FioServiceImp<T extends Fio> implements FioService<T> {
                 .concat(fio.getLastName())
                 .concat(String.valueOf(fio.getBirthday().toLocalDate())).toLowerCase()
                 .concat("Rainbow");
+        System.out.println("tyt99");
         log.info("новый UUID человека сгенерирован");
+        System.out.println("tyt100");
         return UUID.nameUUIDFromBytes(str.getBytes());
     }
 

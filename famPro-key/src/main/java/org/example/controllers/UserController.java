@@ -1,8 +1,10 @@
 package org.example.controllers;
 
 import com.example.dtos.TokenUser;
+import jakarta.websocket.server.PathParam;
 import lombok.AllArgsConstructor;
 import org.example.services.KeyCloakService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,20 +12,26 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/manage")
 @AllArgsConstructor
 public class UserController {
-//    private final WebClient webClient;
     private final KeyCloakService keyCloakService;
 
 
-//    @RolesAllowed("BaseUser")
+    //    @RolesAllowed("BaseUser")
     @PostMapping("/add")
     public ResponseEntity<TokenUser> addUser(@RequestBody TokenUser tokenUser) {
+        System.out.println("Oooooo");
         keyCloakService.addUser(tokenUser);
+        System.out.println("Ogogo");
         return ResponseEntity.status(201).body(tokenUser);
     }
 
-    @GetMapping("/token")
-    public String token() {
-        System.out.println("vasya");
-        return "vasya";
+    @PostMapping("/edit")
+    public ResponseEntity<TokenUser> editUser(@RequestBody TokenUser tokenUser) {
+        keyCloakService.editUser(tokenUser);
+        return ResponseEntity.status(201).body(tokenUser);
+    }
+
+    @PostMapping("")
+    public void chooseLocalisation(@RequestBody String loc) {
+        keyCloakService.chooseLocalisation(loc);
     }
 }

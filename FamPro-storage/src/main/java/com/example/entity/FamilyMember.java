@@ -1,6 +1,8 @@
 package com.example.entity;
 
 
+import com.example.enums.CheckStatus;
+import com.example.enums.Sex;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -11,6 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import java.sql.Date;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @RequiredArgsConstructor
@@ -19,7 +22,7 @@ import java.util.Set;
 @Getter
 @SuperBuilder
 @ToString
-@Cache (usage = CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @NamedEntityGraphs(
         {@NamedEntityGraph(name = "ListForSave",
                 attributeNodes = {
@@ -41,7 +44,7 @@ public class FamilyMember extends Fio {
             name = "genSeqFamMem",
             sequenceName = "FamMem", initialValue = 1, allocationSize = 20)
     private Long id;
-//    @Column(name = "Name", length = 20)
+    //    @Column(name = "Name", length = 20)
 //    private String firstName;
 //    @Column(name = "Fathername", length = 50)
 //    private String middleName;
@@ -67,8 +70,11 @@ public class FamilyMember extends Fio {
     @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "info_id")
     private FamilyMemberInfo familyMemberInfo;
-    @OneToMany(mappedBy = "member",cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private Set<OldFio> otherNames;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "check_status")
+    private CheckStatus checkStatus;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinTable(name = "parents_childs",
@@ -84,6 +90,9 @@ public class FamilyMember extends Fio {
 
     @Column(name = "Death_Day")
     private Date deathday;
+
+    @Column(name = "creator")
+    private String creator;
 
     @Override
     public boolean equals(Object o) {

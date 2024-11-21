@@ -18,7 +18,7 @@
         <module>famPro-discovery</module>
         <module>famPro-storage</module>
         <module>famPro-commons</module>
-        <module>famPro-meta</module>
+        <module>famPro-validation</module>
         <module>famPro-integration</module>
         <module>famPro-notification</module>
         <module>famPro-config</module>

@@ -1,6 +1,8 @@
 {
   "id": "813157dd-5511-4283-9577-fdb86cbaba60",
   "realm": "FamPro",
+  "displayName": "",
+  "displayNameHtml": "",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
   "revokeRefreshToken": false,
@@ -27,14 +29,14 @@
   "oauth2DevicePollingInterval": 5,
   "enabled": true,
   "sslRequired": "external",
-  "registrationAllowed": false,
+  "registrationAllowed": true,
   "registrationEmailAsUsername": false,
   "rememberMe": false,
   "verifyEmail": false,
-  "loginWithEmailAllowed": true,
-  "duplicateEmailsAllowed": false,
-  "resetPasswordAllowed": false,
-  "editUsernameAllowed": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": true,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": true,
   "bruteForceProtected": false,
   "permanentLockout": false,
   "maxTemporaryLockouts": 0,
@@ -46,6 +48,27 @@
   "failureFactor": 30,
   "roles": {
     "realm": [
+      {
+        "id": "ba5b4baf-f85b-457a-b426-cd86bf34be6d",
+        "name": "BaseUser",
+        "description": "User with full info for identification in base",
+        "composite": true,
+        "composites": {
+          "client": {
+            "realm-management": [
+              "manage-authorization",
+              "view-users",
+              "realm-admin"
+            ],
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+        "clientRole": false,
+        "containerId": "813157dd-5511-4283-9577-fdb86cbaba60",
+        "attributes": {}
+      },
       {
         "id": "f8ec6b47-dce9-45dc-8c0d-1d9c1ba3121a",
         "name": "backend_admin",
@@ -67,12 +90,31 @@
         "attributes": {}
       },
       {
+        "id": "de432f73-6799-4f2c-9b89-e3579bda6e4b",
+        "name": "LinkedUser",
+        "description": "User with link to base",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "813157dd-5511-4283-9577-fdb86cbaba60",
+        "attributes": {}
+      },
+      {
+        "id": "b4db9295-c036-438f-8a67-93b60454152a",
+        "name": "SimpleUser",
+        "description": "User without full info for identification in base",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "813157dd-5511-4283-9577-fdb86cbaba60",
+        "attributes": {}
+      },
+      {
         "id": "765acd2e-4fc5-49c9-b6d9-901599ed706e",
         "name": "default-roles-fampro",
         "description": "${role_default-roles}",
         "composite": true,
         "composites": {
           "realm": [
+            "SimpleUser",
             "offline_access",
             "uma_authorization"
           ],
@@ -97,9 +139,36 @@
         "attributes": {}
       },
       {
+        "id": "22ef3ea1-6130-440a-b74f-263792d09249",
+        "name": "Manager",
+        "description": "User in low",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "813157dd-5511-4283-9577-fdb86cbaba60",
+        "attributes": {}
+      },
+      {
         "id": "903e0c25-b6cd-4188-ace1-e28ca17a60b1",
         "name": "uma_authorization",
         "description": "${role_uma_authorization}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "813157dd-5511-4283-9577-fdb86cbaba60",
+        "attributes": {}
+      },
+      {
+        "id": "b4297f83-47d5-47a6-9271-7f568820892a",
+        "name": "VIP",
+        "description": "Premium user",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "813157dd-5511-4283-9577-fdb86cbaba60",
+        "attributes": {}
+      },
+      {
+        "id": "d20c8b85-075f-4048-87ab-154a16d8719d",
+        "name": "Admin",
+        "description": "Full-low User",
         "composite": false,
         "clientRole": false,
         "containerId": "813157dd-5511-4283-9577-fdb86cbaba60",
@@ -452,7 +521,21 @@
       ]
     }
   },
-  "groups": [],
+  "groups": [
+    {
+      "id": "1b8845b8-1fab-4fdd-87ea-149033929224",
+      "name": "InBase",
+      "path": "/InBase",
+      "subGroups": [],
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {
+        "backend": [
+          "backend_user"
+        ]
+      }
+    }
+  ],
   "defaultRole": {
     "id": "765acd2e-4fc5-49c9-b6d9-901599ed706e",
     "name": "default-roles-fampro",
@@ -522,6 +605,7 @@
       ],
       "clientRoles": {
         "backend": [
+          "backend_user",
           "uma_protection"
         ]
       },
@@ -730,6 +814,7 @@
         "oidc.ciba.grant.enabled": "false",
         "client.secret.creation.time": "1729550605",
         "backchannel.logout.session.required": "true",
+        "display.on.consent.screen": "false",
         "oauth2.device.authorization.grant.enabled": "false",
         "backchannel.logout.revoke.offline.tokens": "false"
       },
@@ -788,7 +873,6 @@
         "acr",
         "roles",
         "profile",
-        "test_scope",
         "basic",
         "email"
       ],
@@ -877,6 +961,7 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": true,
       "publicClient": false,
       "frontchannelLogout": false,
       "protocol": "openid-connect",
@@ -900,7 +985,25 @@
         "offline_access",
         "organization",
         "microprofile-jwt"
-      ]
+      ],
+      "authorizationSettings": {
+        "allowRemoteResourceManagement": false,
+        "policyEnforcementMode": "ENFORCING",
+        "resources": [],
+        "policies": [],
+        "scopes": [
+          {
+            "name": "map-role"
+          },
+          {
+            "name": "map-role-client-scope"
+          },
+          {
+            "name": "map-role-composite"
+          }
+        ],
+        "decisionStrategy": "UNANIMOUS"
+      }
     },
     {
       "id": "ee576a06-ee1f-42d1-9f17-848471394905",
@@ -1046,8 +1149,8 @@
           "protocolMapper": "oidc-allowed-origins-mapper",
           "consentRequired": false,
           "config": {
-            "access.token.claim": "true",
-            "introspection.token.claim": "true"
+            "introspection.token.claim": "true",
+            "access.token.claim": "true"
           }
         }
       ]
@@ -1110,12 +1213,34 @@
           "protocolMapper": "oidc-usermodel-attribute-mapper",
           "consentRequired": false,
           "config": {
+            "aggregate.attrs": "false",
             "introspection.token.claim": "true",
+            "multivalued": "false",
             "userinfo.token.claim": "true",
             "user.attribute": "middleName",
+            "lightweight.claim": "false",
             "id.token.claim": "true",
             "access.token.claim": "true",
             "claim.name": "middle_name",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "id": "566d0ced-21f2-4240-baca-d6c9446aeb16",
+          "name": "someinfo",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "aggregate.attrs": "false",
+            "introspection.token.claim": "true",
+            "multivalued": "false",
+            "userinfo.token.claim": "true",
+            "user.attribute": "Some_info",
+            "id.token.claim": "true",
+            "lightweight.claim": "false",
+            "access.token.claim": "true",
+            "claim.name": "SSome",
             "jsonType.label": "String"
           }
         },
@@ -1203,9 +1328,12 @@
           "protocolMapper": "oidc-usermodel-attribute-mapper",
           "consentRequired": false,
           "config": {
+            "aggregate.attrs": "false",
             "introspection.token.claim": "true",
+            "multivalued": "false",
             "userinfo.token.claim": "true",
-            "user.attribute": "birthdate",
+            "user.attribute": "birthday",
+            "lightweight.claim": "false",
             "id.token.claim": "true",
             "access.token.claim": "true",
             "claim.name": "birthdate",
@@ -1283,9 +1411,12 @@
           "protocolMapper": "oidc-usermodel-attribute-mapper",
           "consentRequired": false,
           "config": {
+            "aggregate.attrs": "false",
             "introspection.token.claim": "true",
+            "multivalued": "false",
             "userinfo.token.claim": "true",
-            "user.attribute": "nickname",
+            "user.attribute": "nickName",
+            "lightweight.claim": "false",
             "id.token.claim": "true",
             "access.token.claim": "true",
             "claim.name": "nickname",
@@ -1299,9 +1430,12 @@
           "protocolMapper": "oidc-usermodel-attribute-mapper",
           "consentRequired": false,
           "config": {
+            "aggregate.attrs": "false",
             "introspection.token.claim": "true",
+            "multivalued": "false",
             "userinfo.token.claim": "true",
             "user.attribute": "gender",
+            "lightweight.claim": "false",
             "id.token.claim": "true",
             "access.token.claim": "true",
             "claim.name": "gender",
@@ -1327,8 +1461,8 @@
           "protocolMapper": "oidc-sub-mapper",
           "consentRequired": false,
           "config": {
-            "access.token.claim": "true",
-            "introspection.token.claim": "true"
+            "introspection.token.claim": "true",
+            "access.token.claim": "true"
           }
         },
         {
@@ -1430,9 +1564,10 @@
       "description": "OpenID Connect scope for add user roles to the access token",
       "protocol": "openid-connect",
       "attributes": {
-        "include.in.token.scope": "false",
-        "consent.screen.text": "${rolesScopeConsentText}",
-        "display.on.consent.screen": "true"
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true",
+        "gui.order": "",
+        "consent.screen.text": "${rolesScopeConsentText}"
       },
       "protocolMappers": [
         {
@@ -1453,12 +1588,15 @@
           "protocolMapper": "oidc-usermodel-realm-role-mapper",
           "consentRequired": false,
           "config": {
-            "user.attribute": "foo",
             "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "true",
+            "user.attribute": "foo",
+            "id.token.claim": "false",
+            "lightweight.claim": "false",
             "access.token.claim": "true",
             "claim.name": "realm_access.roles",
-            "jsonType.label": "String",
-            "multivalued": "true"
+            "jsonType.label": "String"
           }
         },
         {
@@ -1505,18 +1643,6 @@
           }
         }
       ]
-    },
-    {
-      "id": "0ef78654-6b8c-4591-897d-4667fe69e319",
-      "name": "test_scope",
-      "description": "",
-      "protocol": "openid-connect",
-      "attributes": {
-        "include.in.token.scope": "false",
-        "display.on.consent.screen": "true",
-        "gui.order": "",
-        "consent.screen.text": ""
-      }
     },
     {
       "id": "4926ce23-6212-4564-b2b7-b5967179aafb",
@@ -1600,8 +1726,8 @@
           "consentRequired": false,
           "config": {
             "id.token.claim": "true",
-            "access.token.claim": "true",
-            "introspection.token.claim": "true"
+            "introspection.token.claim": "true",
+            "access.token.claim": "true"
           }
         }
       ]
@@ -1610,19 +1736,19 @@
   "defaultDefaultClientScopes": [
     "role_list",
     "saml_organization",
-    "profile",
     "email",
-    "roles",
     "web-origins",
     "acr",
-    "basic"
+    "basic",
+    "profile",
+    "roles"
   ],
   "defaultOptionalClientScopes": [
     "offline_access",
-    "address",
     "phone",
     "microprofile-jwt",
-    "organization"
+    "organization",
+    "address"
   ],
   "browserSecurityHeaders": {
     "contentSecurityPolicyReportOnly": "",
@@ -1634,7 +1760,24 @@
     "xXSSProtection": "1; mode=block",
     "strictTransportSecurity": "max-age=31536000; includeSubDomains"
   },
-  "smtpServer": {},
+  "smtpServer": {
+    "password": "**********",
+    "replyToDisplayName": "",
+    "starttls": "false",
+    "auth": "true",
+    "port": "465",
+    "host": "smtp.mail.ru",
+    "replyTo": "",
+    "from": "kyevt@bk.ru",
+    "fromDisplayName": "FamPro",
+    "envelopeFrom": "",
+    "ssl": "true",
+    "user": "kyevt@bk.ru"
+  },
+  "loginTheme": "keycloak.v2",
+  "accountTheme": "",
+  "adminTheme": "",
+  "emailTheme": "",
   "eventsEnabled": false,
   "eventsListeners": [
     "jboss-logging"
@@ -1686,7 +1829,10 @@
         "subComponents": {},
         "config": {
           "allow-default-scopes": [
-            "true"
+            "false"
+          ],
+          "allowed-client-scopes": [
+            "roles"
           ]
         }
       },
@@ -1748,6 +1894,18 @@
             "oidc-usermodel-property-mapper",
             "oidc-full-name-mapper",
             "saml-user-property-mapper"
+          ]
+        }
+      }
+    ],
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "id": "6e95126a-e15e-44f5-9af5-074028df9872",
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"email\",\"displayName\":\"${email}\",\"validations\":{\"email\":{},\"length\":{\"max\":255}},\"annotations\":{},\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"annotations\":{},\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"middleName\",\"displayName\":\"Middle Name\",\"validations\":{},\"annotations\":{},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}},\"annotations\":{},\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"birthday\",\"displayName\":\"${Birthday}\",\"validations\":{\"iso-date\":{}},\"annotations\":{},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false},{\"name\":\"nickName\",\"displayName\":\"Nick Name\",\"validations\":{\"person-name-prohibited-characters\":{},\"up-username-not-idn-homograph\":{\"error-message\":\"must be latin and base simbols\"}},\"annotations\":{\"inputHelperTextBefore\":\"This is you identification name over dialogs\"},\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"multivalued\":false}],\"groups\":[{\"name\":\"user-metadata\",\"displayHeader\":\"User metadata\",\"displayDescription\":\"Attributes, which refer to user metadata\"}]}"
           ]
         }
       }
@@ -2557,16 +2715,23 @@
   "firstBrokerLoginFlow": "first broker login",
   "attributes": {
     "cibaBackchannelTokenDeliveryMode": "poll",
-    "cibaExpiresIn": "120",
     "cibaAuthRequestedUserHint": "login_hint",
-    "oauth2DeviceCodeLifespan": "600",
+    "clientOfflineSessionMaxLifespan": "0",
     "oauth2DevicePollingInterval": "5",
-    "parRequestUriLifespan": "60",
+    "clientSessionIdleTimeout": "0",
+    "clientOfflineSessionIdleTimeout": "0",
     "cibaInterval": "5",
-    "realmReusableOtpCode": "false"
+    "realmReusableOtpCode": "false",
+    "cibaExpiresIn": "120",
+    "oauth2DeviceCodeLifespan": "600",
+    "parRequestUriLifespan": "60",
+    "clientSessionMaxLifespan": "0",
+    "frontendUrl": "",
+    "organizationsEnabled": "false",
+    "acr.loa.map": "{}"
   },
   "keycloakVersion": "26.0.1",
-  "userManagedAccessAllowed": false,
+  "userManagedAccessAllowed": true,
   "organizationsEnabled": false,
   "clientProfiles": {
     "profiles": []

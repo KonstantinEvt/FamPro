@@ -14,17 +14,19 @@ public class StringValidation {
 
     public static void main(String[] args) {
         String str = "Я хочу. перевод: очень-очень хочу . Евтушенко Константин Сергеевич";
-        String str2 = "YA khochu. perevod: ochenʹ-ochenʹ khochu . Evtushenko Konstantin Sergeevich";
-//        Enumeration<String> availableIDs = Transliterator.getAvailableIDs();
-//        availableIDs.asIterator().forEachRemaining(id -> {
-//            Transliterator toLatinTrans = Transliterator.getInstance(id);
-//            String result = toLatinTrans.transliterate(str);
-//            System.out.println(id + " : " +str + " -> " + result);
-//        });
-        String res = checkAllInstance(str, "ru", true);
-        String res2 = checkAllInstance(str, "en", true);
-
+        String str2 = "YA khochu. perevod: ochenʹ-ochenʹ khochu . Yevtushenko Konstantin Sergeevich";
+        Enumeration<String> availableIDs = Transliterator.getAvailableIDs();
+        availableIDs.asIterator().forEachRemaining(id -> {
+            Transliterator toLatinTrans = Transliterator.getInstance(id);
+            String result = toLatinTrans.transliterate(str2);
+            System.out.println(id + " : " +str2 + " -> " + result);
+        });
+//        String res = checkAllInstance(str2, "ru", true);
+        String res2 = checkAllInstance(str2, "en", true);
         System.out.println(res2);
+        Transliterator toCyrillicTrans = Transliterator.getInstance(LATIN_RUSSIAN_BGN );
+        String result = toCyrillicTrans.transliterate(str2);
+        System.out.println(result);
     }
 
     public static String checkForSwears(String str) {
@@ -72,7 +74,7 @@ public class StringValidation {
         StringBuffer sb = new StringBuffer();
         for (String checkWord : stringList) {
             String lang = checkForLang(checkWord);
-            if (toUnivers.isPresent() && guaranteed && lang.equals("other")) {
+            if (toUnivers.isPresent() && guaranteed ) {
                 checkWord = toUnivers.get().transform(checkWord);
             }
             sb.append(checkWord);
