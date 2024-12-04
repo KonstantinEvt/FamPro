@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @AllArgsConstructor
 @RequiredArgsConstructor
+@ToString(callSuper = true)
 public class AddressDto extends InternDto{
     @Schema(description = "Полный адрес")
     private String internName;

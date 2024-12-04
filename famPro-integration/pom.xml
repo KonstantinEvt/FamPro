@@ -21,7 +21,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-integration</artifactId>
-            <version>3.3.3</version>
+            <version>3.3.6</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.integration</groupId>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
-            <version>3.3.3</version>
+            <version>3.3.6</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.integration</groupId>

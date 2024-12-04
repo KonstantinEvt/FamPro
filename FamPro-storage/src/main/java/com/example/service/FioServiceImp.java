@@ -21,6 +21,7 @@ public class FioServiceImp<T extends Fio> implements FioService<T> {
     protected FioMapper fioMapper;
 
     protected UUID generateUUIDFromFullName(String string) {
+        System.out.println("tyt3");
         return UUID.nameUUIDFromBytes(string.getBytes());
     }
 

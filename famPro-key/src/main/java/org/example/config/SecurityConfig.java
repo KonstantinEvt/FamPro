@@ -1,5 +1,6 @@
 package org.example.config;
 
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -32,7 +33,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, JwtConverter.Jwt2AuthenticationConverter authenticationConverter) throws Exception {
 
         http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
-                .oauth2Login(withDefaults())
+//                .oauth2Login(withDefaults())
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(jwt -> jwt
                         .jwtAuthenticationConverter(authenticationConverter)))
                 .sessionManagement((session) -> session
@@ -50,6 +51,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @LoadBalanced
     public WebClient webClient() {
         return WebClient.builder()
                 .filter(new ServletBearerExchangeFilterFunction())

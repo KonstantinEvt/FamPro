@@ -3,10 +3,7 @@ package com.example.dtos;
 import com.example.enums.CheckStatus;
 import com.example.enums.Sex;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.sql.Date;
@@ -17,6 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @SuperBuilder
+@ToString
 public class FioDto {
     @Schema(description ="Идентификатор члена семьи")
     private Long id;

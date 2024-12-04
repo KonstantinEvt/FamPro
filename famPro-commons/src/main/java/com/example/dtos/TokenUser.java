@@ -1,12 +1,17 @@
 package com.example.dtos;
 
-import lombok.Data;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
-@Data
+@AllArgsConstructor
+@RequiredArgsConstructor
+@Getter
+@Setter
+@ToString
+@Builder
 public class TokenUser implements Serializable {
     private String username;
     private String password;

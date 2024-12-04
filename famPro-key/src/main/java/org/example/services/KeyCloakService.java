@@ -9,9 +9,9 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.RoleMappingResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
-import org.keycloak.admin.client.token.TokenManager;
-import org.keycloak.admin.client.token.TokenService;
-import org.keycloak.representations.idm.*;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,12 +19,14 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Data
+
 public class KeyCloakService {
     private final Keycloak keycloak;
 
@@ -32,6 +34,12 @@ public class KeyCloakService {
     private String realm;
     @Value("${keycloak.default-role}")
     private String defaultRole;
+    WebClient webClient;
+
+    public KeyCloakService(Keycloak keycloak, WebClient webClient) {
+        this.keycloak = keycloak;
+        this.webClient = webClient;
+    }
 
     public TokenUser getTokenUser() {
         SecurityContext context = SecurityContextHolder.getContext();
@@ -44,7 +52,8 @@ public class KeyCloakService {
         tokenUser.setRoles(roles);
         return tokenUser;
     }
-//addUser must be option set
+
+    //addUser must be option set
     public void addUser(TokenUser dto) {
         String username = dto.getUsername();
         CredentialRepresentation credential = createPasswordCredentials(dto.getPassword());
@@ -61,10 +70,6 @@ public class KeyCloakService {
 
     public void editUser(TokenUser dto) {
         String userName = getTokenUser().getUsername();
-        editUser(userName, dto);
-    }
-
-    public void editUser(String userName, TokenUser dto) {
         UsersResource usersResource = getUsersResource();
         List<UserRepresentation> users = usersResource.search(userName);
         UserRepresentation user = users.stream().filter(x -> x.getUsername().equals(userName)).findFirst().orElseThrow(() -> new KeyCloakUserNotFound("User not found"));
@@ -76,7 +81,7 @@ public class KeyCloakService {
         }
         if (dto.getFirstName() != null && !dto.getFirstName().isBlank()) user.setFirstName(dto.getFirstName());
         //Разобраться с Identity провадером OpenID и настройками для изменения Email
-//        if (dto.getEmail() != null && !dto.getEmail().isBlank()) user.setEmail(dto.getFirstName());
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) user.setEmail(dto.getEmail());
         if (dto.getLastName() != null && !dto.getLastName().isBlank()) user.setLastName(dto.getLastName());
         if (user.getAttributes() == null) {
             user.setAttributes(new HashMap<>());
@@ -87,27 +92,32 @@ public class KeyCloakService {
             user.getAttributes().put("birthday", Collections.singletonList(dto.getBirthday()));
         if (dto.getNickName() != null && !dto.getNickName().isBlank())
             user.getAttributes().put("nickName", Collections.singletonList(dto.getNickName()));
-
+        if (dto.getRoles() != null && dto.getRoles().contains(UserRoles.LINKED_USER.getNameSSO())) {
+            if (user.getRealmRoles() != null) {
+                user.getRealmRoles().add(UserRoles.LINKED_USER.getNameSSO());
+            } else user.setRealmRoles(Collections.singletonList(UserRoles.LINKED_USER.getNameSSO()));
+        }
         UserResource userResource = usersResource.get(user.getId());
         userResource.update(user);
         addRolesToUser(user);
     }
-    public void chooseLocalisation(String loc){
-        String userName=getTokenUser().getUsername();
+
+    public void chooseLocalisation(String loc) {
+        String userName = getTokenUser().getUsername();
         UsersResource usersResource = getUsersResource();
         List<UserRepresentation> users = usersResource.search(userName);
         UserRepresentation user = users.stream().filter(x -> x.getUsername().equals(userName)).findFirst().orElseThrow(() -> new KeyCloakUserNotFound("User not found"));
-        user.getAttributes().put("localisation",Collections.singletonList(loc));
+        if (user.getAttributes() == null) user.setAttributes(new HashMap<>());
+        user.getAttributes().put("localisation", Collections.singletonList(loc));
         UserResource userResource = usersResource.get(user.getId());
-
         userResource.update(user);
+    }
 
-
-    };
     private void addRolesToUser(UserRepresentation user) {
         Set<String> roles = new HashSet<>();
         if (user.getRealmRoles() == null) user.setRealmRoles(new ArrayList<>());
-        if (!user.getRealmRoles().contains(UserRoles.SIMPLE_USER.getNameSSO())) roles.add(UserRoles.SIMPLE_USER.getNameSSO());
+        if (!user.getRealmRoles().contains(UserRoles.SIMPLE_USER.getNameSSO()))
+            roles.add(UserRoles.SIMPLE_USER.getNameSSO());
         if (!user.getRealmRoles().contains(UserRoles.BASE_USER.getNameSSO())
                 && user.getFirstName() != null
                 && user.getLastName() != null
@@ -115,6 +125,8 @@ public class KeyCloakService {
                 && user.getAttributes().get("birthday") != null) {
             roles.add(UserRoles.BASE_USER.getNameSSO());
         }
+        if (user.getRealmRoles().contains(UserRoles.LINKED_USER.getNameSSO()))
+            roles.add(UserRoles.LINKED_USER.getNameSSO());
         if (!roles.isEmpty()) addRealmRoleToUser(user.getId(), roles);
     }
 

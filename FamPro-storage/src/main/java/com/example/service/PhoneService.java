@@ -66,7 +66,7 @@ public class PhoneService extends InternServiceImp<Phone> {
                 this.checkForCommunity(mainPhone, fmiFromBase.getPhones(), phonesFromBase);
             if (!mainPhone.getTechString().equals("uncorrected")) {
                 if (!mainPhone.getTechString().equals("COMMUNITY")) {
-                    mainPhone.setDescription("Основной телефон");
+                    mainPhone.setDescription("Main phone");
                     mainPhone.setUuid(newFmi.getUuid());
                 }
                 mainPhone.setId(null);

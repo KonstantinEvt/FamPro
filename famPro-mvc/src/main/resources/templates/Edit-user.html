@@ -1,59 +1,84 @@
-
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edit user</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit user</title>
 </head>
 <body>
 <form id="userFormEdit" th:action="@{/cabinet/edit}" method="post">
-  <label for="username">Username:</label>
-  <input type="text" id="username" name="username" required>
-  <br>
-  <label for="nickName">NickName:</label>
-  <input type="text" id="nickName" name="nickName" required>
-  <br>
-  <label for="password">Password:</label>
-  <input type="password" id="password" name="password" required>
-   <br>
-  <label for="firstNameEdit">FirstName:</label>
-  <input type="text" id="firstNameEdit" name="firstNameEdit" required>
-  <br>
-  <label for="middleNameEdit">MiddleName:</label>
-  <input type="text" id="middleNameEdit" name="middleNameEdit" required>
-  <br>
-  <label for="lastNameEdit">LastName:</label>
-  <input type="text" id="lastNameEdit" name="lastNameEdit" required>
-  <br>
-  <label for="birthday">Birthday:</label>
-  <input type="text" id="birthday" name="birthday" required>
-  <br>
-  <button type="button" onclick="submitForm()">Edit User</button>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
+    <label for="email">Email:</label>
+    <input type="text" id="email" name="email" required>
+    <br>
+    <label for="nickName">NickName:</label>
+    <input type="text" id="nickName" name="nickName" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <label for="firstNameEdit">FirstName:</label>
+    <input type="text" id="firstNameEdit" name="firstNameEdit" required>
+    <br>
+    <label for="middleNameEdit">MiddleName:</label>
+    <input type="text" id="middleNameEdit" name="middleNameEdit" required>
+    <br>
+    <label for="lastNameEdit">LastName:</label>
+    <input type="text" id="lastNameEdit" name="lastNameEdit" required>
+    <br>
+    <label for="birthday">Birthday:</label>
+    <input type="datetime-local" id="birthday" name="birthday" required>
+    <br>
+    <button type="button" onclick="submitForm()">Edit User</button>
 </form>
-<p><a th:href="@{/}">Return to Home Page</a></p>
+<br>
+<div>Часть внесенных изменений (например, ваше имя или роль в системе) произойдут с течением времени.</div>
+<div>Для немедленного их применения выйдете из системы и войдите в нее.</div>
+<p><a th:href="@{/cabinet/me}">Вернуться в кабинет</a></p>
+<br>
+<div>Связать регистрацию с записью в базе</div>
+<br>
+<form id="linkForm" th:action="@{/cabinet/link}" method="get" >
+    <label for="idLink">Id человека в базе</label>
+    <input type="number" id="idLink" name="idLink" required>
+    <button type="button" onclick="linkUser()">Связать</button>
+</form>
+<br>
 <script>
-  function submitForm() {
-    var form = document.getElementById('userFormEdit');
-    var formData = {
-      username: form.elements.username.value,
-      password: form.elements.password.value,
-      firstName: form.elements.firstNameEdit.value,
-      middleName: form.elements.middleNameEdit.value,
-      lastName: form.elements.lastNameEdit.value,
-      nickName: form.elements.nickName.value,
-      birthday: form.elements.birthday.value
-    };
-    var jsonData = JSON.stringify(formData);
-    fetch(form.action, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: jsonData
-    });
-  }
+    function linkUser() {
+        var form = document.getElementById('linkForm');
+        var uri="http://localhost:9898/cabinet/link"+form.elements.idLink.value
+        fetch(uri, {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'}
+
+        })
+    }
+
+    function submitForm() {
+        var form = document.getElementById('userFormEdit');
+        var formData = {
+            username: form.elements.username.value,
+            email: form.elements.email.value,
+            password: form.elements.password.value,
+            firstName: form.elements.firstNameEdit.value,
+            middleName: form.elements.middleNameEdit.value,
+            lastName: form.elements.lastNameEdit.value,
+            nickName: form.elements.nickName.value,
+            birthday: form.elements.birthday.value
+        };
+        var jsonData = JSON.stringify(formData);
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: jsonData
+        });
+    }
 </script>
 </body>
 </html>

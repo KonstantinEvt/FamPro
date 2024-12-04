@@ -7,6 +7,7 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @RequiredArgsConstructor
+@ToString(callSuper = true)
 public class EmailDto extends InternDto{
     private String internName;
 }

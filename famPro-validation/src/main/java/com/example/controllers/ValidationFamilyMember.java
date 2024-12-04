@@ -12,18 +12,14 @@ import org.springframework.web.bind.annotation.*;
 public class ValidationFamilyMember {
     private final FamilyMembersValidationService familyMembersValidationService;
 
-    @GetMapping("/{id}")
-    public FamilyMemberDto getFamilyMemberById(@PathVariable("id") Long id) {
-        return familyMembersValidationService.getFamilyMemberById(id);
+    @GetMapping("/{id}/{localisation}")
+    public FamilyMemberDto getFamilyMemberById(@PathVariable("id") Long id,@PathVariable String localisation) {
+        return familyMembersValidationService.getFamilyMemberById(id, localisation);
     }
 
     @PostMapping("/get")
     public FamilyMemberDto getFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
         FamilyMemberDto dto=familyMembersValidationService.getFamilyMember(familyMemberDto);
-        System.out.println(dto.getFirstName());
-        System.out.println(dto.getMiddleName());
-        System.out.println(dto.getLastName());
-        System.out.println(dto.getBirthday());
         return dto;
     }
 

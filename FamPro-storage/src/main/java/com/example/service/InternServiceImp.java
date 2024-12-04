@@ -24,7 +24,7 @@ public class InternServiceImp<T extends InternEntity> implements InternService<T
     public void check(T t) {
         if (t.getAssignment() == null) t.setAssignment(Assignment.HOME);
         if (t.getStatus() == null) t.setStatus(Status.ON_LINK);
-        if (t.getDescription() == null) t.setDescription("Доп.инфо остутствует");
+        if (t.getDescription() == null) t.setDescription("Info is absent");
         if (t.getCheckStatus() == null) t.setCheckStatus(CheckStatus.UNCHECKED);
     }
 
@@ -34,7 +34,7 @@ public class InternServiceImp<T extends InternEntity> implements InternService<T
             if (t.getCheckStatus() != CheckStatus.CHECKED) {
                 t.setTechString("COMMUNITY");
                 t.setUuid(null);
-                t.setDescription("Общественная собственность. Для изменения поля - check instance");
+                t.setDescription("Community. For change - check instance");
             } else if (!t.getTechString().equals("COMMUNITY")) t.setTechString("uncorrected");
         }
     }

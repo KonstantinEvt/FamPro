@@ -7,10 +7,7 @@ import com.example.entity.OldFio;
 import com.example.enums.CheckStatus;
 import com.example.enums.Sex;
 import com.example.enums.UserRoles;
-import com.example.exceptions.Dublicate;
-import com.example.exceptions.FamilyMemberNotFound;
-import com.example.exceptions.ProblemWithId;
-import com.example.exceptions.UncorrectedInformation;
+import com.example.exceptions.*;
 import com.example.mappers.FamilyMemberMapper;
 import com.example.mappers.FioMapper;
 import com.example.repository.FamilyMemberRepo;
@@ -51,7 +48,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     @Transactional(readOnly = true)
     public FamilyMemberDto getFamilyMemberById(Long id) {
         FamilyMember familyMember = familyMemberRepo.findById(id)
-                .orElseThrow(() -> new FamilyMemberNotFound("Человек с ID: ".concat(String.valueOf(id)).concat(" не найден")));
+                .orElseThrow(() -> new FamilyMemberNotFound("Человек с ID ".concat(String.valueOf(id)).concat(" не найден")));
         FamilyMemberDto familyMemberDto = familyMemberMapper.entityToDto(familyMember);
         if (familyMember.getFamilyMemberInfo() != null) {
             familyMemberDto.setMemberInfo(familyMemberInfoService.getMemberInfo(familyMember));
@@ -61,20 +58,19 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
     @Transactional(readOnly = true)
     public FamilyMemberDto getFamilyMember(FamilyMemberDto familyMemberDto) {
-        FamilyMember familyMember;
         if ((familyMemberDto.getFirstName() != null) &&
                 (familyMemberDto.getMiddleName() != null) &&
                 (familyMemberDto.getLastName() != null) &&
                 familyMemberDto.getBirthday() != null) {
             UUID uuid = generateUUIDFromFio(familyMemberMapper.dtoToEntity(familyMemberDto));
-            familyMember = familyMemberRepo.findFioByUuid(uuid)
-                    .orElseThrow(() -> new FamilyMemberNotFound("Такой человек ".concat(" не найден")));
-        } else familyMember = new FamilyMember();
-        if (familyMember.getFamilyMemberInfo() != null) {
-            familyMemberDto.setMemberInfo(familyMemberInfoService.getMemberInfo(familyMember));
-        }
-        System.out.println(familyMember);
-        return familyMemberMapper.entityToDto(familyMember);
+            FamilyMember familyMember = familyMemberRepo.findFioByUuid(uuid)
+                    .orElseThrow(() -> new FamilyMemberNotFound("Такой человек не найден"));
+            FamilyMemberDto dto = familyMemberMapper.entityToDto(familyMember);
+            if (familyMember.getFamilyMemberInfo() != null) {
+                dto.setMemberInfo(familyMemberInfoService.getMemberInfo(familyMember));
+            }
+            return dto;
+        } else throw new RuntimeException("Info not fully");
     }
 
     @Transactional
@@ -85,23 +81,24 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 || familyMemberDto.getMiddleName() == null
                 || familyMemberDto.getLastName() == null
                 || familyMemberDto.getBirthday() == null)
-            throw new UncorrectedInformation("info not fully from creat person in base");
+            throw new UncorrectedInformation("info not fully for creat person in base");
         FamilyMember familyMember = familyMemberMapper.dtoToEntity(familyMemberDto);
         familyMemberDto.setUuid(generateUUIDFromFio(familyMember));
         familyMember.setUuid(familyMemberDto.getUuid());
         Optional<FamilyMember> fm = familyMemberRepo.findFioByUuid(familyMemberDto.getUuid());
         if (fm.isPresent()) {
-            throw new Dublicate("Такой человек уже есть в базе. Если Вы хотите его отредактировать - воспользуйтесь Patch-методом. ID человека: " + (fm.get().getId()));
+            throw new Dublicate("Такой человек уже есть в базе. Если Вы хотите его отредактировать - воспользуйтесь Patch-методом. ID человека " + (fm.get().getId()));
         }
+        familyMember.setCreator((String) tokenService.getTokenUser().getClaims().get("sub"));
+        FamilyMemberUtils.selectCheckStatus(familyMember, tokenService.getTokenUser().getRoles());
         log.info("Первичная информация установлена");
+        familyMemberRepo.save(familyMember);
 
         extractExtensionOfFamilyMember(familyMemberDto, familyMember);
-        familyMember.setCreator((String) tokenService.getTokenUser().getClaims().get("sub"));
-        if (tokenService.getTokenUser().getRoles().contains(UserRoles.LINKED_USER.getNameSSO()))
-            familyMember.setCheckStatus(CheckStatus.CHECKED);
-        else familyMember.setCheckStatus(CheckStatus.UNCHECKED);
+
         familyMemberRepo.save(familyMember);
         addChangingToBase(familyMemberDto, familyMember);
+        if (familyMember.getChilds() != null) addChangesInParensInfo(familyMember.getChilds(), familyMember);
         return familyMemberMapper.entityToDto(familyMemberRepo.save(familyMember));
     }
 
@@ -118,6 +115,15 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     }
 
     @Transactional
+    public FamilyMemberDto linkFamilyMember(Long id) {
+        FamilyMember fm = familyMemberRepo.findById(id).orElseThrow(() -> new FamilyMemberNotFound("Что-то пошло не так. Запись исчезла во время распределенной транзакции"));
+        fm.setCheckStatus(CheckStatus.LINKED);
+        fm.setCreator((String) tokenService.getTokenUser().getClaims().get("sub"));
+        familyMemberRepo.save(fm);
+        return familyMemberMapper.entityToDto(fm);
+    }
+
+    @Transactional
     public FamilyMemberDto updateFamilyMember(FamilyMemberDto familyMemberDto) {
         log.info("--------ИЗМЕНЯЕМ ЧЕЛОВЕКА-------");
         Long dtoId = familyMemberDto.getId();
@@ -130,14 +136,13 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                     new FamilyMemberNotFound("Попытка изменить человека по UUID, которого нет в базе"));
         } else throw new ProblemWithId("Ни Id, ни UUID не указан для поиска/изменения человека");
 
-        if (fm.getCheckStatus() == CheckStatus.CHECKED
-                && !FamilyMemberUtils.checkRightsToEdit(fm, tokenService.getTokenUser()))
-            throw new UncorrectedInformation("У Вас нет прав для изменения");
+        if (!FamilyMemberUtils.checkRightsToEdit(fm, tokenService.getTokenUser()))
+            throw new RightsIsAbsent("У Вас нет прав для изменения");
         if (fm.getCheckStatus() == CheckStatus.MODERATE
                 && !FamilyMemberUtils.checkRightsToModerate(tokenService.getTokenUser()))
-            throw new UncorrectedInformation("Находится на модерации");
-        if (tokenService.getTokenUser().getRoles().contains(UserRoles.LINKED_USER.getNameSSO())
-                && fm.getCheckStatus() == CheckStatus.UNCHECKED) fm.setCheckStatus(CheckStatus.CHECKED);
+            throw new ModeratingContent("Находится на модерации");
+//        if (tokenService.getTokenUser().getRoles().contains(UserRoles.LINKED_USER.getNameSSO())
+//                && fm.getCheckStatus() == CheckStatus.UNCHECKED) fm.setCheckStatus(CheckStatus.CHECKED);
 
         Set<FamilyMember> currentChildrenOfFamilyMember = fm.getChilds();
         if (familyMemberDto.getFirstName() != null) fm.setFirstName(familyMemberDto.getFirstName());
@@ -155,10 +160,16 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         else if (familyMemberDto.getSex() != null && familyMemberDto.getSex() != fm.getSex()) {
             throw new UncorrectedInformation("Изменять пол человека, у которого в базе имеются подтвержденные дети, невозможно");
         }
+
         UUID freshUuid = generateUUIDFromFio(fm);
         Optional<FamilyMember> existFM = familyMemberRepo.findFioByUuid(freshUuid);
         if (existFM.isPresent() && !existFM.get().getId().equals(fm.getId()))
-            throw new Dublicate("Информация в результате изменения совпадает с существующим человеком в базе. Его ID: " + existFM.get().getId());
+            throw new Dublicate("Информация в результате изменения совпадает с существующим человеком в базе. Его ID " + existFM.get().getId());
+        else {
+            Optional<OldFio> existOldName = oldFioService.getFioRepo().findFioByUuid(freshUuid);
+            if (existOldName.isPresent() && !existOldName.get().getId().equals(fm.getId()))
+                throw new Dublicate("Информация в результате изменения совпадает с альтернативным именем человека в базе. Его ID " + existOldName.get().getMember().getId());
+        }
         familyMemberDto.setUuid(freshUuid);
         log.info("Первичная информация установлена");
 
@@ -180,6 +191,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         }
     }
 
+    @Transactional
     public void addChangesInParensInfo(Set<FamilyMember> setOfChilds, FamilyMember fm) {
 
         if (fm.getSex() == Sex.MALE) {
@@ -216,7 +228,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     public String removeFamilyMember(Long id) {
         Optional<FamilyMember> remFM = familyMemberRepo.findById(id);
         if (remFM.isEmpty())
-            throw new FamilyMemberNotFound("Человек с ID:".concat(String.valueOf(id)).concat(" не найден"));
+            throw new FamilyMemberNotFound("Человек с ID ".concat(String.valueOf(id)).concat(" не найден"));
         if (remFM.get().getSex() == Sex.MALE) {
             List<FamilyMember> link1 = familyMemberRepo.findAllByFather_Id(id);
             for (FamilyMember fm : link1

@@ -9,6 +9,7 @@ import lombok.*;
 @RequiredArgsConstructor
 @Setter
 @Getter
+@ToString
 public class InternDto {
     private Long id;
     private String description;

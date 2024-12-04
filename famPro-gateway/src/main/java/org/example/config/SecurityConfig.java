@@ -1,5 +1,6 @@
 package org.example.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,21 +17,29 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.logout.*;
 
 import java.net.URI;
+import java.net.http.HttpHeaders;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
+    @Value("${application.gate}")
+    private String gateURL;
+
+    @Value("${server.port}")
+    private String port;
+
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http, ServerLogoutSuccessHandler handler) {
 
         http
                 .authorizeExchange(auth -> auth
-                        .pathMatchers("/").permitAll()
+                        .pathMatchers("/","/token1").permitAll()
                         .anyExchange().authenticated())
                 .oauth2Login(withDefaults())
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()));
+
         http.csrf(ServerHttpSecurity.CsrfSpec::disable);
         http.logout(logout -> logout.logoutHandler(logoutHandler()).logoutSuccessHandler(handler));
 
@@ -40,7 +49,7 @@ public class SecurityConfig {
     @Bean
     ServerLogoutSuccessHandler oidcLogoutSuccessHandler(ReactiveClientRegistrationRepository clientRegistrationRepository) {
         OidcClientInitiatedServerLogoutSuccessHandler successHandler = new OidcClientInitiatedServerLogoutSuccessHandler(clientRegistrationRepository);
-        successHandler.setPostLogoutRedirectUri(URI.create("http://localhost:9898").toString());
+        successHandler.setPostLogoutRedirectUri(URI.create(gateURL+":"+port).toString());
         return successHandler;
     }
 
@@ -50,6 +59,7 @@ public class SecurityConfig {
 
     @Bean
     KeyResolver authUserKeyResolver() {
+
         return exchange -> ReactiveSecurityContextHolder.getContext()
                 .map(ctx -> ctx.getAuthentication()
                         .getPrincipal().toString());

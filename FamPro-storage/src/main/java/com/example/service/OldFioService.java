@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -41,7 +43,7 @@ public class OldFioService extends FioServiceImp<OldFio> {
                 oldFio.setSex(familyMember.getSex());
                 oldFio.setFullName(generateFioStringInfo(oldFio));
                 oldFio.setMember(familyMember);
-                enteringFio.add(oldFio);
+                if (fioRepo.findFioByUuid(oldFio.getUuid()).isEmpty()) enteringFio.add(oldFio);
             }
         }
         Set<OldFio> checkedOldFio = familyMember.getOtherNames();

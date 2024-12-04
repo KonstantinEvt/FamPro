@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URISyntaxException;
+
 @RestController
 @RequestMapping("/manage")
 @AllArgsConstructor
@@ -31,7 +33,7 @@ public class UserController {
     }
 
     @PostMapping("")
-    public void chooseLocalisation(@RequestBody String loc) {
+    public void chooseLocalisation(@RequestBody String loc) throws URISyntaxException {
         keyCloakService.chooseLocalisation(loc);
     }
 }

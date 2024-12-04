@@ -3,8 +3,8 @@ package com.example.service;
 import com.example.checks.CheckFamilyMember;
 import com.example.dtos.FamilyMemberDto;
 import com.example.feign.FamilyMemberClient;
-import com.example.transcripters.TranscriterHolder;
-import com.example.transcripters.TranscritFamilyMember;
+import com.example.transcriters.TranscriterHolder;
+import com.example.transcriters.TranscritFamilyMember;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,37 +13,47 @@ import org.springframework.stereotype.Service;
 public class FamilyMembersValidationService {
     private final FamilyMemberClient familyMemberClient;
     private final CheckFamilyMember checkFamilyMember;
-    private final TokenService tokenService;
     private final TranscriterHolder transcriterHolder;
     private final TranscritFamilyMember transcritFamilyMember;
 
     public FamilyMemberDto getFamilyMember(FamilyMemberDto familyMemberDto) {
-        transcriterHolder.setTranscriter(familyMemberDto.getLocalisation());
-        return transcritFamilyMember.to(familyMemberClient.getFamilyMember(transcritFamilyMember.from(checkFamilyMember.check(familyMemberDto))));
+        transcriterHolder.setTranscriter(familyMemberDto);
+        checkFamilyMember.check(familyMemberDto);
+        if (familyMemberDto.getFirstName() == null
+                || familyMemberDto.getMiddleName() == null
+                || familyMemberDto.getLastName() == null
+                || familyMemberDto.getBirthday() == null) throw new RuntimeException("Info not fully");
+        transcritFamilyMember.from(familyMemberDto);
+        FamilyMemberDto dto=familyMemberClient.getFamilyMember(familyMemberDto);
+        dto.setLocalisation(familyMemberDto.getLocalisation());
+        transcritFamilyMember.toGet(dto);
+        return dto;
     }
 
-    public FamilyMemberDto getFamilyMemberById(Long id) {
-        return familyMemberClient.getFamilyMemberById(id);
+    public FamilyMemberDto getFamilyMemberById(Long id,String localisation) {
+        FamilyMemberDto dto=familyMemberClient.getFamilyMemberById(id);
+        dto.setLocalisation(localisation);
+        transcriterHolder.setTranscriter(dto);
+        transcritFamilyMember.toGet(dto);
+        return dto;
 
     }
 
     public FamilyMemberDto addFamilyMember(FamilyMemberDto familyMemberDto) {
-        transcriterHolder.setTranscriter(familyMemberDto.getLocalisation());
-        System.out.println(familyMemberDto.getFirstName());
-        System.out.println(familyMemberDto.getMiddleName());
-        System.out.println(familyMemberDto.getLastName());
-        System.out.println(familyMemberDto.getBirthday());
-        return familyMemberClient.addFamilyMember(transcritFamilyMember.from(checkFamilyMember.check(familyMemberDto)));
+        transcriterHolder.setTranscriter(familyMemberDto);
+        checkFamilyMember.check(familyMemberDto);
+        transcritFamilyMember.from(familyMemberDto);
+        familyMemberClient.addFamilyMember(familyMemberDto);
+        return familyMemberDto;
 
     }
 
     public FamilyMemberDto editFamilyMember(FamilyMemberDto familyMemberDto) {
-        transcriterHolder.setTranscriter(familyMemberDto.getLocalisation());
-        System.out.println(familyMemberDto.getFirstName());
-        System.out.println(familyMemberDto.getMiddleName());
-        System.out.println(familyMemberDto.getLastName());
-        System.out.println(familyMemberDto.getBirthday());
-        return familyMemberClient.editFamilyMember(transcritFamilyMember.from(checkFamilyMember.check(familyMemberDto)));
+        transcriterHolder.setTranscriter(familyMemberDto);
+        checkFamilyMember.check(familyMemberDto);
+        transcritFamilyMember.from(familyMemberDto);
+        familyMemberClient.editFamilyMember(familyMemberDto);
+        return familyMemberDto;
 
     }
 }

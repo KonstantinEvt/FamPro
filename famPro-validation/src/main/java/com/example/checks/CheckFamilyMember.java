@@ -7,67 +7,62 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Date;
 import java.util.HashSet;
+import java.util.Set;
 
 @Component
 @AllArgsConstructor
 public class CheckFamilyMember {
     CommonWordChecks commonWordChecks;
 
-    public FamilyMemberDto check(FamilyMemberDto familyMemberDto) {
-        FioDto che = checkFio(familyMemberDto);
-        FamilyMemberDto resultFM = new FamilyMemberDto();
-        resultFM.setFirstName(che.getFirstName());
-        resultFM.setMiddleName(che.getMiddleName());
-        resultFM.setLastName(che.getLastName());
-        resultFM.setBirthday(che.getBirthday());
-        resultFM.setId(familyMemberDto.getId());
-        resultFM.setLocalisation(familyMemberDto.getLocalisation());
-        resultFM.setMemberInfo(familyMemberDto.getMemberInfo());
-        if (familyMemberDto.getSex() != null) resultFM.setSex(familyMemberDto.getSex());
-        if (familyMemberDto.getMotherFio() != null) resultFM.setMotherFio(checkFio(familyMemberDto.getMotherFio()));
-        if (familyMemberDto.getFatherFio() != null) resultFM.setFatherFio(checkFio(familyMemberDto.getFatherFio()));
+    public void check(FamilyMemberDto familyMemberDto) {
+        checkFio(familyMemberDto);
+        if (familyMemberDto.getMotherFio() != null) if (!checkFio(familyMemberDto.getMotherFio())) familyMemberDto.setMotherFio(null);
+        if (familyMemberDto.getFatherFio() != null) if (!checkFio(familyMemberDto.getFatherFio())) familyMemberDto.setFatherFio(null);
         if (familyMemberDto.getDeathday() != null) if (familyMemberDto.getBirthday() != null
-                && (familyMemberDto.getDeathday().after(familyMemberDto.getBirthday())))
-            resultFM.setDeathday(familyMemberDto.getDeathday());
+                && (familyMemberDto.getDeathday().before(familyMemberDto.getBirthday())))
+            familyMemberDto.setDeathday(null);
 // тут надо расписать Инфо мембера
-        if (familyMemberDto.getMemberInfo() != null) resultFM.setMemberInfo(familyMemberDto.getMemberInfo());
+
         if (familyMemberDto.getFioDtos() != null) {
-            resultFM.setFioDtos(new HashSet<>());
+            Set<FioDto> oldNames=new HashSet<>();
             for (FioDto fioDto :
                     familyMemberDto.getFioDtos())
-                resultFM.getFioDtos().add(checkFio(fioDto));
-
+                if (checkFio(fioDto)) oldNames.add(fioDto);
+            System.out.println(oldNames);
+            if (oldNames.isEmpty()) familyMemberDto.setFioDtos(null); else familyMemberDto.setFioDtos(oldNames);
         }
-        return resultFM;
     }
 
-    public FioDto checkFio(FioDto fioDto) {
-        FioDto resultFM = new FioDto();
+    public boolean checkFio(FioDto fioDto) {
+        boolean enable = false;
         if (fioDto.getFirstName() != null) {
-            resultFM.setFirstName(commonWordChecks.checkForBlanks(fioDto.getFirstName()));
-            if (resultFM.getFirstName() != null) {
-                commonWordChecks.checkForSwears(resultFM.getFirstName());
-                resultFM.setFirstName(resultFM.getFirstName().toLowerCase());
+            fioDto.setFirstName(commonWordChecks.checkForBlanks(fioDto.getFirstName()));
+            if (fioDto.getFirstName() != null) {
+                commonWordChecks.checkForSwears(fioDto.getFirstName());
+                fioDto.setFirstName(fioDto.getFirstName().toLowerCase());
+                enable = true;
             }
         }
         if (fioDto.getMiddleName() != null) {
-            resultFM.setMiddleName(commonWordChecks.checkForBlanks(fioDto.getMiddleName()));
-            if (resultFM.getMiddleName() != null) {
-                commonWordChecks.checkForSwears(resultFM.getMiddleName());
-                resultFM.setMiddleName(resultFM.getMiddleName().toLowerCase());
+            fioDto.setMiddleName(commonWordChecks.checkForBlanks(fioDto.getMiddleName()));
+            if (fioDto.getMiddleName() != null) {
+                commonWordChecks.checkForSwears(fioDto.getMiddleName());
+                fioDto.setMiddleName(fioDto.getMiddleName().toLowerCase());
+                enable = true;
             }
         }
         if (fioDto.getLastName() != null) {
-            resultFM.setLastName(commonWordChecks.checkForBlanks(fioDto.getLastName()));
-            if (resultFM.getLastName() != null) {
-                commonWordChecks.checkForSwears(resultFM.getLastName());
-                resultFM.setLastName(resultFM.getLastName().toLowerCase());
+            fioDto.setLastName(commonWordChecks.checkForBlanks(fioDto.getLastName()));
+            if (fioDto.getLastName() != null) {
+                commonWordChecks.checkForSwears(fioDto.getLastName());
+                fioDto.setLastName(fioDto.getLastName().toLowerCase());
+                enable = true;
             }
         }
-        resultFM.setBirthday(fioDto.getBirthday());
-        resultFM.setId(fioDto.getId());
-        return resultFM;
-
+        if (fioDto.getId()!=null) enable=true;
+        if (fioDto.getUuid()!=null) enable=true;
+        System.out.println(fioDto);
+        return  enable;
     }
 }
 

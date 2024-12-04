@@ -14,6 +14,7 @@ import java.util.Set;
 @Getter
 @Setter
 @SuperBuilder
+@ToString(callSuper = true)
 public class FamilyMemberDto extends FioDto implements Serializable {
     @Schema(description ="Идентификатор члена семьи")
     private Long id;

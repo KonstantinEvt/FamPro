@@ -66,7 +66,7 @@ public class EmailService extends InternServiceImp<Email> {
                 this.checkForCommunity(mainEmail, fmiFromBase.getEmails(), emailsFromBase);
             if (!mainEmail.getTechString().equals("uncorrected")) {
                 if (!mainEmail.getTechString().equals("COMMUNITY")) {
-                    mainEmail.setDescription("Основной Email");
+                    mainEmail.setDescription("Main Email");
                     mainEmail.setUuid(newFmi.getUuid());
                 }
                 mainEmail.setId(null);

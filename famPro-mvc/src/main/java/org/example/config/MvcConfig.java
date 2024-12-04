@@ -16,6 +16,7 @@ public class MvcConfig implements WebMvcConfigurer {
         registry.addViewController("/cabinet/edit").setViewName("Edit-user");
         registry.addViewController("/family_member/add").setViewName("CreateNewFamilyMember");
         registry.addViewController("/family_member/edit").setViewName("EditFamilyMember");
+        registry.addViewController("/rules").setViewName("RuRules");
     }
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

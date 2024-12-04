@@ -21,10 +21,16 @@ public class FamilyMemberExceptionHandler {
         return new ResponseEntity<>(familyMemberException, HttpStatus.NOT_ACCEPTABLE);
     }
     @ExceptionHandler
-    public ResponseEntity<FamilyMemberExceptionInfo> handleException(Exception exception) {
+    public ResponseEntity<String> handleException(Exception exception) {
         FamilyMemberExceptionInfo familyMemberException = new FamilyMemberExceptionInfo();
-        familyMemberException.setInfo(exception.getMessage());
-        return new ResponseEntity<>(familyMemberException, HttpStatus.BAD_REQUEST);
+        String[] ex=exception.getMessage().split(":");
+        String last=ex[ex.length-1].replace("\\","")
+                .replace(":","")
+                .replace("\"","")
+                .replace("]","")
+                .replace("}","");
+        familyMemberException.setInfo(last);
+        return new ResponseEntity<>(familyMemberException.getInfo(), HttpStatus.BAD_REQUEST);
     }
     @ExceptionHandler
     public ResponseEntity<FamilyMemberExceptionInfo> handleException(Dublicate dublicate) {

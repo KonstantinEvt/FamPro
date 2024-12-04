@@ -68,7 +68,7 @@ public class AddressService extends InternServiceImp<Address> {
                 this.checkForCommunity(mainAddress, fmiFromBase.getAddresses(), addressesFromBase);
             if (!mainAddress.getTechString().equals("uncorrected")) {
                 if (!mainAddress.getTechString().equals("COMMUNITY")) {
-                    mainAddress.setDescription("Основной адрес");
+                    mainAddress.setDescription("Main address");
                     mainAddress.setUuid(newFmi.getUuid());
                 }
                 mainAddress.setId(null);

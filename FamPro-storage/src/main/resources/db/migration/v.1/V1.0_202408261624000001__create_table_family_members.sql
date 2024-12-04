@@ -21,6 +21,6 @@ create table if not exists family_members
     check_status varchar(50)
         constraint family_members_check
             check ((check_status)::text = ANY
-                   ((ARRAY ['OTHER'::character varying, 'MODERATE'::character varying,'CHECKED'::character varying,'UNCHECKED'::character varying])::text[]))
+                   ((ARRAY ['OTHER'::character varying, 'MODERATE'::character varying,'LINKED'::character varying,'CHECKED'::character varying,'UNCHECKED'::character varying])::text[]))
 );
 CREATE INDEX uuid_fm ON family_members (uuid);

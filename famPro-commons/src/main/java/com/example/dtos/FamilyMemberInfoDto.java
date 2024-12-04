@@ -11,6 +11,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Setter
 @Getter
+@ToString
 public class FamilyMemberInfoDto {
 
     private Long id;

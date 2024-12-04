@@ -36,6 +36,9 @@
 </form>
 <br>
 <div style="font-size: larger; font-family: 'Times New Roman',serif">Result of search:</div>
+<span style="font-size: medium; font-family: 'Times New Roman',serif">Идентификатор в системе: </span>
+<span style="font-size: larger;font-family: bold,'Monotype Corsiva',serif" id="resultListId"></span>
+<br>
 <div style="font-size: medium; font-family: 'Times New Roman',serif">Полное имя</div>
 <span style="font-size: larger;font-family: bold,'Monotype Corsiva',serif" id="resultListFullName"></span>
 <br>
@@ -55,7 +58,7 @@
 <span  style="font-size: larger;font-family: bold,'Monotype Corsiva',serif" id="resultListAddress"></span>
 <br><br>
 <p><a th:href="@{/base}">Return to "Working with base"</a></p>
-<p><a th:href="@{/}">Return to Home Page</a></p>
+<p><a th:href="@{/cabinet/me}">Вернуться в кабинет</a></p>
 <script>
     async function findPerson() {
         const form = document.getElementById('findPerson');
@@ -74,6 +77,7 @@
             },
             body: jsonData,
         }).then(tokenUser => tokenUser.json()).then(familyMember => {
+            document.getElementById("resultListId").innerHTML = familyMember.id;
             document.getElementById("resultListFullName").innerHTML = familyMember.fullName;
             document.getElementById("resultListFather").innerHTML = familyMember.fatherInfo;
             document.getElementById("resultListMother").innerHTML = familyMember.motherInfo;

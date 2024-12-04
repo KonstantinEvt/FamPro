@@ -16,64 +16,66 @@
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
+<br>
 <form id="editFM">
+    <div style="font-size: larger;font-family: bold,'Monotype Corsiva',serif">Main info</div>
     <label for="idEdit">ID:</label>
     <input type="text" id="idEdit" name="idEdit">
     <br>
     <label for="firstNameAdd">FirstName:</label>
     <input type="text" id="firstNameAdd" name="firstNameAdd">
-    <br>
+    <span aria-valuetext="      ">          </span>>
     <label for="middleNameAdd">MiddleName:</label>
     <input type="text" id="middleNameAdd" name="middleNameAdd">
-    <br>
+    <span>          </span>>
     <label for="lastNameAdd">LastName:</label>
     <input type="text" id="lastNameAdd" name="lastNameAdd">
     <br>
     <label for="birthdayAdd">Birthday:</label>
     <input type="text" id="birthdayAdd" name="birthdayAdd">
-    <br>
+    <span aria-valuetext="      ">          </span>>
     <label for="deathDayAdd">Day of death:</label>
     <input type="text" id="deathDayAdd" name="deathDayAdd">
     <br>
-    <label for="genderAdd">Sex:</label>
-    <input type="text" id="genderAdd" name="genderAdd">
-    <br><br>
+    <label for="gender">Sex:</label>
+    <input type="text" id="gender" name="gender" value="MALE">
+    <br>
     <div style="font-size: larger;font-family: bold,'Monotype Corsiva',serif">Contact information</div>
     <label for="mainPhoneAdd">mainPhone:</label>
     <input type="text" id="mainPhoneAdd" name="mainPhoneAdd">
-    <br>
+    <span aria-valuetext="      ">          </span>>
     <label for="mainEmailAdd">mainEmail:</label>
     <input type="text" id="mainEmailAdd" name="mainEmailAdd">
     <br>
     <label for="mainAddressAdd">mainAddress:</label>
     <input type="text" id="mainAddressAdd" name="mainAddressAdd">
-    <br> <br>
+    <br>
     <div style="font-size: larger;font-family: bold,'Monotype Corsiva',serif">Mother info</div>
     <label for="motherIdEdit">motherId:</label>
     <input type="text" id="motherIdEdit" name="motherIdEdit">
     <br>
     <label for="motherFirstNameAdd">motherFirstNameAdd:</label>
     <input type="text" id="motherFirstNameAdd" name="motherFirstNameAdd">
-    <br>
+    <span aria-valuetext="      ">          </span>>
     <label for="motherMiddleNameAdd">motherMiddleName:</label>
     <input type="text" id="motherMiddleNameAdd" name="motherMiddleNameAdd">
-    <br>
+    <span aria-valuetext="      ">          </span>>
     <label for="motherLastNameAdd">motherLastName:</label>
     <input type="text" id="motherLastNameAdd" name="motherLastNameAdd">
     <br>
     <label for="motherBirthdayAdd">motherBirthday:</label>
     <input type="text" id="motherBirthdayAdd" name="motherBirthdayAdd">
-    <br> <br>
+    <br>
     <div style="font-size: larger;font-family: bold,'Monotype Corsiva',serif">Father info</div>
     <label for="fatherIdEdit">fatherId:</label>
     <input type="text" id="fatherIdEdit" name="fatherIdEdit">
     <br>
     <label for="fatherFirstNameAdd">fatherFirstName:</label>
     <input type="text" id="fatherFirstNameAdd" name="fatherFirstNameAdd">
-    <br>
+    <span aria-valuetext="      ">          </span>>
     <label for="fatherMiddleNameAdd">fatherMiddleName:</label>
     <input type="text" id="fatherMiddleNameAdd" name="fatherMiddleNameAdd">
-    <br>
+    <span aria-valuetext="      ">          </span>>
     <label for="fatherLastNameAdd">fatherLastName:</label>
     <input type="text" id="fatherLastNameAdd" name="fatherLastNameAdd">
     <br>
@@ -84,46 +86,48 @@
     <div style="font-size: larger;font-family: bold,'Monotype Corsiva',serif">Old Names</div>
     <label for="oldFirstNameAdd">oldFirstName:</label>
     <input type="text" id="oldFirstNameAdd" name="oldFirstNameAdd">
-    <br>
+    <span aria-valuetext="      ">          </span>>
     <label for="oldMiddleNameAdd">oldMiddleName:</label>
     <input type="text" id="oldMiddleNameAdd" name="oldMiddleNameAdd">
-    <br>
+    <span aria-valuetext="      ">          </span>>
     <label for="oldLastNameAdd">oldLastName:</label>
     <input type="text" id="oldLastNameAdd" name="oldLastNameAdd">
+    <br>
     <button type="button" onclick="creatPerson()">Edit Person</button>
     <br>
 </form>
 <br>
 <div style="font-size: larger; font-family: 'Times New Roman',serif">Result:</div>
 <span style="font-size: larger;font-family: bold,'Monotype Corsiva',serif" id="resultListEditFM"></span>
+<span style="font-size: larger;font-family: bold,'Monotype Corsiva',serif" id="resultListString"></span>
 <br><br>
 <p><a th:href="@{/base}">Return to "Working with base"</a></p>
-<p><a th:href="@{/}">Return to Home Page</a></p>
+<p><a th:href="@{/cabinet/me}">Вернуться в кабинет</a></p>
 <script>
     async function creatPerson() {
         const form = document.getElementById('editFM');
         let formData = {
-            id:form.elements.idEdit.value,
+            id: form.elements.idEdit.value,
             firstName: form.elements.firstNameAdd.value,
             middleName: form.elements.middleNameAdd.value,
             lastName: form.elements.lastNameAdd.value,
             birthday: form.elements.birthdayAdd.value,
             deathday: form.elements.deathDayAdd.value,
-            sex: form.elements.genderAdd.value,
+            sex: form.elements.gender.value,
             memberInfo: {
                 mainAddress: form.elements.mainAddressAdd.value,
                 mainPhone: form.elements.mainPhoneAdd.value,
                 mainEmail: form.elements.mainEmailAdd.value
             },
             motherFio: {
-                id:form.elements.motherIdEdit.value,
+                id: form.elements.motherIdEdit.value,
                 firstName: form.elements.motherFirstNameAdd.value,
                 middleName: form.elements.motherMiddleNameAdd.value,
                 lastName: form.elements.motherLastNameAdd.value,
                 birthday: form.elements.motherBirthdayAdd.value
             },
             fatherFio: {
-                id:form.elements.fatherIdEdit.value,
+                id: form.elements.fatherIdEdit.value,
                 firstName: form.elements.fatherFirstNameAdd.value,
                 middleName: form.elements.fatherMiddleNameAdd.value,
                 lastName: form.elements.fatherLastNameAdd.value,
@@ -136,16 +140,15 @@
             }]
         };
         const jsonData = JSON.stringify(formData);
-        await fetch("/base/family_member/edit", {
+         fetch("/base/family_member/edit", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: jsonData,
-        }).then(status => {
-            document.getElementById("resultListEditFM").innerHTML = status.statusText;
-        });
-
+        }).then(async status => {
+             document.getElementById("resultListEditFM").innerHTML = await status.text();
+         });
     }
 </script>
 </body>
