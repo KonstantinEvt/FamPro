@@ -2,7 +2,6 @@ package com.example.entity;
 
 
 import com.example.enums.CheckStatus;
-import com.example.enums.Sex;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -11,9 +10,9 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 
 @Entity
 @RequiredArgsConstructor
@@ -88,11 +87,24 @@ public class FamilyMember extends Fio {
     @ManyToMany(mappedBy = "children")
     private Set<Family> familyWhereChild;
 
-    @Column(name = "Death_Day")
+    @Column(name = "death_day")
     private Date deathday;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinColumn(name = "burial_id")
+    private PlaceBurial burial;
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinColumn(name = "birth_id")
+    private PlaceBirth birth;
 
     @Column(name = "creator")
     private String creator;
+
+    @Column(name = "create_time")
+    private Timestamp createTime;
+
+    @Column(name = "prime_photo")
+    private boolean primePhoto;
 
     @Override
     public boolean equals(Object o) {

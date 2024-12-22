@@ -24,6 +24,8 @@ public interface BaseClient {
 
     @PostMapping("/validation/family_member/edit")
     FamilyMemberDto editFamilyMember(@RequestBody FamilyMemberDto familyMemberDto);
+
+
     @Component
     class FamilyMemberFallbackFactory implements FallbackFactory<FallFamilyMember> {
 

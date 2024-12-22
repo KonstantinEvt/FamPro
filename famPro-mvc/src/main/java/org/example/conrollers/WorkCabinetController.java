@@ -10,7 +10,7 @@ import org.example.models.OnlineUserHolder;
 import org.example.models.SimpleUserInfo;
 import org.example.services.BaseService;
 import org.example.services.TokenService;
-import org.example.texts.DescriptionHolder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -18,7 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.servlet.view.RedirectView;
 
 
 @Controller
@@ -28,17 +28,19 @@ public class WorkCabinetController {
     private TokenService tokenService;
     private OnlineUserHolder onlineUserHolder;
     private final BaseService baseService;
-    private WebClient webClient;
+//    private WebClient webClient;
 
-    @GetMapping("/me")
+    @GetMapping("/page")
     public String getWelcome(ModelMap model) {
         SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
         model.addAttribute("nickname", simpleUserInfo.getNickName());
         model.addAttribute("roles", simpleUserInfo.getRole());
         model.addAttribute("name", simpleUserInfo.getFullName());
-        if (simpleUserInfo.getLocalisation().equals("loc=ru"))
+        System.out.println(simpleUserInfo);
+        if (simpleUserInfo.getLocalisation().equals("ru"))
             return "WelcomeRu";
-        else return "Welcome";
+        else
+        return "Welcome";
     }
 
     @GetMapping("/rules")
@@ -46,22 +48,15 @@ public class WorkCabinetController {
         SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
         model.addAttribute("nickname", simpleUserInfo.getNickName());
         model.addAttribute("roles", simpleUserInfo.getRole());
-        if (simpleUserInfo.getLocalisation().equals("loc=ru"))
+        if (simpleUserInfo.getLocalisation().equals("ru"))
             return "RuRules";
         else return "Rules";
     }
 
-    @GetMapping("/create")
-    public String createUser() {
-
-        return "Create-user";
-    }
-
-    @PreAuthorize("hasAuthority('Admin')")
     @PostMapping("/create")
     public String createUser(@RequestBody TokenUser tokenUser) {
         tokenService.addUser(tokenUser);
-        return "Welcome";
+        return "WelcomeRu";
     }
 
     @GetMapping("/edit")
@@ -82,7 +77,7 @@ public class WorkCabinetController {
     @GetMapping("/link/{id}")
     public void linkingUser(@PathVariable("id") Long id) {
         System.out.println("lets go");
-        FamilyMemberDto dto = baseService.getFamilyMemberById(id, "loc=en");
+        FamilyMemberDto dto = baseService.getFamilyMemberById(id, "en");
         if (dto.getCheckStatus() == CheckStatus.LINKED)
             throw new RightsIsAbsent("Запись уже связана. Если Вы претендуете на нее - обратитесь к администрации");
         else if (dto.getCheckStatus() == CheckStatus.MODERATE)
@@ -107,24 +102,13 @@ public class WorkCabinetController {
 //        return tokenId;
 //    }
 
-    @PostMapping("/localisation")
-    public String chooseLocalisation(@RequestBody String localisation, ModelMap model) {
+    @GetMapping("/localisation")
+    public RedirectView chooseLocalisation(@RequestParam(value = "loc") String loc,
+                                           @Value("${application.gate.url}") String gateway) {
+
         SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
-        tokenService.chooseLocalisation(localisation);
-        simpleUserInfo.setLocalisation(localisation);
-        model.addAttribute("nickname", simpleUserInfo.getNickName());
-        model.addAttribute("roles", simpleUserInfo.getRole());
-        model.addAttribute("name", simpleUserInfo.getFullName());
-//        webClient
-//                .get()
-//                .uri("http://localhost:9898/refresh")
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .bodyValue(tokenUser)
-//                .retrieve()
-//                .toBodilessEntity()
-//                .block();
-        if (simpleUserInfo.getLocalisation().equals("loc=ru"))
-            return "WelcomeRu";
-        else return "Welcome";
+        tokenService.chooseLocalisation(loc);
+        simpleUserInfo.setLocalisation(loc);
+        return new RedirectView(gateway+"/cabinet/page");
     }
 }

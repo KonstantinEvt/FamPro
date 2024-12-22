@@ -7,7 +7,17 @@ create table if not exists phones
             check ((assignment)::text = ANY
                    ((ARRAY ['WORK'::character varying, 'HOME'::character varying, 'MOBILE'::character varying])::text[])),
     description  varchar(255),
-
+    secret_level varchar(255)
+        constraint phone_secret
+            check ((secret_level)::text = ANY
+                   ((ARRAY [
+                       'OPEN'::character varying,
+                       'CONFIDENTIAL'::character varying,
+                       'FAMILY'::character varying,
+                       'BLOOD_ONE'::character varying,
+                       'BLOOD_TWO'::character varying,
+                       'BLOOD_THREE'::character varying
+                       ])::text[])),
     status       varchar(255)
         constraint phones_status_check
             check ((status)::text = ANY

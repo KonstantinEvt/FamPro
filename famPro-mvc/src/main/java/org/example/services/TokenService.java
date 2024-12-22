@@ -1,5 +1,6 @@
 package org.example.services;
 
+import com.example.dtos.Directive;
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.TokenUser;
 import com.example.enums.CheckStatus;
@@ -15,16 +16,15 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@SuppressWarnings("unchecked")
 public class TokenService {
-    private WebClient webClient;
+//    private WebClient webClient;
     private KeyCloakManageClient keyCloakManageClient;
-    private LinkedList<TokenUser> tokenUserResource;
 
     public TokenUser getTokenUser() {
         SecurityContext context = SecurityContextHolder.getContext();
@@ -33,7 +33,9 @@ public class TokenService {
         TokenUser tokenUser = new TokenUser();
         tokenUser.setClaims(jwt.getClaims());
         tokenUser.setUsername((String) jwt.getClaims().get("preferred_username"));
-        Set<String> roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+        Map<String,Object> realmAccess=(Map<String, Object>) jwt.getClaims().getOrDefault("realm_access", Map.of());
+        Set<String> roles = new HashSet<>(((ArrayList<String>) realmAccess.getOrDefault(("roles"), new ArrayList<String>())));
+        System.out.println(roles);
         tokenUser.setRoles(roles);
         return tokenUser;
     }
@@ -52,7 +54,6 @@ public class TokenService {
 
     public void addUser(TokenUser tokenUser) {
         keyCloakManageClient.addUser(tokenUser);
-        tokenUserResource.add(tokenUser);
     }
 
     public void linkUser(FamilyMemberDto dto) {

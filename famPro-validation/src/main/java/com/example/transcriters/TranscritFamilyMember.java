@@ -15,8 +15,8 @@ public class TranscritFamilyMember {
 
         if (familyMemberDto.getMotherFio() != null)
             transcritToFio(familyMemberDto.getMotherFio());
-        if (familyMemberDto.getFatherFio() != null) transcritToFio(familyMemberDto.getFatherFio());
-
+        if (familyMemberDto.getFatherFio() != null)
+            transcritToFio(familyMemberDto.getFatherFio());
         if (familyMemberDto.getFioDtos() != null) {
             for (FioDto fioDto :
                     familyMemberDto.getFioDtos())

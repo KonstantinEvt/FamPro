@@ -1,5 +1,6 @@
 package com.example.entity;
 
+import com.example.enums.SecretLevel;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,6 +31,10 @@ public class FamilyMemberInfo {
     @Column(name = "main_email")
     private String mainEmail;
 
+    @Column(name = "secret_main_email")
+    @Enumerated(EnumType.STRING)
+    private SecretLevel secretLevelEmail;
+
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "emails_Of_Family_Member",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
@@ -38,6 +43,10 @@ public class FamilyMemberInfo {
 
     @Column(name = "main_phone")
     private String mainPhone;
+
+    @Column(name = "secret_main_phone")
+    @Enumerated(EnumType.STRING)
+    private SecretLevel secretLevelPhone;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "phones_Of_Family_Member",
@@ -48,6 +57,11 @@ public class FamilyMemberInfo {
 
     @Column(name = "main_address")
     private String mainAddress;
+
+    @Column(name = "secret_main_address")
+    @Enumerated(EnumType.STRING)
+    private SecretLevel secretLevelAddress;
+
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "addresses_Of_Family_Member",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),

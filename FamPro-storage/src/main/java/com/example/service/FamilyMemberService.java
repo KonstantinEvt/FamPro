@@ -6,7 +6,6 @@ import com.example.entity.FamilyMember;
 import com.example.entity.OldFio;
 import com.example.enums.CheckStatus;
 import com.example.enums.Sex;
-import com.example.enums.UserRoles;
 import com.example.exceptions.*;
 import com.example.mappers.FamilyMemberMapper;
 import com.example.mappers.FioMapper;
@@ -16,6 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -90,6 +92,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             throw new Dublicate("Такой человек уже есть в базе. Если Вы хотите его отредактировать - воспользуйтесь Patch-методом. ID человека " + (fm.get().getId()));
         }
         familyMember.setCreator((String) tokenService.getTokenUser().getClaims().get("sub"));
+        familyMember.setCreateTime(new Timestamp(System.currentTimeMillis()));
         FamilyMemberUtils.selectCheckStatus(familyMember, tokenService.getTokenUser().getRoles());
         log.info("Первичная информация установлена");
         familyMemberRepo.save(familyMember);

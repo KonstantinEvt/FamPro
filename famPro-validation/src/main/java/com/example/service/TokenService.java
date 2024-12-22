@@ -36,7 +36,7 @@ public class TokenService {
         return "you are haven't role";
     }
     public String getLocalisation(TokenUser tokenUser){
-        if (tokenUser.getClaims()!=null&&tokenUser.getClaims().get("localisation").equals("loc=ru")) return "ru";
+        if (tokenUser.getClaims()!=null&&tokenUser.getClaims().get("localisation").equals("ru")) return "ru";
         else return "en";
     }
 }

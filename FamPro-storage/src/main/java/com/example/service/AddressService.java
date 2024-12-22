@@ -55,7 +55,7 @@ public class AddressService extends InternServiceImp<Address> {
         }
         if (newFmi.getMainAddress() == null && fmiFromBase.getMainAddress() != null) {
             newFmi.setMainAddress(fmiFromBase.getMainAddress());
-            log.info("Основной адрес взят из старой записи, т.к. валидной информацаии об основном адресе в новой записи нет");
+            log.info("Основной адрес взят из старой записи, т.к. валидной информации об основном адресе в новой записи нет");
         }
 
         Set<Address> addressesFromBase;
@@ -77,13 +77,13 @@ public class AddressService extends InternServiceImp<Address> {
         }
         newFmi.setAddresses(new HashSet<>());
         for (Address address : resultList.values()) newFmi.getAddresses().add(address);
-
+if (newFmi.getMainAddress() == null && !newFmi.getAddresses().isEmpty()) newFmi.setMainAddress(newFmi.getAddresses().stream().findAny().get().getInternName());
 
         log.info("Адрес(ы) установлен(ы)");
     }
 
     public String resolveFullAddress(Address address) {
-        return String.join(", ", address.getCountry(), address.getCity(), address.getStreet(), address.getHouse(), address.getBuilding(), address.getFlat());
+        return String.join(", ", address.getCountry(), address.getRegion(), address.getCity(), address.getStreet(), address.getHouse(), address.getBuilding(), address.getFlat());
 
     }
 }

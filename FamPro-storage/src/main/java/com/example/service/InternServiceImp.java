@@ -4,6 +4,7 @@ import com.example.entity.FamilyMemberInfo;
 import com.example.entity.InternEntity;
 import com.example.enums.Assignment;
 import com.example.enums.CheckStatus;
+import com.example.enums.SecretLevel;
 import com.example.enums.Status;
 import com.example.repository.InternRepo;
 import lombok.AllArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Getter
 @Setter
-public class InternServiceImp<T extends InternEntity> implements InternService<T> {
+public class InternServiceImp<T extends InternEntity> implements PlaceService<T> {
     private InternRepo<T> internRepo;
 
     @Override
@@ -26,6 +27,7 @@ public class InternServiceImp<T extends InternEntity> implements InternService<T
         if (t.getStatus() == null) t.setStatus(Status.ON_LINK);
         if (t.getDescription() == null) t.setDescription("Info is absent");
         if (t.getCheckStatus() == null) t.setCheckStatus(CheckStatus.UNCHECKED);
+        if (t.getSecretLevel() == null) t.setSecretLevel(SecretLevel.OPEN);
     }
 
     @Override

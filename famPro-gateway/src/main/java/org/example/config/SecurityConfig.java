@@ -35,7 +35,9 @@ public class SecurityConfig {
 
         http
                 .authorizeExchange(auth -> auth
-                        .pathMatchers("/","/token1").permitAll()
+                        .pathMatchers("/").permitAll()
+                        .pathMatchers("/image/**").permitAll()
+                        .pathMatchers("/resources/**").permitAll()
                         .anyExchange().authenticated())
                 .oauth2Login(withDefaults())
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()));
@@ -64,5 +66,6 @@ public class SecurityConfig {
                 .map(ctx -> ctx.getAuthentication()
                         .getPrincipal().toString());
     }
+
 }
 

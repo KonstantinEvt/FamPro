@@ -12,9 +12,9 @@ import java.util.Objects;
 @Setter
 @Getter
 @SuperBuilder
-@ToString
+@ToString(callSuper = true)
 @Table(name = "addresses")
-public class Address extends InternEntity{
+public class Address extends Place{
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqAddress")
     @SequenceGenerator(
@@ -27,16 +27,6 @@ public class Address extends InternEntity{
     @Column(name = "intern_name", length = 500)
     private String internName;
     /**
-     * Название улицы
-     */
-    @Column(name = "street", length = 50)
-    private String street;
-    /**
-     * Номер дома
-     */
-    @Column(name = "house", length = 50)
-    private String house;
-    /**
      * Почтовый индекс
      */
     @Column(name = "postcode", length = 50)
@@ -47,25 +37,16 @@ public class Address extends InternEntity{
     @Column(name = "building", length = 50)
     private String building;
     /**
-     * Город
+     * Номер дома
      */
-    @Column(name = "city", length = 50)
-    private String city;
-    /**
-     * Регион или область
-     */
-    @Column(name = "region", length = 50)
-    private String region;
-    /**
-     * Страна
-     */
-    @Column(name = "country", length = 50)
-    private String country;
-    /**
+    @Column(name = "house", length = 50)
+    private String house;
+   /**
      * Номер квартиры
      */
     @Column(name = "flat", length = 50)
     private String flat;
+
 
     @Override
     public boolean equals(Object o) {

@@ -34,17 +34,25 @@ public class FamilyMembersValidationService {
         FamilyMemberDto dto=familyMemberClient.getFamilyMemberById(id);
         dto.setLocalisation(localisation);
         transcriterHolder.setTranscriter(dto);
+        transcritFamilyMember.to(dto);
         transcritFamilyMember.toGet(dto);
+        System.out.println(dto);
         return dto;
 
     }
 
     public FamilyMemberDto addFamilyMember(FamilyMemberDto familyMemberDto) {
+        System.out.println("к нам пришел:" + familyMemberDto);
         transcriterHolder.setTranscriter(familyMemberDto);
+        System.out.println("переводчик установлен");
         checkFamilyMember.check(familyMemberDto);
+        System.out.println("проверка пройдена");
         transcritFamilyMember.from(familyMemberDto);
-        familyMemberClient.addFamilyMember(familyMemberDto);
-        return familyMemberDto;
+        System.out.println("переводчик выполнил работу");
+        FamilyMemberDto dto=familyMemberClient.addFamilyMember(familyMemberDto);
+        System.out.println("пришел ответ с базы");
+        System.out.println(dto);
+        return dto;
 
     }
 

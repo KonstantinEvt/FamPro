@@ -2,6 +2,7 @@ package com.example.entity;
 
 import com.example.enums.Assignment;
 import com.example.enums.CheckStatus;
+import com.example.enums.SecretLevel;
 import com.example.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,5 +31,6 @@ public class InternEntity {
     private UUID uuid;
     @Column(name="tech_string")
     private String techString;
-
+    @Enumerated(EnumType.STRING)
+    private SecretLevel secretLevel;
 }

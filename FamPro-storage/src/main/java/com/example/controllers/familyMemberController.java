@@ -25,7 +25,9 @@ public class FamilyMemberController {
 
     @PostMapping("/database/")
     public ResponseEntity<FamilyMemberDto> addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
-        return ResponseEntity.ok(familyMemberService.addFamilyMember(familyMemberDto));
+        FamilyMemberDto dto=familyMemberService.addFamilyMember(familyMemberDto);
+        System.out.println(dto);
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/database/all")

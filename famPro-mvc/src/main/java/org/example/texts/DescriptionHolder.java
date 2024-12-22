@@ -9,7 +9,7 @@ public class DescriptionHolder {
     SimpleUserInfo simpleUserInfo;
 
     public void setDescriptionHolder() {
-        if (simpleUserInfo.getLocalisation().equals("loc=ru")) descriptions = new RusDescriptions();
+        if (simpleUserInfo.getLocalisation().equals("ru")) descriptions = new RusDescriptions();
         else descriptions = new EnDescriptions();
     }
 }

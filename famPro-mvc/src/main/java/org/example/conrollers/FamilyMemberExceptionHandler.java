@@ -1,13 +1,19 @@
 package org.example.conrollers;
 
+import com.example.dtos.Directive;
 import com.example.exceptions.*;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.util.LinkedList;
+
 @ControllerAdvice
+@AllArgsConstructor
 public class FamilyMemberExceptionHandler {
+    private LinkedList<Directive> directives;
     @ExceptionHandler
     public ResponseEntity<FamilyMemberExceptionInfo> handleException(FamilyMemberNotFound familyMemberNotFound) {
         FamilyMemberExceptionInfo familyMemberExceptionInfo = new FamilyMemberExceptionInfo();

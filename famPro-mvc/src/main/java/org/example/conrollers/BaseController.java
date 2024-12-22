@@ -33,9 +33,9 @@ public class BaseController {
 
     @ResponseBody
     @PostMapping("/family_member/{id}")
-    public FamilyMemberDto getFamilyMemberById(@PathVariable("id") Long id) {
+    public ResponseEntity<FamilyMemberDto> getFamilyMemberById(@PathVariable("id") Long id) {
         SimpleUserInfo simpleUserInfo=onlineUserHolder.getSimpleUser();
-        return baseService.getFamilyMemberById(id, simpleUserInfo.getLocalisation());
+        return ResponseEntity.status(200).header("resultFindStatus","Person is found").body(baseService.getFamilyMemberById(id, simpleUserInfo.getLocalisation()));
     }
 
     @ResponseBody

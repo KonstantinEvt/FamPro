@@ -1,12 +1,8 @@
 package org.example.process;
 
-import com.example.dtos.TokenUser;
+import com.example.dtos.Directive;
 import lombok.AllArgsConstructor;
-import org.example.models.OnlineUserHolder;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.Role;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
@@ -16,15 +12,15 @@ import java.util.function.Supplier;
 
 @Component
 @AllArgsConstructor
-public class SendProcess implements Supplier<Message<TokenUser>> {
-    private final LinkedList<TokenUser> tokenUserResource;
+public class SendProcess implements Supplier<Message<Directive>> {
+    private final LinkedList<Directive> directives;
 
     @Override
-    public Message<TokenUser> get() {
-        if (!tokenUserResource.isEmpty()) {
+    public Message<Directive> get() {
+        if (!directives.isEmpty()) {
             System.out.println("tyt0");
-            System.out.println(tokenUserResource.peek());
-            return MessageBuilder.withPayload(Objects.requireNonNull(tokenUserResource.poll())).build();
+            System.out.println(directives.peek());
+            return MessageBuilder.withPayload(Objects.requireNonNull(directives.poll())).build();
         }
         System.out.println("tyt1");
         return null;
