@@ -25,12 +25,12 @@ function getPersonFromBase(){
                 <div> Фото</div>
                 <div id="resultPrimePhoto" style="margin-bottom:10px; font-size: larger; text-align: center; color: black;font-family: 'Times New Roman',serif"></div>
                 <div>Полное имя</div>
-                <div style="margin-bottom:10px; font-size: larger; text-align: left; color: black; font-family: 'Times New Roman',serif" id="resultListFullName"><br></div>
+                <div style="margin-bottom:10px; font-size: larger; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListFullName"><br></div>
                 <div>Mother info:</div>
-                <div style="margin-bottom:10px; font-size: larger; text-align: left; color: black; font-family: 'Times New Roman',serif" id="resultListMother"><br></div>
+                <div style="margin-bottom:10px; font-size: larger; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListMother"><br></div>
             
                 <div>Father info:</div>
-                <div style="margin-bottom:10px; font-size: larger; text-align: left; color: black;font-family: 'Times New Roman',serif" id="resultListFather"><br></div>
+                <div style="margin-bottom:10px; font-size: larger; text-align: center; color: black;font-family: 'Times New Roman',serif" id="resultListFather"><br></div>
                
                 <div>Phone:</div>
                 <div style="margin-bottom:10px; font-size: larger; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListPhone"><br></div>
@@ -39,7 +39,7 @@ function getPersonFromBase(){
                 <div style="margin-bottom:10px; font-size: larger; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListEmail"><br></div>
                 
                 <div>Address:</div>
-                <div style="margin-bottom:10px; font-size: larger; text-align: center; color: black; font-family: ,'Times New Roman',serif" id="resultListAddress"><br></div>
+                <div style="margin-bottom:10px; font-size: larger; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListAddress"><br></div>
                                 
             </div></em>
     `;
