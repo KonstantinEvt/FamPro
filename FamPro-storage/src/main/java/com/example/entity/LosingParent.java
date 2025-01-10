@@ -13,7 +13,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
 @SuperBuilder
 @Table(name = "losing_parents")
 public class LosingParent extends Fio {

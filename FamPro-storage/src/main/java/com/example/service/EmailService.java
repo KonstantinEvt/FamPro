@@ -45,7 +45,7 @@ public class EmailService extends InternServiceImp<Email> {
             for (Email email : newFmi.getEmails()) {
                 check(email);
                 if (!email.getTechString().equals("uncorrected")) {
-                    email.setUuid(newFmi.getUuid());
+//                    email.setUuid(newFmi.getUuid());
                     namesEmails.add(email.getInternName());
                     if (email.getId() != null) email.setId(null);
                 }
@@ -67,14 +67,17 @@ public class EmailService extends InternServiceImp<Email> {
             if (!mainEmail.getTechString().equals("uncorrected")) {
                 if (!mainEmail.getTechString().equals("COMMUNITY")) {
                     mainEmail.setDescription("Main Email");
-                    mainEmail.setUuid(newFmi.getUuid());
+//                    mainEmail.setUuid(newFmi.getUuid());
                 }
                 mainEmail.setId(null);
                 resultList.put(mainEmail.getInternName(), mainEmail);
             }
         }
         newFmi.setEmails(new HashSet<>());
-        for (Email email : resultList.values()) newFmi.getEmails().add(email);
+        for (Email email : resultList.values()) {
+            if (!email.getTechString().equals("COMMUNITY")) email.setUuid(newFmi.getUuid()); else email.setUuid(null);
+            newFmi.getEmails().add(email);
+        }
         log.info("Email(s) установлен(ы)");
     }
 }

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Objects;
+
 @Entity
 @RequiredArgsConstructor
 @AllArgsConstructor
@@ -44,4 +46,16 @@ public class PlaceBurial extends Place{
      */
     @Column(name = "grave", length = 50)
     private String grave;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PlaceBurial address = (PlaceBurial) o;
+        return Objects.equals(id, address.id) && Objects.equals(internName, address.internName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

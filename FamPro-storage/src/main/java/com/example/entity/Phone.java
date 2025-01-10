@@ -11,7 +11,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @Setter
 @Getter
-@ToString
+@ToString(callSuper = true)
 @SuperBuilder
 @Table(name = "phones")
 public class Phone  extends InternEntity{

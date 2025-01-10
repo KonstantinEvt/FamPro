@@ -45,7 +45,7 @@ public class PhoneService extends InternServiceImp<Phone> {
             for (Phone phone : newFmi.getPhones()) {
                 check(phone);
                 if (!phone.getTechString().equals("uncorrected")) {
-                    phone.setUuid(newFmi.getUuid());
+//                    phone.setUuid(newFmi.getUuid());
                     namesPhones.add(phone.getInternName());
                     if (phone.getId() != null) phone.setId(null);
                 }
@@ -74,7 +74,11 @@ public class PhoneService extends InternServiceImp<Phone> {
             }
         }
         newFmi.setPhones(new HashSet<>());
-        for (Phone phone : resultList.values()) newFmi.getPhones().add(phone);
+        for (Phone phone : resultList.values()) {
+            if (!phone.getTechString().equals("COMMUNITY")) phone.setUuid(newFmi.getUuid());
+            else phone.setUuid(null);
+            newFmi.getPhones().add(phone);
+        }
         log.info("Телефон(ы) установлен(ы)");
     }
 }

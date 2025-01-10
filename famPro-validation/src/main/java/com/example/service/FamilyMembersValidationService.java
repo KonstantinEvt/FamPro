@@ -13,29 +13,31 @@ import org.springframework.stereotype.Service;
 public class FamilyMembersValidationService {
     private final FamilyMemberClient familyMemberClient;
     private final CheckFamilyMember checkFamilyMember;
-    private final TranscriterHolder transcriterHolder;
     private final TranscritFamilyMember transcritFamilyMember;
+    private final TokenService tokenService;
 
     public FamilyMemberDto getFamilyMember(FamilyMemberDto familyMemberDto) {
+        TranscriterHolder transcriterHolder=new TranscriterHolder(tokenService.getTokenUser());
         transcriterHolder.setTranscriter(familyMemberDto);
-        checkFamilyMember.check(familyMemberDto);
+        checkFamilyMember.check(transcriterHolder, familyMemberDto);
         if (familyMemberDto.getFirstName() == null
                 || familyMemberDto.getMiddleName() == null
                 || familyMemberDto.getLastName() == null
                 || familyMemberDto.getBirthday() == null) throw new RuntimeException("Info not fully");
-        transcritFamilyMember.from(familyMemberDto);
+        transcritFamilyMember.from(transcriterHolder,familyMemberDto);
         FamilyMemberDto dto=familyMemberClient.getFamilyMember(familyMemberDto);
         dto.setLocalisation(familyMemberDto.getLocalisation());
-        transcritFamilyMember.toGet(dto);
+        transcritFamilyMember.toGet(transcriterHolder,dto);
         return dto;
     }
 
     public FamilyMemberDto getFamilyMemberById(Long id,String localisation) {
         FamilyMemberDto dto=familyMemberClient.getFamilyMemberById(id);
         dto.setLocalisation(localisation);
+        TranscriterHolder transcriterHolder=new TranscriterHolder(tokenService.getTokenUser());
         transcriterHolder.setTranscriter(dto);
-        transcritFamilyMember.to(dto);
-        transcritFamilyMember.toGet(dto);
+        transcritFamilyMember.to(transcriterHolder,dto);
+        transcritFamilyMember.toGet(transcriterHolder,dto);
         System.out.println(dto);
         return dto;
 
@@ -43,11 +45,12 @@ public class FamilyMembersValidationService {
 
     public FamilyMemberDto addFamilyMember(FamilyMemberDto familyMemberDto) {
         System.out.println("к нам пришел:" + familyMemberDto);
+        TranscriterHolder transcriterHolder=new TranscriterHolder(tokenService.getTokenUser());
         transcriterHolder.setTranscriter(familyMemberDto);
         System.out.println("переводчик установлен");
-        checkFamilyMember.check(familyMemberDto);
+        checkFamilyMember.check(transcriterHolder, familyMemberDto);
         System.out.println("проверка пройдена");
-        transcritFamilyMember.from(familyMemberDto);
+        transcritFamilyMember.from(transcriterHolder,familyMemberDto);
         System.out.println("переводчик выполнил работу");
         FamilyMemberDto dto=familyMemberClient.addFamilyMember(familyMemberDto);
         System.out.println("пришел ответ с базы");
@@ -57,9 +60,10 @@ public class FamilyMembersValidationService {
     }
 
     public FamilyMemberDto editFamilyMember(FamilyMemberDto familyMemberDto) {
+        TranscriterHolder transcriterHolder=new TranscriterHolder(tokenService.getTokenUser());
         transcriterHolder.setTranscriter(familyMemberDto);
-        checkFamilyMember.check(familyMemberDto);
-        transcritFamilyMember.from(familyMemberDto);
+        checkFamilyMember.check(transcriterHolder,familyMemberDto);
+        transcritFamilyMember.from(transcriterHolder, familyMemberDto);
         familyMemberClient.editFamilyMember(familyMemberDto);
         return familyMemberDto;
 

@@ -12,8 +12,9 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 @Cacheable
 @Table(name = "old_fio")
 public class OldFio extends Fio {
@@ -31,16 +32,5 @@ public class OldFio extends Fio {
     @Column(name = "check_status")
     private CheckStatus checkStatus;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        OldFio oldFio = (OldFio) o;
-        return Objects.equals(id, oldFio.id) && Objects.equals(member, oldFio.member);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, member);
-    }
 }

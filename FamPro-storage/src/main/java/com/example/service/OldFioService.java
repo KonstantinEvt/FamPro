@@ -3,8 +3,10 @@ package com.example.service;
 import com.example.dtos.FioDto;
 import com.example.entity.FamilyMember;
 import com.example.entity.OldFio;
+import com.example.exceptions.Dublicate;
 import com.example.mappers.FioMapper;
 import com.example.mappers.OldNamesMapper;
+import com.example.repository.FamilyMemberRepo;
 import com.example.repository.OldFioRepo;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -24,11 +25,13 @@ import java.util.UUID;
 public class OldFioService extends FioServiceImp<OldFio> {
     private final OldFioRepo fioRepo;
     private final OldNamesMapper oldNamesMapper;
+    private final FamilyMemberRepo fmRepo;
 
-    public OldFioService(FioMapper fioMapper, OldFioRepo fioRepo, OldNamesMapper oldNamesMapper) {
+    public OldFioService(FioMapper fioMapper, OldFioRepo fioRepo, OldNamesMapper oldNamesMapper, FamilyMemberRepo fmRepo) {
         super(fioMapper);
         this.fioRepo = fioRepo;
         this.oldNamesMapper = oldNamesMapper;
+        this.fmRepo = fmRepo;
     }
 
     @Transactional
@@ -43,7 +46,15 @@ public class OldFioService extends FioServiceImp<OldFio> {
                 oldFio.setSex(familyMember.getSex());
                 oldFio.setFullName(generateFioStringInfo(oldFio));
                 oldFio.setMember(familyMember);
-                if (fioRepo.findFioByUuid(oldFio.getUuid()).isEmpty()) enteringFio.add(oldFio);
+                Optional<OldFio> findInOld = fioRepo.findFioByUuid(oldFio.getUuid());
+                if (findInOld.isPresent())
+                    throw new Dublicate("Введенное альтернативное имя уже есть в базе. Оно принадлежит человеку с ID " + findInOld.get().getMember().getId());
+                else {
+                    Optional<FamilyMember> findFM = fmRepo.findFioByUuid(oldFio.getUuid());
+                    if (findFM.isPresent())
+                        throw new Dublicate("Введенное альтернативное имя - основное имя человека с ID " + findFM.get().getId());
+                }
+                enteringFio.add(oldFio);
             }
         }
         Set<OldFio> checkedOldFio = familyMember.getOtherNames();

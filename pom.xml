@@ -26,6 +26,7 @@
         <module>famPro-gateway</module>
         <module>famPro-key</module>
         <module>famPro-file-keeper</module>
+        <module>famPro-family</module>
     </modules>
     <licenses>
         <license/>

@@ -43,19 +43,6 @@ public class FamilyMember extends Fio {
             name = "genSeqFamMem",
             sequenceName = "FamMem", initialValue = 1, allocationSize = 20)
     private Long id;
-    //    @Column(name = "Name", length = 20)
-//    private String firstName;
-//    @Column(name = "Fathername", length = 50)
-//    private String middleName;
-//    @Column(name = "Familiya", length = 50)
-//    private String lastName;
-//    @Column(name = "Birthday")
-//    private Date birthday;
-//    @Column(name = "UUID")
-//    private UUID uuid;
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "sex")
-//    private Sex sex;
     @Column(name = "mother_info")
     private String motherInfo;
     @Column(name = "father_info")
@@ -80,12 +67,6 @@ public class FamilyMember extends Fio {
             joinColumns = @JoinColumn(name = "parent_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "child_id", referencedColumnName = "id"))
     private Set<FamilyMember> childs;
-
-    @ManyToMany(mappedBy = "parents")
-    private Set<Family> familyWhereParent;
-
-    @ManyToMany(mappedBy = "children")
-    private Set<Family> familyWhereChild;
 
     @Column(name = "death_day")
     private Date deathday;

@@ -3,7 +3,11 @@ package com.example.transcriters;
 
 import com.example.enums.CheckStatus;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class EmptyTranscriter implements AbstractTranscriter {
+    public static final Map<String,String> matrixOfChange=new HashMap<>();
 
     @Override
     public String transcritWordToLocalisation(String str) {
@@ -31,7 +35,7 @@ public class EmptyTranscriter implements AbstractTranscriter {
     }
 
     @Override
-    public String getBirth() {
+    public String getBirthdayString() {
         return " . Birthday: ";
     }
 
@@ -43,6 +47,11 @@ public class EmptyTranscriter implements AbstractTranscriter {
     @Override
     public String empty() {
         return "<empty>";
+    }
+
+    @Override
+    public Map<String, String> getMatrixOfChange() {
+        return matrixOfChange;
     }
 
 

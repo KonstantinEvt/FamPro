@@ -8,7 +8,7 @@ create table if not exists family_members
     create_time  timestamp,
     prime_photo  boolean,
     father_id    bigint
-        constraint family_member_farther references family_members (id),
+        constraint family_member_father references family_members (id),
     father_info  varchar(255),
     mother_id    bigint
         constraint family_member_mother references family_members (id),

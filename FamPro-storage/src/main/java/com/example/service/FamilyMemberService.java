@@ -10,6 +10,7 @@ import com.example.exceptions.*;
 import com.example.mappers.FamilyMemberMapper;
 import com.example.mappers.FioMapper;
 import com.example.repository.FamilyMemberRepo;
+import com.example.repository.OldFioRepo;
 import com.example.utils.FamilyMemberUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -90,6 +91,10 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         Optional<FamilyMember> fm = familyMemberRepo.findFioByUuid(familyMemberDto.getUuid());
         if (fm.isPresent()) {
             throw new Dublicate("Такой человек уже есть в базе. Если Вы хотите его отредактировать - воспользуйтесь Patch-методом. ID человека " + (fm.get().getId()));
+        } else {
+            Optional<OldFio> existOldFio = oldFioService.getFioRepo().findFioByUuid(familyMemberDto.getUuid());
+            if (existOldFio.isPresent())
+                throw new Dublicate("Такой человек уже есть в базе. Это его альтернативное имя. ID человека " + (existOldFio.get().getMember()).getId());
         }
         familyMember.setCreator((String) tokenService.getTokenUser().getClaims().get("sub"));
         familyMember.setCreateTime(new Timestamp(System.currentTimeMillis()));

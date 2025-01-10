@@ -47,7 +47,7 @@ public class AddressService extends InternServiceImp<Address> {
                 address.setInternName(resolveFullAddress(address));
                 check(address);
                 if (!address.getTechString().equals("uncorrected")) {
-                    address.setUuid(newFmi.getUuid());
+//                    address.setUuid(newFmi.getUuid());
                     namesAddresses.add(address.getInternName());
                     if (address.getId() != null) address.setId(null);
                 }
@@ -76,8 +76,13 @@ public class AddressService extends InternServiceImp<Address> {
             }
         }
         newFmi.setAddresses(new HashSet<>());
-        for (Address address : resultList.values()) newFmi.getAddresses().add(address);
-if (newFmi.getMainAddress() == null && !newFmi.getAddresses().isEmpty()) newFmi.setMainAddress(newFmi.getAddresses().stream().findAny().get().getInternName());
+        for (Address address : resultList.values()) {
+            if (!address.getTechString().equals("COMMUNITY")) address.setUuid(newFmi.getUuid());
+            else address.setUuid(null);
+            newFmi.getAddresses().add(address);
+        }
+        if (newFmi.getMainAddress() == null && !newFmi.getAddresses().isEmpty())
+            newFmi.setMainAddress(newFmi.getAddresses().stream().findAny().get().getInternName());
 
         log.info("Адрес(ы) установлен(ы)");
     }
