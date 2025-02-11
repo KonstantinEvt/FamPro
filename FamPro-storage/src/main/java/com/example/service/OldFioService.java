@@ -47,7 +47,7 @@ public class OldFioService extends FioServiceImp<OldFio> {
                 oldFio.setFullName(generateFioStringInfo(oldFio));
                 oldFio.setMember(familyMember);
                 Optional<OldFio> findInOld = fioRepo.findFioByUuid(oldFio.getUuid());
-                if (findInOld.isPresent())
+                if (findInOld.isPresent() && !findInOld.get().getMember().getUuid().equals(familyMember.getUuid()))
                     throw new Dublicate("Введенное альтернативное имя уже есть в базе. Оно принадлежит человеку с ID " + findInOld.get().getMember().getId());
                 else {
                     Optional<FamilyMember> findFM = fmRepo.findFioByUuid(oldFio.getUuid());

@@ -24,7 +24,6 @@ public class CabinetController {
 
     @GetMapping("/info")
     public SimpleUserInfo getOnlineUser() {
-        System.out.println("tyt");
         return onlineUserHolder.getSimpleUser();
     }
 
@@ -47,7 +46,7 @@ public class CabinetController {
     @GetMapping("/link/{id}")
     public ResponseEntity<String> linkingUser(@PathVariable("id") Long id) {
         System.out.println("lets go");
-        FamilyMemberDto dto = baseService.getFamilyMemberById(id, "en");
+        FamilyMemberDto dto = baseService.getFamilyMemberById(id, onlineUserHolder.getSimpleUser().getLocalisation());
         if (dto.getCheckStatus() == CheckStatus.LINKED)
             throw new RightsIsAbsent("Запись уже связана. Если Вы претендуете на нее - обратитесь к администрации");
         else if (dto.getCheckStatus() == CheckStatus.MODERATE)

@@ -27,7 +27,6 @@ import org.springframework.web.servlet.view.RedirectView;
 public class WorkCabinetController {
     private TokenService tokenService;
     private OnlineUserHolder onlineUserHolder;
-    private final BaseService baseService;
 //    private WebClient webClient;
 
     @GetMapping("/page")
@@ -36,7 +35,6 @@ public class WorkCabinetController {
         model.addAttribute("nickname", simpleUserInfo.getNickName());
         model.addAttribute("roles", simpleUserInfo.getRole());
         model.addAttribute("name", simpleUserInfo.getFullName());
-        System.out.println(simpleUserInfo);
         if (simpleUserInfo.getLocalisation().equals("ru"))
             return "WelcomeRu";
         else
@@ -72,21 +70,21 @@ public class WorkCabinetController {
         return "redirect:http/localhost:9898/logout";
     }
 
-    @PreAuthorize("hasAuthority('BaseUser')")
-    @ResponseBody
-    @GetMapping("/link/{id}")
-    public void linkingUser(@PathVariable("id") Long id) {
-        System.out.println("lets go");
-        FamilyMemberDto dto = baseService.getFamilyMemberById(id, "en");
-        if (dto.getCheckStatus() == CheckStatus.LINKED)
-            throw new RightsIsAbsent("Запись уже связана. Если Вы претендуете на нее - обратитесь к администрации");
-        else if (dto.getCheckStatus() == CheckStatus.MODERATE)
-            throw new ModeratingContent("Запись находится на модерации. Если Вы претендуете на нее - обратитесь к администрации");
-        System.out.println("связываем с Клоаком");
-        tokenService.linkUser(dto);
-        System.out.println("связываем с базой");
-        baseService.linkFamilyMember(id);
-    }
+//    @PreAuthorize("hasAuthority('BaseUser')")
+//    @ResponseBody
+//    @GetMapping("/link/{id}")
+//    public void linkingUser(@PathVariable("id") Long id) {
+//        System.out.println("lets go");
+//        FamilyMemberDto dto = baseService.getFamilyMemberById(id, "en");
+//        if (dto.getCheckStatus() == CheckStatus.LINKED)
+//            throw new RightsIsAbsent("Запись уже связана. Если Вы претендуете на нее - обратитесь к администрации");
+//        else if (dto.getCheckStatus() == CheckStatus.MODERATE)
+//            throw new ModeratingContent("Запись находится на модерации. Если Вы претендуете на нее - обратитесь к администрации");
+//        System.out.println("связываем с Клоаком");
+//        tokenService.linkUser(dto);
+//        System.out.println("связываем с базой");
+//        baseService.linkFamilyMember(id);
+//    }
 
     @GetMapping("/token")
     @ResponseBody

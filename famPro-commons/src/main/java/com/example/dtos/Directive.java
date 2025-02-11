@@ -3,6 +3,7 @@ package com.example.dtos;
 import com.example.enums.KafkaOperation;
 import com.example.enums.SwitchPosition;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 
@@ -11,7 +12,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @ToString
-@Builder
+@SuperBuilder
 public class Directive implements Serializable {
     private String tokenUser;
     private String person;

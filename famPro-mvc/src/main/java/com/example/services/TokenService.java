@@ -30,18 +30,11 @@ public class TokenService {
         tokenUser.setUsername((String) jwt.getClaims().get("preferred_username"));
         Map<String,Object> realmAccess=(Map<String, Object>) jwt.getClaims().getOrDefault("realm_access", Map.of());
         Set<String> roles = new HashSet<>(((ArrayList<String>) realmAccess.getOrDefault(("roles"), new ArrayList<String>())));
-        System.out.println(roles);
         tokenUser.setRoles(roles);
         return tokenUser;
     }
 
-    public String getPriorityUserRole(TokenUser tokenUser) {
-        for (UserRoles role :
-                UserRoles.values()) {
-            if (tokenUser.getRoles().contains(role.getNameSSO())) return role.getNameSSO();
-        }
-        return "you are haven't role";
-    }
+
 
     public void editUser(TokenUser tokenUser) {
         keyCloakManageClient.editUser(tokenUser);

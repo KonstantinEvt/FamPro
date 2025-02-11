@@ -14,16 +14,14 @@ import java.util.UUID;
 @Getter
 @Builder
 @ToString
-@Cacheable
 @Table(name = "short_members_info")
 public class ShortFamilyMemberInfo {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "MemberInfoSeq")
-    @SequenceGenerator(name = "MemberInfoSeq",
-            sequenceName = "FamInfo", initialValue = 1, allocationSize = 20
-    )
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "info_gen")
+    @SequenceGenerator(name = "info_gen",
+            sequenceName = "seq_member_info", initialValue = 1, allocationSize = 20)
     private Long id;
-    @Column(name = "UUID", unique = true)
+    @Column(name = "UUID")
     private UUID uuid;
 
     @Column(name = "main_email")

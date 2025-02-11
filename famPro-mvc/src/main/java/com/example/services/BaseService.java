@@ -2,8 +2,10 @@ package com.example.services;
 
 import com.example.dtos.Directive;
 import com.example.dtos.FamilyMemberDto;
+import com.example.dtos.TokenUser;
 import com.example.enums.KafkaOperation;
 import com.example.enums.SwitchPosition;
+import com.example.feign.FamilyClient;
 import lombok.AllArgsConstructor;
 import com.example.feign.BaseClient;
 import com.example.feign.BaseOverClient;
@@ -16,6 +18,7 @@ import java.util.LinkedList;
 public class BaseService {
     private final BaseClient baseClient;
     private final BaseOverClient baseOverClient;
+    private final FamilyClient familyClient;
     private LinkedList<Directive> directives;
 
     public FamilyMemberDto getFamilyMember(FamilyMemberDto familyMemberDto) {
@@ -37,6 +40,6 @@ public class BaseService {
     }
 
     public void linkFamilyMember(Long id) {
-        baseOverClient.linkFamilyMember(id);
+        familyClient.addGuard(baseOverClient.linkFamilyMember(id));
     }
 }

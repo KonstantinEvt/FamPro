@@ -37,5 +37,5 @@ create table if not exists short_members_info
                        'BLOOD_TWO'::character varying,
                        'BLOOD_THREE'::character varying
                        ])::text[])),
-    uuid         uuid unique
+    uuid         uuid
 );

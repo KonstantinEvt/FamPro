@@ -25,4 +25,4 @@ create table if not exists short_family_members
             check ((check_status)::text = ANY
                    ((ARRAY ['OTHER'::character varying, 'MODERATE'::character varying,'LINKED'::character varying,'CHECKED'::character varying,'UNCHECKED'::character varying])::text[]))
 );
-CREATE INDEX uuid_fm ON short_family_members (uuid);
+CREATE INDEX uuid_short_fm ON short_family_members (uuid);

@@ -19,7 +19,6 @@ import java.util.Set;
 @Setter
 @Getter
 @SuperBuilder
-@ToString
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "short_family_members")
 public class ShortFamilyMember extends Fio {
@@ -31,32 +30,51 @@ public class ShortFamilyMember extends Fio {
     private Long id;
     @Column(name = "mother_info")
     private String motherInfo;
+
     @Column(name = "father_info")
     private String fatherInfo;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mother_id")
     private ShortFamilyMember mother;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "father_id")
     private ShortFamilyMember father;
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     @JoinColumn(name = "info_id")
     private ShortFamilyMemberInfo shortFamilyMemberInfo;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "check_status")
     private CheckStatus checkStatus;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinTable(name = "parents_childs",
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "parents_childs_shorts",
             joinColumns = @JoinColumn(name = "parent_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "child_id", referencedColumnName = "id"))
     private Set<ShortFamilyMember> childs;
 
+    @ManyToMany(mappedBy = "familyMembers")
+    private Set<Family> families;
+
     @ManyToMany(mappedBy = "parents")
     private Set<Family> familyWhereParent;
 
-    @ManyToMany(mappedBy = "children")
-    private Set<Family> familyWhereChild;
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "prime_family")
+    private Family familyWhereChild;
+
+    @ManyToMany(mappedBy = "halfChildrenByFather")
+    private Set<Family> familyWhereHalfChildByFather;
+
+    @ManyToMany(mappedBy = "halfChildrenByMother")
+    private Set<Family> familyWhereHalfChildByMother;
+
+    @ManyToMany(mappedBy = "childrenInLow")
+    private Set<Family> familyWhereChildInLow;
 
     @Column(name = "death_day")
     private Date deathday;
@@ -69,6 +87,9 @@ public class ShortFamilyMember extends Fio {
 
     @Column(name = "prime_photo")
     private boolean primePhoto;
+
+    @OneToOne(mappedBy = "linkedPerson")
+    private Guard linkedGuard;
 
     @Override
     public boolean equals(Object o) {

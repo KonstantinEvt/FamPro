@@ -68,7 +68,10 @@
 <nav class="navbar navbar-expand-lg bg-body-secondary "
      style="color: chocolate;font-family: 'Times New Roman',serif; font-size: 16px; padding:0; align-content: center; ">
     <div class="container-fluid" >
-        <a class="navbar-brand" style="color: darkred" href="#" onclick="getNews()">Новости</a>
+        <a class="navbar-brand" style="color: darkred" href="#" onclick="getNews()">Новости
+            <span id="badge0">
+
+            </span></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
                 aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -79,7 +82,7 @@
                     <a class="nav-link " style="color: darkred" aria-current="page" href="/">Старт</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" style="color: darkred" aria-current="page" href="#" onclick="commonRules()">Правила</a>
+                    <a class="nav-link" style="color: darkred" aria-current="page" href="#" onclick="systemRules()">Правила</a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" style="color: darkred" href="#" role="button" data-bs-toggle="dropdown"
@@ -91,6 +94,29 @@
                         <li><a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onclick="addFamilyMember()">Создать нового человека</a></li>
                         <li><a class="dropdown-item" style="color: chocolate;" th:href="@{/base/family_member/edit}">Отредактировать человека</a></li>
                         <li><a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onclick="getPersonFromBase()">Найти человека</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" style="color: darkred" href="#mainPanel" role="button" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        Семья
+                    </a>
+                    <ul class="dropdown-menu bg-light-subtle"
+                        style="color: chocolate;font-family: 'Times New Roman',serif; font-size: 16px; padding:0; ">
+                        <li><a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onclick="">Найти семью </a></li>
+                        <li><a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onclick="">Создать логическую семью</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" style="color: darkred" href="#"  role="button" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        Коммуникация
+                    </a>
+                    <ul class="dropdown-menu bg-light-subtle"
+                        style="color: chocolate;font-family: 'Times New Roman',serif; font-size: 16px; padding:0; ">
+                        <li><a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onclick="getCommunication()">Написать человеку</a></li>
+                        <li><a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onclick="">Написать семье</a></li>
+                        <li><a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onclick="">Чат</a></li>
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
@@ -119,5 +145,6 @@
 <script src='js/UserSeoOperation.js'></script>
 <script src='js/AddPersonInBase.js'></script>
 <script src='js/FindPersonInBase.js'></script>
+<script src='js/Communication.js'></script>
 </body>
 </html>

@@ -21,7 +21,7 @@ public class BaseController {
     public String getBaseForm(Model model) {
         SimpleUserInfo simpleUserInfo=onlineUserHolder.getSimpleUser();
         model.addAttribute("nickname", simpleUserInfo.getNickName());
-        if (simpleUserInfo.getLocalisation().equals("loc=ru"))
+        if (simpleUserInfo.getLocalisation().equals("ru"))
             return "Connect-to-base-ru";
         else return "Connect-to-base";
     }

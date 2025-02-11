@@ -1,11 +1,16 @@
 package com.example.service;
 
 
+import com.example.config.TaskResource;
+import com.example.dtos.Directive;
+import com.example.dtos.FamilyDirective;
 import com.example.dtos.FamilyMemberDto;
 import com.example.entity.FamilyMember;
 import com.example.entity.OldFio;
 import com.example.enums.CheckStatus;
+import com.example.enums.KafkaOperation;
 import com.example.enums.Sex;
+import com.example.enums.SwitchPosition;
 import com.example.exceptions.*;
 import com.example.mappers.FamilyMemberMapper;
 import com.example.mappers.FioMapper;
@@ -31,6 +36,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     private final OldFioService oldFioService;
     private final FamilyMemberRepo familyMemberRepo;
     private final TokenService tokenService;
+    private final LinkedList<FamilyDirective> directives;
 
     public FamilyMemberService(FioMapper fioMapper,
                                FamilyMemberMapper familyMemberMapper,
@@ -38,7 +44,8 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                                LosingParentsService losingParentsService,
                                OldFioService oldFioService,
                                FamilyMemberRepo familyMemberRepo,
-                               TokenService tokenService) {
+                               TokenService tokenService,
+                               LinkedList<FamilyDirective> directives) {
         super(fioMapper);
         this.familyMemberMapper = familyMemberMapper;
         this.familyMemberInfoService = familyMemberInfoService;
@@ -46,6 +53,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         this.oldFioService = oldFioService;
         this.familyMemberRepo = familyMemberRepo;
         this.tokenService = tokenService;
+        this.directives = directives;
     }
 
     @Transactional(readOnly = true)
@@ -99,6 +107,8 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         familyMember.setCreator((String) tokenService.getTokenUser().getClaims().get("sub"));
         familyMember.setCreateTime(new Timestamp(System.currentTimeMillis()));
         FamilyMemberUtils.selectCheckStatus(familyMember, tokenService.getTokenUser().getRoles());
+        if (familyMemberDto.getBurial() != null) familyMember.getBurial().setUuid(familyMemberDto.getUuid());
+        if (familyMemberDto.getBirth() != null) familyMember.getBirth().setUuid(familyMemberDto.getUuid());
         log.info("Первичная информация установлена");
         familyMemberRepo.save(familyMember);
 
@@ -106,8 +116,20 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
         familyMemberRepo.save(familyMember);
         addChangingToBase(familyMemberDto, familyMember);
-        if (familyMember.getChilds() != null) addChangesInParensInfo(familyMember.getChilds(), familyMember);
-        return familyMemberMapper.entityToDto(familyMemberRepo.save(familyMember));
+        if (familyMember.getChilds() != null)
+            addChangesInParensInfo(familyMember.getChilds(), familyMember, familyMember.getUuid());
+
+        FamilyMemberDto result = familyMemberMapper.entityToDto(familyMemberRepo.save(familyMember));
+        result.setMemberInfo(familyMemberInfoService.getMemberInfo(familyMember));
+        // Если нужны старые имена и прозвища в модуле family
+//        result.setFioDtos(oldFioService.getOldNamesMapper().oldFiosSetToFioDtoSet(familyMember.getOtherNames()));
+        directives.add(FamilyDirective.builder()
+                .familyMemberDto(result)
+                .tokenUser(familyMember.getCreator())
+                .person(result.getUuid().toString())
+                .switchPosition(SwitchPosition.MAIN)
+                .operation(KafkaOperation.ADD).build());
+        return result;
     }
 
 
@@ -183,12 +205,24 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
         extractExtensionOfFamilyMember(familyMemberDto, fm);
 
-        fm.setUuid(familyMemberDto.getUuid());
+        familyMemberDto.setUuid(fm.getUuid());
+        fm.setUuid(freshUuid);
         familyMemberRepo.save(fm);
         addChangingToBase(familyMemberDto, fm);
-        if (fm.getChilds() != null) addChangesInParensInfo(fm.getChilds(), fm);
+        if (fm.getChilds() != null) addChangesInParensInfo(fm.getChilds(), fm, familyMemberDto.getUuid());
         familyMemberRepo.save(fm);
-        return familyMemberMapper.entityToDto(fm);
+
+        FamilyMemberDto result = familyMemberMapper.entityToDto(fm);
+        result.setMemberInfo(familyMemberInfoService.getMemberInfo(fm));
+// Если нужны старые имена и прозвища в модуле family
+        //        result.setFioDtos(oldFioService.getOldNamesMapper().oldFiosSetToFioDtoSet(fm.getOtherNames()));
+        directives.add(FamilyDirective.builder()
+                .familyMemberDto(result)
+                .tokenUser((String) tokenService.getTokenUser().getClaims().get("sub"))
+                .person(familyMemberDto.getUuid().toString())
+                .switchPosition(SwitchPosition.MAIN)
+                .operation(KafkaOperation.RENAME).build());
+        return result;
     }
 
 
@@ -200,24 +234,41 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     }
 
     @Transactional
-    public void addChangesInParensInfo(Set<FamilyMember> setOfChilds, FamilyMember fm) {
+    public void addChangesInParensInfo(Set<FamilyMember> setOfChilds, FamilyMember fm, UUID uuid) {
 
         if (fm.getSex() == Sex.MALE) {
             for (FamilyMember child : setOfChilds) {
                 child.setFatherInfo(fm.getFullName());
                 child.setFather(fm);
                 familyMemberRepo.save(child);
+                sendChildDirective(child, uuid);
             }
         } else for (FamilyMember child : setOfChilds) {
             child.setMotherInfo(fm.getFullName());
             child.setMother(fm);
             familyMemberRepo.save(child);
+            sendChildDirective(child, uuid);
         }
+    }
+
+    public void sendChildDirective(FamilyMember child, UUID uuid) {
+        directives.add(FamilyDirective.builder()
+                .familyMemberDto(familyMemberMapper.entityToDto(child))
+                .tokenUser((String) tokenService.getTokenUser().getClaims().get("sub"))
+                .person(uuid.toString())
+                .switchPosition(SwitchPosition.CHILD)
+                .operation(KafkaOperation.EDIT).build());
     }
 
     @Transactional
     public void extractExtensionOfFamilyMember(FamilyMemberDto familyMemberDto, FamilyMember fm) {
         fm.setFullName(generateFioStringInfo(fm));
+        if (familyMemberDto.getFatherFio()!=null&&familyMemberDto.getMotherFio()!=null
+                && Objects.equals(familyMemberDto.getFatherFio().getFirstName(), familyMemberDto.getMotherFio().getFirstName())
+                && Objects.equals(familyMemberDto.getFatherFio().getMiddleName(), familyMemberDto.getMotherFio().getFirstName())
+                && Objects.equals(familyMemberDto.getFatherFio().getLastName(), familyMemberDto.getMotherFio().getFirstName())
+        ) throw new UncorrectedInformation("It's not funny. Mother and Father must be different people");
+
         if (familyMemberDto.getFatherFio() != null) {
             losingParentsService.setUpFather(familyMemberDto.getFatherFio(), fm);
         }

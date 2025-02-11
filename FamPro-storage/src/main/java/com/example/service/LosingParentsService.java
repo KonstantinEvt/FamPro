@@ -1,14 +1,19 @@
 package com.example.service;
 
+import com.example.dtos.FamilyDirective;
+import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.FioDto;
 import com.example.entity.FamilyMember;
 import com.example.entity.LosingParent;
 import com.example.entity.OldFio;
 import com.example.enums.CheckStatus;
+import com.example.enums.KafkaOperation;
 import com.example.enums.Sex;
+import com.example.enums.SwitchPosition;
 import com.example.exceptions.FamilyMemberNotFound;
 import com.example.exceptions.UncorrectedInformation;
 import com.example.exceptions.UncorrectedOrNewInformation;
+import com.example.mappers.FamilyMemberMapper;
 import com.example.mappers.FioMapper;
 import com.example.mappers.LosingParensMapper;
 import com.example.repository.FamilyMemberRepo;
@@ -30,13 +35,19 @@ public class LosingParentsService extends FioServiceImp<LosingParent> {
     private final LosingParensMapper losingParensMapper;
     private final FamilyMemberRepo familyMemberRepo;
     private final OldFioService oldFioService;
+    private final LinkedList<FamilyDirective> directives;
+    private final TokenService tokenService;
+    private final FamilyMemberMapper familyMemberMapper;
 
-    public LosingParentsService(FioMapper fioMapper, LosingParentsRepo losingParentsRepo, LosingParensMapper losingParensMapper, FamilyMemberRepo familyMemberRepo, OldFioService oldFioService) {
+    public LosingParentsService(FioMapper fioMapper, LosingParentsRepo losingParentsRepo, LosingParensMapper losingParensMapper, FamilyMemberRepo familyMemberRepo, OldFioService oldFioService, LinkedList<FamilyDirective> directives, TokenService tokenService, FamilyMemberMapper familyMemberMapper) {
         super(fioMapper);
         this.losingParentsRepo = losingParentsRepo;
         this.losingParensMapper = losingParensMapper;
         this.familyMemberRepo = familyMemberRepo;
         this.oldFioService = oldFioService;
+        this.directives = directives;
+        this.tokenService = tokenService;
+        this.familyMemberMapper = familyMemberMapper;
     }
 
     @Transactional
@@ -97,6 +108,12 @@ public class LosingParentsService extends FioServiceImp<LosingParent> {
                 fm.setFatherInfo(father.getFullName());
                 if (!father.getChilds().isEmpty()) father.setChilds(new HashSet<>());
                 father.getChilds().add(fm);
+                directives.add(FamilyDirective.builder()
+                        .familyMemberDto(familyMemberMapper.entityToDto(father))
+                        .tokenUser((String) tokenService.getTokenUser().getClaims().get("sub"))
+                        .person(String.valueOf(fm.getUuid()))
+                        .switchPosition(SwitchPosition.FATHER)
+                        .operation(KafkaOperation.EDIT).build());
             } else
                 throw new UncorrectedInformation(CheckStatus.UNCORRECTED.getComment());
         } catch (FamilyMemberNotFound e) {
@@ -123,6 +140,12 @@ public class LosingParentsService extends FioServiceImp<LosingParent> {
                 fm.setMotherInfo(mother.getFullName());
                 if (!mother.getChilds().isEmpty()) mother.setChilds(new HashSet<>());
                 mother.getChilds().add(fm);
+                directives.add(FamilyDirective.builder()
+                        .familyMemberDto(familyMemberMapper.entityToDto(mother))
+                        .tokenUser((String) tokenService.getTokenUser().getClaims().get("sub"))
+                        .person(String.valueOf(fm.getUuid()))
+                        .switchPosition(SwitchPosition.MOTHER)
+                        .operation(KafkaOperation.EDIT).build());
             } else throw new UncorrectedInformation(CheckStatus.UNCORRECTED.getComment());
         } catch (FamilyMemberNotFound e) {
             log.warn(e.getMessage());

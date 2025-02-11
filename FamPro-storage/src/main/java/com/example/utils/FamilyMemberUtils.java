@@ -19,7 +19,6 @@ public class FamilyMemberUtils {
                 || tokenUser.getRoles().contains(UserRoles.ADMIN.getNameSSO())) return true;
         return familyMember.getCheckStatus() == CheckStatus.CHECKED
                 && (tokenUser.getRoles().contains(UserRoles.MANAGER.getNameSSO())
-                || tokenUser.getRoles().contains(UserRoles.LINKED_USER.getNameSSO())
                 || tokenUser.getRoles().contains(UserRoles.VIP.getNameSSO()));
 
 //        else if (tokenUser.getRoles().contains(UserRoles.MANAGER.getNameSSO())) {
@@ -42,9 +41,7 @@ public class FamilyMemberUtils {
 
     public static void selectCheckStatus(FamilyMember fm, Set<String> roles) {
 
-        if (roles.contains(UserRoles.LINKED_USER.getNameSSO())
-                || roles.contains(UserRoles.MANAGER.getNameSSO())
-                || roles.contains(UserRoles.VIP.getNameSSO())
+        if ( roles.contains(UserRoles.MANAGER.getNameSSO())
                 || roles.contains(UserRoles.ADMIN.getNameSSO()))
             fm.setCheckStatus(CheckStatus.CHECKED);
         else fm.setCheckStatus(CheckStatus.UNCHECKED);

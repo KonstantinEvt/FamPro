@@ -1,25 +1,22 @@
-function commonRules(){
+function systemRules(){
     loadStandardMainPanel();
     document.getElementById("resultPart").innerHTML=`<br> Как и везде тут тоже существуют правила и их надо стараться соблюдать :)`;
-    document.getElementById("taskPart").innerHTML=    `<br>
-<ul class="nav flex-column">
-  <li class="nav-item">
-    <a class="nav-link" style="margin-left:15px; font-family: 'Times New Roman', serif; color: chocolate" href="#" >Rules</a>
-  </li>
-  <div style="margin-left:15px">__________</div>
-  <li class="nav-item">
-    <a class="nav-link" style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="roleRules()">Roles</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link " style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="seoRules()" >SEO</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link active" style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" aria-current="page" onclick="baseRules()">Base</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link disabled" style="margin-left:15px; font-family: 'Times New Roman', serif; color: grey" aria-disabled="true">Any</a>
-  </li>
-</ul>`}
+
+    document.getElementById("taskPart").innerHTML = `    
+    <br>
+    <div style="font-family: 'Times New Roman', serif; font-size: 16px; text-align: center; color: chocolate">Rules:</div>
+    <div class="btn-group-vertical" role="group" aria-label="Vertical button group" style="margin-left: 5px">
+        <input type="radio" class="btn-check" name="rules-radio" onclick="commonRules()" id="rules-radio1" autoComplete="off" checked>
+        <label class="btn btn-outline-warning" style="font-size: 14px; color: darkred" for="rules-radio1">Roles </label>
+        <input type="radio" class="btn-check" name="rules-radio" onclick="seoRules()" id="rules-radio2" autoComplete="off">
+        <label class="btn btn-outline-warning" style="font-size: 14px; color: darkred" for="rules-radio2">SEO </label>
+        <input type="radio" class="btn-check" name="rules-radio" id="rules-radio3" onclick="baseRules()" autoComplete="off">
+        <label class="btn btn-outline-warning" style="font-size: 14px; color: darkred" for="rules-radio3">Base</label>
+                <input type="radio" class="btn-check" name="rules-radio" id="rules-radio4" onclick="roleRules()" autoComplete="off">
+        <label class="btn btn-outline-warning" style="font-size: 14px; color: darkred" for="rules-radio4">Other</label>
+    </div>
+`
+}
 function roleRules() {
 
     let text = `
@@ -67,68 +64,20 @@ function roleRules() {
                                         <span>Создать в учетную запись (зарегистрироваться)</span>
                                         <br>'`;
 document.getElementById("resultPart").innerHTML=text;
-document.getElementById("taskPart").innerHTML=    `<br>
-<ul class="nav flex-column">
-  <li class="nav-item">
-    <a class="nav-link" style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="commonRules()" >Rules</a>
-  </li>
-    <div style="margin-left:15px">__________</div>
-  <li class="nav-item">
-    <a class="nav-link active" style="margin-left:15px; font-family: 'Times New Roman', serif; color: chocolate" aria-current="page" >Roles</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="seoRules()" >SEO</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="baseRules()" >Base</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link disabled" style="margin-left:15px; font-family: 'Times New Roman', serif; color: grey" aria-disabled="true">Any</a>
-  </li>
-</ul>`
+
+}
+function otherRules(){
+    document.getElementById("resultPart").innerHTML=`<br> тут надо писать про авторизаию`;
+
 }
 function seoRules(){
-    loadStandardMainPanel();
     document.getElementById("resultPart").innerHTML=`<br> тут надо писать про авторизаию`;
-    document.getElementById("taskPart").innerHTML=    `<br>
-<ul class="nav flex-column">
-  <li class="nav-item">
-    <a class="nav-link" style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="commonRules()" >Rules</a>
-  </li>
-    <div style="margin-left:15px">__________</div>
-  <li class="nav-item">
-    <a class="nav-link" style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="roleRules()">Roles</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link active" style="margin-left:15px; font-family: 'Times New Roman', serif; color: chocolate" aria-current="page" href="#">SEO</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="baseRules()">Base</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link disabled" style="margin-left:15px; font-family: 'Times New Roman', serif; color: grey" aria-disabled="true">Any</a>
-  </li>
-</ul>`
+
 }
 function baseRules(){
-    loadStandardMainPanel();
     document.getElementById("resultPart").innerHTML=`<br> тут надо писать про базу`;
-    document.getElementById("taskPart").innerHTML=    `<br>
-<ul class="nav flex-column">
-  <li class="nav-item">
-    <a class="nav-link" style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="commonRules()" >Rules</a>
-  </li>
-    <div style="margin-left:15px">__________</div>
-  <li class="nav-item">
-    <a class="nav-link" style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="roleRules()">Roles</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link " style="margin-left:15px; font-family: 'Times New Roman', serif; color: black" onclick="seoRules()" >SEO</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link active" style="margin-left:15px; font-family: 'Times New Roman', serif; color: chocolate" aria-current="page" href="#">Base</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link disabled" style="margin-left:15px; font-family: 'Times New Roman', serif; color: grey" aria-disabled="true">Any</a>
-  </li>
-</ul>`}
+ }
+function commonRules(){
+    document.getElementById("resultPart").innerHTML=`<br> Как и везде тут тоже существуют правила и их надо стараться соблюдать :)`;
+
+}
