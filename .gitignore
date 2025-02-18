@@ -4,6 +4,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 configs_fam_pro/
+volumes/
 
 ### STS ###
 .apt_generated
@@ -13,13 +14,20 @@ configs_fam_pro/
 .settings
 .springBeans
 .sts4-cache
+.gitignore
 
 ### IntelliJ IDEA ###
 .idea
 *.iws
 *.iml
 *.ipr
-
+*.yml
+*.jks
+*.gif
+*.jpeg
+*.jpg
+*.png
+*.webp
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -32,3 +40,4 @@ build/
 
 ### VS Code ###
 .vscode/
+
