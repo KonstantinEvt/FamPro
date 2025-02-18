@@ -11,7 +11,7 @@ function addFamilyMember() {
     countOtherNames = 1;
     insertOther = [];
     document.getElementById("mainPanel").innerHTML = `
-<div style="margin:10px; text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 20px">*** Adding Person ***</div>
+<div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px">*** Adding Person ***</div>
 <form class="form-group" style="margin:5px; text-align: center" id="baseFormAddFM">
         <div class="accordion"  id="accordionExample" >
         <div class="accordion-item">

@@ -20,6 +20,8 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.util.Date;
+
 
 @Controller
 @RequestMapping("/cabinet")
@@ -38,7 +40,7 @@ public class WorkCabinetController {
         if (simpleUserInfo.getLocalisation().equals("ru"))
             return "WelcomeRu";
         else
-        return "Welcome";
+            return "Welcome";
     }
 
     @GetMapping("/rules")
@@ -107,6 +109,6 @@ public class WorkCabinetController {
         SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
         tokenService.chooseLocalisation(loc);
         simpleUserInfo.setLocalisation(loc);
-        return new RedirectView(gateway+"/cabinet/page");
+        return new RedirectView(gateway + "/cabinet/page");
     }
 }

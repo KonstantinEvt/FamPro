@@ -4,6 +4,7 @@ import com.example.enums.NewsCategory;
 import lombok.*;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -12,7 +13,7 @@ import java.util.Date;
 @Builder
 @ToString
 public class AloneNewDto {
-    private Long id;
+    private UUID id;
     private String sendingFrom;
     private String sendingTo;
     private Date creationDate;

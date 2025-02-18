@@ -21,9 +21,9 @@ public class MessageController {
 
     @PostMapping("/sendMessage")
     public ResponseEntity<String> sendMessage(@RequestBody AloneNewDto aloneNewDto) {
-        messageService.sendMessage((String) tokenService.getTokenUser().getClaims().get("sub"), aloneNewDto);
+        messageService.sendMessage(tokenService.getTokenUser(), aloneNewDto);
         System.out.println("Letter is sending");
-    return ResponseEntity.ok("Letter is sending");
+    return ResponseEntity.status(200).body("Letter is sending");
     }
 
 

@@ -5,6 +5,7 @@ import com.example.services.TokenService;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +25,8 @@ public class PhotoHolder {
     private TokenService tokenService;
     private DirectiveHolder directiveHolder;
     private FileStorageService fileStorageService;
+    @Value("${minio.first_photo_bucket}")
+    private String firstPhoto;
 
     public PhotoHolder(TokenService tokenService, DirectiveHolder directiveHolder, FileStorageService fileStorageService) {
         this.tokenService = tokenService;
@@ -40,8 +43,8 @@ public class PhotoHolder {
         }
         if (directiveHolder.getDirectiveMap().containsKey(frontUser)) {
             try {
-                fileStorageService.saveFirstPhoto(getFrontPictures().get(frontUser),
-                        directiveHolder.getDirectiveMap().get(frontUser).getPerson());
+                fileStorageService.savePhoto(getFrontPictures().get(frontUser),
+                        directiveHolder.getDirectiveMap().get(frontUser).getPerson(),firstPhoto);
                 log.info("Файл успешно сохранен на сервер MinIO.");
             } catch (Exception e) {
                 log.error("Ошибка при сохранении файла на сервер MinIO.", e);

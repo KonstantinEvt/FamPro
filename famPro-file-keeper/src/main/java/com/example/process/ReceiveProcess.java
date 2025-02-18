@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import com.example.holders.DirectiveHolder;
 import com.example.holders.PhotoHolder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
@@ -13,11 +14,18 @@ import java.util.function.Consumer;
 
 @Component
 @Log4j2
-@AllArgsConstructor
 public class ReceiveProcess implements Consumer<Message<Directive>> {
     private final PhotoHolder photoHolder;
     private final FileStorageService fileStorageService;
     private final DirectiveHolder directiveHolder;
+    @Value("${minio.first_photo_bucket}")
+    private String firstPhoto;
+
+    public ReceiveProcess(PhotoHolder photoHolder, FileStorageService fileStorageService, DirectiveHolder directiveHolder) {
+        this.photoHolder = photoHolder;
+        this.fileStorageService = fileStorageService;
+        this.directiveHolder = directiveHolder;
+    }
 
     @Override
     public void accept(Message<Directive> directiveMessage) {
@@ -29,8 +37,8 @@ public class ReceiveProcess implements Consumer<Message<Directive>> {
                 if (photoHolder.getFrontPictures().get(directive.getTokenUser()) != null) {
                     log.info("Выполняется сохранение файла на сервер MinIO...");
                     try {
-                        fileStorageService.saveFirstPhoto(photoHolder.getFrontPictures().get(directive.getTokenUser()),
-                                directive.getPerson());
+                        fileStorageService.savePhoto(photoHolder.getFrontPictures().get(directive.getTokenUser()),
+                                directive.getPerson(),firstPhoto);
                         log.info("Файл успешно сохранен на сервер MinIO.");
                     } catch (Exception e) {
                         log.error("Ошибка при сохранении файла на сервер MinIO.", e);

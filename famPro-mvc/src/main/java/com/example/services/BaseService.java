@@ -9,6 +9,7 @@ import com.example.feign.FamilyClient;
 import lombok.AllArgsConstructor;
 import com.example.feign.BaseClient;
 import com.example.feign.BaseOverClient;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.ehcache.org/v3"
+        xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.0.xsd">
+
+    <cache-template name="default">
+        <expiry>
+            <ttl unit="days">7</ttl>
+        </expiry>
+        <heap>10000</heap>
+    </cache-template>
+
+    <cache alias="com.example.cache_for_family_member" uses-template="default"/>
+    <cache alias="com.example.intern.StandardQueryCache" uses-template="default"/>
+</config>

@@ -5,7 +5,7 @@ function creatUserSSO() {
 создать нового пользователя получится только у Админа
 </div>`;
     document.getElementById("resultPart").innerHTML = `
-<div style="margin:10px; text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 20px" >*** Adding user to SSO ***</div>
+<div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px" >*** Adding user to SSO ***</div>
 <div class="container-fluid row mh-100 no-gutters">
     <span class="col" style="width: 20%"></span>
     <span class="col" style="min-width: 200px">
@@ -48,16 +48,16 @@ function submitAddForm() {
 function editUserSSO() {
     loadStandardMainPanel();
     document.getElementById("taskPart").innerHTML=`<br>
-        <div style="color: black;font-family: 'Times New Roman',serif; font-size: 12px; text-align: center">Связать регистрацию с записью в базе</div>
+        <div style="color: black;font-family: 'Times New Roman',serif; font-size: 12px; text-align: center; padding-left: 10px">Связать регистрацию с записью в базе</div>
         <br>
-        <form id="linkForm" class="form-group" style="align-items: center; align-content: center; text-align: center; margin-right: 7px; padding: 0">
+        <form id="linkForm" class="form-group" style="align-items: center; align-content: center; text-align: center; padding-left: 10px">
             <label for="idLink" style="color: chocolate; ">Id человека в базе</label>
             <input class="form-control" type="text" id="idLink" name="idLink" required>
             <br>
             <button class="btn btn-outline-warning" type="button" onclick="linkUser()">Связать</button>
         </form>`;
     document.getElementById("resultPart").innerHTML = `
-    <div style="margin:10px; text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 20px" >*** Editing user in SSO ***</div>
+    <div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px" >*** Editing user in SSO ***</div>
     <div class="container-fluid row mh-100 no-gutters">
     <span class="col" style="width: 20%"></span>
     <span class="col" style="min-width: 200px">

@@ -1,4 +1,6 @@
 let counts = [0, 0, 0, 0, 0];
+let cards;
+let numCards;
 loadOnlineUser();
 loadStandardMainPanel();
 loadNewsCounts()
@@ -47,22 +49,62 @@ function loadOnlineUser() {
 
 function loadStandardMainPanel() {
     document.getElementById("mainPanel").innerHTML = `
-    <div class="list-group list-group-flush col-2" id="taskPart" style="height: 300px; min-width: 100px; margin-left: 10px" role="tablist" >
+    <table style="height: 780px; padding: 0; margin-left: -2px" >
+    <tbody>
+    <tr>
+    <td class="col-1" style="vertical-align: top;  height: 780px; padding-right:7px; margin-right: 10px; margin-left: 5px;text-align: center ">
+    <div class="list-group list-group-flush" id="taskPart" style="min-width: 100px; text-align: center" role="tablist" >
     </div>
-    <div style="height: 1200px" class="tab-content col bg-light" id="resultPart"></div>
-    `
+    </td>
+    <td class="col" style="height: 100%; horiz-align: center; margin-right: 5px; margin-left: 5px ; text-align: center">
+    <div  class="tab-content col bg-light" id="resultPart" style=" height: 780px; padding-left: 5px;text-align: center"></div>
+    </td>
+    </tr>
+    </tbody>
+    </table>    
+`
 }
-function getTime(datetime){
-    let hour = new Intl.NumberFormat("en",{minimumIntegerDigits:2}).format(datetime.getUTCHours());
-    let minutes = new Intl.NumberFormat("en",{minimumIntegerDigits:2}).format(datetime.getUTCMinutes());
+
+function getTime(datetime) {
+    let hour = new Intl.NumberFormat("ru", {minimumIntegerDigits: 2}).format(datetime.getHours());
+    let minutes = new Intl.NumberFormat("ru", {minimumIntegerDigits: 2}).format(datetime.getMinutes());
     return hour + ':' + minutes;
 }
-function getDate(datetime){
-    let year = datetime.getUTCFullYear();
-    let month = new Intl.NumberFormat("en",{minimumIntegerDigits:2}).format(datetime.getUTCMonth()+1);
-    let day = new Intl.NumberFormat("en",{minimumIntegerDigits:2}).format(datetime.getUTCDate());
+
+function getDate(datetime) {
+    let year = datetime.getFullYear();
+    let month = new Intl.NumberFormat("en", {minimumIntegerDigits: 2}).format(datetime.getMonth() + 1);
+    let day = new Intl.NumberFormat("en", {minimumIntegerDigits: 2}).format(datetime.getDate());
     return (day + '.' + month + '.' + year);
 }
+
+// async function loadNewsPicture2(url) {
+//     let picture;
+//     let array;
+//     let load= await fetch(url, {
+//         method: "GET",
+//        // headers: {
+//          //   "Content-Type": "image/jpeg"
+//             // "Access-Control-Allow-Origin": "*"
+//         //}
+//     }).then(r => r.blob()).then(cou => {
+//         picture=URL.createObjectURL(cou);
+//     }).then(cou=>console.log("Изображение загружено",cou));
+//     console.log("Изображение точно загружено",load);
+//      // picture = btoa(array);
+//     // return `data:image/jpeg;base64,${picture}`;
+//     return picture;
+// }
+async function loadNewsPicture(url) {
+    let array=[];
+    await fetch(url, {
+        method: "GET"
+    }).then(r => r.blob()).then(cou => {
+        array=cou;
+    }).then(cou=>console.log("Изображение загружено",cou));
+    return array;
+}
+
 function loadNewsCounts() {
     fetch("/news/counts", {
         method: "GET",
@@ -73,7 +115,7 @@ function loadNewsCounts() {
     }).then(r => r.json()).then(cou => {
         counts = cou;
     })
-    if (document.getElementById("badge0")!==null&&counts[0] !== 0) {
+    if (document.getElementById("badge0") !== null && counts[0] !== 0) {
         document.getElementById("badge0").innerHTML =
             `<span id="newsCount" class="position-absolute top-1 start-1 translate-middle badge rounded-pill bg-danger" style="font-size: 12px" >
                 
@@ -82,36 +124,34 @@ function loadNewsCounts() {
         document.getElementById("newsCount").innerHTML = counts[0];
 
 
-        if (document.getElementById("badge1")!==null&&counts[1] !== 0) {
+        if (document.getElementById("badge1") !== null && counts[1] !== 0) {
             document.getElementById("badge1").innerHTML = `
-         <span class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
+         <span id="countNew1" class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
                 <span>` + counts[1] + `</span>
                 <span class="visually-hidden">unread messages</span>
             </span>`
-            // document.getElementById("newsCount1").innerHTML = counts[1];
-        }
-        if (document.getElementById("badge2")!==null&&counts[2] !== 0) {
+        } else if (document.getElementById("badge1") !== null) document.getElementById("badge1").innerHTML = "";
+        if (document.getElementById("badge2") !== null && counts[2] !== 0) {
             document.getElementById("badge2").innerHTML = `
-          <span class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
+          <span id="countNew2" class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
                 <span>` + counts[2] + `</span>
                 <span class="visually-hidden">unread messages</span>
             </span>`
-        }
-        if (document.getElementById("badge3")!==null&&counts[3] !== 0) {
+        } else if (document.getElementById("badge2") !== null) document.getElementById("badge2").innerHTML = "";
+        if (document.getElementById("badge3") !== null && counts[3] !== 0) {
             document.getElementById("badge3").innerHTML = `
-          <span class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
+          <span id="countNew3" class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
                 <span>` + counts[3] + `</span>
                 <span class="visually-hidden">unread messages</span>
             </span>`
-        }
-        if (document.getElementById("badge4")!==null&&counts[4] !== 0) {
+        } else if (document.getElementById("badge1") !== null) document.getElementById("badge3").innerHTML = "";
+        if (document.getElementById("badge4") !== null && counts[4] !== 0) {
             document.getElementById("badge4").innerHTML = `
-          <span class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
+          <span id="countNew3" class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
                 <span>` + counts[4] + `</span>
                 <span class="visually-hidden">unread messages</span>
             </span>`
-        }
-    }
+        } else if (document.getElementById("badge1") !== null) document.getElementById("badge4").innerHTML = "";
+    } else document.getElementById("badge0").innerHTML = "";
 }
-
 

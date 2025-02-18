@@ -21,7 +21,7 @@ public interface FileStorageService {
      * @param file загружаемый файл
      */
 
-    void saveFirstPhoto(byte[] file, String uuid);
+    void savePhoto(byte[] file, String uuid, String bucket);
 
 
     /**
@@ -30,6 +30,6 @@ public interface FileStorageService {
      * @param fileName UUID файла
      * @return ответ с файлом или статусом "Not Found", если файл не найден
      */
-    ResponseEntity<Resource> getFirstPhoto(String fileName);
-
+//    ResponseEntity<Resource> getPhoto(String bucket, String fileName);
+    byte[] getPhoto(String bucket, String fileName);
 }
