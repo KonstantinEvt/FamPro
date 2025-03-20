@@ -1,13 +1,11 @@
 package com.example.entity;
 
-import com.example.dtos.FamilyMemberDto;
 import com.example.enums.SwitchPosition;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.sql.Date;
 import java.sql.Timestamp;
-import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @NoArgsConstructor
@@ -18,34 +16,44 @@ import java.util.Set;
 @Builder
 public class DeferredDirective {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "directiveGen")
-    @SequenceGenerator(name = "directiveGen",
-            sequenceName = "seqDirective", initialValue = 1)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
     @Column(name="created")
     private Timestamp created;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "directive_family")
     private Family directiveFamily;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "directive_member")
     private ShortFamilyMember directiveMember;
-    @Column(name="ExternId")
-    private String enternId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "family_member")
+    private ShortFamilyMember shortFamilyMemberLink;
+
+    @Column(name="info_link")
+    private String info;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "process_family")
     private Family processFamily;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "directive_guard")
-    private Guard directiveGuard;
+
+    @Column(name="tokenUser")
+    private String tokenUser;
+
     @Enumerated(EnumType.STRING)
     private SwitchPosition switchPosition;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "directive_global")
-    private GlobalFamily globalFor;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "link_family")
-    private GlobalFamily globalTo;
+    @Column(name="number_for")
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "directive_global")
+    private int globalFor;
+    @Column(name="number_to")
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "link_global_family")
+    private int globalTo;
 
 
 }

@@ -88,7 +88,7 @@ public class ShortFamilyMember extends Fio {
     @Column(name = "prime_photo")
     private boolean primePhoto;
 
-    @OneToOne(mappedBy = "linkedPerson")
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "linkedPerson")
     private Guard linkedGuard;
 
     @Override

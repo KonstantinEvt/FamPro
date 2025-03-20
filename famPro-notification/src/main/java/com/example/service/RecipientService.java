@@ -1,30 +1,39 @@
 package com.example.service;
 
-import com.example.dtos.FamilyDirective;
-import com.example.dtos.TokenUser;
+import com.example.dtos.*;
 import com.example.entity.AloneNew;
+import com.example.entity.Contact;
 import com.example.entity.Recipient;
 import com.example.holders.StandardInfoHolder;
 import com.example.mappers.AloneNewMapper;
+import com.example.mappers.ContactMapper;
 import com.example.models.StandardInfo;
+import com.example.repository.NotificationRepo;
 import com.example.repository.RecipientRepo;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @AllArgsConstructor
+@Log4j2
 public class RecipientService {
     private RecipientRepo recipientRepo;
     private StandardInfoHolder standardInfoHolder;
     private AloneNewMapper letterMapper;
+    private ContactMapper contactMapper;
+    private ContactService contactService;
+    private NotificationRepo notificationRepo;
 
     @Transactional(readOnly = true)
     public Recipient findRecipient(String externId) {
-        return recipientRepo.findByExternId(externId);
+        return recipientRepo.findByExternId(externId).orElse(null);
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +61,7 @@ public class RecipientService {
     }
 
     @Transactional
-    public Recipient creatRecipient(FamilyDirective directive) {
+    public void creatRecipient(FamilyDirective directive) {
         Recipient recipient = Recipient.builder()
                 .nickName(directive.getPerson())
                 .externId(directive.getTokenUser())
@@ -60,7 +69,6 @@ public class RecipientService {
                 .systemReading("")
                 .build();
         recipientRepo.save(recipient);
-        return recipient;
     }
 
     @Transactional
@@ -70,7 +78,7 @@ public class RecipientService {
 
     @Transactional
     public void inlineProcess(FamilyDirective directive) {
-        Recipient recipient = findRecipient(directive.getTokenUser());
+        Recipient recipient = notificationRepo.findRecipientWithReceivedLetter(directive.getTokenUser());
         StandardInfo standardInfo = new StandardInfo();
 
         if (recipient == null) {
@@ -79,35 +87,86 @@ public class RecipientService {
             standardInfo.getCommonGlobalRead().addAll(standardInfoHolder.getCommonGlobalMask());
             standardInfoHolder.getOnlineInfo().put(directive.getTokenUser(), standardInfo);
         } else {
-            List<AloneNew> letters = recipient.getReceivedLetters();
-            for (AloneNew letter :
-                    letters) {
-                if (!letter.isAlreadyRead()) standardInfo.addNewMessageToPerson(letterMapper.entityToDto(letter));
+            List<AloneNew> aloneNewList0 = recipient.getReceivedLetters();
+            if (aloneNewList0 != null && !aloneNewList0.isEmpty()) {
+                List<AloneNew> aloneNewNewList = notificationRepo.getNewLettersWithSenders(aloneNewList0);
+                for (AloneNew letter :
+                        aloneNewNewList) {
+                    AloneNewDto aloneNewDto = letterMapper.entityToDto(letter);
+                    if (letter.getSendFrom() != null) {
+                        aloneNewDto.setSendingFromAlt(letter.getSendFrom().getNickName());
+                    } else {
+                        aloneNewDto.setSendingFrom(aloneNewDto.getId().toString());
+                    }
+                    standardInfo.addNewMessageToPerson(aloneNewDto);
+                }
             }
+
             standardInfo.getSystemGlobalRead().addAll(recipient.getSystemReading().chars().map(x -> x - 48).boxed().toList());
-//            int oldSystem = standardInfo.getSystemGlobalRead().size();
-//            StringBuilder stringBuffer = new StringBuilder(recipient.getSystemReading());
-//            for (int i = 1; i <= (standardInfoHolder.getSystemNewsGlobal().size() - oldSystem); i++) {
-//                standardInfo.getSystemGlobalRead().add(0);
-//                stringBuffer.append(0);
-//            }
-//            recipient.setSystemReading(stringBuffer.toString());
-//
-//            standardInfo.getCommonGlobalRead().addAll(recipient.getCommonReading().chars().map(x -> x - 48).boxed().toList());
-//            int oldCommon = standardInfo.getCommonGlobalRead().size();
-//            StringBuilder stringBuffer1 = new StringBuilder(recipient.getCommonReading());
-//            for (int i = 1; i <= (standardInfoHolder.getCommonNewsGlobal().size() - oldCommon); i++) {
-//                standardInfo.getCommonGlobalRead().add(0);
-//                stringBuffer1.append(0);
-//            }
-//            recipient.setCommonReading(stringBuffer1.toString());
             standardInfoHolder.getOnlineInfo().put(directive.getTokenUser(), standardInfo);
             if (!recipient.getNickName().equals(directive.getPerson())) {
                 recipient.setNickName(directive.getPerson());
+
                 recipientRepo.save(recipient);
             }
         }
+    }
 
+    @Transactional(readOnly = true)
+    public Set<ContactDto> getContactDtos(String recipientExternId) {
+        Recipient recipient = notificationRepo.findRecipientWithContacts(recipientExternId);
+        if (recipient == null || recipient.getContacts() == null) return new HashSet<>();
+        return contactMapper.entitySetToDtoSet(recipient.getContacts());
+    }
+
+    @Transactional(readOnly = true)
+    public ContactDto getContact(String recipientExternId, String personName) {
+        Recipient owner = notificationRepo.findRecipientWithContacts(recipientExternId);
+        if (owner.getContacts() == null) return null;
+        return contactMapper.entityToDto(findContactByName(owner, personName));
+    }
+
+    @Transactional(readOnly = true)
+    public Contact findContactByName(Recipient recipient, String personName) {
+        for (Contact contact :
+                recipient.getContacts()) {
+            if (contact.getName().equals(personName)) return contact;
+        }
+        return null;
+    }
+
+    @Transactional
+    public ContactDto addContactToOwner(String recipientExternId, RecipientDto recipientDto) {
+        Recipient owner = notificationRepo.findRecipientWithContacts(recipientExternId);
+        if (owner.getContacts() == null) owner.setContacts(new HashSet<>());
+        Recipient person = notificationRepo.findRecipientWithPodpisota(recipientDto.getExternId());
+        if (person == null) throw new RuntimeException("Такового подписанта еще нет");
+        for (Contact contact :
+                owner.getContacts()) {
+            for (Contact podpisota :
+                    person.getPodpisota()) {
+                if (podpisota.equals(contact)) throw new RuntimeException("Такой контакт у Вас уже есть!");
+            }
+        }
+        ContactDto contactDto = contactMapper.entityToDto(contactService.addContact(owner, recipientDto, person));
+        contactDto.setOwnerId(owner.getExternId());
+        return contactDto;
+    }
+
+    @Transactional
+    public ContactDto editContact(String recipientExternId, RecipientDto recipientDto) {
+        Recipient owner = notificationRepo.findRecipientWithContacts(recipientExternId);
+        Recipient person = notificationRepo.findRecipientWithPodpisota(recipientDto.getExternId());
+        Set<Contact> podpisota = person.getPodpisota();
+        for (Contact contact :
+                podpisota) {
+            if (contact.getOwner() == owner) {
+                ContactDto contactDto = contactMapper.entityToDto(contactService.editContact(person, recipientDto, contact));
+                contactDto.setOwnerId(owner.getExternId());
+                return contactDto;
+            }
+        }
+        return null;
     }
 }
 

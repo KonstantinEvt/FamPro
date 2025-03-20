@@ -8,10 +8,11 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Setter
 @Getter
 public class DirectiveHolder {
-    private Map<String, LinkedList<FamilyDirective>> directiveMap = new HashMap<>();
+    private Map<String, LinkedList<FamilyDirective>> directiveMap = new ConcurrentHashMap<>();
 }

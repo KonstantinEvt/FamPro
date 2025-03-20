@@ -24,30 +24,25 @@ import java.io.InputStream;
 public class GateController {
 
 private FrontBackgroundHolder frontBackgroundHolder;
-    @GetMapping(value = "/token")
-    public Mono<String> getHome(@RegisteredOAuth2AuthorizedClient OAuth2AuthorizedClient authorizedClient) {
-        return Mono.just(authorizedClient.getAccessToken().getTokenValue());
-    }
-    @GetMapping(value = "/token1")
-    public Mono<Authentication> getHome1() {
-        SecurityContext context = SecurityContextHolder.getContext();
-        return Mono.just(context.getAuthentication());
-
-    }
-    @GetMapping(value = "/image0",
-            produces = MediaType.IMAGE_JPEG_VALUE)
-    public Mono<byte[]> getStartRaw() throws IOException {
-        InputStream in = getClass()
-                .getResourceAsStream("/images/дерево1.jpg");
-        assert in != null;
-        return Mono.just(IOUtils.toByteArray(in));
-    }
+//    @GetMapping(value = "/token")
+//    public Mono<String> getHome(@RegisteredOAuth2AuthorizedClient OAuth2AuthorizedClient authorizedClient) {
+//        return Mono.just(authorizedClient.getAccessToken().getTokenValue());
+//    }
+//    @GetMapping(value = "/token1")
+//    public Mono<Authentication> getHome1() {
+//        SecurityContext context = SecurityContextHolder.getContext();
+//        return Mono.just(context.getAuthentication());
+//    }
     @GetMapping(value = "/image",
             produces = MediaType.IMAGE_JPEG_VALUE)
     public Mono<byte[]> getStart() {
         return Mono.just(frontBackgroundHolder.getPicture());
     }
-
+    @GetMapping(value = "/favicon",
+            produces = MediaType.IMAGE_JPEG_VALUE)
+    public Mono<byte[]> getFavicon() {
+        return Mono.just(frontBackgroundHolder.getFavicon());
+    }
 }
 
 

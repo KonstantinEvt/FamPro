@@ -1,6 +1,8 @@
 let counts = [0, 0, 0, 0, 0];
 let cards;
 let numCards;
+let rawNews;
+
 loadOnlineUser();
 loadStandardMainPanel();
 loadNewsCounts()
@@ -49,15 +51,17 @@ function loadOnlineUser() {
 
 function loadStandardMainPanel() {
     document.getElementById("mainPanel").innerHTML = `
-    <table style="height: 780px; padding: 0; margin-left: -2px" >
+    <table style="padding: 0; margin-left: -2px; height: 82vh" >
     <tbody>
     <tr>
-    <td class="col-1" style="vertical-align: top;  height: 780px; padding-right:7px; margin-right: 10px; margin-left: 5px;text-align: center ">
-    <div class="list-group list-group-flush" id="taskPart" style="min-width: 100px; text-align: center" role="tablist" >
+    <td class="col-1" style="vertical-align: top; padding-right:7px; margin-right: 10px; margin-left: 5px;text-align: center ">
+    <div class="list-group list-group-flush" id="taskPart" style="height: 82vh; min-width: 80px; text-align: center" role="tablist" ><span style="color:white">Hello</span>
     </div>
     </td>
-    <td class="col" style="height: 100%; horiz-align: center; margin-right: 5px; margin-left: 5px ; text-align: center">
-    <div  class="tab-content col bg-light" id="resultPart" style=" height: 780px; padding-left: 5px;text-align: center"></div>
+    <td class="col" style="horiz-align: center; margin-right: 5px; margin-left: 5px ; text-align: center">
+    <div  class="tab-content col bg-light" id="resultPart" style=" height: 82vh; padding-left: 5px;text-align: center">
+    <span style="color:lightgray">.</span>
+</div>
     </td>
     </tr>
     </tbody>
@@ -95,7 +99,7 @@ function getDate(datetime) {
 //     // return `data:image/jpeg;base64,${picture}`;
 //     return picture;
 // }
-async function loadNewsPicture(url) {
+async function loadPicture(url) {
     let array=[];
     await fetch(url, {
         method: "GET"
@@ -104,7 +108,16 @@ async function loadNewsPicture(url) {
     }).then(cou=>console.log("Изображение загружено",cou));
     return array;
 }
-
+async function loadDefaultPhotos(){
+    let url="/file/defaultPhoto/"
+    return {
+        person: await loadPicture(url + "person.jpg"),
+        election: await loadPicture(url+"election.jpg"),
+        approved: await loadPicture(url+"approved.jpg"),
+        rejected: await loadPicture(url+"rejected.jpg"),
+        linking: await loadPicture(url+"linking.jpg")
+    };
+}
 function loadNewsCounts() {
     fetch("/news/counts", {
         method: "GET",
@@ -144,14 +157,14 @@ function loadNewsCounts() {
                 <span>` + counts[3] + `</span>
                 <span class="visually-hidden">unread messages</span>
             </span>`
-        } else if (document.getElementById("badge1") !== null) document.getElementById("badge3").innerHTML = "";
+        } else if (document.getElementById("badge3") !== null) document.getElementById("badge3").innerHTML = "";
         if (document.getElementById("badge4") !== null && counts[4] !== 0) {
             document.getElementById("badge4").innerHTML = `
-          <span id="countNew3" class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
+          <span id="countNew4" class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
                 <span>` + counts[4] + `</span>
                 <span class="visually-hidden">unread messages</span>
             </span>`
-        } else if (document.getElementById("badge1") !== null) document.getElementById("badge4").innerHTML = "";
+        } else if (document.getElementById("badge4") !== null) document.getElementById("badge4").innerHTML = "";
     } else document.getElementById("badge0").innerHTML = "";
 }
 

@@ -34,49 +34,58 @@ public class StandardInfoHolder {
     private List<AloneNewDto> commonNewsGlobal;
     private List<Integer> systemGlobalMask;
     private List<Integer> commonGlobalMask;
-    private String systemID;
+    //  private String systemID;
 
     @PostConstruct
     @Transactional
     public void setUpMainRecipients() {
 //        Optional<Recipient> systemRecipient = recipientRepo.findById(1L);
-        try{ Recipient systemRecipient=entityManager.createQuery("from Recipient a join fetch a.receivedLetters where a.id=1",Recipient.class).getSingleResult();
+        try {
+            Recipient systemRecipient = entityManager.createQuery("select a from Recipient a left join fetch  a.receivedLetters where a.id=1L", Recipient.class).getSingleResult();
 
-
-//            List<AloneNew> systemNews=entityManager.createQuery("from AloneNew a join fetch recipient where recipient.id=alone_new.sending_from", AloneNew.class).getResultList();
-            List<AloneNew> systemNews = systemRecipient.getReceivedLetters();
-            systemNewsGlobal.addAll(systemNews
-                    .stream()
-                    .sorted(Comparator.comparing(AloneNew::getCreationDate))
-                    .map(x -> aloneNewMapper.entityToDto(x))
-                    .toList());
-            for (int i=0; i<systemNewsGlobal.size();i++){
-                systemNewsGlobal.get(i).setSendingFrom("s".concat(String.valueOf(i)));
+            if (systemRecipient.getReceivedLetters() != null) {
+                List<AloneNew> systemNews = systemRecipient.getReceivedLetters();
+                systemNewsGlobal.addAll(systemNews
+                        .stream()
+                        .sorted(Comparator.comparing(AloneNew::getCreationDate))
+                        .map(x -> aloneNewMapper.entityToDto(x))
+                        .toList());
+                for (int i = 0; i < systemNewsGlobal.size(); i++) {
+                    systemNewsGlobal.get(i).setSendingFrom("s".concat(String.valueOf(i)));
+                }
+                systemGlobalMask.addAll(systemRecipient.getSystemReading().chars().map(x -> x - 48).boxed().toList());
             }
-            systemGlobalMask.addAll(systemRecipient.getSystemReading().chars().map(x->x-48).boxed().toList());
-            Recipient commonRecipient=entityManager.createQuery("from Recipient a join fetch a.receivedLetters where a.id=2",Recipient.class).getSingleResult();
+            Recipient commonRecipient = entityManager.createQuery("select a from Recipient a left join fetch a.receivedLetters where a.id=2L", Recipient.class).getSingleResult();
 //            Recipient commonRecipient = recipientRepo.findById(2L).orElseThrow(() -> new RuntimeException("CommonRecipient not found"));
-            List<AloneNew> commonNews = commonRecipient.getReceivedLetters();
-            commonNewsGlobal.addAll(commonNews
-                    .stream()
-                    .sorted(Comparator.comparing(AloneNew::getCreationDate))
-                    .map(x -> aloneNewMapper.entityToDto(x))
-                    .toList());
-            for (int i=0; i<commonNewsGlobal.size();i++){
-                commonNewsGlobal.get(i).setSendingFrom("c".concat(String.valueOf(i)));
+            if (commonRecipient.getReceivedLetters() != null) {
+                List<AloneNew> commonNews = commonRecipient.getReceivedLetters();
+                commonNewsGlobal.addAll(commonNews
+                        .stream()
+                        .sorted(Comparator.comparing(AloneNew::getCreationDate))
+                        .map(x -> aloneNewMapper.entityToDto(x))
+                        .toList());
+                for (int i = 0; i < commonNewsGlobal.size(); i++) {
+                    commonNewsGlobal.get(i).setSendingFrom("c".concat(String.valueOf(i)));
+                }
+                commonGlobalMask.addAll(commonRecipient.getCommonReading().chars().map(x -> x - 48).boxed().toList());
             }
-            commonGlobalMask.addAll(commonRecipient.getCommonReading().chars().map(x->x-48).boxed().toList());
         } catch (RuntimeException e) {
-            recipientRepo.save(Recipient.builder()
+            Recipient systemRecipient = Recipient.builder()
                     .nickName("System")
                     .systemReading("")
-                    .externId(UUID.nameUUIDFromBytes("SYSTEM".getBytes()).toString())
-                    .build());
+                    .externId(UUID.nameUUIDFromBytes("SYSTEM_RECIPIENT".getBytes()).toString())
+                    .build();
+            recipientRepo.save(systemRecipient);
             recipientRepo.save(Recipient.builder()
                     .nickName("Common")
                     .commonReading("")
-                    .externId(UUID.nameUUIDFromBytes("COMMON".getBytes()).toString())
+                    .externId(UUID.nameUUIDFromBytes("COMMON_RECIPIENT".getBytes()).toString())
                     .build());
+            Recipient informerRecipient = Recipient.builder()
+                    .nickName("Informer")
+                    .externId(UUID.nameUUIDFromBytes("INFORMER_RECIPIENT".getBytes()).toString())
+                    .build();
+            recipientRepo.save(informerRecipient);
         }
     }
 
@@ -85,9 +94,11 @@ public class StandardInfoHolder {
         if (!onlineInfo.containsKey(onlineUser))
             onlineInfo.put(onlineUser, new StandardInfo());
         onlineInfo.get(onlineUser).addNewMessageToPerson(aloneNewDto);
-        System.out.println(onlineInfo);
     }
-
+    public void removeMessageFromPerson(String user, AloneNewDto aloneNewDto) {
+        System.out.println("delete from holder");
+        if (onlineInfo.containsKey(user)) onlineInfo.get(user).removeNew(aloneNewDto);
+    }
     public List<AloneNewDto> getGlobalSystemNewsToPerson(String user) {
         List<AloneNewDto> rezult = new ArrayList<>();
         StandardInfo standardInfo = onlineInfo.get(user);

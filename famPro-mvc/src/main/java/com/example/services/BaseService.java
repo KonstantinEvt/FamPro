@@ -40,7 +40,7 @@ public class BaseService {
         baseClient.editFamilyMember(familyMemberDto);
     }
 
-    public void linkFamilyMember(Long id) {
-        familyClient.addGuard(baseOverClient.linkFamilyMember(id));
+    public void linkFamilyMember(FamilyMemberDto familyMemberDto) {
+        familyClient.addGuard(familyMemberDto);
     }
 }

@@ -1,14 +1,12 @@
 package com.example.controllers;
 
-import com.example.dtos.FamilyMemberDto;
+import com.example.dtos.ContactDto;
+import com.example.dtos.RecipientDto;
 import com.example.service.RecipientService;
 import com.example.service.TokenService;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @RestController
@@ -18,8 +16,16 @@ public class RecipientController {
     private TokenService tokenService;
     private RecipientService recipientService;
 
-    @GetMapping("/podpisota")
-    public Set<FamilyMemberDto> getPodpisota(){
-        return new HashSet<>();
+    @PostMapping("/contact/add")
+    public ContactDto addContact(@RequestBody RecipientDto recipientDto){
+        return recipientService.addContactToOwner((String)tokenService.getTokenUser().getClaims().get("sub"), recipientDto);
+    }
+    @GetMapping("/contact/get")
+    public Set<ContactDto> getContacts(){
+        return recipientService.getContactDtos((String)tokenService.getTokenUser().getClaims().get("sub"));
+    }
+    @PostMapping("/contact/edit")
+    public ContactDto editContact(@RequestBody RecipientDto recipientDto){
+        return recipientService.editContact((String)tokenService.getTokenUser().getClaims().get("sub"), recipientDto);
     }
 }

@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .authorizeExchange(auth -> auth
                         .pathMatchers("/").permitAll()
                         .pathMatchers("/image/**").permitAll()
+                        .pathMatchers("/favicon/**").permitAll()
                         .pathMatchers("/resources/**").permitAll()
                         .anyExchange().authenticated())
                 .oauth2Login(withDefaults())

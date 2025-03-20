@@ -29,33 +29,29 @@ public class GlobalFamilyService {
         primeFamily.setGlobalFamily(globalFamily);
     }
 
-    public void addFreeFamilyToGlobalFamily(Family family, GlobalFamily globalFamily) {
-        if (globalFamily.getNumber() == null) globalFamily.setNumber(1);
-        else globalFamily.setNumber(globalFamily.getNumber() + 1);
-        family.setGlobalFamily(globalFamily);
-    }
-
     @Transactional
     public GlobalFamily mergeGlobalFamilies(GlobalFamily family1, GlobalFamily family2) {
-        if (family1!=family2){
-        System.out.println("Слияние глобальных семей");
-        family1.setNumber(family1.getNumber() + family2.getNumber());
-        System.out.println("Счас бум изменять семьи");
-        if (family2.getGuard() != null && !family2.getGuard().isEmpty()) {
-            for (Guard guard :
-                    family2.getGuard()) {
-                guardService.addGuardToGlobalFamily(guard,family1);
+        if (family1 != family2) {
+            System.out.println("Слияние глобальных семей");
+
+            System.out.println("Счас бум изменять семьи");
+            if (family2.getGuard() != null && !family2.getGuard().isEmpty()) {
+                for (Guard guard :
+                        family2.getGuard()) {
+                    guardService.addGuardToGlobalFamily(guard, family1);
+                }
             }
-        }
-        System.out.println("Добавили Стражу");
-        for (Family f :
-                family2.getMembers()) {
-            f.setGlobalFamily(family1);
-        }
-        System.out.println("Добавили членов");
-        globalFamilyRepo.delete(family2);
-        System.out.println("Удалили старую. Счас бум сохранять изменения");
-        return globalFamilyRepo.save(family1);}else return family1;
+            System.out.println("Добавили Стражу");
+            for (Family f :
+                    family2.getMembers()) {
+                f.setGlobalFamily(family1);
+            }
+            System.out.println("Добавили членов");
+            globalFamilyRepo.delete(family2);
+            System.out.println("Удалили старую. Счас бум сохранять изменения");
+            family1.setNumber(family1.getMembers().size());
+            return globalFamilyRepo.save(family1);
+        } else return family1;
 
     }
 }

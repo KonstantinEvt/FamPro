@@ -1,29 +1,23 @@
 package com.example.service;
 
 
-import com.example.config.TaskResource;
-import com.example.dtos.Directive;
+import com.example.dtos.DirectiveGuards;
 import com.example.dtos.FamilyDirective;
 import com.example.dtos.FamilyMemberDto;
 import com.example.entity.FamilyMember;
 import com.example.entity.OldFio;
-import com.example.enums.CheckStatus;
-import com.example.enums.KafkaOperation;
-import com.example.enums.Sex;
-import com.example.enums.SwitchPosition;
+import com.example.enums.*;
 import com.example.exceptions.*;
+import com.example.feign.FamilyConnectionClient;
 import com.example.mappers.FamilyMemberMapper;
 import com.example.mappers.FioMapper;
 import com.example.repository.FamilyMemberRepo;
-import com.example.repository.OldFioRepo;
 import com.example.utils.FamilyMemberUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Date;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -37,6 +31,9 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     private final FamilyMemberRepo familyMemberRepo;
     private final TokenService tokenService;
     private final LinkedList<FamilyDirective> directives;
+    private final FamilyConnectionClient familyConnectionClient;
+
+    private final LinkedList<DirectiveGuards> directiveGuardsList;
 
     public FamilyMemberService(FioMapper fioMapper,
                                FamilyMemberMapper familyMemberMapper,
@@ -45,7 +42,9 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                                OldFioService oldFioService,
                                FamilyMemberRepo familyMemberRepo,
                                TokenService tokenService,
-                               LinkedList<FamilyDirective> directives) {
+                               LinkedList<FamilyDirective> directives,
+                               FamilyConnectionClient familyConnectionClient,
+                               LinkedList<DirectiveGuards> directiveGuardsList) {
         super(fioMapper);
         this.familyMemberMapper = familyMemberMapper;
         this.familyMemberInfoService = familyMemberInfoService;
@@ -54,6 +53,8 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         this.familyMemberRepo = familyMemberRepo;
         this.tokenService = tokenService;
         this.directives = directives;
+        this.familyConnectionClient = familyConnectionClient;
+        this.directiveGuardsList = directiveGuardsList;
     }
 
     @Transactional(readOnly = true)
@@ -166,14 +167,33 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                     new FamilyMemberNotFound("Попытка изменить человека по UUID, которого нет в базе"));
         } else throw new ProblemWithId("Ни Id, ни UUID не указан для поиска/изменения человека");
 
-        if (!FamilyMemberUtils.checkRightsToEdit(fm, tokenService.getTokenUser()))
+        if (!FamilyMemberUtils.checkRightsToEdit(fm, tokenService.getTokenUser())) {
+            directiveGuardsList.add(DirectiveGuards.builder()
+                    .created(new Timestamp(System.currentTimeMillis()))
+                    .tokenUser((String) tokenService.getTokenUser().getClaims().get("sub"))
+                    .switchPosition(SwitchPosition.MAIN)
+                    .info1("You are havent rights to change this person")
+                    .info2(fm.getFullName())
+                    .build());
             throw new RightsIsAbsent("У Вас нет прав для изменения");
+        }
+        if (fm.getCheckStatus() == CheckStatus.CHECKED
+                && !tokenService.getTokenUser().getRoles().contains(UserRoles.MANAGER.getNameSSO())
+                && !tokenService.getTokenUser().getRoles().contains(UserRoles.ADMIN.getNameSSO())
+                && !familyConnectionClient.checkRights((UUID) tokenService.getTokenUser().getClaims().get("sub"))){
+            throw new RightsIsAbsent("У Вас нет прав для изменения");
+        }
         if (fm.getCheckStatus() == CheckStatus.MODERATE
-                && !FamilyMemberUtils.checkRightsToModerate(tokenService.getTokenUser()))
-            throw new ModeratingContent("Находится на модерации");
-//        if (tokenService.getTokenUser().getRoles().contains(UserRoles.LINKED_USER.getNameSSO())
-//                && fm.getCheckStatus() == CheckStatus.UNCHECKED) fm.setCheckStatus(CheckStatus.CHECKED);
-
+                && !FamilyMemberUtils.checkRightsToModerate(tokenService.getTokenUser())) {
+            directiveGuardsList.add(DirectiveGuards.builder()
+                    .created(new Timestamp(System.currentTimeMillis()))
+                    .tokenUser((String) tokenService.getTokenUser().getClaims().get("sub"))
+                    .switchPosition(SwitchPosition.MAIN)
+                    .info1("trying changing person under voting or moderating")
+                    .info2(fm.getFullName())
+                    .build());
+            throw new ModeratingContent("Находится на модерцаии");
+        }
         Set<FamilyMember> currentChildrenOfFamilyMember = fm.getChilds();
         if (familyMemberDto.getFirstName() != null) fm.setFirstName(familyMemberDto.getFirstName());
         if (familyMemberDto.getBirthday() != null && (currentChildrenOfFamilyMember == null || currentChildrenOfFamilyMember.isEmpty())) {
@@ -263,10 +283,10 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     @Transactional
     public void extractExtensionOfFamilyMember(FamilyMemberDto familyMemberDto, FamilyMember fm) {
         fm.setFullName(generateFioStringInfo(fm));
-        if (familyMemberDto.getFatherFio()!=null&&familyMemberDto.getMotherFio()!=null
+        if (familyMemberDto.getFatherFio() != null && familyMemberDto.getMotherFio() != null
                 && Objects.equals(familyMemberDto.getFatherFio().getFirstName(), familyMemberDto.getMotherFio().getFirstName())
-                && Objects.equals(familyMemberDto.getFatherFio().getMiddleName(), familyMemberDto.getMotherFio().getFirstName())
-                && Objects.equals(familyMemberDto.getFatherFio().getLastName(), familyMemberDto.getMotherFio().getFirstName())
+                && Objects.equals(familyMemberDto.getFatherFio().getMiddleName(), familyMemberDto.getMotherFio().getMiddleName())
+                && Objects.equals(familyMemberDto.getFatherFio().getLastName(), familyMemberDto.getMotherFio().getLastName())
         ) throw new UncorrectedInformation("It's not funny. Mother and Father must be different people");
 
         if (familyMemberDto.getFatherFio() != null) {
@@ -335,6 +355,56 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 familyMember.getMotherInfo().charAt(1) == 'A') {
             losingParentsService.addLosingParent(familyMemberDto.getMotherFio(), familyMember, Sex.FEMALE);
         }
+    }
+
+    @Transactional
+    public void changeParentsAfterVoting(FamilyDirective directive) {
+        FamilyMember familyMember = familyMemberRepo.findFioByUuid(UUID.fromString(directive.getPerson())).orElseThrow(() -> new RuntimeException("family member not found"));
+        switch (directive.getSwitchPosition()) {
+            case MAIN -> {
+                if (familyMember.getFather() != null) familyMember.setFather(null);
+                else
+                    losingParentsService.removeParentByLosingUuid(losingParentsService.generateUUIDFromFullName(familyMember.getFatherInfo()), familyMember);
+                if (familyMember.getMother() != null) familyMember.setMother(null);
+                else
+                    losingParentsService.removeParentByLosingUuid(losingParentsService.generateUUIDFromFullName(familyMember.getMotherInfo()), familyMember);
+                familyMember.setFatherInfo(null);
+                familyMember.setMotherInfo(null);
+            }
+            case FATHER -> {
+                if (familyMember.getFather() != null) familyMember.setFather(null);
+                else
+                    losingParentsService.removeParentByLosingUuid(losingParentsService.generateUUIDFromFullName(familyMember.getFatherInfo()), familyMember);
+                familyMember.setFatherInfo(null);
+            }
+            case MOTHER -> {
+                if (familyMember.getMother() != null) familyMember.setMother(null);
+                else
+                    losingParentsService.removeParentByLosingUuid(losingParentsService.generateUUIDFromFullName(familyMember.getMotherInfo()), familyMember);
+                familyMember.setMotherInfo(null);
+            }
+            default -> log.warn("found unknown directive");
+        }
+        familyMemberRepo.save(familyMember);
+    }
+
+    @Transactional
+    public void changeCheckStatus(FamilyDirective directive) {
+        FamilyMember familyMember = familyMemberRepo.findFioByUuid(UUID.fromString(directive.getPerson())).orElseThrow(() -> new RuntimeException("family member not found"));
+        switch (directive.getSwitchPosition()) {
+            case MAIN -> familyMember.setCheckStatus(CheckStatus.MODERATE);
+            case FATHER -> {
+                familyMember.setCheckStatus(CheckStatus.LINKED);
+                if (directive.getTokenUser() != null) familyMember.setCreator(directive.getTokenUser());
+            }
+            case MOTHER -> {
+                familyMember.setCheckStatus(CheckStatus.CHECKED);
+                if (directive.getTokenUser() != null) familyMember.setCreator(directive.getTokenUser());
+            }
+            case CHILD -> familyMember.setCheckStatus(CheckStatus.UNCHECKED);
+            default -> log.warn("found unknown directive");
+        }
+        familyMemberRepo.save(familyMember);
     }
 }
 

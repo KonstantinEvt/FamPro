@@ -5,8 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface RecipientRepo extends JpaRepository<Recipient,Long>{
-    Recipient findByExternId(String externId);
+    Optional<Recipient> findByExternId(String externId);
+
 }

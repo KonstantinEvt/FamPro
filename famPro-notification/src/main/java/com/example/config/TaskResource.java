@@ -1,6 +1,7 @@
 package com.example.config;
 
 import com.example.dtos.AloneNewDto;
+import com.example.dtos.Directive;
 import com.example.dtos.FamilyDirective;
 import com.example.models.StandardInfo;
 import org.springframework.context.annotation.Bean;
@@ -14,8 +15,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Configuration
 public class TaskResource {
 
-    @Bean("inlineResource")
-    LinkedList<FamilyDirective> inline() {
+//    @Bean("inlineResource")
+//    LinkedList<FamilyDirective> inline() {
+//        return new LinkedList<>();
+//    }
+    @Bean("directiveResource")
+    LinkedList<Directive> sender() {
+        return new LinkedList<>();
+    }
+    @Bean("directiveVoting")
+    LinkedList<Directive> senderVoting() {
         return new LinkedList<>();
     }
 

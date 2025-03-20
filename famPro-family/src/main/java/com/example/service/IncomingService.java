@@ -1,25 +1,24 @@
 package com.example.service;
 
 
+import com.example.dtos.DirectiveGuards;
 import com.example.dtos.FamilyDirective;
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.TokenUser;
-import com.example.entity.DeferredDirective;
-import com.example.entity.Family;
-import com.example.entity.Guard;
-import com.example.entity.ShortFamilyMember;
-import com.example.enums.CheckStatus;
-import com.example.enums.KafkaOperation;
-import com.example.enums.Sex;
-import com.example.enums.SwitchPosition;
+import com.example.entity.*;
+import com.example.enums.*;
 import com.example.repository.DirectiveRepo;
 import com.example.repository.FamilyRepo;
+import com.example.repository.MainFamilyRepo;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -30,8 +29,11 @@ public class IncomingService {
     private final GlobalFamilyService globalFamilyService;
     private final DirectiveRepo directiveRepo;
     private final GuardService guardService;
-    private final FamilyService familyService;
-
+    private final FamilyServiceImp familyService;
+    private final DirectiveService directiveService;
+    private List<DirectiveGuards> directiveGuardsList;
+    private List<FamilyDirective> storageDirective;
+    private final MainFamilyRepo mainFamilyRepo;
 
     @Transactional
     public void checkFamilyDirectives(LinkedList<FamilyDirective> directiveLinkedList) {
@@ -50,11 +52,23 @@ public class IncomingService {
         Set<ShortFamilyMember> acceptedChild = new HashSet<>();
         List<Family> familiesToRemove = new ArrayList<>();
         List<DeferredDirective> directiveList = new ArrayList<>();
+        ShortFamilyMember anyBrother = null;
 
         if (mainDirective.getOperation() == KafkaOperation.RENAME) {
             mainMember = memberService.getShortMemberRepo().findByUuid(UUID.fromString(mainDirective.getPerson())).orElseThrow(() -> new RuntimeException("не найден"));
+            if (mainMember.getCheckStatus() == CheckStatus.MODERATE && !mainDirective.getTokenUser().equals("moderator")) {
+                log.warn("Попытка изменения человека находящимся под голосованием или модерацией");
+                directiveGuardsList.add(DirectiveGuards.builder()
+                        .created(new Timestamp(System.currentTimeMillis()))
+                        .tokenUser(mainDirective.getTokenUser())
+                        .switchPosition(mainDirective.getSwitchPosition())
+                        .info1("trying changing person under voting")
+                        .info2(mainMember.getFullName())
+                        .build());
+                return;
+            }
             primeFamily = mainMember.getFamilyWhereChild();
-            if (checkFamilyForGuard(primeFamily, guardFromDirective) || mainDto.getCheckStatus() == CheckStatus.CHECKED) {
+            if (checkFamilyForGuard(primeFamily, guardFromDirective) || mainDto.getCheckStatus() == CheckStatus.MODERATE || mainDto.getCheckStatus() == CheckStatus.CHECKED) {
                 memberService.editFamilyMember(mainDto, mainMember);
                 if ((mainDto.getFatherInfo() != null
                         && mainDto.getMotherInfo() != null) &&
@@ -66,7 +80,7 @@ public class IncomingService {
                     possiblePrime = familyRepo.findFirstByExternID(possibleId);
                     if (possiblePrime.isPresent()) {
                         System.out.println("И мы ее нашли");
-                        if (checkFamilyForGuard(possiblePrime.get(), guardFromDirective)) {
+                        if (checkFamilyForGuard(possiblePrime.get(), guardFromDirective) || mainDto.getCheckStatus() == CheckStatus.MODERATE) {
                             System.out.println("Сейчас будем мержить семьи");
                             possiblePrime.get().getChildren().add(mainMember);
                             familyService.mergeFamilies(primeFamily, possiblePrime.get());
@@ -74,16 +88,19 @@ public class IncomingService {
                             System.out.println("444");
                             primeFamily = possiblePrime.get();
                         } else {
+                            anyBrother = possiblePrime.get().getChildren().stream().findFirst().orElseThrow(() -> new RuntimeException("Brother not found"));
                             directiveList.add(DeferredDirective
                                     .builder()
+                                    .created(new Timestamp(System.currentTimeMillis()))
                                     .directiveFamily(primeFamily)
                                     .directiveMember(mainMember)
-                                    .enternId(possibleId)
+                                    .shortFamilyMemberLink(anyBrother)
+                                    .info(possibleId)
                                     .processFamily(possiblePrime.get())
-                                    .directiveGuard(guardFromDirective.orElse(null))
+                                    .tokenUser(mainDirective.getTokenUser())
                                     .switchPosition(SwitchPosition.MAIN)
-                                    .globalFor(primeFamily.getGlobalFamily())
-                                    .globalTo(possiblePrime.get().getGlobalFamily())
+                                    .globalFor(primeFamily.getGlobalFamily().getNumber())
+                                    .globalTo(possiblePrime.get().getGlobalFamily().getNumber())
                                     .build());
                         }// запрос на слияние с кровными братьями
                     } else {
@@ -92,33 +109,43 @@ public class IncomingService {
                     }
                 }
                 familyService.addChangesToFamilyInfo(primeFamily, mainDto.getFatherInfo(), mainMember.getMotherInfo());
-            } else throw new RuntimeException("редактирование запрещено");
+            } else {
+                log.warn("Попытка изменения человека под защитой");
+                directiveGuardsList.add(DirectiveGuards.builder()
+                        .created(new Timestamp(System.currentTimeMillis()))
+                        .tokenUser(mainDirective.getTokenUser())
+                        .switchPosition(mainDirective.getSwitchPosition())
+                        .info1("trying changing person without rights")
+                        .info2(mainMember.getFullName())
+                        .build());
+                return;
+            }
         }
         if (mainDirective.getOperation() == KafkaOperation.ADD) {
-            primeFamily = familyService.creatOrFindFamilyByInfo(mainDto.getFatherInfo(), mainDto.getMotherInfo(), mainDto.getUuid().toString());
-            System.out.println("прайм семья определена");
             mainMember = memberService.addFamilyMember(mainDto);
+            primeFamily = familyService.creatOrFindFamilyByInfo(mainMember);
+            System.out.println("прайм семья определена");
+
             System.out.println("OOOOOOOOOOOOOOOOJJJJJJJJ1");
-            if (!checkFamilyForGuard(primeFamily, guardFromDirective)) {
+            if (!primeFamily.getChildren().isEmpty() && !checkFamilyForGuard(primeFamily, guardFromDirective)) {
                 System.out.println("OOOOOOOOOOOOOOOOJJJJJJJJ3");
                 possiblePrime = Optional.of(primeFamily);
                 primeFamily = familyService.creatFreeFamily(mainDto.getFatherInfo(), mainDto.getMotherInfo(), mainDto.getUuid().toString());
+                anyBrother = possiblePrime.get().getChildren().stream().findFirst().orElseThrow(() -> new RuntimeException("Brother not found"));
                 directiveList.add(DeferredDirective
                         .builder()
                         .directiveFamily(primeFamily)
                         .directiveMember(mainMember)
-                        .enternId(possiblePrime.get().getExternID())
+                        .shortFamilyMemberLink(anyBrother)
+                        .created(new Timestamp(System.currentTimeMillis()))
+                        .info(possiblePrime.get().getExternID())
                         .processFamily(possiblePrime.get())
-                        .directiveGuard(guardFromDirective.orElse(null))
+                        .tokenUser(mainDirective.getTokenUser())
                         .switchPosition(SwitchPosition.MAIN)
-                        .globalFor(primeFamily.getGlobalFamily())
-                        .globalTo(possiblePrime.get().getGlobalFamily())
+                        .globalFor(1)
+                        .globalTo(possiblePrime.get().getGlobalFamily().getNumber())
                         .build());
             }
-//            if (primeFamily.getChildren().isEmpty()) {
-//                primeFamily.getGlobalFamily().setNumber(primeFamily.getGlobalFamily().getNumber() + 1);
-//            }
-
         }
         System.out.println("555");
         assert primeFamily != null;
@@ -131,30 +158,29 @@ public class IncomingService {
         if (primeFamily.getGlobalFamily() == null) {
             globalFamilyService.creatNewGlobalFamily(primeFamily);
         }
-        if (guardFromDirective.isPresent()
-                && guardFromDirective.get().getLinkedPerson().getUuid().equals(mainDto.getUuid())) {
-            guardService.addGuardToFamily(guardFromDirective.get(), primeFamily);
-            guardService.addGuardToGlobalFamily(guardFromDirective.get(), primeFamily.getGlobalFamily());
-        }
+
 
         while (!directiveLinkedList.isEmpty()) {
             System.out.println("обработка едит директив");
             FamilyDirective processDirective = directiveLinkedList.pollFirst();
             assert processDirective != null;
-            ShortFamilyMember member = memberService.getShortMemberRepo().findByUuid(processDirective.getFamilyMemberDto().getUuid())
-                    .orElseThrow(() -> new RuntimeException("Anomaly"));
+            System.out.println(processDirective);
+//            ShortFamilyMember member = memberService.getShortMemberRepo().findByUuid(processDirective.getFamilyMemberDto().getUuid())
+//                    .orElseThrow(() -> new RuntimeException("Anomaly"));
+            ShortFamilyMember member = mainFamilyRepo.findMemberWithFamilyWithAllGuardsByUuid(processDirective.getFamilyMemberDto().getUuid());
+            if (member == null) {
+                log.warn("This link is {}", processDirective.getSwitchPosition().getInfo());
+                continue;
+            }
             Family family = member.getFamilyWhereChild();
             boolean existBloodBrother = !childFamilies.isEmpty() && childFamilies.contains(family);
-            if (existBloodBrother || checkFamilyForGuard(family, guardFromDirective)) {
+            if (checkFamilyForGuard(family, guardFromDirective)) {
                 if (!existBloodBrother) {
-//                    if (primeFamily.getGlobalFamily() != null) {
+                    log.info("merging global families");
                     if (family.getGlobalFamily().getNumber() > primeFamily.getGlobalFamily().getNumber())
                         primeFamily.setGlobalFamily(globalFamilyService.mergeGlobalFamilies(family.getGlobalFamily(), primeFamily.getGlobalFamily()));
                     else
                         family.setGlobalFamily(globalFamilyService.mergeGlobalFamilies(primeFamily.getGlobalFamily(), family.getGlobalFamily()));
-//                    } else {
-//                        globalFamilyService.addFreeFamilyToGlobalFamily(primeFamily, family.getGlobalFamily());
-//                    }
                 }
                 switch (processDirective.getSwitchPosition()) {
                     case CHILD -> {
@@ -170,15 +196,11 @@ public class IncomingService {
                                 family.setWife(mainMember);
                                 family.getFamilyMembers().add(mainMember);
                             }
-
-                            if (primeFamily.getGuard() != null) for (Guard guard :
-                                    primeFamily.getGuard()) {
-                                guardService.addGuardToFamily(guard, family);
-                            }
+                            guardService.addGuardParentsFamilyToFamily(primeFamily, family);
 
                             if (family.getHusbandInfo() != null && family.getWifeInfo() != null)
                                 family.setExternID(family.getHusbandInfo().concat(family.getWifeInfo()));
-                            addPersonParentsToFamilyParents(family, mainMember);
+                            familyService.addPersonParentsToFamilyParents(family, mainMember);
                             for (Family fam :
                                     childFamilies) {
                                 if (fam.getExternID().equals(family.getExternID()) && fam != family) {
@@ -188,101 +210,45 @@ public class IncomingService {
                             }
                             familyRepo.save(family);
                         }
-                        if (member.getChilds() != null) {
-                            for (ShortFamilyMember grandChild :
-                                    member.getChilds()) {
-                                Family grand = grandChild.getFamilyWhereChild();
-                                if (grand.getParents() == null) grand.setParents(new HashSet<>());
-                                grand.getParents().add(mainMember);
-                                grand.getFamilyMembers().add(mainMember);
-                                mainMember.getFamilies().add(grand);
-                                if (mainMember.getLinkedGuard() != null)
-                                    guardService.addGuardToFamily(mainMember.getLinkedGuard(), grand);
-                                grandChildFamilies.add(grand);
-                            }
-                        }
+                        grandChildFamilies.addAll(familyService.addGrandLinks(member.getChilds(), mainMember));
                         memberService.addChildToFamilyMember(mainMember, member);
                         memberService.getShortMemberRepo().save(member);
+                        log.info("child is setup");
 
                     }
                     case FATHER -> {
-                        primeFamily.setHusband(member);
-                        primeFamily.getFamilyMembers().add(member);
-                        primeFamily.setHusbandInfo(member.getFullName());
-                        if (primeFamily.getWifeInfo() != null)
-                            primeFamily.setExternID(primeFamily.getHusbandInfo().concat(primeFamily.getWifeInfo()));
-                        addPersonParentsToFamilyParents(primeFamily, member);
-                        Set<Family> familiesOfBrothersByFather = familyRepo.findAllByHusband(member);
-                        if (familiesOfBrothersByFather.size() > 1) {
-                            if (primeFamily.getHalfChildrenByFather() == null)
-                                primeFamily.setHalfChildrenByFather(new HashSet<>());
-                            for (Family fam :
-                                    familiesOfBrothersByFather) {
-                                if (!fam.equals(primeFamily)) {
-                                    primeFamily.getHalfChildrenByFather().addAll(fam.getChildren());
-                                    primeFamily.getFamilyMembers().addAll(fam.getChildren());
-                                    if (fam.getHalfChildrenByFather() == null)
-                                        fam.setHalfChildrenByFather(new HashSet<>());
-                                    fam.getHalfChildrenByFather().add(mainMember);
-                                    fam.getFamilyMembers().add(mainMember);
-                                }
-                            }
-                        }
-                        if (family.getGuard() != null) for (Guard guard :
-                                family.getGuard()) {
-                            guardService.addGuardToFamily(guard, primeFamily);
-                        }
-                        mainMember.setFather(member);
-                        if (member.getChilds() == null) member.setChilds(new HashSet<>());
-                        member.getChilds().add(mainMember);
-
-                        familyRepo.saveAll(familiesOfBrothersByFather);
+                        familyService.addChangesFromFather(primeFamily, family, mainMember, member);
+                        grandChildFamilies.addAll(familyService.addGrandLinks(mainMember.getChilds(), member));
+                        log.info("father is setup");
                     }
                     case MOTHER -> {
-                        primeFamily.setWife(member);
-                        primeFamily.getFamilyMembers().add(member);
-                        primeFamily.setWifeInfo(member.getFullName());
-                        if (primeFamily.getHusbandInfo() != null)
-                            primeFamily.setExternID(primeFamily.getHusbandInfo().concat(primeFamily.getWifeInfo()));
-                        addPersonParentsToFamilyParents(primeFamily, member);
-                        Set<Family> familiesOfBrothersByMother = familyRepo.findAllByWife(member);
-                        if (familiesOfBrothersByMother.size() > 1) {
-                            if (primeFamily.getHalfChildrenByMother() == null)
-                                primeFamily.setHalfChildrenByMother(new HashSet<>());
-                            for (Family fam :
-                                    familiesOfBrothersByMother) {
-                                if (!fam.equals(primeFamily)) {
-                                    if (fam.getHalfChildrenByMother() == null)
-                                        fam.setHalfChildrenByMother(new HashSet<>());
-                                    primeFamily.getHalfChildrenByMother().addAll(fam.getChildren());
-                                    primeFamily.getFamilyMembers().addAll(fam.getChildren());
-                                    fam.getHalfChildrenByMother().add(mainMember);
-                                    fam.getFamilyMembers().add(mainMember);
-                                }
-                            }
-                        }
-                        if (family.getGuard() != null) for (Guard guard :
-                                family.getGuard()) {
-                            guardService.addGuardToFamily(guard, primeFamily);
-                        }
-                        mainMember.setMother(member);
-                        if (member.getChilds() == null) member.setChilds(new HashSet<>());
-                        member.getChilds().add(mainMember);
-                        familyRepo.saveAll(familiesOfBrothersByMother);
+                        familyService.addChangesFromMother(primeFamily, family, mainMember, member);
+                        grandChildFamilies.addAll(familyService.addGrandLinks(mainMember.getChilds(), member));
                     }
                     default -> log.warn("Обнаружена нераспознанная директива");
                 }
             } else {
+                if (member.getCheckStatus() != CheckStatus.MODERATE) {
+                    member.setCheckStatus(CheckStatus.MODERATE);
+                    memberService.getShortMemberRepo().save(member);
+                    storageDirective.add(FamilyDirective.builder()
+                            .person(member.getUuid().toString())
+                            .switchPosition(SwitchPosition.MAIN)
+                            .operation(KafkaOperation.RENAME)
+                            .build());
+                }
                 directiveList.add(DeferredDirective
                         .builder()
                         .directiveFamily(primeFamily)
                         .directiveMember(mainMember)
-                        .enternId(family.getExternID())
+                        .created(new Timestamp(System.currentTimeMillis()))
+                        .info(member.getFullName())
+                        .shortFamilyMemberLink(member)
                         .processFamily(family)
-                        .directiveGuard(guardFromDirective.orElse(null))
+                        .tokenUser(mainDirective.getTokenUser())
                         .switchPosition(processDirective.getSwitchPosition())
-                        .globalFor(primeFamily.getGlobalFamily())
-                        .globalTo(family.getGlobalFamily())
+                        .globalFor(primeFamily.getGlobalFamily().getNumber())
+                        .globalTo(family.getGlobalFamily().getNumber())
                         .build());
             }
         }
@@ -296,52 +262,170 @@ public class IncomingService {
             }
         }
         familyRepo.deleteAll(familiesToRemove);
+        System.out.println("Отправка статусных директив");
+        if (!directiveList.isEmpty()) {
+            mainMember.setCheckStatus(CheckStatus.MODERATE);
+            storageDirective.add(FamilyDirective.builder()
+                    .person(mainMember.getUuid().toString())
+                    .switchPosition(SwitchPosition.MAIN)
+                    .operation(KafkaOperation.RENAME)
+                    .build());
+            log.info("moderate directive is send");
+        } else if ((primeFamily.getGuard() != null && !primeFamily.getGuard().isEmpty())
+                || (primeFamily.getGlobalFamily().getGuard() != null && !primeFamily.getGlobalFamily().getGuard().isEmpty())) {
+            if (mainMember.getCheckStatus() != CheckStatus.LINKED && guardFromDirective.isPresent() && Objects.equals(mainMember.getLinkedGuard(), guardFromDirective.get())) {
+                mainMember.setCheckStatus(CheckStatus.LINKED);
+                storageDirective.add(FamilyDirective.builder()
+                        .tokenUser(mainDirective.getTokenUser())
+                        .person(mainMember.getUuid().toString())
+                        .switchPosition(SwitchPosition.FATHER)
+                        .operation(KafkaOperation.RENAME)
+                        .build());
+                log.info("person receive link status and directive is send");
+            } else if (mainMember.getCheckStatus() != CheckStatus.CHECKED) {
+                mainMember.setCheckStatus(CheckStatus.CHECKED);
+                storageDirective.add(FamilyDirective.builder()
+                        .tokenUser(mainDirective.getTokenUser())
+                        .person(mainMember.getUuid().toString())
+                        .switchPosition(SwitchPosition.MOTHER)
+                        .operation(KafkaOperation.RENAME)
+                        .build());
+                log.info("person receive checked status and directive is send");
+            }
+        }
         memberService.getShortMemberRepo().save(mainMember);
         if (!childFamilies.isEmpty()) familyRepo.saveAll(childFamilies);
-        System.out.println(grandChildFamilies.size());
         if (!grandChildFamilies.isEmpty()) familyRepo.saveAll(grandChildFamilies);
         familyRepo.save(primeFamily);
+        log.info("Acceptable changes is done. Directives will be send");
+        if (directiveList.size() > 1 && directiveList.get(0).getSwitchPosition() == SwitchPosition.MAIN && (directiveList.get(1).getSwitchPosition() == SwitchPosition.FATHER || directiveList.get(1).getSwitchPosition() == SwitchPosition.MOTHER))
+            directiveList.remove(0);
+        else {
+            if (anyBrother != null && anyBrother.getCheckStatus() != CheckStatus.MODERATE) {
+                anyBrother.setCheckStatus(CheckStatus.MODERATE);
+                memberService.getShortMemberRepo().save(anyBrother);
+                storageDirective.add(FamilyDirective.builder()
+                        .person(anyBrother.getUuid().toString())
+                        .switchPosition(SwitchPosition.MAIN)
+                        .operation(KafkaOperation.RENAME)
+                        .build());
+            }
+        }
         directiveRepo.saveAll(directiveList);
-    }
-
-    @Transactional
-    public void addPersonParentsToFamilyParents(Family family, ShortFamilyMember member) {
-        if (member.getFather() != null) {
-            if (family.getParents() == null) family.setParents(new HashSet<>());
-            family.getParents().add(member.getFather());
-            family.getFamilyMembers().add(member.getFather());
-            if (member.getFather().getLinkedGuard() != null)
-                guardService.addGuardToFamily(member.getFather().getLinkedGuard(), family);
-        }
-        if (member.getMother() != null) {
-            if (family.getParents() == null) family.setParents(new HashSet<>());
-            family.getParents().add(member.getMother());
-            family.getFamilyMembers().add(member.getMother());
-            if (member.getMother().getLinkedGuard() != null)
-                guardService.addGuardToFamily(member.getMother().getLinkedGuard(), family);
-        }
-
+        directiveService.formGuardDirective(directiveList);
     }
 
     public boolean checkFamilyForGuard(Family family, Optional<Guard> directiveGuard) {
         System.out.println("OOOOOOOOOOOOOOOOJJJJJJJJ2");
-        return (directiveGuard.isPresent() && (family.getGuard() == null || family.getGuard().contains(directiveGuard.get()))
-                || ((family.getGuard() == null || family.getGuard().isEmpty()) && (family.getGlobalFamily() == null || family.getGlobalFamily().getGuard() == null || family.getGlobalFamily().getGuard().isEmpty()))
-                || ((family.getGuard() == null || family.getGuard().isEmpty())
-                && directiveGuard.isPresent()
-                && family.getGlobalFamily().getGuard().contains(directiveGuard.get())));
+        return ((family.getGuard() == null || family.getGuard().isEmpty()) &&
+                (family.getGlobalFamily() == null || family.getGlobalFamily().getGuard() == null || family.getGlobalFamily().getGuard().isEmpty()))
+                || (directiveGuard.isPresent() &&
+                ((family.getGuard() != null && !family.getGuard().isEmpty() && family.getGuard().contains(directiveGuard.get()))
+                        || (family.getGlobalFamily().getGuard() != null && !family.getGlobalFamily().getGuard().isEmpty() && family.getGlobalFamily().getGuard().contains(directiveGuard.get())
+                )));
     }
 
     @Transactional
     public void addGuardByLink(FamilyMemberDto familyMemberDto, TokenUser tokenUser) {
-        ShortFamilyMember shortFamilyMember = memberService.getShortMemberRepo().findByUuid(familyMemberDto.getUuid()).orElseThrow(() -> new RuntimeException("не найден человек"));
-        Guard guard = guardService.creatGuard(shortFamilyMember, (String) tokenUser.getClaims().get("sub"));
-        System.out.println("Стража создана");
-        guardService.addGuardToFamilies(shortFamilyMember.getFamilies(), guard);
-        guardService.addGuardToGlobalFamily(guard, shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
-        familyRepo.saveAll(shortFamilyMember.getFamilies());
+        if (tokenUser.getRoles().contains(UserRoles.LINKED_USER.getNameSSO())) {
+            log.warn("this user is already linked");
+            throw new RuntimeException("you are already linked");
+        }
+        ShortFamilyMember shortFamilyMember = mainFamilyRepo.getPersonForLinking(familyMemberDto.getUuid());
+        if (shortFamilyMember == null) throw new RuntimeException("человек не найден");
+        switch (shortFamilyMember.getCheckStatus()) {
+            case LINKED -> {
+                log.warn("this person is already linked");
+                throw new RuntimeException("person is already linked");
+            }
+            case MODERATE -> {
+                log.warn("person is under voting or moderate");
+                throw new RuntimeException("person is under voting or moderate. Try linking later");
+            }
+            case UNCHECKED -> {
+                Guard guard = guardService.creatGuard(shortFamilyMember, (String) tokenUser.getClaims().get("sub"));
+                shortFamilyMember.setCheckStatus(CheckStatus.LINKED);
+                guardService.addGuardToFamilies(shortFamilyMember.getFamilies(), guard);
+                guardService.addGuardToGlobalFamily(guard, shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
+                familyRepo.saveAll(shortFamilyMember.getFamilies());
+//                memberService.shortMemberRepo.save(shortFamilyMember);
+                log.info("New guard is created");
+
+                storageDirective.add(FamilyDirective.builder()
+                        .tokenUser((String) tokenUser.getClaims().get("sub"))
+                        .person(shortFamilyMember.getUuid().toString())
+                        .switchPosition(SwitchPosition.FATHER)
+                        .operation(KafkaOperation.RENAME)
+                        .build());
+            }
+            default -> {
+                shortFamilyMember.setCheckStatus(CheckStatus.MODERATE);
+                log.info("New guard is prepare to voting");
+                DeferredDirective directive = DeferredDirective
+                        .builder()
+                        .directiveFamily(shortFamilyMember.getFamilyWhereChild())
+                        .directiveMember(shortFamilyMember)
+                        .created(new Timestamp(System.currentTimeMillis()))
+                        .info("linking directive")
+                        .tokenUser((String) tokenUser.getClaims().get("sub"))
+                        .switchPosition(SwitchPosition.MAIN)
+                        .globalFor(shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getNumber())
+                        .build();
+                directiveRepo.save(directive);
+                Set<String> guards;
+                if (shortFamilyMember.getFamilyWhereChild().getGuard() != null
+                        && !shortFamilyMember.getFamilyWhereChild().getGuard().isEmpty()) {
+                    guards = shortFamilyMember.getFamilyWhereChild().getGuard().stream()
+                            .map(Guard::getTokenUser)
+                            .collect(Collectors.toSet());
+                } else if (shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getGuard() != null && !shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getGuard().isEmpty()) {
+                    guards = shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getGuard().stream()
+                            .map(Guard::getTokenUser)
+                            .collect(Collectors.toSet());
+                } else throw new RuntimeException("check status off person is wrong");
+                DirectiveGuards directiveGuards = DirectiveGuards.builder()
+                        .id(directive.getId().toString())
+                        .created(directive.getCreated())
+                        .guards(guards)
+                        .tokenUser(directive.getTokenUser())
+                        .switchPosition(directive.getSwitchPosition())
+                        .info1(StringUtils.join("User: ", "<br>",
+                                tokenUser.getUsername(), "<br>",
+                                " with NickName: ",
+                                tokenUser.getNickName(),
+                                " with Email: ",
+                                tokenUser.getEmail(), "<br>",
+                                "want to be linking with ", "<br>",
+                                directive.getDirectiveMember().getFullName(),
+                                " "))
+                        .build();
+                directiveGuards.setGlobalNumber1(directive.getGlobalTo());
+                directiveGuardsList.add(directiveGuards);
+
+                storageDirective.add(FamilyDirective.builder()
+                        .person(shortFamilyMember.getUuid().toString())
+                        .switchPosition(SwitchPosition.MAIN)
+                        .operation(KafkaOperation.RENAME)
+                        .build());
+            }
+        }
+
     }
 
+    @Transactional
+    public boolean checkStatusCheck(UUID uuid, String tokenUser) {
+        Optional<ShortFamilyMember> mainMember = memberService.getShortMemberRepo().findByUuid(uuid);
+        Optional<Guard> guardFromToken = guardService.findGuard(tokenUser);
+        if (mainMember.isEmpty() || guardFromToken.isEmpty()) return false;
+        boolean rights = checkFamilyForGuard(mainFamilyRepo.findFamilyWithAllGuards(mainMember.get()), guardFromToken);
+        if (!rights) directiveGuardsList.add(DirectiveGuards.builder()
+                .created(new Timestamp(System.currentTimeMillis()))
+                .tokenUser(tokenUser)
+                .switchPosition(SwitchPosition.MAIN)
+                .info1("trying changing person without rights")
+                .info2(mainMember.get().getFullName())
+                .build());
+        return rights;
+    }
 }
-
 

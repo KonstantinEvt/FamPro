@@ -3,6 +3,7 @@ package com.example.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -10,16 +11,37 @@ import java.util.UUID;
 @NoArgsConstructor
 @Setter
 @Getter
+@Builder
 public class Contact {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
+    private UUID uuid;
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "owner")
     private Recipient owner;
-    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     private Recipient person;
+    @Column(name = "contact_name")
+    private String name;
     @Column(name = "contact_info")
     private String info;
+    @Column(name = "extern_id")
+    private String externId;
+    @Column(name = "contact_photo")
+    private boolean contactPhoto;
+    @Column(name = "prime_photo")
+    private boolean primePhoto;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Contact contact = (Contact) o;
+        return contactPhoto == contact.contactPhoto && primePhoto == contact.primePhoto && Objects.equals(uuid, contact.uuid) && Objects.equals(owner, contact.owner) && Objects.equals(person, contact.person) && Objects.equals(name, contact.name) && Objects.equals(info, contact.info) && Objects.equals(externId, contact.externId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid);
+    }
 }

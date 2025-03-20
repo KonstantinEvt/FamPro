@@ -23,47 +23,50 @@ public class StandardInfo {
     private List<Integer> commonGlobalRead = new ArrayList<>();
 
     public void addNewMessageToPerson(AloneNewDto aloneNewDto) {
+        boolean success = false;
         switch (aloneNewDto.getCategory()) {
             case SYSTEM -> {
-                this.counts[1] += 1;
-                systemNews.add(aloneNewDto);
+                success = systemNews.add(aloneNewDto);
+                this.counts[1] = systemNews.size();
             }
             case FAMILY -> {
-                this.counts[3] += 1;
-                familyNews.add(aloneNewDto);
+                success = familyNews.add(aloneNewDto);
+                this.counts[3] = familyNews.size();
             }
             case PRIVATE -> {
-                this.counts[4] += 1;
-                individualNews.add(aloneNewDto);
+                success = individualNews.add(aloneNewDto);
+                this.counts[4] = individualNews.size();
             }
             default -> log.warn("try to receive unknown letter");
         }
-        this.counts[0] += 1;
+        if (success) this.counts[0] = this.counts[1] + this.counts[3] + this.counts[4];
     }
 
     public void removeNew(AloneNewDto aloneNewDto) {
+        boolean success = false;
         switch (aloneNewDto.getCategory()) {
             case SYSTEM -> {
-                this.counts[1] -= 1;
-                systemNews.remove(aloneNewDto);
+                success = systemNews.remove(aloneNewDto);
+                this.counts[1] = systemNews.size();
             }
             case FAMILY -> {
-                this.counts[3] -= 1;
-                familyNews.remove(aloneNewDto);
+                success = familyNews.remove(aloneNewDto);
+                this.counts[3] = familyNews.size();
             }
             case PRIVATE -> {
-                this.counts[4] -= 1;
-                individualNews.remove(aloneNewDto);
+                success = individualNews.remove(aloneNewDto);
+                this.counts[4] = individualNews.size();
             }
             default -> log.warn("try to remove unknown letter");
         }
-        this.counts[0] -= 1;
+        if (success) this.counts[0] = this.counts[1] + this.counts[3] + this.counts[4];
     }
-    public int viewGlobalMessage(List<Integer> mask, List<Integer> read){
-        int countGlobal=0;
+
+    public int viewGlobalMessage(List<Integer> mask, List<Integer> read) {
+        int countGlobal = 0;
         for (int i = 0; i < mask.size(); i++) {
-            if (i==read.size()) read.add(0);
-            if (mask.get(i)+read.get(i)==0) countGlobal+=1;
+            if (i == read.size()) read.add(0);
+            if (mask.get(i) + read.get(i) == 0) countGlobal += 1;
         }
         return countGlobal;
     }

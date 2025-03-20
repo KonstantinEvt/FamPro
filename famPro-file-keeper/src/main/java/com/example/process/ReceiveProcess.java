@@ -1,6 +1,7 @@
 package com.example.process;
 
 import com.example.dtos.Directive;
+import com.example.enums.SwitchPosition;
 import com.example.services.FileStorageService;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -37,8 +38,12 @@ public class ReceiveProcess implements Consumer<Message<Directive>> {
                 if (photoHolder.getFrontPictures().get(directive.getTokenUser()) != null) {
                     log.info("Выполняется сохранение файла на сервер MinIO...");
                     try {
+                        if (directive.getSwitchPosition()== SwitchPosition.PRIME_PHOTO) {
                         fileStorageService.savePhoto(photoHolder.getFrontPictures().get(directive.getTokenUser()),
-                                directive.getPerson(),firstPhoto);
+                                directive.getPerson(),firstPhoto);} else {
+                            fileStorageService.savePhoto(photoHolder.getFrontPictures().get(directive.getTokenUser()),
+                                    directive.getPerson(),directive.getTokenUser());
+                        }
                         log.info("Файл успешно сохранен на сервер MinIO.");
                     } catch (Exception e) {
                         log.error("Ошибка при сохранении файла на сервер MinIO.", e);

@@ -22,13 +22,11 @@ public class ReceiveProcess implements Consumer<Message<FamilyDirective>> {
     @Override
     public void accept(Message<FamilyDirective> directiveMessage) {
         FamilyDirective directive = directiveMessage.getPayload();
-        System.out.println("Получена директива");
+        log.info("Receiving directive from storage: {}",directive);
         String keyOperation = directive.getTokenUser().concat(directive.getPerson());
 
         directiveHolder.getDirectiveMap().putIfAbsent(keyOperation, new LinkedList<>());
         if (!directiveHolder.getDirectiveMap().get(keyOperation).contains(directive)) {
-            System.out.println("Директива обрабатывается");
-            System.out.println(directive);
             directiveHolder.getDirectiveMap().get(keyOperation).add(directive);
             if (directive.getSwitchPosition() == SwitchPosition.MAIN) {
                 incomingService.checkFamilyDirectives(directiveHolder.getDirectiveMap().get(keyOperation));

@@ -12,4 +12,7 @@ public class MapsOfHolders {
     Map<String, byte[]> systemPictures(){return new ConcurrentHashMap<>();}
     @Bean
     Map<String, byte[]> commonPictures(){return new ConcurrentHashMap<>();}
+
+    @Bean
+    Map<String, byte[]> defaultPhotos(){return new ConcurrentHashMap<>();}
 }

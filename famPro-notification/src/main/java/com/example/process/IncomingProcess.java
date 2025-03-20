@@ -21,8 +21,8 @@ public class IncomingProcess implements Consumer<Message<FamilyDirective>> {
     @Override
     public void accept(Message<FamilyDirective> directiveMessage) {
         FamilyDirective directive = directiveMessage.getPayload();
-        System.out.println("Получена директива");
         String inlineUser = directive.getTokenUser();
+        log.info("User {} is entering in system", inlineUser);
         if (directive.getOperation() == KafkaOperation.ADD) {
             if (!standardInfoHolder.getOnlineInfo().containsKey(inlineUser))
                 recipientService.inlineProcess(directive);

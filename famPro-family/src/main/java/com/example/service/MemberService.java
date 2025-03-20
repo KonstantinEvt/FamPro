@@ -10,7 +10,9 @@ import com.example.enums.Sex;
 import com.example.mappers.FamilyMemberInfoMapper;
 import com.example.mappers.FamilyMemberMapper;
 import com.example.repository.FamilyMemberInfoRepo;
+import com.example.repository.MainFamilyRepo;
 import com.example.repository.ShortMemberRepo;
+import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,18 +32,23 @@ public class MemberService {
     FamilyMemberInfoRepo familyMemberInfoRepo;
     FamilyMemberMapper familyMemberMapper;
     FamilyMemberInfoMapper familyMemberInfoMapper;
+    MainFamilyRepo mainFamilyRepo;
 
     @Transactional
     public ShortFamilyMember addFamilyMember(FamilyMemberDto dto) {
         ShortFamilyMember familyMember = familyMemberMapper.dtoToEntity(dto);
-        if (dto.getMemberInfo() != null)
+        familyMember.setId(null);
+        if (dto.getMemberInfo() != null) {
             familyMember.setShortFamilyMemberInfo(familyMemberInfoMapper.dtoToEntity(dto.getMemberInfo()));
+            familyMember.getShortFamilyMemberInfo().setId(null);
+        }
         familyMember.setFamilies(new HashSet<>());
         familyMember.setChilds(new HashSet<>());
         familyMember.setFamilyWhereChildInLow(new HashSet<>());
         familyMember.setFamilyWhereHalfChildByFather(new HashSet<>());
         familyMember.setFamilyWhereHalfChildByMother(new HashSet<>());
-        return shortMemberRepo.save(familyMember);
+        mainFamilyRepo.persistNewPerson(familyMember);
+        return familyMember;
     }
 
     @Transactional

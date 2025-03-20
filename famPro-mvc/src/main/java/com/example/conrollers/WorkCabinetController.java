@@ -1,17 +1,11 @@
 package com.example.conrollers;
 
-import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.TokenUser;
-import com.example.enums.CheckStatus;
-import com.example.exceptions.ModeratingContent;
-import com.example.exceptions.RightsIsAbsent;
-import com.example.services.BaseService;
 import lombok.AllArgsConstructor;
 import com.example.models.OnlineUserHolder;
 import com.example.models.SimpleUserInfo;
 import com.example.services.TokenService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,8 +13,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
-
-import java.util.Date;
 
 
 @Controller
@@ -40,7 +32,7 @@ public class WorkCabinetController {
         if (simpleUserInfo.getLocalisation().equals("ru"))
             return "WelcomeRu";
         else
-            return "Welcome";
+            return "WelcomeOld";
     }
 
     @GetMapping("/rules")

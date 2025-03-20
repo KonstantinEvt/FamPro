@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class MailService {
+public class EmailServiceFam {
     Session getSession;
     public void sendingMessage() throws MessagingException {
 

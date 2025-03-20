@@ -13,20 +13,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Getter
 @Setter
 @Slf4j
 public class PhotoHolder {
-    private Map<String, byte[]> frontPictures = new WeakHashMap<>();
-    private Map<String, byte[]> birthPictures = new WeakHashMap<>();
-    private Map<String, byte[]> burialPictures = new WeakHashMap<>();
+    private Map<String, byte[]> frontPictures = new ConcurrentHashMap<>();
+    private Map<String, byte[]> birthPictures = new ConcurrentHashMap<>();
+    private Map<String, byte[]> burialPictures = new ConcurrentHashMap<>();
     private TokenService tokenService;
     private DirectiveHolder directiveHolder;
     private FileStorageService fileStorageService;
-    @Value("${minio.first_photo_bucket}")
-    private String firstPhoto;
+
 
     public PhotoHolder(TokenService tokenService, DirectiveHolder directiveHolder, FileStorageService fileStorageService) {
         this.tokenService = tokenService;
@@ -34,7 +34,7 @@ public class PhotoHolder {
         this.fileStorageService = fileStorageService;
     }
 
-    public void addFrontPicture(MultipartFile frontPicture) {
+    public void addFrontPicture(MultipartFile frontPicture, String bucket) {
         String frontUser = (String) tokenService.getTokenUser().getClaims().get("sub");
         try (InputStream file = frontPicture.getInputStream()) {
              frontPictures.put(frontUser, file.readAllBytes());
@@ -44,7 +44,7 @@ public class PhotoHolder {
         if (directiveHolder.getDirectiveMap().containsKey(frontUser)) {
             try {
                 fileStorageService.savePhoto(getFrontPictures().get(frontUser),
-                        directiveHolder.getDirectiveMap().get(frontUser).getPerson(),firstPhoto);
+                        directiveHolder.getDirectiveMap().get(frontUser).getPerson(),bucket);
                 log.info("Файл успешно сохранен на сервер MinIO.");
             } catch (Exception e) {
                 log.error("Ошибка при сохранении файла на сервер MinIO.", e);

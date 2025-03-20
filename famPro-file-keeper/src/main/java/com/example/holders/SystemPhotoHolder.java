@@ -1,52 +1,51 @@
 package com.example.holders;
 
 import com.example.services.FileStorageService;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 
 @Component
 @Getter
 @Setter
 @Slf4j
-public class NewsHolder {
+public class SystemPhotoHolder {
     private Map<String, byte[]> systemPictures;
     private Map<String, byte[]> commonPictures;
+    private Map<String, byte[]> defaultPhotos;
     private FileStorageService fileStorageService;
 
     @Value("${minio.system_news_bucket}")
-    private String sysNews;
+    private String sysNewsBucket;
     @Value("${minio.common_news_bucket}")
-    private String commonNews;
+    private String commonNewsBucket;
+    @Value("${minio.default_photo_bucket}")
+    private String defaultPhotoBucket;
 
-    public NewsHolder(Map<String, byte[]> systemPictures, Map<String, byte[]> commonPictures, FileStorageService fileStorageService) {
+
+    public SystemPhotoHolder(Map<String, byte[]> systemPictures, Map<String, byte[]> commonPictures, Map<String, byte[]> defaultPhotos, FileStorageService fileStorageService) {
         this.systemPictures = systemPictures;
         this.commonPictures = commonPictures;
+        this.defaultPhotos = defaultPhotos;
         this.fileStorageService = fileStorageService;
     }
 
     public void addPicture(String name, MultipartFile frontPicture, String bucket) {
-        String bucketMinio=(bucket.equals("SYSTEM"))?sysNews:commonNews;
+        String bucketMinio = (bucket.equals("SYSTEM")) ? sysNewsBucket : commonNewsBucket;
         System.out.println(name);
         System.out.println(bucketMinio);
         System.out.println(frontPicture.getSize());
         try (InputStream file = frontPicture.getInputStream()) {
-            byte[] bytesOfPicture=file.readAllBytes();
-            if (bucketMinio.equals(sysNews)) systemPictures.put(name, bytesOfPicture);
-            else if (bucketMinio.equals(commonNews)) commonPictures.put(name, bytesOfPicture);
+            byte[] bytesOfPicture = file.readAllBytes();
+            if (bucketMinio.equals(sysNewsBucket)) systemPictures.put(name, bytesOfPicture);
+            else if (bucketMinio.equals(commonNewsBucket)) commonPictures.put(name, bytesOfPicture);
             fileStorageService.savePhoto(bytesOfPicture,
                     name, bucketMinio);
             log.info("Файл успешно сохранен на сервер MinIO.");
@@ -57,7 +56,8 @@ public class NewsHolder {
         }
         System.out.println("tyt_tyt");
     }
-//public ResponseEntity<Resource> getPhoto(String bucket, String fileName){
+
+    //public ResponseEntity<Resource> getPhoto(String bucket, String fileName){
 //    if (systemPictures.containsKey(fileName)){
 //    Resource resource = new InputStreamResource(new ByteArrayInputStream(systemPictures.get(fileName)));
 //    // Возвращение ResponseEntity с содержимым файла
@@ -67,10 +67,16 @@ public class NewsHolder {
 //            .body(resource);}
 //    else return fileStorageService.getPhoto(bucket, fileName);
 //}
-    public byte[] getPhoto(String bucket, String fileName){
-        if (systemPictures.containsKey(fileName))
+    public byte[] getPhoto(String bucket, String fileName) {
+
+        if (bucket.equals(sysNewsBucket) && systemPictures.containsKey(fileName))
             return systemPictures.get(fileName);
-        else return fileStorageService.getPhoto(bucket, fileName);
+        else if (bucket.equals(commonNewsBucket) && commonPictures.containsKey(fileName))
+            return commonPictures.get(fileName);
+        else if (bucket.equals(defaultPhotoBucket) && defaultPhotos.containsKey(fileName))
+            return defaultPhotos.get(fileName);
+        log.warn("Search photo in unknown bucket or Holder haven`t this photo");
+        return fileStorageService.getPhoto(bucket, fileName);
     }
 }
 

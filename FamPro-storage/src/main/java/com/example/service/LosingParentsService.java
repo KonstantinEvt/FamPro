@@ -79,7 +79,8 @@ public class LosingParentsService extends FioServiceImp<LosingParent> {
 //тут возможны доп проверки на соответствие и право
                 FamilyMember childWithLosingParent = losingParentForFamilyMember.getMember();
 // если поменяли пол, а у найденных детей иное мнение
-                if (losingParentForFamilyMember.getSex()!=familyMember.getSex()) familyMember.setSex(losingParentForFamilyMember.getSex());
+                if (losingParentForFamilyMember.getSex() != familyMember.getSex())
+                    familyMember.setSex(losingParentForFamilyMember.getSex());
 // тут можно побаловаться с сохраняемым инфо (на данный моммент остается информация старой записи)
 //                if (losingParentForFamilyMember.getSex() == Sex.MALE && familyMember.getSex() == Sex.MALE) {
 //                    childWithLosingParent.setFather(familyMember);
@@ -106,7 +107,9 @@ public class LosingParentsService extends FioServiceImp<LosingParent> {
             if (checkDifBirthday(Sex.MALE, father.getBirthday(), fm.getBirthday())) {
                 fm.setFather(father);
                 fm.setFatherInfo(father.getFullName());
-                if (!father.getChilds().isEmpty()) father.setChilds(new HashSet<>());
+
+                if (father.getChilds() == null) father.setChilds(new HashSet<>());
+
                 father.getChilds().add(fm);
                 directives.add(FamilyDirective.builder()
                         .familyMemberDto(familyMemberMapper.entityToDto(father))
@@ -138,7 +141,7 @@ public class LosingParentsService extends FioServiceImp<LosingParent> {
             if (checkDifBirthday(Sex.FEMALE, mother.getBirthday(), fm.getBirthday())) {
                 fm.setMother(mother);
                 fm.setMotherInfo(mother.getFullName());
-                if (!mother.getChilds().isEmpty()) mother.setChilds(new HashSet<>());
+                if (mother.getChilds() == null) mother.setChilds(new HashSet<>());
                 mother.getChilds().add(fm);
                 directives.add(FamilyDirective.builder()
                         .familyMemberDto(familyMemberMapper.entityToDto(mother))

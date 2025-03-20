@@ -54,7 +54,7 @@ public class CabinetController {
         System.out.println("связываем с Клоаком");
         tokenService.linkUser(dto);
         System.out.println("связываем с базой");
-        baseService.linkFamilyMember(id);
+        baseService.linkFamilyMember(dto);
         onlineUserHolder.getSimpleUser().editUser(dto);
     return ResponseEntity.ok("Вы успешно связаны с челоеком c Id: "+id);
     }
