@@ -1,6 +1,6 @@
 package com.example.holders;
 
-import com.example.services.FileStorageService;
+import com.example.services.FileStorageServiceImpl;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ public class SystemPhotoHolder {
     private Map<String, byte[]> systemPictures;
     private Map<String, byte[]> commonPictures;
     private Map<String, byte[]> defaultPhotos;
-    private FileStorageService fileStorageService;
+    private FileStorageServiceImpl fileStorageService;
 
     @Value("${minio.system_news_bucket}")
     private String sysNewsBucket;
@@ -30,7 +30,7 @@ public class SystemPhotoHolder {
     private String defaultPhotoBucket;
 
 
-    public SystemPhotoHolder(Map<String, byte[]> systemPictures, Map<String, byte[]> commonPictures, Map<String, byte[]> defaultPhotos, FileStorageService fileStorageService) {
+    public SystemPhotoHolder(Map<String, byte[]> systemPictures, Map<String, byte[]> commonPictures, Map<String, byte[]> defaultPhotos, FileStorageServiceImpl fileStorageService) {
         this.systemPictures = systemPictures;
         this.commonPictures = commonPictures;
         this.defaultPhotos = defaultPhotos;

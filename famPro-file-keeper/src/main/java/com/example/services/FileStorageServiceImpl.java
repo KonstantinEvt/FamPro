@@ -4,20 +4,16 @@ import io.minio.*;
 import io.minio.errors.*;
 import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
-import com.example.holders.PhotoHolder;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
@@ -28,7 +24,7 @@ import java.util.Map;
  */
 @Log4j2
 @Service
-public class FileStorageServiceImpl implements FileStorageService {
+public class FileStorageServiceImpl {
 
     private MinioClient minioClient;
     private TokenService tokenService;
@@ -48,16 +44,17 @@ public class FileStorageServiceImpl implements FileStorageService {
     private Map<String, byte[]> commonPictures;
 
     private Map<String, byte[]> defaultPhotos;
+
     public FileStorageServiceImpl(MinioClient minioClient,
                                   TokenService tokenService,
                                   Map<String, byte[]> systemPictures,
                                   Map<String, byte[]> commonPictures,
-                                  Map<String,byte[]> defaultPhotos) {
+                                  Map<String, byte[]> defaultPhotos) {
         this.minioClient = minioClient;
         this.tokenService = tokenService;
         this.systemPictures = systemPictures;
         this.commonPictures = commonPictures;
-        this.defaultPhotos=defaultPhotos;
+        this.defaultPhotos = defaultPhotos;
     }
 
     @PostConstruct
@@ -112,7 +109,6 @@ public class FileStorageServiceImpl implements FileStorageService {
         ResponseEntity.ok("Photo is saved");
     }
 
-    @Override
     public byte[] getPhoto(String bucket, String fileName) {
         try {
             // Получение объекта (файла) из MinIO
@@ -141,10 +137,12 @@ public class FileStorageServiceImpl implements FileStorageService {
         loadPictureToHolder(sysNews, systemPictures);
         log.info("System News photo is load to Holder");
     }
+
     private void getCommonNews() {
         loadPictureToHolder(commonNews, commonPictures);
         log.info("Common News photo is load to Holder");
     }
+
     private void getDefaultPhotos() {
         loadPictureToHolder(defaultPhoto, defaultPhotos);
         log.info("Default photo is load to Holder");
@@ -188,5 +186,18 @@ public class FileStorageServiceImpl implements FileStorageService {
         }
     }
 
+    public void saveNewsPhoto(String name, MultipartFile frontPicture) {
+        String bucketMinio = (String) tokenService.getTokenUser().getClaims().get("sub");
+        try (InputStream file = frontPicture.getInputStream()) {
+            byte[] bytesOfPicture = file.readAllBytes();
+            savePhoto(bytesOfPicture, name, bucketMinio);
+            log.info("Файл успешно сохранен на сервер MinIO.");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            log.error("Ошибка при сохранении файла на сервер MinIO.", e);
+        }
+        System.out.println("tyt_tyt");
+    }
 
 }

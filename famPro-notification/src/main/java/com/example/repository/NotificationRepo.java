@@ -1,6 +1,7 @@
 package com.example.repository;
 
 import com.example.entity.AloneNew;
+import com.example.entity.Contact;
 import com.example.entity.Recipient;
 import com.example.entity.Voting;
 import com.example.enums.NewsCategory;
@@ -90,6 +91,34 @@ public class NotificationRepo {
     }
 
     @Transactional(readOnly = true)
+    public Recipient findRecipientWithContactsByLinkExternId(String externId) {
+        Recipient owner;
+        try {
+            owner = entityManager.createQuery("select a from Recipient a left join fetch a.contacts where a.linkExternId= :externId", Recipient.class)
+                    .setParameter("externId", externId)
+                    .getSingleResult();
+        } catch (RuntimeException e) {
+            log.warn("owner not found");
+            owner = null;
+        }
+        return owner;
+    }
+
+    @Transactional(readOnly = true)
+    public Recipient findRecipientWithPodpisotaByLink(String externId) {
+        Recipient owner;
+        try {
+            owner = entityManager.createQuery("select a from Recipient a left join fetch a.podpisota where a.linkExternId= :externId", Recipient.class)
+                    .setParameter("externId", externId)
+                    .getSingleResult();
+        } catch (RuntimeException e) {
+            log.warn("recipient not found");
+            owner = null;
+        }
+        return owner;
+    }
+
+    @Transactional(readOnly = true)
     public Recipient findRecipientWithPodpisota(String externId) {
         Recipient owner;
         try {
@@ -97,7 +126,7 @@ public class NotificationRepo {
                     .setParameter("externId", externId)
                     .getSingleResult();
         } catch (RuntimeException e) {
-            log.warn("owner not found");
+            log.warn("recipient not found");
             owner = null;
         }
         return owner;
@@ -116,6 +145,7 @@ public class NotificationRepo {
         }
         return recipientSet;
     }
+
     @Transactional(readOnly = true)
     public Voting findVoting(String externId) {
         Voting voting;
@@ -129,16 +159,47 @@ public class NotificationRepo {
         }
         return voting;
     }
+
     @Transactional
-    public List<AloneNew> getAloneNewWithSendTo(String externId){
+    public List<AloneNew> getAloneNewWithSendTo(String externId) {
         List<AloneNew> aloneNews;
-        try{
-            aloneNews=entityManager.createQuery("from AloneNew a left join fetch a.sendTo where a.externId= :externId",AloneNew.class)
-                    .setParameter("externId",externId).getResultList();
-        }catch (RuntimeException e) {
+        try {
+            aloneNews = entityManager.createQuery("from AloneNew a left join fetch a.sendTo where a.externId= :externId", AloneNew.class)
+                    .setParameter("externId", externId).getResultList();
+        } catch (RuntimeException e) {
             log.info("Voting-letter link not found");
             return null;
-    }return aloneNews;
+        }
+        return aloneNews;
     }
 
+    @Transactional
+    public Set<Contact> getContactsWithAll(Set<Recipient> guard, Set<String> extern) {
+        Set<Contact> contacts;
+        try {
+            contacts = new HashSet<>(entityManager.createQuery("from Contact a join fetch a.owner b join fetch a.person where b in :guard and a.externId in :extern", Contact.class)
+                    .setParameter("guard", guard)
+                    .setParameter("extern", extern)
+                    .getResultList());
+        } catch (RuntimeException e) {
+            log.warn("something is wrong", e);
+            contacts = null;
+        }
+        return contacts;
+    }
+
+    @Transactional
+    public Optional<Contact> getContact(String owner, String recipient) {
+        Optional<Contact> contact;
+        try {
+            contact = Optional.of(entityManager.createQuery("from Contact a join fetch a.owner b join fetch a.person where b.externId= :owner and a.externId= :recipient", Contact.class)
+                    .setParameter("owner", owner)
+                    .setParameter("recipient", recipient)
+                    .getSingleResult());
+        } catch (RuntimeException e) {
+            log.warn("something is wrong", e);
+            contact = Optional.empty();
+        }
+        return contact;
+    }
 }

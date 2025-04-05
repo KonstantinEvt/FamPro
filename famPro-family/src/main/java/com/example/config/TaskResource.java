@@ -15,12 +15,24 @@ public class TaskResource {
     LinkedList<DirectiveGuards> letterToGuards() {
         return new LinkedList<>();
     }
+
     @Bean("inlineResource")
     LinkedList<FamilyDirective> inline() {
         return new LinkedList<>();
     }
+
     @Bean("storageDirective")
     LinkedList<FamilyDirective> storageDirective() {
+        return new LinkedList<>();
+    }
+
+    @Bean("contactDirective")
+    LinkedList<DirectiveGuards> contactDirective() {
+        return new LinkedList<>();
+    }
+
+    @Bean("cloakDirective")
+    LinkedList<Directive> cloakDirective() {
         return new LinkedList<>();
     }
 }

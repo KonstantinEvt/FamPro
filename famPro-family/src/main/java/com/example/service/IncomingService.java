@@ -5,14 +5,17 @@ import com.example.dtos.DirectiveGuards;
 import com.example.dtos.FamilyDirective;
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.TokenUser;
-import com.example.entity.*;
+import com.example.entity.DeferredDirective;
+import com.example.entity.Family;
+import com.example.entity.Guard;
+import com.example.entity.ShortFamilyMember;
 import com.example.enums.*;
 import com.example.repository.DirectiveRepo;
 import com.example.repository.FamilyRepo;
 import com.example.repository.MainFamilyRepo;
-import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
+
 @Log4j2
 public class IncomingService {
     private final FamilyRepo familyRepo;
@@ -31,9 +34,33 @@ public class IncomingService {
     private final GuardService guardService;
     private final FamilyServiceImp familyService;
     private final DirectiveService directiveService;
-    private List<DirectiveGuards> directiveGuardsList;
-    private List<FamilyDirective> storageDirective;
+    private final List<DirectiveGuards> directiveGuardsList;
+    private final List<FamilyDirective> storageDirective;
     private final MainFamilyRepo mainFamilyRepo;
+    private final List<DirectiveGuards> contactDirective;
+
+    public IncomingService(FamilyRepo familyRepo,
+                           MemberService memberService,
+                           GlobalFamilyService globalFamilyService,
+                           DirectiveRepo directiveRepo,
+                           GuardService guardService,
+                           FamilyServiceImp familyService,
+                           DirectiveService directiveService,
+                           @Qualifier("directiveGuards") List<DirectiveGuards> directiveGuardsList,
+                           List<FamilyDirective> storageDirective,
+                           MainFamilyRepo mainFamilyRepo, List<DirectiveGuards> contactDirective) {
+        this.familyRepo = familyRepo;
+        this.memberService = memberService;
+        this.globalFamilyService = globalFamilyService;
+        this.directiveRepo = directiveRepo;
+        this.guardService = guardService;
+        this.familyService = familyService;
+        this.directiveService = directiveService;
+        this.directiveGuardsList = directiveGuardsList;
+        this.storageDirective = storageDirective;
+        this.mainFamilyRepo = mainFamilyRepo;
+        this.contactDirective = contactDirective;
+    }
 
     @Transactional
     public void checkFamilyDirectives(LinkedList<FamilyDirective> directiveLinkedList) {
@@ -68,7 +95,7 @@ public class IncomingService {
                 return;
             }
             primeFamily = mainMember.getFamilyWhereChild();
-            if (checkFamilyForGuard(primeFamily, guardFromDirective) || mainDto.getCheckStatus() == CheckStatus.MODERATE || mainDto.getCheckStatus() == CheckStatus.CHECKED) {
+            if (mainDto.getCheckStatus() == CheckStatus.MODERATE || checkFamilyForGuard(primeFamily, guardFromDirective)) {
                 memberService.editFamilyMember(mainDto, mainMember);
                 if ((mainDto.getFatherInfo() != null
                         && mainDto.getMotherInfo() != null) &&
@@ -165,14 +192,12 @@ public class IncomingService {
             FamilyDirective processDirective = directiveLinkedList.pollFirst();
             assert processDirective != null;
             System.out.println(processDirective);
-//            ShortFamilyMember member = memberService.getShortMemberRepo().findByUuid(processDirective.getFamilyMemberDto().getUuid())
-//                    .orElseThrow(() -> new RuntimeException("Anomaly"));
-            ShortFamilyMember member = mainFamilyRepo.findMemberWithFamilyWithAllGuardsByUuid(processDirective.getFamilyMemberDto().getUuid());
+            ShortFamilyMember member = mainFamilyRepo.findMemberWithPrimeFamily(processDirective.getFamilyMemberDto().getUuid());
             if (member == null) {
                 log.warn("This link is {}", processDirective.getSwitchPosition().getInfo());
                 continue;
             }
-            Family family = member.getFamilyWhereChild();
+            Family family = mainFamilyRepo.findFamilyWithAllGuards(member);
             boolean existBloodBrother = !childFamilies.isEmpty() && childFamilies.contains(family);
             if (checkFamilyForGuard(family, guardFromDirective)) {
                 if (!existBloodBrother) {
@@ -293,6 +318,9 @@ public class IncomingService {
                 log.info("person receive checked status and directive is send");
             }
         }
+        if (!directiveList.isEmpty()) for (DeferredDirective dd : directiveList)
+            if (dd.getGlobalFor() != primeFamily.getGlobalFamily().getNumber())
+                dd.setGlobalFor(primeFamily.getGlobalFamily().getNumber());
         memberService.getShortMemberRepo().save(mainMember);
         if (!childFamilies.isEmpty()) familyRepo.saveAll(childFamilies);
         if (!grandChildFamilies.isEmpty()) familyRepo.saveAll(grandChildFamilies);
@@ -326,7 +354,7 @@ public class IncomingService {
     }
 
     @Transactional
-    public void addGuardByLink(FamilyMemberDto familyMemberDto, TokenUser tokenUser) {
+    public CheckStatus addGuardByLink(FamilyMemberDto familyMemberDto, TokenUser tokenUser) {
         if (tokenUser.getRoles().contains(UserRoles.LINKED_USER.getNameSSO())) {
             log.warn("this user is already linked");
             throw new RuntimeException("you are already linked");
@@ -347,16 +375,37 @@ public class IncomingService {
                 shortFamilyMember.setCheckStatus(CheckStatus.LINKED);
                 guardService.addGuardToFamilies(shortFamilyMember.getFamilies(), guard);
                 guardService.addGuardToGlobalFamily(guard, shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
-                familyRepo.saveAll(shortFamilyMember.getFamilies());
-//                memberService.shortMemberRepo.save(shortFamilyMember);
+                globalFamilyService.getGlobalFamilyRepo().save(shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
+                memberService.getShortMemberRepo().save(shortFamilyMember);
                 log.info("New guard is created");
 
+                DirectiveGuards directiveGuards = DirectiveGuards.builder()
+                        .created(new Timestamp(System.currentTimeMillis()))
+                        .id((String) tokenUser.getClaims().get("sub"))
+                        .tokenUser((String) tokenUser.getClaims().get("sub"))
+                        .person(shortFamilyMember.getUuid().toString())
+                        .switchPosition(SwitchPosition.MAIN)
+                        .operation(KafkaOperation.ADD)
+                        .info1(StringUtils.join("You are successful linked with", "<br>",
+                                shortFamilyMember.getFullName(),
+                                " "))
+                        .build();
+                directiveGuards.setGlobalNumber1(shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getNumber());
+                directiveGuards.setGlobalNumber2((shortFamilyMember.isPrimePhoto()) ? 1 : 0);
+                directiveGuardsList.add(directiveGuards);
                 storageDirective.add(FamilyDirective.builder()
                         .tokenUser((String) tokenUser.getClaims().get("sub"))
                         .person(shortFamilyMember.getUuid().toString())
                         .switchPosition(SwitchPosition.FATHER)
                         .operation(KafkaOperation.RENAME)
                         .build());
+                globalFamilyService.changeStatusFamiliesMembersByGuarding(shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
+                contactDirective.add(DirectiveGuards.builder()
+                        .operation(KafkaOperation.ADD)
+                        .switchPosition(SwitchPosition.MAIN)
+                        .guards(shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getGuard().stream().map(Guard::getTokenUser).collect(Collectors.toSet()))
+                        .build());
+            return CheckStatus.LINKED;
             }
             default -> {
                 shortFamilyMember.setCheckStatus(CheckStatus.MODERATE);
@@ -366,10 +415,11 @@ public class IncomingService {
                         .directiveFamily(shortFamilyMember.getFamilyWhereChild())
                         .directiveMember(shortFamilyMember)
                         .created(new Timestamp(System.currentTimeMillis()))
-                        .info("linking directive")
+                        .info(tokenUser.getUsername())
                         .tokenUser((String) tokenUser.getClaims().get("sub"))
                         .switchPosition(SwitchPosition.MAIN)
                         .globalFor(shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getNumber())
+                        .globalTo((shortFamilyMember.isPrimePhoto()) ? 1 : 0)
                         .build();
                 directiveRepo.save(directive);
                 Set<String> guards;
@@ -386,6 +436,7 @@ public class IncomingService {
                 DirectiveGuards directiveGuards = DirectiveGuards.builder()
                         .id(directive.getId().toString())
                         .created(directive.getCreated())
+                        .person(shortFamilyMember.getUuid().toString())
                         .guards(guards)
                         .tokenUser(directive.getTokenUser())
                         .switchPosition(directive.getSwitchPosition())
@@ -399,7 +450,8 @@ public class IncomingService {
                                 directive.getDirectiveMember().getFullName(),
                                 " "))
                         .build();
-                directiveGuards.setGlobalNumber1(directive.getGlobalTo());
+                directiveGuards.setGlobalNumber1(directive.getGlobalFor());
+                directiveGuards.setGlobalNumber2(directive.getGlobalTo());
                 directiveGuardsList.add(directiveGuards);
 
                 storageDirective.add(FamilyDirective.builder()
@@ -407,25 +459,59 @@ public class IncomingService {
                         .switchPosition(SwitchPosition.MAIN)
                         .operation(KafkaOperation.RENAME)
                         .build());
+                return CheckStatus.MODERATE;
             }
         }
 
     }
 
     @Transactional
-    public boolean checkStatusCheck(UUID uuid, String tokenUser) {
+    public boolean checkStatusCheckChecked(UUID uuid, String tokenUser) {
         Optional<ShortFamilyMember> mainMember = memberService.getShortMemberRepo().findByUuid(uuid);
         Optional<Guard> guardFromToken = guardService.findGuard(tokenUser);
         if (mainMember.isEmpty() || guardFromToken.isEmpty()) return false;
-        boolean rights = checkFamilyForGuard(mainFamilyRepo.findFamilyWithAllGuards(mainMember.get()), guardFromToken);
-        if (!rights) directiveGuardsList.add(DirectiveGuards.builder()
-                .created(new Timestamp(System.currentTimeMillis()))
-                .tokenUser(tokenUser)
-                .switchPosition(SwitchPosition.MAIN)
-                .info1("trying changing person without rights")
-                .info2(mainMember.get().getFullName())
-                .build());
-        return rights;
+        //        if (!rights) directiveGuardsList.add(DirectiveGuards.builder()
+//                .created(new Timestamp(System.currentTimeMillis()))
+//                .tokenUser(tokenUser)
+//                .switchPosition(SwitchPosition.MAIN)
+//                .info1("trying changing person without rights")
+//                .info2(mainMember.get().getFullName())
+//                .build());
+        Family family = mainFamilyRepo.findFamilyWithAllGuards(mainMember.get());
+        switch (mainMember.get().getSecretLevelEdit()) {
+            case OPEN -> {
+                return true;
+            }
+            case FAMILY, CONFIDENTIAL -> {
+                if (family.getGuard() != null) return family.getGuard().contains(guardFromToken.get());
+                return family.getGlobalFamily().getGuard() == null || family.getGlobalFamily().getGuard().contains(guardFromToken.get());
+            }
+            case GLOBAL_TREE -> {
+                return family.getGlobalFamily().getGuard() == null || family.getGlobalFamily().getGuard().contains(guardFromToken.get());
+            }
+            default -> {
+                return false;
+            }
+        }
+    }
+
+    @Transactional
+    public SecretLevel getGuardStatus(UUID uuid, String tokenUser) {
+        ShortFamilyMember mainMember = mainFamilyRepo.findMemberWithPrimeFamily(uuid);
+        Guard guardFromToken = mainFamilyRepo.findGuardWithLinkByUuid(tokenUser);
+        if (mainMember == null || guardFromToken == null) throw new RuntimeException("Status check is falled");
+        if (mainMember.getCheckStatus() == CheckStatus.UNCHECKED
+                || (mainMember.getCheckStatus() == CheckStatus.LINKED && guardFromToken.getLinkedPerson().equals(mainMember)))
+            return SecretLevel.CONFIDENTIAL;
+        Family primeFamily=mainFamilyRepo.findFamilyWithAllGuards(mainMember);
+        if ((primeFamily.getGuard() == null
+                && primeFamily.getGlobalFamily().getGuard() != null
+                && primeFamily.getGlobalFamily().getGuard().contains(guardFromToken))
+                || primeFamily.getGuard() != null
+                && primeFamily.getGuard().contains(guardFromToken)) return SecretLevel.FAMILY;
+        if (primeFamily.getGuard() != null && !primeFamily.getGuard().contains(guardFromToken) && primeFamily.getGlobalFamily().getGuard() != null
+                && primeFamily.getGlobalFamily().getGuard().contains(guardFromToken))
+            return SecretLevel.GLOBAL_TREE;
+        return SecretLevel.OPEN;
     }
 }
-

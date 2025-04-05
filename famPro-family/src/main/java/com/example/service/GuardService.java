@@ -34,6 +34,11 @@ public class GuardService {
         family.getGuard().add(guard);
     }
 
+    @Transactional
+    public String getLinkGuard(String uuid) {
+        return guardRepo.findByTokenUser(uuid).orElseThrow().getLinkedPerson().getUuid().toString();
+    }
+
     public void addGuardToGlobalFamily(Guard guard, GlobalFamily globalFamily) {
         if (globalFamily.getGuard() == null) globalFamily.setGuard(new HashSet<>());
         globalFamily.getGuard().add(guard);
@@ -48,12 +53,13 @@ public class GuardService {
         familyMember.setCheckStatus(CheckStatus.LINKED);
         return guardRepo.save(linkGuard);
     }
-@Transactional
+
+    @Transactional
     public void addGuardToFamilies(Set<Family> families, Guard guard) {
         for (Family family :
                 families) {
             addGuardToFamily(guard, family);
-        familyRepository.saveFamily(family);
+            familyRepository.saveFamily(family);
         }
     }
 
@@ -76,7 +82,7 @@ public class GuardService {
                 if ((!parensFamily.getChildren().contains(guard.getLinkedPerson())
                         || family.getWife() == guard.getLinkedPerson()
                         || family.getHusband() == guard.getLinkedPerson()))
-                    addGuardToFamily(guard,family);
+                    addGuardToFamily(guard, family);
             }
     }
 }

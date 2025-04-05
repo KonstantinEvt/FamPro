@@ -3,7 +3,6 @@ package com.example.process;
 import com.example.dtos.AloneNewDto;
 import com.example.dtos.DirectiveGuards;
 import com.example.entity.AloneNew;
-import com.example.entity.Recipient;
 import com.example.holders.StandardInfoHolder;
 import com.example.mappers.AloneNewMapper;
 import com.example.service.FamilyService;
@@ -12,8 +11,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Consumer;
 
 @Component
@@ -42,7 +39,7 @@ public class GuardProcess implements Consumer<Message<DirectiveGuards>> {
             }
             aloneNew1 = familyService.formMessageToRequester(directiveGuards);
         } else {
-            aloneNew1 = familyService.formRejectToRequester(directiveGuards);
+            aloneNew1 = familyService.formAnswerToRequester(directiveGuards);
         }
         AloneNewDto letterForRequester = aloneNewMapper.entityToDto(aloneNew1);
         letterForRequester.setSendingTo(directiveGuards.getTokenUser());

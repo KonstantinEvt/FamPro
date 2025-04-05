@@ -29,9 +29,9 @@ public class LosingParent extends Fio {
     @JoinColumn(name = "member_id")
     private FamilyMember member;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "check_status")
-    private CheckStatus checkStatus;
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "check_status")
+//    private CheckStatus checkStatus;
 
     @Override
     public boolean equals(Object o) {

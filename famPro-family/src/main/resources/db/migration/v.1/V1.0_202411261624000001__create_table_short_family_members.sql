@@ -7,6 +7,30 @@ create table if not exists short_family_members
     creator      varchar(55),
     create_time  timestamp,
     prime_photo  boolean,
+    security_photo varchar(255)
+        constraint photo_security
+            check ((security_photo)::text = ANY
+                   ((ARRAY [
+                       'OPEN'::character varying,
+                       'CONFIDENTIAL'::character varying,
+                       'FAMILY'::character varying,
+                       'GENETIC_TREE'::character varying,
+                       'BLOOD_TWO'::character varying,
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
+                       ])::text[])),
+    security_edit varchar(255)
+        constraint edit_security
+            check ((security_edit)::text = ANY
+                   ((ARRAY [
+                       'OPEN'::character varying,
+                       'CONFIDENTIAL'::character varying,
+                       'FAMILY'::character varying,
+                       'GENETIC_TREE'::character varying,
+                       'BLOOD_TWO'::character varying,
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
+                       ])::text[])),
     father_id    bigint
         constraint short_family_member_father references short_family_members (id),
     father_info  varchar(255),

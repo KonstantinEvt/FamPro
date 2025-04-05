@@ -1,5 +1,6 @@
 package com.example.dtos;
 
+import com.example.enums.Localisation;
 import lombok.*;
 
 import java.util.UUID;
@@ -18,4 +19,5 @@ public class ContactDto {
     private String info;
     private boolean contactPhoto;
     private boolean primePhoto;
+    private Localisation localisation;
 }

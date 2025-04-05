@@ -1,9 +1,7 @@
 package com.example.service;
 
 
-import com.example.dtos.DirectiveGuards;
-import com.example.dtos.FamilyDirective;
-import com.example.dtos.FamilyMemberDto;
+import com.example.dtos.*;
 import com.example.entity.FamilyMember;
 import com.example.entity.OldFio;
 import com.example.enums.*;
@@ -12,8 +10,12 @@ import com.example.feign.FamilyConnectionClient;
 import com.example.mappers.FamilyMemberMapper;
 import com.example.mappers.FioMapper;
 import com.example.repository.FamilyMemberRepo;
+import com.example.repository.MainStorageRepository;
 import com.example.utils.FamilyMemberUtils;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,9 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     private final FamilyConnectionClient familyConnectionClient;
 
     private final LinkedList<DirectiveGuards> directiveGuardsList;
+    private final LinkedList<Directive> directivePhotos;
+    private final Map<String, String> tempPhotoAccept;
+    private final MainStorageRepository mainStorageRepository;
 
     public FamilyMemberService(FioMapper fioMapper,
                                FamilyMemberMapper familyMemberMapper,
@@ -44,7 +49,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                                TokenService tokenService,
                                LinkedList<FamilyDirective> directives,
                                FamilyConnectionClient familyConnectionClient,
-                               LinkedList<DirectiveGuards> directiveGuardsList) {
+                               LinkedList<DirectiveGuards> directiveGuardsList, LinkedList<Directive> directivePhotos, Map<String, String> tempPhotoAccept, MainStorageRepository mainStorageRepository) {
         super(fioMapper);
         this.familyMemberMapper = familyMemberMapper;
         this.familyMemberInfoService = familyMemberInfoService;
@@ -55,17 +60,74 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         this.directives = directives;
         this.familyConnectionClient = familyConnectionClient;
         this.directiveGuardsList = directiveGuardsList;
+        this.directivePhotos = directivePhotos;
+        this.tempPhotoAccept = tempPhotoAccept;
+        this.mainStorageRepository = mainStorageRepository;
     }
 
     @Transactional(readOnly = true)
     public FamilyMemberDto getFamilyMemberById(Long id) {
-        FamilyMember familyMember = familyMemberRepo.findById(id)
-                .orElseThrow(() -> new FamilyMemberNotFound("Человек с ID ".concat(String.valueOf(id)).concat(" не найден")));
+        FamilyMember familyMember = mainStorageRepository.findMemberWithInfoById(id)
+                .orElseThrow(() -> new FamilyMemberNotFound(StringUtils.join("person with id:", id, "not found", ' ')));
         FamilyMemberDto familyMemberDto = familyMemberMapper.entityToDto(familyMember);
         if (familyMember.getFamilyMemberInfo() != null) {
-            familyMemberDto.setMemberInfo(familyMemberInfoService.getMemberInfo(familyMember));
+            familyMemberDto.setMemberInfo(familyMemberInfoService.getShortMemberInfo(familyMember));
         }
+        if (familyMemberDto.getCheckStatus() != CheckStatus.UNCHECKED) changeMemberDtoByGuardStatus(familyMemberDto);
+        else if (familyMemberDto.isPrimePhoto())
+            tempPhotoAccept.put((String) tokenService.getTokenUser().getClaims().get("sub"), familyMemberDto.getUuid().toString());
         return familyMemberDto;
+    }
+
+    private void changeMemberDtoByGuardStatus(FamilyMemberDto familyMemberDto) {
+        SecretLevel guardStatus;
+        Set<String> roles = tokenService.getTokenUser().getRoles();
+        if (roles.contains(UserRoles.ADMIN.getNameSSO()) || roles.contains(UserRoles.MANAGER.getNameSSO()))
+            guardStatus = SecretLevel.CONFIDENTIAL;
+        else if (roles.contains(UserRoles.LINKED_USER.getNameSSO()))
+            guardStatus = familyConnectionClient.getGuardStatus(familyMemberDto.getUuid());
+        else guardStatus = SecretLevel.OPEN;
+        log.info(StringUtils.join("status user: ", guardStatus.name(), " photo status person: ", familyMemberDto.getSecretLevelPhoto().name(), ' '));
+        if (familyMemberDto.isPrimePhoto() && guardStatus.ordinal() < familyMemberDto.getSecretLevelPhoto().ordinal())
+            familyMemberDto.setSecretLevelPhoto(SecretLevel.CLOSE);
+        else {
+            if (familyMemberDto.isPrimePhoto())
+                tempPhotoAccept.put((String) tokenService.getTokenUser().getClaims().get("sub"), familyMemberDto.getUuid().toString());
+        }
+        if (guardStatus.ordinal() < familyMemberDto.getSecretLevelEdit().ordinal())
+            familyMemberDto.setSecretLevelEdit(SecretLevel.CLOSE);
+        if (familyMemberDto.getMemberInfo() != null) {
+            if (familyMemberDto.getMemberInfo().getMainEmail() != null
+                    && guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelEmail().ordinal()) {
+                familyMemberDto.getMemberInfo().setSecretLevelEmail(SecretLevel.CLOSE);
+                familyMemberDto.getMemberInfo().setEmails(null);
+                familyMemberDto.getMemberInfo().setMainEmail(null);
+            }
+            if (familyMemberDto.getMemberInfo().getMainPhone() != null
+                    && guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelPhone().ordinal()) {
+                familyMemberDto.getMemberInfo().setSecretLevelPhone(SecretLevel.CLOSE);
+                familyMemberDto.getMemberInfo().setPhones(null);
+                familyMemberDto.getMemberInfo().setMainPhone(null);
+            }
+            if (familyMemberDto.getMemberInfo().getMainAddress() != null
+                    && guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelAddress().ordinal()) {
+                familyMemberDto.getMemberInfo().setSecretLevelAddress(SecretLevel.CLOSE);
+                familyMemberDto.getMemberInfo().setAddresses(null);
+                familyMemberDto.getMemberInfo().setMainAddress(null);
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public FamilyMemberDto getFullFamilyMember(SecurityDto securityDto) {
+        if (!securityDto.getOwner().equals (tokenService.getTokenUser().getClaims().get("sub"))) {
+            log.warn("попытка взлома");
+            throw new RuntimeException("В доступе отказано. Не хорошо так делать. Мы же к Вам со свей душой, а Вы... ");
+        }
+        FamilyMember familyMember = mainStorageRepository.getFullFamilyMember(securityDto);
+        FamilyMemberDto dto = familyMemberMapper.entityToDto(familyMember);
+        if (securityDto.isInfoExist()) dto.setMemberInfo(familyMemberInfoService.getShortMemberInfo(familyMember));
+        return dto;
     }
 
     @Transactional(readOnly = true)
@@ -75,12 +137,16 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 (familyMemberDto.getLastName() != null) &&
                 familyMemberDto.getBirthday() != null) {
             UUID uuid = generateUUIDFromFio(familyMemberMapper.dtoToEntity(familyMemberDto));
-            FamilyMember familyMember = familyMemberRepo.findFioByUuid(uuid)
-                    .orElseThrow(() -> new FamilyMemberNotFound("Такой человек не найден"));
+            FamilyMember familyMember = mainStorageRepository.findMemberWithInfoByUUID(uuid)
+                    .orElse(mainStorageRepository.findMemberWithInfoByOldNameUUID(uuid)
+                            .orElseThrow(() -> new FamilyMemberNotFound("Такой человек не найден")));
             FamilyMemberDto dto = familyMemberMapper.entityToDto(familyMember);
             if (familyMember.getFamilyMemberInfo() != null) {
-                dto.setMemberInfo(familyMemberInfoService.getMemberInfo(familyMember));
+                dto.setMemberInfo(familyMemberInfoService.getShortMemberInfo(familyMember));
             }
+            if (familyMemberDto.getCheckStatus() != CheckStatus.UNCHECKED) changeMemberDtoByGuardStatus(dto);
+            else if (familyMemberDto.isPrimePhoto())
+                tempPhotoAccept.put((String) tokenService.getTokenUser().getClaims().get("sub"), familyMemberDto.getUuid().toString());
             return dto;
         } else throw new RuntimeException("Info not fully");
     }
@@ -130,6 +196,9 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 .person(result.getUuid().toString())
                 .switchPosition(SwitchPosition.MAIN)
                 .operation(KafkaOperation.ADD).build());
+        if (familyMember.isPrimePhoto())
+            directivePhotos.add(new Directive(familyMember.getCreator(), familyMember.getUuid().toString(), SwitchPosition.PRIME_PHOTO, KafkaOperation.ADD));
+
         return result;
     }
 
@@ -180,7 +249,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         if (fm.getCheckStatus() == CheckStatus.CHECKED
                 && !tokenService.getTokenUser().getRoles().contains(UserRoles.MANAGER.getNameSSO())
                 && !tokenService.getTokenUser().getRoles().contains(UserRoles.ADMIN.getNameSSO())
-                && !familyConnectionClient.checkRights((UUID) tokenService.getTokenUser().getClaims().get("sub"))){
+                && !familyConnectionClient.checkRights(fm.getUuid())) {
             throw new RightsIsAbsent("У Вас нет прав для изменения");
         }
         if (fm.getCheckStatus() == CheckStatus.MODERATE

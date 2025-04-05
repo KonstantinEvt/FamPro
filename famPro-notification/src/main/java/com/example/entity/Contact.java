@@ -1,5 +1,6 @@
 package com.example.entity;
 
+import com.example.enums.KafkaOperation;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,10 +17,10 @@ public class Contact {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID uuid;
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner")
     private Recipient owner;
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Recipient person;
     @Column(name = "contact_name")
     private String name;
@@ -31,6 +32,8 @@ public class Contact {
     private boolean contactPhoto;
     @Column(name = "prime_photo")
     private boolean primePhoto;
+    @Column(name = "status")
+    private KafkaOperation status;
 
     @Override
     public boolean equals(Object o) {

@@ -9,9 +9,10 @@ create table if not exists short_members_info
                        'OPEN'::character varying,
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
-                       'BLOOD_ONE'::character varying,
+                       'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
-                       'BLOOD_THREE'::character varying
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
                        ])::text[])),
     main_phone   varchar(50),
     secret_main_phone varchar(255)
@@ -21,9 +22,10 @@ create table if not exists short_members_info
                        'OPEN'::character varying,
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
-                       'BLOOD_ONE'::character varying,
+                       'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
-                       'BLOOD_THREE'::character varying
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
                        ])::text[])),
     main_address varchar(50),
     secret_main_address varchar(255)
@@ -33,9 +35,22 @@ create table if not exists short_members_info
                        'OPEN'::character varying,
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
-                       'BLOOD_ONE'::character varying,
+                       'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
-                       'BLOOD_THREE'::character varying
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
+                       ])::text[])),
+    secret_biometric varchar(255)
+        constraint biometric_secret
+            check ((secret_biometric)::text = ANY
+                   ((ARRAY [
+                       'OPEN'::character varying,
+                       'CONFIDENTIAL'::character varying,
+                       'FAMILY'::character varying,
+                       'GENETIC_TREE'::character varying,
+                       'BLOOD_TWO'::character varying,
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
                        ])::text[])),
     uuid         uuid
 );

@@ -1,7 +1,7 @@
 async function getCommunication() {
     loadStandardMainPanel();
-    let contactCards =await paintContacts(contacts);
-        console.log("Contacts are painted", contactCards);
+    let contactCards = await paintContacts(contacts);
+    console.log("Contacts are painted", contactCards);
     document.getElementById("taskPart").innerHTML = `    
     <br>
     <div style="font-family: 'Times New Roman', serif; font-size: 16px; text-align: center; color: chocolate">Написать:</div>
@@ -73,7 +73,7 @@ async function getContacts(state) {
     console.log("Кол-во контактов: ", i);
     if (state !== 0) {
         contacts = contactsFresh;
-        contactImages = await loadContactsImage(contacts,defaultPhotos);
+        contactImages = await loadContactsImage(contacts, defaultPhotos);
         document.getElementById("contactTabForm").innerHTML = await paintContacts(contacts);
     }
     return contactsFresh;
@@ -147,23 +147,27 @@ function submitAddContact() {
 // private String info;
 // private String urlPhoto;
 
-async function loadContactsImage(contacts,defaultPhotos){
+async function loadContactsImage(contacts, defaultPhotos) {
     let get;
     let url = []
-    let imjUrl='';
+    let imjUrl = '';
     for (let j = 0; j < contacts.length; j++) {
         url[j] = contacts[j].externId + "";
-        if (contacts[j].primePhoto) imjUrl = "/file/get/" + url[j];
-            else if (contacts[j].contactPhoto) imjUrl = "/photoContact/get/" + url[j];
-                else {contacts[j].imj = defaultPhotos.person;}
+        if (contacts[j].contactPhoto) imjUrl = "/photoContact/get/" + url[j];
+        else if (contacts[j].primePhoto) imjUrl = "/photoContact/getPrime/" + url[j];
+        else {
+            contacts[j].imj = defaultPhotos.person;
+        }
         if (imjUrl !== '') {
-            get = await loadPicture(imjUrl).then(r => contacts[j].imj = r);
+            get = await loadPicture(imjUrl).then(r => contacts[j].imj = r
+            ).catch(() => contacts[j].imj = defaultPhotos.person);
             console.log("Photo:", get)
         }
         imjUrl = '';
     }
 }
-    async function paintContacts(contactsPaint) {
+
+async function paintContacts(contactsPaint) {
     let temp1 = "";
     for (let j = 0; j < contactsPaint.length; j++) {
         let pictureUrl = '';
@@ -193,7 +197,7 @@ async function loadContactsImage(contacts,defaultPhotos){
             URL.revokeObjectURL(contactsPaint[j].imj);
         }
     }
-      if  (contactsPaint.length===0) temp1=`<div style="font-family: 'Times New Roman',serif;font-size: 16px;color:darkred;text-align: center">Contact list is empty</div>`
+    if (contactsPaint.length === 0) temp1 = `<div style="font-family: 'Times New Roman',serif;font-size: 16px;color:darkred;text-align: center">Contact list is empty</div>`
     return temp1;
 }
 
@@ -330,5 +334,13 @@ function submitMessage() {
         body: jsonData,
     }).then(async status => {
         document.getElementById("resultListCreateMessage").innerHTML = await status.text();
+    });
+}
+
+function addContactBySearch(a) {
+    fetch("/message/contact/addRequest/" + a, {
+        method: 'GET',
+    }).then(async status => {
+        document.getElementById("footer-main").innerHTML = await status.text();
     });
 }

@@ -42,8 +42,10 @@ public class Recipient {
     private String commonReading;
     @Column (name="read_system")
     private String systemReading;
-    @Column (name="primePhoto")
-    private String urlPhoto;
+    @Column (name="exist_prime_Photo")
+    private boolean urlPhoto;
+    @Column(name="link_extern_id")
+    private String linkExternId;
     @OneToMany(mappedBy = "person")
     private Set<Contact> podpisota;
     @Override

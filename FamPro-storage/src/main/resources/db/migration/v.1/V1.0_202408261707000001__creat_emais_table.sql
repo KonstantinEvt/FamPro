@@ -13,9 +13,10 @@ create table if not exists emails
                        'OPEN'::character varying,
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
-                       'BLOOD_ONE'::character varying,
+                       'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
-                       'BLOOD_THREE'::character varying
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
                        ])::text[])),
     status       varchar(255)
         constraint emails_status_check

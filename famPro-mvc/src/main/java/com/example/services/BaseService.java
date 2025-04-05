@@ -2,14 +2,12 @@ package com.example.services;
 
 import com.example.dtos.Directive;
 import com.example.dtos.FamilyMemberDto;
-import com.example.dtos.TokenUser;
-import com.example.enums.KafkaOperation;
-import com.example.enums.SwitchPosition;
-import com.example.feign.FamilyClient;
-import lombok.AllArgsConstructor;
+import com.example.enums.CheckStatus;
+import com.example.enums.Localisation;
 import com.example.feign.BaseClient;
 import com.example.feign.BaseOverClient;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.example.feign.FamilyClient;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
@@ -20,27 +18,25 @@ public class BaseService {
     private final BaseClient baseClient;
     private final BaseOverClient baseOverClient;
     private final FamilyClient familyClient;
-    private LinkedList<Directive> directives;
 
     public FamilyMemberDto getFamilyMember(FamilyMemberDto familyMemberDto) {
         return baseClient.getFamilyMember(familyMemberDto);
     }
 
-    public FamilyMemberDto getFamilyMemberById(Long id, String localisation) {
+    public FamilyMemberDto getFamilyMemberById(Long id, Localisation localisation) {
         return baseClient.getFamilyMemberById(id, localisation);
 
     }
 
     public void addFamilyMember(FamilyMemberDto familyMemberDto) {
         FamilyMemberDto dto=baseClient.addFamilyMember(familyMemberDto);
-        if (familyMemberDto.isPrimePhoto()) directives.add(new Directive(dto.getCreator(),dto.getUuid().toString(), SwitchPosition.PRIME_PHOTO, KafkaOperation.ADD));
-    }
+     }
 
     public void editFamilyMember(FamilyMemberDto familyMemberDto) {
         baseClient.editFamilyMember(familyMemberDto);
     }
 
-    public void linkFamilyMember(FamilyMemberDto familyMemberDto) {
-        familyClient.addGuard(familyMemberDto);
+    public CheckStatus linkFamilyMember(FamilyMemberDto familyMemberDto) {
+        return familyClient.addGuard(familyMemberDto);
     }
 }

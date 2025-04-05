@@ -42,6 +42,8 @@ public class MemberService {
             familyMember.setShortFamilyMemberInfo(familyMemberInfoMapper.dtoToEntity(dto.getMemberInfo()));
             familyMember.getShortFamilyMemberInfo().setId(null);
         }
+        familyMember.setBirthExist(dto.getBirth() != null);
+        familyMember.setBurialExist(dto.getBurial() != null);
         familyMember.setFamilies(new HashSet<>());
         familyMember.setChilds(new HashSet<>());
         familyMember.setFamilyWhereChildInLow(new HashSet<>());
@@ -72,6 +74,8 @@ public class MemberService {
             familyMember.setMotherInfo(dto.getMotherInfo());
         if (dto.getMemberInfo() != null)
             familyMember.setShortFamilyMemberInfo(familyMemberInfoMapper.dtoToEntity(dto.getMemberInfo()));
+        familyMember.setBirthExist(dto.getBirth() != null);
+        familyMember.setBurialExist(dto.getBurial() != null);
         shortMemberRepo.save(familyMember);
     }
 

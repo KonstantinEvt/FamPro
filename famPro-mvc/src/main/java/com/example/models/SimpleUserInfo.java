@@ -2,12 +2,14 @@ package com.example.models;
 
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.TokenUser;
+import com.example.enums.CheckStatus;
+import com.example.enums.Localisation;
 import com.example.enums.UserRoles;
-import com.example.services.TokenService;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.Locale;
 import java.util.Map;
 
 @Setter
@@ -15,7 +17,7 @@ import java.util.Map;
 @ToString
 public class SimpleUserInfo {
     private String nickName = "Anonymous";
-    private String localisation = "en";
+    private Localisation localisation = Localisation.EN;
     private String email;
     private String firstName = "Unknown";
     private String middleName = "Unknown";
@@ -99,8 +101,13 @@ public class SimpleUserInfo {
 
     private void setUpLocalisation(Map<String, Object> claims) {
         if (claims.get("localisation") != null
-                && !claims.get("localisation").toString().isBlank())
-            this.localisation = (String) claims.get("localisation");
+                && !claims.get("localisation").toString().isBlank()) {
+            String local = (String) claims.get("localisation");
+            for (Localisation loc :
+                    Localisation.values()) {
+                if (local.toUpperCase().equals(loc.name())) this.localisation = loc;
+            }
+        }
     }
 
     private void setUpFullName(Map<String, Object> claims, TokenUser tokenUser) {
@@ -122,26 +129,29 @@ public class SimpleUserInfo {
     }
 
     public SimpleUserInfo editUser(TokenUser tokenUser) {
-        if (tokenUser.getNickName() != null && !tokenUser.getNickName().isBlank()) this.nickName=tokenUser.getNickName();
-        if (tokenUser.getEmail() != null && !tokenUser.getEmail().isBlank()) this.email=tokenUser.getEmail();
+        if (tokenUser.getNickName() != null && !tokenUser.getNickName().isBlank())
+            this.nickName = tokenUser.getNickName();
+        if (tokenUser.getEmail() != null && !tokenUser.getEmail().isBlank()) this.email = tokenUser.getEmail();
         if (tokenUser.getFirstName() != null && !tokenUser.getFirstName().isBlank())
-            this.firstName=tokenUser.getFirstName();
+            this.firstName = tokenUser.getFirstName();
         if (tokenUser.getMiddleName() != null && !tokenUser.getMiddleName().isBlank())
-            this.middleName=tokenUser.getMiddleName();
-        if (tokenUser.getLastName() != null && !tokenUser.getLastName().isBlank()) this.lastName=tokenUser.getLastName();
-        if (tokenUser.getBirthday() != null && !tokenUser.getBirthday().isBlank()) this.birthday=tokenUser.getBirthday();
+            this.middleName = tokenUser.getMiddleName();
+        if (tokenUser.getLastName() != null && !tokenUser.getLastName().isBlank())
+            this.lastName = tokenUser.getLastName();
+        if (tokenUser.getBirthday() != null && !tokenUser.getBirthday().isBlank())
+            this.birthday = tokenUser.getBirthday();
         this.fullName = this.firstName.concat(" ").concat(this.lastName);
         return this;
     }
 
-    public SimpleUserInfo editUser(FamilyMemberDto tokenUser) {
+    public void editUserByLinked(FamilyMemberDto tokenUser) {
 
-        if (tokenUser.getFirstName() != null && !tokenUser.getFirstName().isBlank())
-            setFirstName(tokenUser.getFirstName());
-        if (tokenUser.getMiddleName() != null && !tokenUser.getMiddleName().isBlank())
-            setMiddleName(tokenUser.getMiddleName());
-        if (tokenUser.getLastName() != null && !tokenUser.getLastName().isBlank()) setLastName(tokenUser.getLastName());
-
-return this;
+//        if (tokenUser.getFirstName() != null && !tokenUser.getFirstName().isBlank())
+//            setFirstName(tokenUser.getFirstName());
+//        if (tokenUser.getMiddleName() != null && !tokenUser.getMiddleName().isBlank())
+//            setMiddleName(tokenUser.getMiddleName());
+//        if (tokenUser.getLastName() != null && !tokenUser.getLastName().isBlank()) setLastName(tokenUser.getLastName());
+        if (tokenUser.getCheckStatus() == CheckStatus.LINKED)
+            this.role = UserRoles.LINKED_USER.getNameSSO();
     }
 }

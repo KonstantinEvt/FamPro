@@ -3,6 +3,7 @@ package com.example.feign;
 import com.example.config.FeignRequestIntercepter;
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.TokenUser;
+import com.example.enums.CheckStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 public interface FamilyClient {
 
     @PostMapping("/guard/addLinkGuard")
-    void addGuard(FamilyMemberDto familyMemberDto);
+    CheckStatus addGuard(FamilyMemberDto familyMemberDto);
 
      @Component
     class LinkedFallbackFactory implements FallbackFactory<FallGuard> {
@@ -32,7 +33,7 @@ public interface FamilyClient {
 
 
         @Override
-        public void addGuard(FamilyMemberDto familyMemberDto) {
+        public CheckStatus addGuard(FamilyMemberDto familyMemberDto) {
             throw new RuntimeException(reason);
         }
 

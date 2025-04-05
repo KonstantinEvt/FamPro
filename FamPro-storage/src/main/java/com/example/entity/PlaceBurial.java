@@ -19,7 +19,7 @@ public class PlaceBurial extends Place{
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqBurials")
     @SequenceGenerator(
             name = "genSeqBurials",
-            sequenceName = "seqBurials", initialValue = 1, allocationSize = 5)
+            sequenceName = "seq_burials", initialValue = 1, allocationSize = 5)
     private Long id;
     /**
      * Полный адрес

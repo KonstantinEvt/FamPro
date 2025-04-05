@@ -1,22 +1,29 @@
 package com.example.process;
 
-import com.example.dtos.TokenUser;
+import com.example.dtos.Directive;
+import com.example.enums.KafkaOperation;
+import com.example.enums.UserRoles;
+import com.example.models.OnlineUserHolder;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.Role;
-//import org.springframework.messaging.Message;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-//@Component
-//@AllArgsConstructor
-////@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-//public class ReceiveProcess implements Consumer<Message<TokenUser>> {
-//
-//    @Override
-//    public void accept(Message<TokenUser> tokenUserMessage) {
-//    }
-//}
+@Component
+@AllArgsConstructor
+@Log4j2
+public class ReceiveProcess implements Consumer<Message<Directive>> {
+    private final OnlineUserHolder onlineUserHolder;
+
+    @Override
+    public void accept(Message<Directive> directiveMessage) {
+        Directive directive = directiveMessage.getPayload();
+        if (directive.getOperation() == KafkaOperation.EDIT) {
+        log.info("User {} is change ROLE in system", directive.getTokenUser());
+        onlineUserHolder.changeUserRole(directive.getPerson(), UserRoles.LINKED_USER);
+        }
+    }
+}
 

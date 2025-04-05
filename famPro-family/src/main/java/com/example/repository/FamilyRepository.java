@@ -24,12 +24,11 @@ public class FamilyRepository {
         }
         return family1;
     }
-public Family saveFamily(Family family){
+public void saveFamily(Family family){
         try{entityManager.persist(family);
         }
         catch (RuntimeException e){
             log.warn("family is not saved");
         }
-        return family;
 }
 }

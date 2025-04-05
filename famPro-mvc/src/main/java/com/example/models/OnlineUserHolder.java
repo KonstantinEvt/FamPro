@@ -1,17 +1,18 @@
 package com.example.models;
 
-import com.example.dtos.Directive;
 import com.example.dtos.FamilyDirective;
-import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.TokenUser;
 import com.example.enums.KafkaOperation;
+import com.example.enums.Localisation;
 import com.example.enums.SwitchPosition;
+import com.example.enums.UserRoles;
 import com.example.services.TokenService;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -26,6 +27,13 @@ public class OnlineUserHolder {
 
     public void addUser(SimpleUserInfo simpleUserInfo) {
         onlineUsers.put(simpleUserInfo.getId(), simpleUserInfo);
+    }
+
+    public void changeUserRole(String id, UserRoles userRoles) {
+        if (onlineUsers.containsKey(id)) {
+            onlineUsers.get(id).setRole(userRoles.getNameSSO());
+        }
+        ;
     }
 
     public SimpleUserInfo getSimpleUser() {
@@ -43,6 +51,12 @@ public class OnlineUserHolder {
                 .switchPosition(SwitchPosition.MAIN)
                 .operation(KafkaOperation.ADD).build());
         return simpleUserInfo;
+    }
+
+    public String getLocalisation() {
+        TokenUser tokenUser = tokenService.getTokenUser();
+        String inlineUuid = (String) tokenUser.getClaims().get("sub");
+        return (onlineUsers.containsKey(inlineUuid)) ? onlineUsers.get(inlineUuid).getLocalisation().toString().toLowerCase():(String) tokenUser.getClaims().get("localisation");
     }
 
     ;

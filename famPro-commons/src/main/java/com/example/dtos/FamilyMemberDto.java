@@ -1,5 +1,7 @@
 package com.example.dtos;
 
+import com.example.enums.CheckStatus;
+import com.example.enums.SecretLevel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -37,9 +39,16 @@ public class FamilyMemberDto extends FioDto implements Serializable {
     private BirthDto birth;
     private String creator;
     private Timestamp createTime;
-    @Schema(description = "Выбранная локализцаия")
-    private String localisation;
+//    @Schema(description = "Выбранная локализцаия")
+//    private String localisation;
     private boolean primePhoto;
+    private SecretLevel secretLevelPhoto;
+    private SecretLevel secretLevelEdit;
+    private SecretLevel secretLevelRemove;
+    private SecretLevel secretLevelBirth;
+    private SecretLevel secretLevelBurial;
+    @Schema(name = "status")
+    private CheckStatus checkStatus;
 }
 
 

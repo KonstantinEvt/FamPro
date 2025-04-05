@@ -1,6 +1,7 @@
 package com.example.feign;
 
 import com.example.config.FeignRequestIntercepter;
+import com.example.enums.SecretLevel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -15,7 +16,8 @@ public interface FamilyConnectionClient {
 
     @GetMapping("/guard/check/{uuid}")
     boolean checkRights(@PathVariable("uuid") UUID uuid);
-
+    @GetMapping("/guard/checkGuards/{uuid}")
+    SecretLevel getGuardStatus(@PathVariable("uuid") UUID uuid);
 
     @Component
     class checkGuardFallbackFactory implements FallbackFactory<FallFamilyConnection> {
@@ -31,6 +33,11 @@ public interface FamilyConnectionClient {
         @Override
         public boolean checkRights(UUID uuid) {
             return false;
+        }
+
+        @Override
+        public SecretLevel getGuardStatus(UUID uuid) {
+            return SecretLevel.OPEN;
         }
     }
 }

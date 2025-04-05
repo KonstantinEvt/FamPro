@@ -1,6 +1,7 @@
 package com.example.dtos;
 
 import com.example.enums.Assignment;
+import com.example.enums.Localisation;
 import com.example.enums.SecretLevel;
 import com.example.enums.Status;
 import lombok.*;
@@ -17,4 +18,5 @@ public class InternDto {
     private Assignment assignment;
     private Status status;
     private SecretLevel secretLevel;
+    private Localisation localisation;
 }

@@ -2,6 +2,7 @@ package com.example.service;
 
 import com.example.checks.CheckFamilyMember;
 import com.example.dtos.FamilyMemberDto;
+import com.example.enums.Localisation;
 import com.example.feign.FamilyMemberClient;
 import com.example.transcriters.TranscriterHolder;
 import com.example.transcriters.TranscritFamilyMember;
@@ -31,7 +32,7 @@ public class FamilyMembersValidationService {
         return dto;
     }
 
-    public FamilyMemberDto getFamilyMemberById(Long id,String localisation) {
+    public FamilyMemberDto getFamilyMemberById(Long id, Localisation localisation) {
         FamilyMemberDto dto=familyMemberClient.getFamilyMemberById(id);
         dto.setLocalisation(localisation);
         TranscriterHolder transcriterHolder=new TranscriterHolder(tokenService.getTokenUser());

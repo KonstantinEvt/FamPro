@@ -45,6 +45,10 @@ public class ShortFamilyMemberInfo {
     @Enumerated(EnumType.STRING)
     private SecretLevel secretLevelAddress;
 
+    @Column(name = "secret_biometric")
+    @Enumerated(EnumType.STRING)
+    private SecretLevel secretLevelBiometric;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

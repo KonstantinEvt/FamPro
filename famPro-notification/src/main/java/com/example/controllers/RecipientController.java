@@ -2,6 +2,7 @@ package com.example.controllers;
 
 import com.example.dtos.ContactDto;
 import com.example.dtos.RecipientDto;
+import com.example.service.ContactService;
 import com.example.service.RecipientService;
 import com.example.service.TokenService;
 import lombok.AllArgsConstructor;
@@ -15,6 +16,7 @@ import java.util.Set;
 public class RecipientController {
     private TokenService tokenService;
     private RecipientService recipientService;
+    private ContactService contactService;
 
     @PostMapping("/contact/add")
     public ContactDto addContact(@RequestBody RecipientDto recipientDto){
@@ -27,5 +29,9 @@ public class RecipientController {
     @PostMapping("/contact/edit")
     public ContactDto editContact(@RequestBody RecipientDto recipientDto){
         return recipientService.editContact((String)tokenService.getTokenUser().getClaims().get("sub"), recipientDto);
+    }
+    @GetMapping("/contact/get/{uuid}")
+    public boolean getAccessContact(@PathVariable("uuid") String uuid){
+        return contactService.getAccessContact((String)tokenService.getTokenUser().getClaims().get("sub"),uuid);
     }
 }

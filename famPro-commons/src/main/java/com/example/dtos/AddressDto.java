@@ -1,5 +1,6 @@
 package com.example.dtos;
 
+import com.example.enums.Localisation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -21,4 +22,5 @@ public class AddressDto extends PlaceDto{
     private String building;
     @Schema(description = "Номер квартиры")
     private String flat;
+    private Localisation localisation;
 }

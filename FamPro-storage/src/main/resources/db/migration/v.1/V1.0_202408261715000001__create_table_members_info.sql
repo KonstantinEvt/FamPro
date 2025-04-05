@@ -1,31 +1,33 @@
 create table if not exists members_info
 (
-    id           bigint not null primary key,
-    main_email   varchar(50),
-    secret_main_email varchar(255)
+    id                  bigint not null primary key,
+    main_email          varchar(50),
+    secret_main_email   varchar(255)
         constraint main_email_secret
             check ((secret_main_email)::text = ANY
                    ((ARRAY [
                        'OPEN'::character varying,
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
-                       'BLOOD_ONE'::character varying,
+                       'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
-                       'BLOOD_THREE'::character varying
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
                        ])::text[])),
-    main_phone   varchar(50),
-    secret_main_phone varchar(255)
+    main_phone          varchar(50),
+    secret_main_phone   varchar(255)
         constraint main_phone_secret
             check ((secret_main_phone)::text = ANY
                    ((ARRAY [
                        'OPEN'::character varying,
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
-                       'BLOOD_ONE'::character varying,
+                       'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
-                       'BLOOD_THREE'::character varying
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
                        ])::text[])),
-    main_address varchar(50),
+    main_address        varchar(50),
     secret_main_address varchar(255)
         constraint main_address_secret
             check ((secret_main_address)::text = ANY
@@ -33,9 +35,22 @@ create table if not exists members_info
                        'OPEN'::character varying,
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
-                       'BLOOD_ONE'::character varying,
+                       'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
-                       'BLOOD_THREE'::character varying
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
                        ])::text[])),
-    uuid         uuid unique
+    secret_biometric varchar(255)
+        constraint biometric_secret
+            check ((secret_biometric)::text = ANY
+                   ((ARRAY [
+                       'OPEN'::character varying,
+                       'CONFIDENTIAL'::character varying,
+                       'FAMILY'::character varying,
+                       'GENETIC_TREE'::character varying,
+                       'BLOOD_TWO'::character varying,
+                       'GLOBAL_TREE'::character varying,
+                       'CLOSE'::character varying
+                       ])::text[])),
+    uuid                uuid unique
 );

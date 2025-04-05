@@ -28,9 +28,9 @@ public class OldFio extends Fio {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "member_id")
     private FamilyMember member;
-    @Enumerated(EnumType.STRING)
-    @Column(name = "check_status")
-    private CheckStatus checkStatus;
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "check_status")
+//    private CheckStatus checkStatus;
 
 
 }

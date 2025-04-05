@@ -4,6 +4,7 @@ import com.example.dtos.*;
 import com.example.entity.AloneNew;
 import com.example.entity.Contact;
 import com.example.entity.Recipient;
+import com.example.enums.KafkaOperation;
 import com.example.holders.StandardInfoHolder;
 import com.example.mappers.AloneNewMapper;
 import com.example.mappers.ContactMapper;
@@ -11,16 +12,18 @@ import com.example.models.StandardInfo;
 import com.example.repository.NotificationRepo;
 import com.example.repository.RecipientRepo;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
+@Getter
+@Setter
 @AllArgsConstructor
 @Log4j2
 public class RecipientService {
@@ -30,6 +33,7 @@ public class RecipientService {
     private ContactMapper contactMapper;
     private ContactService contactService;
     private NotificationRepo notificationRepo;
+    private LinkedList<DirectiveGuards> directiveRights;
 
     @Transactional(readOnly = true)
     public Recipient findRecipient(String externId) {
@@ -116,6 +120,11 @@ public class RecipientService {
     public Set<ContactDto> getContactDtos(String recipientExternId) {
         Recipient recipient = notificationRepo.findRecipientWithContacts(recipientExternId);
         if (recipient == null || recipient.getContacts() == null) return new HashSet<>();
+        else directiveRights.add(DirectiveGuards.builder()
+                        .operation(KafkaOperation.ADD)
+                        .person(recipient.getExternId())
+                        .guards(recipient.getContacts().stream().map(Contact::getExternId).collect(Collectors.toSet()))
+                .build());
         return contactMapper.entitySetToDtoSet(recipient.getContacts());
     }
 
@@ -139,7 +148,10 @@ public class RecipientService {
     public ContactDto addContactToOwner(String recipientExternId, RecipientDto recipientDto) {
         Recipient owner = notificationRepo.findRecipientWithContacts(recipientExternId);
         if (owner.getContacts() == null) owner.setContacts(new HashSet<>());
-        Recipient person = notificationRepo.findRecipientWithPodpisota(recipientDto.getExternId());
+        Recipient person;
+        if (recipientDto.getLinkExternId() != null)
+            person = notificationRepo.findRecipientWithPodpisotaByLink(recipientDto.getLinkExternId());
+        else person = notificationRepo.findRecipientWithPodpisota(recipientDto.getExternId());
         if (person == null) throw new RuntimeException("Такового подписанта еще нет");
         for (Contact contact :
                 owner.getContacts()) {
@@ -168,5 +180,7 @@ public class RecipientService {
         }
         return null;
     }
+
+
 }
 

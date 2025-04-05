@@ -3,6 +3,7 @@ package com.example.services;
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.TokenUser;
 import com.example.enums.CheckStatus;
+import com.example.enums.Localisation;
 import com.example.enums.UserRoles;
 import com.example.feign.KeyCloakManageClient;
 import lombok.AllArgsConstructor;
@@ -45,12 +46,11 @@ public class TokenService {
     }
 
     public void linkUser(FamilyMemberDto dto) {
-        //Тут должен был запрос на подтверждение личности
         TokenUser tokenUser = getTokenUser();
-        tokenUser.setFirstName(dto.getFirstName());
-        tokenUser.setMiddleName(dto.getMiddleName());
-        tokenUser.setLastName(dto.getLastName());
-        tokenUser.setBirthday(String.valueOf(dto.getBirthday()));
+//        tokenUser.setFirstName(dto.getFirstName());
+//        tokenUser.setMiddleName(dto.getMiddleName());
+//        tokenUser.setLastName(dto.getLastName());
+//        tokenUser.setBirthday(String.valueOf(dto.getBirthday()));
         tokenUser.getRoles().add(UserRoles.LINKED_USER.getNameSSO());
         keyCloakManageClient.editUser(tokenUser);
         dto.setCheckStatus(CheckStatus.LINKED);
@@ -65,19 +65,12 @@ public class TokenService {
 //                .block();
 
 
-    public void chooseLocalisation(String localisation) {
+    public Localisation chooseLocalisation(String localisation) {
         keyCloakManageClient.chooseLocalisation(localisation);
+        for (Localisation loc :
+                Localisation.values()) {
+            if (localisation.toUpperCase().equals(loc.name())) return loc;
+        }
+        return Localisation.EN;
     }
-
-//    public void getToken() {
-//
-//
-//        webClient
-//                .get()
-//                .uri("http://famPro-key/manage/token")
-//                .retrieve()
-//                .toBodilessEntity()
-//                .block();
-//
-//    }
 }

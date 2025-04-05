@@ -69,7 +69,9 @@ public class KeyCloakService {
     }
 
     public void editUser(TokenUser dto) {
-        String userName = getTokenUser().getUsername();
+        String userName;
+        if (SecurityContextHolder.getContext().getAuthentication()==null) userName=dto.getUsername();
+        else userName = getTokenUser().getUsername();
         UsersResource usersResource = getUsersResource();
         List<UserRepresentation> users = usersResource.search(userName);
         UserRepresentation user = users.stream().filter(x -> x.getUsername().equals(userName)).findFirst().orElseThrow(() -> new KeyCloakUserNotFound("User not found"));

@@ -2,6 +2,7 @@ package com.example.entity;
 
 
 import com.example.enums.CheckStatus;
+import com.example.enums.SecretLevel;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -74,9 +75,18 @@ public class FamilyMember extends Fio {
     @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "burial_id")
     private PlaceBurial burial;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_burial")
+    private SecretLevel secretLevelBurial;
+
     @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "birth_id")
     private PlaceBirth birth;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_birth")
+    private SecretLevel secretLevelBirth;
 
     @Column(name = "creator")
     private String creator;
@@ -86,6 +96,18 @@ public class FamilyMember extends Fio {
 
     @Column(name = "prime_photo")
     private boolean primePhoto;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_photo")
+    private SecretLevel secretLevelPhoto;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_edit")
+    private SecretLevel secretLevelEdit;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_remove")
+    private SecretLevel secretLevelRemove;
 
     @Override
     public boolean equals(Object o) {

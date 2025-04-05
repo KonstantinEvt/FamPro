@@ -1,6 +1,7 @@
 package com.example.controllers;
 
 import com.example.dtos.FamilyMemberDto;
+import com.example.enums.Localisation;
 import com.example.service.FamilyMembersValidationService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +14,7 @@ public class ValidationFamilyMember {
     private final FamilyMembersValidationService familyMembersValidationService;
 
     @GetMapping("/{id}/{localisation}")
-    public FamilyMemberDto getFamilyMemberById(@PathVariable("id") Long id,@PathVariable String localisation) {
+    public FamilyMemberDto getFamilyMemberById(@PathVariable("id") Long id,@PathVariable Localisation localisation) {
         return familyMembersValidationService.getFamilyMemberById(id, localisation);
     }
 

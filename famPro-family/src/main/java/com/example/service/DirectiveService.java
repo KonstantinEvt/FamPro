@@ -3,36 +3,62 @@ package com.example.service;
 import com.example.dtos.Directive;
 import com.example.dtos.DirectiveGuards;
 import com.example.dtos.FamilyDirective;
-import com.example.entity.*;
-import com.example.enums.CheckStatus;
-import com.example.enums.KafkaOperation;
-import com.example.enums.Sex;
-import com.example.enums.SwitchPosition;
+import com.example.entity.DeferredDirective;
+import com.example.entity.Family;
+import com.example.entity.Guard;
+import com.example.entity.ShortFamilyMember;
+import com.example.enums.*;
 import com.example.repository.DirectiveRepo;
 import com.example.repository.FamilyRepo;
 import com.example.repository.MainFamilyRepo;
-import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
 @Log4j2
 public class DirectiveService {
-    private GuardService guardService;
-    private List<DirectiveGuards> directiveGuardsList;
-    private FamilyRepo familyRepo;
-    private MainFamilyRepo mainFamilyRepo;
-    private FamilyServiceImp familyService;
-    private MemberService memberService;
-    private DirectiveRepo directiveRepo;
-    private GlobalFamilyService globalFamilyService;
-    private List<FamilyDirective> storageDirective;
+    private final GuardService guardService;
+    private final List<DirectiveGuards> directiveGuardsList;
+    private final FamilyRepo familyRepo;
+    private final MainFamilyRepo mainFamilyRepo;
+    private final FamilyServiceImp familyService;
+    private final MemberService memberService;
+    private final DirectiveRepo directiveRepo;
+    private final GlobalFamilyService globalFamilyService;
+    private final List<FamilyDirective> storageDirective;
+    private final List<DirectiveGuards> contactDirective;
+    private final List<Directive> cloakDirective;
+
+    public DirectiveService(GuardService guardService,
+                            @Qualifier("directiveGuards") List<DirectiveGuards> directiveGuardsList,
+                            FamilyRepo familyRepo,
+                            MainFamilyRepo mainFamilyRepo,
+                            FamilyServiceImp familyService,
+                            MemberService memberService,
+                            DirectiveRepo directiveRepo,
+                            GlobalFamilyService globalFamilyService,
+                            List<FamilyDirective> storageDirective,
+                            @Qualifier("contactDirective") List<DirectiveGuards> contactDirective, List<Directive> cloakDirective) {
+        this.guardService = guardService;
+        this.directiveGuardsList = directiveGuardsList;
+        this.familyRepo = familyRepo;
+        this.mainFamilyRepo = mainFamilyRepo;
+        this.familyService = familyService;
+        this.memberService = memberService;
+        this.directiveRepo = directiveRepo;
+        this.globalFamilyService = globalFamilyService;
+        this.storageDirective = storageDirective;
+        this.contactDirective = contactDirective;
+        this.cloakDirective = cloakDirective;
+    }
 
     public void formGuardDirective(List<DeferredDirective> directiveList) {
 
@@ -81,12 +107,12 @@ public class DirectiveService {
         DeferredDirective existByMain = directiveRepo.findFirstByDirectiveMember(mainMember);
         DeferredDirective existByProcess = directiveRepo.findFirstByDirectiveMember(processMember);
         if (existByMain == null) {
-            if (mainMember.getLinkedGuard() != null)
+            if (mainMember.getLinkedGuard() != null && !mainMember.getLinkedGuard().isEmpty())
                 mainMember.setCheckStatus(CheckStatus.LINKED);
             else mainMember.setCheckStatus(CheckStatus.CHECKED);
         }
         if (existByProcess == null) {
-            if (processMember.getLinkedGuard() != null)
+            if (processMember.getLinkedGuard() != null && !processMember.getLinkedGuard().isEmpty())
                 processMember.setCheckStatus(CheckStatus.LINKED);
             else processMember.setCheckStatus(CheckStatus.CHECKED);
         }
@@ -141,13 +167,24 @@ public class DirectiveService {
         if (!grandChildFamilies.isEmpty()) familyRepo.saveAll(grandChildFamilies);
         memberService.getShortMemberRepo().save(mainMember);
         memberService.getShortMemberRepo().save(processMember);
-        if (familyToRemove != null) familyRepo.delete(familyToRemove);
-        if (mainFamily.getGlobalFamily() != processFamily.getGlobalFamily()) {
-            if (mainFamily.getGlobalFamily().getNumber() > processFamily.getGlobalFamily().getNumber())
-                processFamily.setGlobalFamily(globalFamilyService.mergeGlobalFamilies(mainFamily.getGlobalFamily(), processFamily.getGlobalFamily()));
-            else
-                mainFamily.setGlobalFamily(globalFamilyService.mergeGlobalFamilies(processFamily.getGlobalFamily(), mainFamily.getGlobalFamily()));
+
+        if (familyToRemove != null) {
+            Set<DeferredDirective> deferredDirectives = mainFamilyRepo.findDirectivesConsistFamilyToRemove(familyToRemove);
+            if (!deferredDirectives.isEmpty()) {
+                for (DeferredDirective dd :
+                        deferredDirectives) {
+                    if (dd.getDirectiveFamily() == familyToRemove) dd.setDirectiveFamily(null);
+                    else dd.setProcessFamily(null);
+                }
+                directiveRepo.saveAll(deferredDirectives);
+            }
+            familyRepo.delete(familyToRemove);
         }
+
+        if (mainFamily.getGlobalFamily().getNumber() > processFamily.getGlobalFamily().getNumber())
+            globalFamilyService.mergeGlobalFamilies(mainFamily.getGlobalFamily(), processFamily.getGlobalFamily());
+        else
+            globalFamilyService.mergeGlobalFamilies(processFamily.getGlobalFamily(), mainFamily.getGlobalFamily());
 
         if (existByMain == null) storageDirective.add(FamilyDirective.builder()
                 .person(mainMember.getUuid().toString())
@@ -158,6 +195,11 @@ public class DirectiveService {
                 .person(processMember.getUuid().toString())
                 .switchPosition((processMember.getCheckStatus() == CheckStatus.LINKED) ? SwitchPosition.FATHER : SwitchPosition.MOTHER)
                 .operation(KafkaOperation.RENAME)
+                .build());
+        contactDirective.add(DirectiveGuards.builder()
+                .operation(KafkaOperation.ADD)
+                .switchPosition(SwitchPosition.MAIN)
+                .guards(mainFamily.getGlobalFamily().getGuard().stream().map(Guard::getTokenUser).collect(Collectors.toSet()))
                 .build());
     }
 
@@ -257,13 +299,15 @@ public class DirectiveService {
         }
         directiveRepo.delete(deferredDirective);
     }
+
     @Transactional
     public void setLinkGuardFromVotingDirective(String directiveUuid) {
-        DeferredDirective directive=mainFamilyRepo.getLinkingDirective(UUID.fromString(directiveUuid)).orElseThrow(()->new RuntimeException("directive is missing"));
-        if (directive.getDirectiveMember() == null || directive.getDirectiveMember().getLinkedGuard()!=null) throw new RuntimeException("directive is corrupt");
+        DeferredDirective directive = mainFamilyRepo.getLinkingDirective(UUID.fromString(directiveUuid)).orElseThrow(() -> new RuntimeException("directive is missing"));
+        if (directive.getDirectiveMember() == null || !directive.getDirectiveMember().getLinkedGuard().isEmpty())
+            throw new RuntimeException("directive is corrupt");
         ShortFamilyMember shortFamilyMember = mainFamilyRepo.getPersonForLinking(directive.getDirectiveMember().getUuid());
         if (shortFamilyMember == null) throw new RuntimeException("человек не найден");
-        Guard linkGuard = guardService.creatGuard(shortFamilyMember,directive.getTokenUser());
+        Guard linkGuard = guardService.creatGuard(shortFamilyMember, directive.getTokenUser());
         guardService.addGuardToFamilies(shortFamilyMember.getFamilies(), linkGuard);
         guardService.addGuardToGlobalFamily(linkGuard, shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
         globalFamilyService.getGlobalFamilyRepo().save(shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
@@ -271,24 +315,38 @@ public class DirectiveService {
 //        familyRepo.saveAll(shortFamilyMember.getFamilies());
 
         log.info("New guard is created");
-
+        cloakDirective.add(Directive.builder()
+                .operation(KafkaOperation.EDIT)
+                .tokenUser(directive.getInfo())
+                .person(directive.getTokenUser())
+                .build());
         storageDirective.add(FamilyDirective.builder()
                 .tokenUser(directive.getTokenUser())
                 .person(shortFamilyMember.getUuid().toString())
                 .switchPosition(SwitchPosition.FATHER)
                 .operation(KafkaOperation.RENAME)
                 .build());
+        contactDirective.add(DirectiveGuards.builder()
+                .operation(KafkaOperation.ADD)
+                .switchPosition(SwitchPosition.MAIN)
+                .guards(shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getGuard().stream().map(Guard::getTokenUser).collect(Collectors.toSet()))
+                .build());
+        directiveRepo.delete(directive);
+
     }
+
     @Transactional
-    public void rejectLinkGuard(String directiveUuid){
-        DeferredDirective directive=directiveRepo.findById(UUID.fromString(directiveUuid)).orElseThrow(()->new RuntimeException("directive is missing"));
-        ShortFamilyMember shortFamilyMember =memberService.getShortMemberRepo().findByUuid(directive.getDirectiveMember().getUuid()).orElseThrow(() -> new RuntimeException("не найден человек"));
-        shortFamilyMember.setCheckStatus(CheckStatus.CHECKED); memberService.shortMemberRepo.save(shortFamilyMember);
+    public void rejectLinkGuard(String directiveUuid) {
+        DeferredDirective directive = directiveRepo.findById(UUID.fromString(directiveUuid)).orElseThrow(() -> new RuntimeException("directive is missing"));
+        ShortFamilyMember shortFamilyMember = memberService.getShortMemberRepo().findByUuid(directive.getDirectiveMember().getUuid()).orElseThrow(() -> new RuntimeException("не найден человек"));
+        shortFamilyMember.setCheckStatus(CheckStatus.CHECKED);
+        memberService.getShortMemberRepo().save(shortFamilyMember);
         storageDirective.add(FamilyDirective.builder()
                 .tokenUser(directive.getTokenUser())
                 .person(shortFamilyMember.getUuid().toString())
                 .switchPosition(SwitchPosition.MOTHER)
                 .operation(KafkaOperation.RENAME)
                 .build());
+        directiveRepo.delete(directive);
     }
 }

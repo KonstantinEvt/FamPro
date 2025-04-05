@@ -31,4 +31,6 @@ public class FamilyMemberInfoDto {
     private SecretLevel secretLevelAddress;
     private Set<AddressDto> addresses;
 
+    private BiometricDto biometric;
+    private SecretLevel secretLevelBiometric;
 }

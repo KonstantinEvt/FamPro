@@ -22,10 +22,10 @@ public class FamilyMemberInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "MemberInfoSeq")
     @SequenceGenerator(name = "MemberInfoSeq",
-            sequenceName = "FamInfo", initialValue = 1, allocationSize = 20
+            sequenceName = "fam_info", initialValue = 1, allocationSize = 20
     )
     private Long id;
-    @Column(name = "UUID", unique = true)
+    @Column(name = "UUID")
     private UUID uuid;
 
     @Column(name = "main_email")
@@ -40,6 +40,14 @@ public class FamilyMemberInfo {
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "email_id", referencedColumnName = "id"))
     private Set<Email> emails;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinColumn(name = "biometric_id")
+    private Biometric biometric;
+
+    @Column(name = "secret_biometric")
+    @Enumerated(EnumType.STRING)
+    private SecretLevel secretLevelBiometric;
 
     @Column(name = "main_phone")
     private String mainPhone;

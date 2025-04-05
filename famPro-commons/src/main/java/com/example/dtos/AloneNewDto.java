@@ -1,5 +1,6 @@
 package com.example.dtos;
 
+import com.example.enums.Localisation;
 import com.example.enums.NewsCategory;
 import lombok.*;
 
@@ -24,6 +25,7 @@ public class AloneNewDto {
     private String textInfo;
     private NewsCategory category;
     private boolean alreadyRead;
+    private Localisation localisation;
 
     @Override
     public boolean equals(Object o) {

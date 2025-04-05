@@ -2,10 +2,14 @@ let counts = [0, 0, 0, 0, 0];
 let cards;
 let numCards;
 let rawNews;
+let externId;
+let ownLinkId;
+let ownId;
+let tempSecurity;
 
 loadOnlineUser();
 loadStandardMainPanel();
-loadNewsCounts()
+loadNewsCounts();
 let delay = 5000;
 setInterval(loadNewsCounts, delay);
 
@@ -41,9 +45,28 @@ function loadOnlineUser() {
         email = user.email;
         fullName = user.fullName;
         role = user.role;
-        document.getElementById("nav0").innerHTML = fullName
+        ownId = user.id;
+        document.getElementById("nav0").innerHTML = fullName;
         document.getElementById("nav1").innerHTML = nickName;
         document.getElementById("nav2").innerHTML = role;
+        if (role !== "LinkedUser") document.getElementById("linking-knopa").innerHTML = `<a class="nav-link" style="color: red;" href="#mainPanel"
+                           onclick="getPersonFromBase(0)">Связать</a>`;
+        else {
+            fetch("/guard/getLinkGuard", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json; charset=UTF-8"
+                    // "Access-Control-Allow-Origin": "*"
+                }
+            }).then(promise => promise.text()).then(x => {
+                ownLinkId = x;
+                console.log(ownLinkId)
+            })
+
+            document.getElementById("linking-knopa").innerHTML = ``;
+            document.getElementById("getLinkedPerson").innerHTML = `
+                <a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onClick="">Ты в базе</a>`
+        }
     });
 
 // document.getElementById("locForm1").addEventListener("Language", loadOnlineUser)
@@ -65,7 +88,7 @@ function loadStandardMainPanel() {
     </td>
     </tr>
     </tbody>
-    </table>    
+    </table>   
 `
 }
 
@@ -100,24 +123,27 @@ function getDate(datetime) {
 //     return picture;
 // }
 async function loadPicture(url) {
-    let array=[];
+    let array = [];
     await fetch(url, {
         method: "GET"
     }).then(r => r.blob()).then(cou => {
-        array=cou;
-    }).then(cou=>console.log("Изображение загружено",cou));
+        array = cou;
+    }).then(cou => console.log("Изображение загружено", cou));
     return array;
 }
-async function loadDefaultPhotos(){
-    let url="/file/defaultPhoto/"
+
+async function loadDefaultPhotos() {
+    let url = "/file/defaultPhoto/"
     return {
         person: await loadPicture(url + "person.jpg"),
-        election: await loadPicture(url+"election.jpg"),
-        approved: await loadPicture(url+"approved.jpg"),
-        rejected: await loadPicture(url+"rejected.jpg"),
-        linking: await loadPicture(url+"linking.jpg")
+        election: await loadPicture(url + "election.jpg"),
+        approved: await loadPicture(url + "approved.jpg"),
+        rejected: await loadPicture(url + "rejected.jpg"),
+        linking: await loadPicture(url + "linking.jpg"),
+        contact: await loadPicture(url + "contact.jpg")
     };
 }
+
 function loadNewsCounts() {
     fetch("/news/counts", {
         method: "GET",
@@ -126,9 +152,11 @@ function loadNewsCounts() {
             // "Access-Control-Allow-Origin": "*"
         }
     }).then(r => r.json()).then(cou => {
+        if (document.getElementById("message-list") !== null && document.getElementById("family-list") !== undefined && counts[3] !== cou[3]) loadingIndividualNews("family", false);
+        if (document.getElementById("message-list") !== null && document.getElementById("private-list") !== undefined && counts[4] !== cou[4]) loadingIndividualNews("private", false);
         counts = cou;
     })
-    if (document.getElementById("badge0") !== null && counts[0] !== 0) {
+    if (document.getElementById("badge0") !== null && document.getElementById("badge0") !== undefined && counts[0] !== 0) {
         document.getElementById("badge0").innerHTML =
             `<span id="newsCount" class="position-absolute top-1 start-1 translate-middle badge rounded-pill bg-danger" style="font-size: 12px" >
                 
@@ -137,28 +165,30 @@ function loadNewsCounts() {
         document.getElementById("newsCount").innerHTML = counts[0];
 
 
-        if (document.getElementById("badge1") !== null && counts[1] !== 0) {
+        if (document.getElementById("badge1") !== null && document.getElementById("badge1") !== undefined && counts[1] !== 0) {
             document.getElementById("badge1").innerHTML = `
          <span id="countNew1" class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
                 <span>` + counts[1] + `</span>
                 <span class="visually-hidden">unread messages</span>
             </span>`
         } else if (document.getElementById("badge1") !== null) document.getElementById("badge1").innerHTML = "";
-        if (document.getElementById("badge2") !== null && counts[2] !== 0) {
+        if (document.getElementById("badge2") !== null && document.getElementById("badge2") !== undefined && counts[2] !== 0) {
             document.getElementById("badge2").innerHTML = `
           <span id="countNew2" class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
                 <span>` + counts[2] + `</span>
                 <span class="visually-hidden">unread messages</span>
             </span>`
         } else if (document.getElementById("badge2") !== null) document.getElementById("badge2").innerHTML = "";
-        if (document.getElementById("badge3") !== null && counts[3] !== 0) {
+        if (document.getElementById("badge3") !== null
+            && document.getElementById("badge3") !== undefined
+            && counts[3] !== 0) {
             document.getElementById("badge3").innerHTML = `
           <span id="countNew3" class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
                 <span>` + counts[3] + `</span>
                 <span class="visually-hidden">unread messages</span>
             </span>`
         } else if (document.getElementById("badge3") !== null) document.getElementById("badge3").innerHTML = "";
-        if (document.getElementById("badge4") !== null && counts[4] !== 0) {
+        if (document.getElementById("badge4") !== null && document.getElementById("badge4") !== undefined && counts[4] !== 0) {
             document.getElementById("badge4").innerHTML = `
           <span id="countNew4" class="position-absolute top-1 start-1 translate-small badge rounded-pill bg-danger" style="font-size: 10px">        
                 <span>` + counts[4] + `</span>

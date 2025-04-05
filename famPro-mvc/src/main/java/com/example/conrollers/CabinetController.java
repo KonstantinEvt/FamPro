@@ -27,7 +27,7 @@ public class CabinetController {
         return onlineUserHolder.getSimpleUser();
     }
 
-     @PostMapping("/create")
+    @PostMapping("/create")
     public ResponseEntity<String> createUser(@RequestBody TokenUser tokenUser) {
         if (onlineUserHolder.getSimpleUser().getRole().equals("Admin")) tokenService.addUser(tokenUser);
         else return ResponseEntity.ok("Your are haven't rights");
@@ -45,17 +45,17 @@ public class CabinetController {
 
     @GetMapping("/link/{id}")
     public ResponseEntity<String> linkingUser(@PathVariable("id") Long id) {
-        System.out.println("lets go");
         FamilyMemberDto dto = baseService.getFamilyMemberById(id, onlineUserHolder.getSimpleUser().getLocalisation());
         if (dto.getCheckStatus() == CheckStatus.LINKED)
             throw new RightsIsAbsent("Запись уже связана. Если Вы претендуете на нее - обратитесь к администрации");
         else if (dto.getCheckStatus() == CheckStatus.MODERATE)
             throw new ModeratingContent("Запись находится на модерации. Если Вы претендуете на нее - обратитесь к администрации");
-        System.out.println("связываем с Клоаком");
-        tokenService.linkUser(dto);
-        System.out.println("связываем с базой");
-        baseService.linkFamilyMember(dto);
-        onlineUserHolder.getSimpleUser().editUser(dto);
-    return ResponseEntity.ok("Вы успешно связаны с челоеком c Id: "+id);
+
+        if (baseService.linkFamilyMember(dto) == CheckStatus.LINKED) {
+            tokenService.linkUser(dto);
+            onlineUserHolder.getSimpleUser().editUserByLinked(dto);
+            return ResponseEntity.ok("Вы успешно связаны с челоеком c Id: " + id);
+        }
+        return ResponseEntity.ok("Запрос на связь отправлен");
     }
 }

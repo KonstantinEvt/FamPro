@@ -1,11 +1,13 @@
 package com.example.controllers;
 
 import com.example.dtos.AloneNewDto;
+import com.example.dtos.ContactDto;
 import com.example.models.StandardInfo;
 import com.example.service.MessageService;
 import com.example.service.TokenService;
 import com.example.service.VotingService;
 import lombok.AllArgsConstructor;
+import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,5 +59,10 @@ public class MessageController {
     public ResponseEntity<String> readResult(@PathVariable("id") String id){
         messageService.removeRecipientFromSendTo((String) tokenService.getTokenUser().getClaims().get("sub"),id);
         return ResponseEntity.ok("Seen");
+
+    }
+    @GetMapping("/contact/addRequest/{uuid}")
+    public String addRequestToAddContact(@PathVariable("uuid") String uuid){
+        return messageService.addRequestToDoContact((String)tokenService.getTokenUser().getClaims().get("sub"), uuid);
     }
 }

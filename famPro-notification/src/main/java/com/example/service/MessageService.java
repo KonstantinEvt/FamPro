@@ -3,14 +3,16 @@ package com.example.service;
 import com.example.dtos.AloneNewDto;
 import com.example.dtos.TokenUser;
 import com.example.entity.AloneNew;
+import com.example.entity.Contact;
 import com.example.entity.Recipient;
+import com.example.entity.Voting;
 import com.example.enums.NewsCategory;
 import com.example.holders.StandardInfoHolder;
 import com.example.mappers.AloneNewMapper;
 import com.example.models.StandardInfo;
 import com.example.repository.AloneNewRepo;
 import com.example.repository.NotificationRepo;
-import jakarta.persistence.EntityManager;
+import com.example.repository.VotingRepo;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -24,11 +26,12 @@ import java.util.*;
 @AllArgsConstructor
 @Log4j2
 public class MessageService {
-    private StandardInfoHolder infoHolder;
+    private StandardInfoHolder standardInfoHolder;
     private AloneNewMapper aloneNewMapper;
     private AloneNewRepo aloneNewRepo;
     private RecipientService recipientService;
     private NotificationRepo notificationRepo;
+    private final VotingRepo votingRepo;
 
     @Transactional
     public void sendMessage(TokenUser tokenUser, AloneNewDto aloneNewDto) {
@@ -68,36 +71,36 @@ public class MessageService {
         switch (aloneNew.getCategory()) {
             case SYSTEM -> {
                 if (to == null) {
-                    aloneNewDto.setSendingFrom("s".concat(String.valueOf(infoHolder.getSystemNewsGlobal().size())));
-                    infoHolder.getSystemNewsGlobal().add(aloneNewDto);
-                    infoHolder.getSystemGlobalMask().add(0);
+                    aloneNewDto.setSendingFrom("s".concat(String.valueOf(standardInfoHolder.getSystemNewsGlobal().size())));
+                    standardInfoHolder.getSystemNewsGlobal().add(aloneNewDto);
+                    standardInfoHolder.getSystemGlobalMask().add(0);
                 } else {
                     aloneNewDto.setSendingFrom(String.valueOf(aloneNew.getId()));
-                    infoHolder.addNewMessageToPerson(aloneNewDto);
+                    standardInfoHolder.addNewMessageToPerson(aloneNewDto);
                 }
             }
             case COMMON -> {
-                aloneNewDto.setSendingFrom("c".concat(String.valueOf(infoHolder.getCommonNewsGlobal().size())));
-                infoHolder.getCommonNewsGlobal().add(aloneNewDto);
-                infoHolder.getCommonGlobalMask().add(0);
+                aloneNewDto.setSendingFrom("c".concat(String.valueOf(standardInfoHolder.getCommonNewsGlobal().size())));
+                standardInfoHolder.getCommonNewsGlobal().add(aloneNewDto);
+                standardInfoHolder.getCommonGlobalMask().add(0);
             }
             default -> {
                 if (to == null) throw new RuntimeException("Адресат не указан");
 //                if (!to.getContacts().contains(from)) aloneNewDto.setSendingFrom(tokenUser.getNickName());
-                if (infoHolder.getOnlineInfo().containsKey(to.getExternId()))
-                    infoHolder.addNewMessageToPerson(aloneNewDto);
+                if (standardInfoHolder.getOnlineInfo().containsKey(to.getExternId()))
+                    standardInfoHolder.addNewMessageToPerson(aloneNewDto);
             }
         }
         log.info("letter ${} is entered to holder", aloneNewDto);
     }
 
     public int[] getNewsCounts(String user) {
-        StandardInfo userInfo = infoHolder.getOnlineInfo().get(user);
+        StandardInfo userInfo = standardInfoHolder.getOnlineInfo().get(user);
         if (userInfo == null)
             return new int[]{0, 0, 0, 0, 0};
         System.out.println("hi");
-        int com = userInfo.viewGlobalMessage(infoHolder.getCommonGlobalMask(), userInfo.getCommonGlobalRead());
-        int sys = userInfo.viewGlobalMessage(infoHolder.getSystemGlobalMask(), userInfo.getSystemGlobalRead());
+        int com = userInfo.viewGlobalMessage(standardInfoHolder.getCommonGlobalMask(), userInfo.getCommonGlobalRead());
+        int sys = userInfo.viewGlobalMessage(standardInfoHolder.getSystemGlobalMask(), userInfo.getSystemGlobalRead());
         return new int[]{
                 userInfo.getCounts()[0] + com + sys,
                 userInfo.getCounts()[1] + sys,
@@ -108,12 +111,12 @@ public class MessageService {
     }
 
     public List<AloneNewDto> getCommonMessages(String user) {
-        return infoHolder.getCommonNewsToPerson(user);
+        return standardInfoHolder.getCommonNewsToPerson(user);
     }
 
     public List<AloneNewDto> getSystemMessages(String user) {
-        List<AloneNewDto> global = infoHolder.getGlobalSystemNewsToPerson(user);
-        global.addAll(infoHolder.getOnlineInfo().get(user).getSystemNews());
+        List<AloneNewDto> global = standardInfoHolder.getGlobalSystemNewsToPerson(user);
+        global.addAll(standardInfoHolder.getOnlineInfo().get(user).getSystemNews());
         return global.stream().sorted(Comparator.comparing(AloneNewDto::getCreationDate)).toList();
     }
 
@@ -124,12 +127,12 @@ public class MessageService {
         Recipient recipient = recipientService.findRecipient(user);
         if (id.charAt(0) == 's') {
             int element = Integer.parseInt(id.substring(1));
-            List<Integer> reading = infoHolder.getOnlineInfo().get(user).getSystemGlobalRead();
+            List<Integer> reading = standardInfoHolder.getOnlineInfo().get(user).getSystemGlobalRead();
             reading.set(element, 1);
             recipient.setSystemReading(StringUtils.join(reading, ""));
         } else if (id.charAt(0) == 'c') {
             int element = Integer.parseInt(id.substring(1));
-            List<Integer> reading = infoHolder.getOnlineInfo().get(user).getCommonGlobalRead();
+            List<Integer> reading = standardInfoHolder.getOnlineInfo().get(user).getCommonGlobalRead();
             reading.set(element, 1);
             recipient.setCommonReading(StringUtils.join(reading, ""));
         } else {
@@ -142,16 +145,16 @@ public class MessageService {
     @Transactional
     public void readIndividualMessage(String user, UUID id) {
         AloneNew letter = aloneNewRepo.findById(id).orElseThrow(() -> new RuntimeException("Letter not found"));
-        if (infoHolder.getOnlineInfo().get(user) != null)
-            infoHolder.getOnlineInfo().get(user).removeNew(aloneNewMapper.entityToDto(letter));
+        if (standardInfoHolder.getOnlineInfo().get(user) != null)
+            standardInfoHolder.getOnlineInfo().get(user).removeNew(aloneNewMapper.entityToDto(letter));
         letter.setAlreadyRead(true);
         aloneNewRepo.save(letter);
     }
 
     public void removeIndividualMessage(String user, UUID id) {
         AloneNew letter = aloneNewRepo.findById(id).orElseThrow(() -> new RuntimeException("Letter not found"));
-        if (infoHolder.getOnlineInfo().get(user) != null)
-            infoHolder.getOnlineInfo().get(user).removeNew(aloneNewMapper.entityToDto(letter));
+        if (standardInfoHolder.getOnlineInfo().get(user) != null)
+            standardInfoHolder.getOnlineInfo().get(user).removeNew(aloneNewMapper.entityToDto(letter));
         aloneNewRepo.deleteById(id);
     }
 
@@ -198,13 +201,67 @@ public class MessageService {
         }
         if (needAlone != null) {
             needAlone.getSendTo().remove(recipient);
-            infoHolder.removeMessageFromPerson(user, aloneNewMapper.entityToDto(needAlone));
-            if (needAlone.getSendTo().isEmpty() && (needAlone.getSubject().equals("Request link")||needAlone.getSubject().equals("Link to person"))) {
+            standardInfoHolder.removeMessageFromPerson(user, aloneNewMapper.entityToDto(needAlone));
+            if (needAlone.getSendTo().isEmpty()
+                    && (needAlone.getSubject().equals("Request link")
+                    || needAlone.getSubject().equals("Link to person")
+                    || needAlone.getSubject().equals("Request for contact"))) {
                 needAlone.getSendTo().add(recipient);
                 needAlone.setAlreadyRead(true);
             }
             if (needAlone.getSendTo().isEmpty()) aloneNewRepo.delete(needAlone);
             else aloneNewRepo.save(needAlone);
         }
+    }
+
+    @Transactional
+    public String addRequestToDoContact(String ownerID, String contactID) {
+        Recipient owner = notificationRepo.findRecipientWithContacts(ownerID);
+        if (owner.getLinkExternId() == null) return "You are not linked";
+        for (Contact contact :
+                owner.getContacts()) {
+            if (contact.getExternId().equals(contactID)) return "You are already have this contact";
+        }
+        Recipient recipient = notificationRepo.findRecipientWithContactsByLinkExternId(contactID);
+        String externId = owner.getExternId().concat(recipient.getExternId());
+        Recipient informer = recipientService.findRecipient(3L).orElseThrow(() -> new RuntimeException("Informer recipient not found"));
+        AloneNew aloneNewToOwner = aloneNewRepo.save(AloneNew.builder()
+                .category(NewsCategory.PRIVATE)
+                .alreadyRead(false)
+                .externId(externId)
+                .imageUrl(owner.isUrlPhoto() ? owner.getExternId() : "")
+                .creationDate(new Timestamp(System.currentTimeMillis()))
+                .textInfo(StringUtils.join("You are do request for add contact with: ", recipient.getNickName(), ' '))
+                .sendTo(Set.of(owner))
+                .subject("Request for contact")
+                .sendFrom(informer)
+                .build());
+        AloneNew aloneNew = aloneNewRepo.save(AloneNew.builder()
+                .category(NewsCategory.PRIVATE)
+                .alreadyRead(false)
+                .externId(externId)
+                .imageUrl(owner.isUrlPhoto() ? owner.getExternId() : "")
+                .creationDate(aloneNewToOwner.getCreationDate())
+                .textInfo(StringUtils.join(owner.getNickName(), " want to add contact with you", ' '))
+                .sendTo(Set.of(recipient))
+                .subject("Contact request")
+                .sendFrom(informer)
+                .build());
+        votingRepo.save(Voting.builder()
+                .recipients(Set.of(recipient))
+                .letter(externId)
+                .guardSize(1)
+                .accepts(0)
+                .rejects(0)
+                .build());
+        AloneNewDto toOwner = aloneNewMapper.entityToDto(aloneNewToOwner);
+        toOwner.setSendingTo(ownerID);
+        toOwner.setSendingFromAlt(aloneNew.getSendFrom().getNickName());
+        AloneNewDto toRecipient = aloneNewMapper.entityToDto(aloneNew);
+        toRecipient.setSendingTo(recipient.getExternId());
+        toRecipient.setSendingFromAlt(aloneNew.getSendFrom().getNickName());
+        standardInfoHolder.addNewMessageToPerson(toOwner);
+        standardInfoHolder.addNewMessageToPerson(toRecipient);
+        return "Contact message is send";
     }
 }

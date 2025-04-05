@@ -2,11 +2,10 @@ package com.example.process;
 
 import com.example.dtos.Directive;
 import com.example.enums.SwitchPosition;
-import com.example.services.FileStorageService;
-import lombok.AllArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import com.example.holders.DirectiveHolder;
 import com.example.holders.PhotoHolder;
+import com.example.services.FileStorageServiceImpl;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
@@ -17,12 +16,12 @@ import java.util.function.Consumer;
 @Log4j2
 public class ReceiveProcess implements Consumer<Message<Directive>> {
     private final PhotoHolder photoHolder;
-    private final FileStorageService fileStorageService;
+    private final FileStorageServiceImpl fileStorageService;
     private final DirectiveHolder directiveHolder;
     @Value("${minio.first_photo_bucket}")
     private String firstPhoto;
 
-    public ReceiveProcess(PhotoHolder photoHolder, FileStorageService fileStorageService, DirectiveHolder directiveHolder) {
+    public ReceiveProcess(PhotoHolder photoHolder, FileStorageServiceImpl fileStorageService, DirectiveHolder directiveHolder) {
         this.photoHolder = photoHolder;
         this.fileStorageService = fileStorageService;
         this.directiveHolder = directiveHolder;

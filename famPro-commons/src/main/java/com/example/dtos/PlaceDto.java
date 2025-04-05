@@ -1,5 +1,6 @@
 package com.example.dtos;
 
+import com.example.enums.Localisation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 

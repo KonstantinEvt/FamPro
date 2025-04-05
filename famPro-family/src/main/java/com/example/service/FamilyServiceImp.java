@@ -177,15 +177,15 @@ public class FamilyServiceImp  {
             if (family.getParents() == null) family.setParents(new HashSet<>());
             family.getParents().add(member.getFather());
             family.getFamilyMembers().add(member.getFather());
-            if (member.getFather().getLinkedGuard() != null)
-                guardService.addGuardToFamily(member.getFather().getLinkedGuard(), family);
+            if (member.getFather().getLinkedGuard() != null&&!member.getFather().getLinkedGuard().isEmpty())
+                guardService.addGuardToFamily(member.getFather().getLinkedGuard().get(0), family);
         }
         if (member.getMother() != null) {
             if (family.getParents() == null) family.setParents(new HashSet<>());
             family.getParents().add(member.getMother());
             family.getFamilyMembers().add(member.getMother());
-            if (member.getMother().getLinkedGuard() != null)
-                guardService.addGuardToFamily(member.getMother().getLinkedGuard(), family);
+            if (member.getMother().getLinkedGuard() != null&&!member.getMother().getLinkedGuard().isEmpty())
+                guardService.addGuardToFamily(member.getMother().getLinkedGuard().get(0), family);
         }
 
     }
@@ -200,8 +200,8 @@ public class FamilyServiceImp  {
                 grand.getParents().add(primeMember);
                 grand.getFamilyMembers().add(primeMember);
                 primeMember.getFamilies().add(grand);
-                if (primeMember.getLinkedGuard() != null)
-                    guardService.addGuardToFamily(primeMember.getLinkedGuard(), grand);
+                if (primeMember.getLinkedGuard() != null&&!primeMember.getLinkedGuard().isEmpty())
+                    guardService.addGuardToFamily(primeMember.getLinkedGuard().get(0), grand);
                 grandChildFamilies.add(grand);
             }
         }
@@ -213,9 +213,9 @@ public class FamilyServiceImp  {
         Family newFamily = creatFreeFamily(familyMember.getFatherInfo(), familyMember.getMotherInfo(), familyMember.getUuid().toString());
         family.getChildren().remove(familyMember);
         newFamily.getChildren().add(familyMember);
-        if (familyMember.getLinkedGuard() != null) {
-            family.getGuard().remove(familyMember.getLinkedGuard());
-            newFamily.getGuard().add(familyMember.getLinkedGuard());
+        if (familyMember.getLinkedGuard() != null && !familyMember.getLinkedGuard().isEmpty()) {
+            family.getGuard().remove(familyMember.getLinkedGuard().get(0));
+            newFamily.getGuard().add(familyMember.getLinkedGuard().get(0));
         }
         addPersonParentsToFamilyParents(newFamily, familyMember);
         if (familyMember.getMother() != null) {

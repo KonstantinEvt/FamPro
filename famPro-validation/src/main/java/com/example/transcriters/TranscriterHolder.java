@@ -2,6 +2,7 @@ package com.example.transcriters;
 
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.TokenUser;
+import com.example.enums.Localisation;
 import com.example.exceptions.UncorrectedInformation;
 import lombok.Getter;
 
@@ -16,9 +17,13 @@ public class TranscriterHolder {
 
     public void setTranscriter(FamilyMemberDto familyMemberDto) {
         if (familyMemberDto.getLocalisation() == null)
-            familyMemberDto.setLocalisation((String) tokenUser.getClaims().get("localisation"));
-        if (familyMemberDto.getLocalisation().equals("ru")) transcriter = new RusTranscriter();
-        else if (familyMemberDto.getLocalisation().equals("en")) {
+            for (Localisation loc :
+                    Localisation.values()) {
+                if (loc.name().equals((String) tokenUser.getClaims().get("localisation"))) familyMemberDto.setLocalisation(loc);
+            }
+        if  (familyMemberDto.getLocalisation() == null) familyMemberDto.setLocalisation(Localisation.EN);
+        if (familyMemberDto.getLocalisation()==Localisation.RU) transcriter = new RusTranscriter();
+        else if (familyMemberDto.getLocalisation()==Localisation.EN) {
 
             if (checkForLang(familyMemberDto.toString()).equals("en")) transcriter = new EmptyTranscriter();
             else

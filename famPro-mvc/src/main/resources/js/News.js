@@ -1,5 +1,5 @@
 async function getNews() {
-
+    loadOnlineUser();
     loadStandardMainPanel();
     document.getElementById("taskPart").innerHTML = `    
     <br>
@@ -30,15 +30,13 @@ async function getSystemNews() {
     cards = [];
     numCards = [];
     document.getElementById("resultPart").innerHTML = `
-        <div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px">
-            *** System News ***
-        </div>
+        <div style="padding-right: 0;padding-left:0;text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 20px">SYSTEM NEWS </div>
         <div id="sys-empty" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">
         <div id="system-list" class="card-group" style="height: 84vh; max-width:100%; overflow-x: auto"></div></div>`
     if (counts[1] !== null && counts[1] !== 0) {
         await loadCategoryNews("system")
     } else {
-        document.getElementById("sys-empty").innerHTML = "We are glad to see you";
+        document.getElementById("sys-empty").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">We are glad to see you</div>`;
     }
 }
 
@@ -163,13 +161,14 @@ async function getCommonNews() {
     cards = [];
     numCards = [];
     document.getElementById("resultPart").innerHTML = `
-            <div style=" text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px">*** Common News ***</div>
+                    <div style="padding-right: 0;padding-left:0;text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 20px">COMMON NEWS </div>
+                    <div id="common-empty" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">
             <div class="card-group" id="common-list" style="height: 84vh; max-width: 100%; overflow-x: auto" >           
-            </div> `;
+            </div> </div>`;
     if (counts[2] !== null && counts[2] !== 0) {
         await loadCategoryNews("common");
     } else {
-        document.getElementById("common-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">Блок общих сообщений пуст</div>`;
+        document.getElementById("common-empty").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Common messages are absent</div>`;
     }
 }
 
@@ -262,9 +261,10 @@ async function loadingIndividualNews(category, choice) {
                     num: num
                 }
 
-                if (fetchData.subjectJS === "Positive result" && defaultPhotos.approved !== null) fetchData.imj = defaultPhotos.approved;
-                if (fetchData.subjectJS === ("Negative result" || "Reject change") && defaultPhotos.rejected !== null) fetchData.imj = defaultPhotos.rejected;
+                if ((fetchData.subjectJS === "Positive result" || fetchData.subjectJS === "Contact added" || fetchData.subjectJS === "Accept change") && defaultPhotos.approved !== null) fetchData.imj = defaultPhotos.approved;
+                if ((fetchData.subjectJS === "Negative result" || fetchData.subjectJS === "Reject change" || fetchData.subjectJS === "Contact reject") && defaultPhotos.rejected !== null) fetchData.imj = defaultPhotos.rejected;
                 if ((fetchData.subjectJS === "Link request" || fetchData.subjectJS === "Request link") && defaultPhotos.election !== null) fetchData.imj = defaultPhotos.election;
+                if ((fetchData.subjectJS === "Request for contact" || fetchData.subjectJS === "Contact request") && defaultPhotos.contact !== null) fetchData.imj = defaultPhotos.contact;
                 if ((fetchData.subjectJS === "Link to person" || fetchData.subjectJS === "Linking to person") && defaultPhotos.linking !== null) fetchData.imj = defaultPhotos.linking;
                 if (fetchData.imj === ``) fetchData.imj = contactImage;
                 if (fetchData.imj === `` && defaultPhotos.person !== null) fetchData.imj = defaultPhotos.person;
@@ -348,28 +348,37 @@ function drawCardBody(letter, choice) {
 
 function drawButtons(letter, choice) {
     let temp;
-    if (choice && letter.alreadyRead) temp = `<span class="col" style=" text-align: center;color:chocolate">Letter is already read"</span>`;
-    else {
+    if (choice && letter.alreadyRead && letter.sendingFromJS !== "Informer") temp = `<span class="col" style=" text-align: center;color:chocolate">Letter is already read"</span>
+                <span class="col-2" style="text-align:right; padding-right: 10px">
+                    <a href="#" type="button" class="btn btn-outline-danger" onClick="deleteMessage('${letter.idJS}','${letter.categoryJS}', ${letter.num}, ${choice})">Delete</a></span>`;
+    else if (choice && letter.alreadyRead) {
+        temp = `<span class="col" style=" text-align: center;color:chocolate">Letter is already read"</span>`
+    } else {
         if (letter.sendingFromJS === "Informer")
             switch (letter.subjectJS) {
                 case "Link request":
+                case "Contact request":
                 case "Linking to person":
                     temp = `<span class="col-2">
                             <a type="button" class="btn btn-outline-success"
-                                onClick="acceptMessage('${letter.externIdJS}', '${letter.num}')" href="#">Accept</a></span>
+                                onClick="acceptMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">Accept</a></span>
                         <span class="col"></span>
                         <span class="col-2" style="text-align:right; padding-right: 10px">
-                            <a type="button" class="btn btn-outline-danger" onClick="rejectMessage('${letter.externIdJS}', '${letter.num}')"
+                            <a type="button" class="btn btn-outline-danger" onClick="rejectMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')"
                                 href="#">Reject</a></span>`;
                     break;
                 case "Positive result":
+                case "Request for contact":
+                case "Contact added":
+                case "Contact reject":
+                case "Accept change":
                 case "Negative result":
                 case "Request link":
                 case "Link to person":
                     temp = `<span class="col-4"></span>
                         <span class="col">
                             <a type="button" class="btn btn-outline-warning"
-                                onClick="readResult('${letter.externIdJS}', '${letter.num}')" href="#">See</a></span>
+                                onClick="readResult('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">See</a></span>
                         <span class="col-4"></span>`;
                     break;
                 default:
@@ -431,8 +440,6 @@ async function refreshNews(category, choice) {
 }
 
 async function loadNewNews(category, choice) {
-    // let linkOn = category + "-list";
-    // document.getElementById(linkOn).innerHTML = "";
     if (rawNews === null) {
         let raw = await loadingIndividualNews(category, choice);
         console.log(raw);
@@ -441,7 +448,7 @@ async function loadNewNews(category, choice) {
         let temp0 = ``;
         let temp1 = ``;
         for (let i = 0; i < rawNews.length; i++) {
-            if (rawNews[i] !== null && rawNews[i]!==undefined && (choice || !rawNews[i].alreadyRead)) {
+            if (rawNews[i] !== null && rawNews[i] !== undefined && (choice || !rawNews[i].alreadyRead)) {
                 temp0 += cards[i].top;
                 temp1 += cards[i].body;
             }
@@ -498,31 +505,31 @@ async function getPrivateNews(category) {
     }
 }
 
-async function acceptMessage(id, num) {
+async function acceptMessage(id, num, category) {
     fetch("/message/accept/" + id, {method: "GET"}).then(r => r.text())
         .then(r => document.getElementById("footer-main").innerHTML = r);
     rawNews.forEach(letter => {
         if (letter.externIdJS === id) letter.alreadyRead = true;
     })
-    changeCountsByRead("family");
+    changeCountsByRead(category);
     delete rawNews[num];
     delete cards[num];
-    await loadNewNews("family", false);
+    await loadNewNews(category, false);
 }
 
-async function rejectMessage(id, num) {
+async function rejectMessage(id, num, category) {
     fetch("/message/reject/" + id, {method: "GET"}).then(r => r.text())
         .then(r => document.getElementById("footer-main").innerHTML = r);
     rawNews.forEach(letter => {
         if (letter.externIdJS === id) letter.alreadyRead = true;
     })
-    changeCountsByRead("family");
+    changeCountsByRead(category);
     delete rawNews[num];
     delete cards[num];
-    await loadNewNews("family", false);
+    await loadNewNews(category, false);
 }
 
-async function readResult(id, num) {
+async function readResult(id, num, category) {
     let url = "/message/readResult/" + id;
     fetch(url, {
         method: "GET",
@@ -530,10 +537,10 @@ async function readResult(id, num) {
             "Content-Type": "application/json"
         },
     }).then(r => console.log("Answer:", r))
-    changeCountsByRead("family");
+    changeCountsByRead(category);
     delete rawNews[num];
     delete cards[num];
-    await loadNewNews("family", false);
+    await loadNewNews(category, false);
 }
 
 // private String sendingFrom;
@@ -647,7 +654,7 @@ async function deleteMessage(id, category, num, choice) {
             "Content-Type": "application/json"
         },
     });
-    changeCountsByRead(category);
+    if (!rawNews[num].alreadyRead) changeCountsByRead(category);
     delete rawNews[num];
     delete cards[num];
     await loadNewNews(category, choice)

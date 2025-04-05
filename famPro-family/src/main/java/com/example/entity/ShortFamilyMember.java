@@ -2,6 +2,7 @@ package com.example.entity;
 
 
 import com.example.enums.CheckStatus;
+import com.example.enums.SecretLevel;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -10,6 +11,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -88,9 +90,31 @@ public class ShortFamilyMember extends Fio {
     @Column(name = "prime_photo")
     private boolean primePhoto;
 
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "linkedPerson")
-    private Guard linkedGuard;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_photo")
+    private SecretLevel secretLevelPhoto;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_edit")
+    private SecretLevel secretLevelEdit;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_remove")
+    private SecretLevel   secretLevelRemove;;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_burial")
+    private SecretLevel secretLevelBurial;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_birth")
+    private SecretLevel secretLevelBirth;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "linkedPerson")
+    private List<Guard> linkedGuard;
+
+    @Column(name = "burial_exist")
+    private boolean burialExist;
+    @Column(name = "birth_exist")
+    private boolean birthExist;
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

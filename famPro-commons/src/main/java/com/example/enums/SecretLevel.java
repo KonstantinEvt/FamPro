@@ -1,5 +1,5 @@
 package com.example.enums;
 
 public enum SecretLevel {
-    OPEN, CONFIDENTIAL, FAMILY, BLOOD_ONE, BLOOD_TWO, BLOOD_THREE
+    OPEN, GLOBAL_TREE, BLOOD_TWO, GENETIC_TREE, FAMILY, CONFIDENTIAL, CLOSE
 }

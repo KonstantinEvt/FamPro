@@ -19,7 +19,7 @@ public class PlaceBirth extends Place{
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqBirths")
     @SequenceGenerator(
             name = "genSeqBirths",
-            sequenceName = "seqBurials", initialValue = 1, allocationSize = 5)
+            sequenceName = "seq_births", initialValue = 1, allocationSize = 5)
     private Long id;
     /**
      * Полный адрес

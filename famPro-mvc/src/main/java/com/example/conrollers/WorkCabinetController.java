@@ -1,6 +1,7 @@
 package com.example.conrollers;
 
 import com.example.dtos.TokenUser;
+import com.example.enums.Localisation;
 import lombok.AllArgsConstructor;
 import com.example.models.OnlineUserHolder;
 import com.example.models.SimpleUserInfo;
@@ -14,6 +15,8 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.util.Objects;
+
 
 @Controller
 @RequestMapping("/cabinet")
@@ -24,37 +27,39 @@ public class WorkCabinetController {
 //    private WebClient webClient;
 
     @GetMapping("/page")
-    public String getWelcome(ModelMap model) {
-        SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
-        model.addAttribute("nickname", simpleUserInfo.getNickName());
-        model.addAttribute("roles", simpleUserInfo.getRole());
-        model.addAttribute("name", simpleUserInfo.getFullName());
-        if (simpleUserInfo.getLocalisation().equals("ru"))
+    public String getWelcome() {
+//        ModelMap model
+//        SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
+//        model.addAttribute("nickname", simpleUserInfo.getNickName());
+//        model.addAttribute("roles", simpleUserInfo.getRole());
+//        model.addAttribute("name", simpleUserInfo.getFullName());
+//        if (simpleUserInfo.getLocalisation()== Localisation.RU)
+        if (Objects.equals(onlineUserHolder.getLocalisation(), Localisation.RU.name().toLowerCase()))
             return "WelcomeRu";
         else
             return "WelcomeOld";
     }
 
-    @GetMapping("/rules")
-    public String getRules(ModelMap model) {
-        SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
-        model.addAttribute("nickname", simpleUserInfo.getNickName());
-        model.addAttribute("roles", simpleUserInfo.getRole());
-        if (simpleUserInfo.getLocalisation().equals("ru"))
-            return "RuRules";
-        else return "Rules";
-    }
+//    @GetMapping("/rules")
+//    public String getRules(ModelMap model) {
+//        SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
+//        model.addAttribute("nickname", simpleUserInfo.getNickName());
+//        model.addAttribute("roles", simpleUserInfo.getRole());
+//        if (simpleUserInfo.getLocalisation().equals("ru"))
+//            return "RuRules";
+//        else return "Rules";
+//    }
 
-    @PostMapping("/create")
-    public String createUser(@RequestBody TokenUser tokenUser) {
-        tokenService.addUser(tokenUser);
-        return "WelcomeRu";
-    }
+//    @PostMapping("/create")
+//    public String createUser(@RequestBody TokenUser tokenUser) {
+//        tokenService.addUser(tokenUser);
+//        return "WelcomeRu";
+//    }
 
-    @GetMapping("/edit")
-    public String editUser() {
-        return "Edit-user";
-    }
+//    @GetMapping("/edit")
+//    public String editUser() {
+//        return "Edit-user";
+//    }
 
     @PostMapping("/edit")
     public String editUser(@RequestBody TokenUser tokenUser) {
@@ -99,8 +104,7 @@ public class WorkCabinetController {
                                            @Value("${application.gate.url}") String gateway) {
 
         SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
-        tokenService.chooseLocalisation(loc);
-        simpleUserInfo.setLocalisation(loc);
+        simpleUserInfo.setLocalisation(tokenService.chooseLocalisation(loc));
         return new RedirectView(gateway + "/cabinet/page");
     }
 }

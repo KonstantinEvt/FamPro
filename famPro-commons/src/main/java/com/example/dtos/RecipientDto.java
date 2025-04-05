@@ -1,8 +1,7 @@
 package com.example.dtos;
 
+import com.example.enums.Localisation;
 import lombok.*;
-
-import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
@@ -11,8 +10,10 @@ import java.util.UUID;
 @ToString
 public class RecipientDto {
         private Long id;
-        private String ExternId;
+        private String externId;
+        private String linkExternId;
         private String info;
         private String name;
-        private String urlPhoto;
+        private Boolean urlPhoto;
+        private Localisation localisation;
     }

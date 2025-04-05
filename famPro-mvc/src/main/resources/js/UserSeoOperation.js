@@ -117,9 +117,10 @@ function linkUser() {
         headers: {'Content-Type': 'application/json'}
 
     }).then(async status => {
-        document.getElementById("resultListEditUserSSO").innerHTML = await status.text();
+        document.getElementById("footer-main").innerHTML = await status.text();
+        loadOnlineUser();
         });
-    loadOnlineUser();
+
 }
 function submitEditFormSSO() {
     let form = document.getElementById('userFormEditSSO');

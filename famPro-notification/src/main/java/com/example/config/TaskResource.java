@@ -2,6 +2,7 @@ package com.example.config;
 
 import com.example.dtos.AloneNewDto;
 import com.example.dtos.Directive;
+import com.example.dtos.DirectiveGuards;
 import com.example.dtos.FamilyDirective;
 import com.example.models.StandardInfo;
 import org.springframework.context.annotation.Bean;
@@ -31,9 +32,11 @@ public class TaskResource {
     @Bean("onlineInfo")
     ConcurrentHashMap<String, StandardInfo> onlineInfo() {
         return new ConcurrentHashMap<>();
-
     }
-
+    @Bean("directiveRights")
+    LinkedList<DirectiveGuards> directiveRights() {
+        return new LinkedList<>();
+    }
     @Bean("systemGlobalMask")
     public List<Integer> systemGlobalMask() {
         return new CopyOnWriteArrayList<>();

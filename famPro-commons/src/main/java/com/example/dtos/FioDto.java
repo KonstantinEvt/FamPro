@@ -1,6 +1,7 @@
 package com.example.dtos;
 
 import com.example.enums.CheckStatus;
+import com.example.enums.Localisation;
 import com.example.enums.Sex;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -32,8 +33,7 @@ public class FioDto {
     private Sex sex;
     @Schema(name = "full_name")
     private String fullName;
-    @Schema(name="status")
-    private CheckStatus checkStatus;
+    private Localisation localisation;
 }
 
 
