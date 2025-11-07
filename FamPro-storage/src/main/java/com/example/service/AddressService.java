@@ -4,6 +4,7 @@ import com.example.entity.Address;
 import com.example.entity.FamilyMemberInfo;
 import com.example.enums.CheckStatus;
 import com.example.repository.InternRepo;
+import com.example.repository.MainAddressRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -15,9 +16,11 @@ import java.util.Set;
 @Service
 @Slf4j
 public class AddressService extends InternServiceImp<Address> {
+    private final MainAddressRepository mainAddressRepository;
 
-    public AddressService(@Qualifier("addressRepo") InternRepo<Address> internRepo) {
+    public AddressService(@Qualifier("addressRepo") InternRepo<Address> internRepo, MainAddressRepository mainAddressRepository) {
         super(internRepo);
+        this.mainAddressRepository = mainAddressRepository;
     }
 
     @Override
@@ -42,8 +45,8 @@ public class AddressService extends InternServiceImp<Address> {
                 namesAddresses.add(mainAddress.getInternName());
             } else newFmi.setMainPhone(null);
         }
-        if (newFmi.getAddresses() != null && !newFmi.getAddresses().isEmpty()) {
-            for (Address address : newFmi.getAddresses()) {
+        if (newFmi.getAddressesSet() != null && !newFmi.getAddressesSet().isEmpty()) {
+            for (Address address : newFmi.getAddressesSet()) {
                 address.setInternName(resolveFullAddress(address));
                 check(address);
                 if (!address.getTechString().equals("uncorrected")) {
@@ -53,19 +56,19 @@ public class AddressService extends InternServiceImp<Address> {
                 }
             }
         }
-        if (newFmi.getMainAddress() == null && fmiFromBase.getMainAddress() != null) {
-            newFmi.setMainAddress(fmiFromBase.getMainAddress());
+        if (newFmi.getMainAddress() == null || newFmi.getMainAddress().isEmpty()) {
+
             log.info("Основной адрес взят из старой записи, т.к. валидной информации об основном адресе в новой записи нет");
-        }
+        } else fmiFromBase.setMainAddress(newFmi.getMainAddress());
 
         Set<Address> addressesFromBase;
         if (!namesAddresses.isEmpty()) addressesFromBase = getAllInternEntityByNames(namesAddresses);
         else addressesFromBase = new HashSet<>();
 
-        Map<String, Address> resultList = mergeSetsOfInterns(newFmi.getAddresses(), fmiFromBase.getAddresses(), addressesFromBase);
+        Map<String, Address> resultList = mergeSetsOfInterns(newFmi.getAddressesSet(), fmiFromBase.getAddressesSet(), addressesFromBase);
         if (mainAddress.getInternName() != null && !resultList.containsKey(mainAddress.getInternName())) {
             if (!addressesFromBase.isEmpty() && !mainAddress.getTechString().equals("uncorrected"))
-                this.checkForCommunity(mainAddress, fmiFromBase.getAddresses(), addressesFromBase);
+                this.checkForCommunity(mainAddress, fmiFromBase.getAddressesSet(), addressesFromBase);
             if (!mainAddress.getTechString().equals("uncorrected")) {
                 if (!mainAddress.getTechString().equals("COMMUNITY")) {
                     mainAddress.setDescription("Main address");
@@ -75,20 +78,23 @@ public class AddressService extends InternServiceImp<Address> {
                 resultList.put(mainAddress.getInternName(), mainAddress);
             }
         }
-        newFmi.setAddresses(new HashSet<>());
+        fmiFromBase.setAddressesSet(new HashSet<>());
         for (Address address : resultList.values()) {
             if (!address.getTechString().equals("COMMUNITY")) address.setUuid(newFmi.getUuid());
             else address.setUuid(null);
-            newFmi.getAddresses().add(address);
+            fmiFromBase.getAddressesSet().add(address);
         }
-        if (newFmi.getMainAddress() == null && !newFmi.getAddresses().isEmpty())
-            newFmi.setMainAddress(newFmi.getAddresses().stream().findAny().get().getInternName());
+        if (fmiFromBase.getMainAddress() == null && !fmiFromBase.getAddressesSet().isEmpty())
+            fmiFromBase.setMainAddress(fmiFromBase.getAddressesSet().stream().findFirst().get().getInternName());
 
         log.info("Адрес(ы) установлен(ы)");
     }
 
     public String resolveFullAddress(Address address) {
-        return String.join(", ", address.getCountry(), address.getRegion(), address.getCity(), address.getStreet(), address.getHouse(), address.getBuilding(), address.getFlat());
+        return String.join(", ",address.getIndex(), address.getCountry(), address.getRegion(), address.getCity(), address.getStreet(), address.getHouse(), address.getBuilding(), address.getFlatNumber());
+    }
 
+    public Set<Address> getAddressByInfoId(Long id) {
+        return mainAddressRepository.findAddressesOfPerson(id);
     }
 }

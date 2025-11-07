@@ -4,6 +4,7 @@ import com.example.entity.FamilyMemberInfo;
 import com.example.entity.Phone;
 import com.example.enums.CheckStatus;
 import com.example.repository.InternRepo;
+import com.example.repository.MainPhoneRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -15,8 +16,10 @@ import java.util.Set;
 @Service
 @Slf4j
 public class PhoneService extends InternServiceImp<Phone> {
-    public PhoneService(@Qualifier("phoneRepo") InternRepo<Phone> internRepo) {
+    private final MainPhoneRepository mainPhoneRepository;
+    public PhoneService(@Qualifier("phoneRepo") InternRepo<Phone> internRepo, MainPhoneRepository mainPhoneRepository) {
         super(internRepo);
+        this.mainPhoneRepository = mainPhoneRepository;
     }
 
     @Override
@@ -41,8 +44,8 @@ public class PhoneService extends InternServiceImp<Phone> {
                 namesPhones.add(mainPhone.getInternName());
             } else newFmi.setMainPhone(null);
         }
-        if (newFmi.getPhones() != null && !newFmi.getPhones().isEmpty()) {
-            for (Phone phone : newFmi.getPhones()) {
+        if (newFmi.getPhonesSet() != null && !newFmi.getPhonesSet().isEmpty()) {
+            for (Phone phone : newFmi.getPhonesSet()) {
                 check(phone);
                 if (!phone.getTechString().equals("uncorrected")) {
 //                    phone.setUuid(newFmi.getUuid());
@@ -51,19 +54,19 @@ public class PhoneService extends InternServiceImp<Phone> {
                 }
             }
         }
-        if (newFmi.getMainPhone() == null && fmiFromBase.getMainPhone() != null) {
-            newFmi.setMainPhone(fmiFromBase.getMainPhone());
+        if (newFmi.getMainPhone() == null|| newFmi.getMainPhone().isEmpty()) {
+
             log.info("Основной телефон взят из старой записи, т.к. валидной информации об основном телефоне в новой записи нет");
-        }
+        }else  fmiFromBase.setMainPhone(newFmi.getMainPhone());
 
         Set<Phone> phonesFromBase;
         if (!namesPhones.isEmpty()) phonesFromBase = getAllInternEntityByNames(namesPhones);
         else phonesFromBase = new HashSet<>();
 
-        Map<String, Phone> resultList = mergeSetsOfInterns(newFmi.getPhones(), fmiFromBase.getPhones(), phonesFromBase);
+        Map<String, Phone> resultList = mergeSetsOfInterns(newFmi.getPhonesSet(), fmiFromBase.getPhonesSet(), phonesFromBase);
         if (mainPhone.getInternName() != null && !resultList.containsKey(mainPhone.getInternName())) {
             if (!phonesFromBase.isEmpty() && !mainPhone.getTechString().equals("uncorrected"))
-                this.checkForCommunity(mainPhone, fmiFromBase.getPhones(), phonesFromBase);
+                this.checkForCommunity(mainPhone, fmiFromBase.getPhonesSet(), phonesFromBase);
             if (!mainPhone.getTechString().equals("uncorrected")) {
                 if (!mainPhone.getTechString().equals("COMMUNITY")) {
                     mainPhone.setDescription("Main phone");
@@ -73,12 +76,15 @@ public class PhoneService extends InternServiceImp<Phone> {
                 resultList.put(mainPhone.getInternName(), mainPhone);
             }
         }
-        newFmi.setPhones(new HashSet<>());
+        fmiFromBase.setPhonesSet(new HashSet<>());
         for (Phone phone : resultList.values()) {
             if (!phone.getTechString().equals("COMMUNITY")) phone.setUuid(newFmi.getUuid());
             else phone.setUuid(null);
-            newFmi.getPhones().add(phone);
+            fmiFromBase.getPhonesSet().add(phone);
         }
         log.info("Телефон(ы) установлен(ы)");
+    }
+    public Set<Phone> getPhonesByInfoId(Long id){
+        return mainPhoneRepository.findPhonesOfPerson(id);
     }
 }

@@ -38,5 +38,5 @@ public class Place extends InternEntity {
     private String street;
 
     @Column(name = "photo_exist")
-    private Boolean photo_exist;
+    private boolean photoExist;
 }

@@ -119,12 +119,12 @@ public class RecipientService {
     @Transactional(readOnly = true)
     public Set<ContactDto> getContactDtos(String recipientExternId) {
         Recipient recipient = notificationRepo.findRecipientWithContacts(recipientExternId);
-        if (recipient == null || recipient.getContacts() == null) return new HashSet<>();
-        else directiveRights.add(DirectiveGuards.builder()
-                        .operation(KafkaOperation.ADD)
-                        .person(recipient.getExternId())
-                        .guards(recipient.getContacts().stream().map(Contact::getExternId).collect(Collectors.toSet()))
+        if (recipient != null && recipient.getContacts() != null&&!recipient.getContacts().isEmpty()) directiveRights.add(DirectiveGuards.builder()
+                .operation(KafkaOperation.ADD)
+                .person(recipient.getExternId())
+                .guards(recipient.getContacts().stream().map(Contact::getExternId).collect(Collectors.toSet()))
                 .build());
+        else return new HashSet<>();
         return contactMapper.entitySetToDtoSet(recipient.getContacts());
     }
 

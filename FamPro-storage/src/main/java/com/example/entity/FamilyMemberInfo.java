@@ -36,14 +36,16 @@ public class FamilyMemberInfo {
     private SecretLevel secretLevelEmail;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "emails_Of_Family_Member",
+    @JoinTable(name = "emails_of_family_member",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "email_id", referencedColumnName = "id"))
-    private Set<Email> emails;
+    private Set<Email> emailsSet;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
-    @JoinColumn(name = "biometric_id")
-    private Biometric biometric;
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinTable(name = "biometric_of_family_member",
+            joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "biometric_id", referencedColumnName = "id"))
+    private List<Biometric> biometricData;
 
     @Column(name = "secret_biometric")
     @Enumerated(EnumType.STRING)
@@ -57,11 +59,20 @@ public class FamilyMemberInfo {
     private SecretLevel secretLevelPhone;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "phones_Of_Family_Member",
+    @JoinTable(name = "phones_Of_family_member",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "phone_id", referencedColumnName = "id"))
-    private Set<Phone> phones;
+    private Set<Phone> phonesSet;
 
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "description_Of_family_member",
+            joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "description_id", referencedColumnName = "id"))
+    private List<Description> descriptionData;
+
+    @Column(name = "secret_description")
+    @Enumerated(EnumType.STRING)
+    private SecretLevel secretLevelDescription;
 
     @Column(name = "main_address")
     private String mainAddress;
@@ -71,10 +82,36 @@ public class FamilyMemberInfo {
     private SecretLevel secretLevelAddress;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "addresses_Of_Family_Member",
+    @JoinTable(name = "addresses_Of_family_member",
             joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "address_id", referencedColumnName = "id"))
-    private Set<Address> addresses;
+    private Set<Address> addressesSet;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinTable(name = "birth_place_member",
+            joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "birth_id", referencedColumnName = "id"))
+    private List<PlaceBirth> birthPlace;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "secret_birth")
+    private SecretLevel secretLevelBirth;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinTable(name = "burial_place_member",
+            joinColumns = @JoinColumn(name = "member_info_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "burial_id", referencedColumnName = "id"))
+    private List<PlaceBurial> burialPlace;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "secret_burial")
+    private SecretLevel secretLevelBurial;
+
+    @Column(name = "photo_birth")
+    private boolean photoBirthExist;
+
+    @Column(name = "photo_burial")
+    private boolean photoBurialExist;
 
     @Override
     public boolean equals(Object o) {

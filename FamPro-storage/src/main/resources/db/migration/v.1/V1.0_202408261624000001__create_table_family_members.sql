@@ -34,7 +34,8 @@ create table if not exists family_members
                        'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
                        'GLOBAL_TREE'::character varying,
-                       'CLOSE'::character varying
+                       'CLOSE'::character varying,
+                       'UNDEFINED'::character varying
                        ])::text[])),
     security_edit  varchar(255)
         constraint edit_security
@@ -46,7 +47,8 @@ create table if not exists family_members
                        'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
                        'GLOBAL_TREE'::character varying,
-                       'CLOSE'::character varying
+                       'CLOSE'::character varying,
+                       'UNDEFINED'::character varying
                        ])::text[]))
 );
 CREATE INDEX uuid_fm ON family_members (uuid);

@@ -7,6 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class BurialDto extends PlaceDto{
     /**
      * Полный адрес

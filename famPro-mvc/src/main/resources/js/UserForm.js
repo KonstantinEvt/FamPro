@@ -6,6 +6,15 @@ let externId;
 let ownLinkId;
 let ownId;
 let tempSecurity;
+let tempPerson;
+let tempTextPhoto;
+const infoAbsent = "Информация отсутствует";
+const infoClosed = "Информация закрыта";
+const infoUncorrected="Неверная информация"
+
+let tempPrimePhoto;
+let tempBirthPhoto;
+let tempBurialPhoto;
 
 loadOnlineUser();
 loadStandardMainPanel();
@@ -65,7 +74,7 @@ function loadOnlineUser() {
 
             document.getElementById("linking-knopa").innerHTML = ``;
             document.getElementById("getLinkedPerson").innerHTML = `
-                <a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onClick="">Ты в базе</a>`
+                <a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onclick="getPersonalPage()">Ты в базе</a>`;
         }
     });
 
@@ -105,6 +114,28 @@ function getDate(datetime) {
     return (day + '.' + month + '.' + year);
 }
 
+function getAge(birthday, deathday) {
+    if (deathday===infoAbsent) return deathday;
+    let age;
+    let alife = false;
+    if (deathday === undefined || deathday === null || deathday === '') {
+        deathday = new Date();
+        alife = true;
+    }
+    let fullYear = deathday.getFullYear() - birthday.getFullYear();
+    if ((fullYear > 120 && alife) || deathday === infoAbsent) age = "не известно";
+    else if (fullYear > 120) age = "Столько не живут";
+    else {
+        let mouthDelta = deathday.getMonth() - birthday.getMonth();
+        let dayDelta = deathday.getDay() - birthday.getDay();
+        age = fullYear + " year " + mouthDelta + " month "
+        if (mouthDelta === 0 && dayDelta === 0) age += " (birthday now)"
+        // age = new Intl.NumberFormat("en", {minimumIntegerDigits: 3}).format(((new Date(tempPerson.birthday) - new Date()) / 86400000-fullYear/4)/365);
+        // if ((vis % 4 === 0 && vis % 100 !== 100) || vis % 400 === 0)
+    }
+    return age;
+}
+
 // async function loadNewsPicture2(url) {
 //     let picture;
 //     let array;
@@ -140,7 +171,8 @@ async function loadDefaultPhotos() {
         approved: await loadPicture(url + "approved.jpg"),
         rejected: await loadPicture(url + "rejected.jpg"),
         linking: await loadPicture(url + "linking.jpg"),
-        contact: await loadPicture(url + "contact.jpg")
+        contact: await loadPicture(url + "contact.jpg"),
+        photono: await loadPicture(url + "photono.jpg"),
     };
 }
 

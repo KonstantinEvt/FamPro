@@ -10,6 +10,8 @@ function addFamilyMember() {
     countEmail = 0;
     countOtherNames = 1;
     insertOther = [];
+    insertPhone = [];
+    insertEmail = [];
     document.getElementById("mainPanel").innerHTML = `
 <div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px">*** Adding Person ***</div>
 <form class="form-group" style="margin:5px; text-align: center;" id="baseFormAddFM">
@@ -40,6 +42,8 @@ function addFamilyMember() {
             <option value="MALE" selected>MALE</option>
             <option value="FEMALE">FEMALE</option>
         </select>
+        <label for="primePhoto" style="padding-top:12px; color: chocolate;">Файл фото</label>
+        <input class="form-control" style="padding-top: 2px;padding-bottom: 12px" type="file" id="primePhoto" name="primePhoto" value="DDD">
         <div style="margin-top: 15px">  Внимание: без заполненных полей "Имя", "Отчество", "Фамилия", "День рождения"</div> 
         <div>НИКАКАЯ информация в базу внесена не будет!</div>
                         </span>
@@ -225,6 +229,14 @@ function addFamilyMember() {
             <option value="GENETIC_TREE">Семейное древо</option>
             <option value="GLOBAL_TREE">Все родственники</option>
         </select>
+        <label for="chooseSecureMain" style="color: chocolate; padding-top: 5px">Secure edit main:</label>
+        <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureMain" aria-label="chooseSecureMain">            
+            <option value="CONFIDENTIAL">Личное</option>
+            <option value="FAMILY" selected >Семейное</option>
+            <option value="GENETIC_TREE">Семейное древо</option>
+            <option value="GLOBAL_TREE">Все родственники</option>
+        </select>
+        <label for="chooseSecureRM" style="color: chocolate; padding-top: 5px">Secure remove:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureRM" aria-label="chooseSecureRM">            
             <option value="CONFIDENTIAL">Личное</option>
             <option value="FAMILY" selected >Семейное</option>
@@ -253,10 +265,10 @@ function addFamilyMember() {
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBirth" aria-label="chooseSecurePBirth">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" >Личное</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="FAMILY" selected>Семейное</option>
             <option value="GENETIC_TREE">Семейное древо</option>
             <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE" selected>Все родственники</option>
+            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
         <label for="chooseSecureMP" style="color: chocolate; padding-top: 5px">Secure main phone:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px; text-align: center" id="chooseSecureMP" aria-label="chooseSecureMP">            
@@ -284,6 +296,13 @@ function addFamilyMember() {
             <option value="GENETIC_TREE">Семейное древо</option>
             <option value="GLOBAL_TREE">Все родственники</option>
         </select>
+        <label for="chooseSecureDes" style="color: chocolate; padding-top: 5px">Secure description:</label>
+        <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureDes" aria-label="chooseSecureDes">            
+            <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="FAMILY">Семейное</option>
+            <option value="GENETIC_TREE">Семейное древо</option>
+            <option value="GLOBAL_TREE">Все родственники</option>
+        </select>
                         </span>
                         <span class="col" style="width: 30%"></span>
                     </div>
@@ -305,26 +324,28 @@ function addFamilyMember() {
                         <span class="col" style="width: 30%"></span>
                         <span class="col-6" style="min-width: 300px">
         <label for="heightFM" style="color: chocolate; padding-top: 5px">Рост (см)</label>
-        <input class="form-control" style="text-align: center" type="number" id="heightFM" name="heightFM" value="160">
+        <input class="form-control" style="text-align: center" type="number" id="heightFM" name="heightFM" placeholder="введите число">
         <label for="weightFM" style="color: chocolate; padding-top: 5px">Вес (кг)</label>
-        <input class="form-control" style="text-align: center" type="number" id="weightFM" name="weightFM" value="70">
+        <input class="form-control" style="text-align: center" type="number" id="weightFM" name="weightFM" placeholder="введите число">
         <label for="footSizeFM" style="color: chocolate; padding-top: 5px">Размер стопы (см)</label>
-        <input class="form-control" style="text-align: center" type="number" id="footSizeFM" name="footSizeFM" value="40">
+        <input class="form-control" style="text-align: center" type="number" id="footSizeFM" name="footSizeFM" placeholder="введите число">
         <label for="shirtSizeFM" style="color: chocolate; padding-top: 5px">Размер рубашки:</label>
-        <input class="form-control" style="text-align: center" type="number" id="shirtSizeFM" name="shirtSizeFM" value="50">
+        <input class="form-control" style="text-align: center" type="number" id="shirtSizeFM" name="shirtSizeFM" placeholder="введите число">
         <label for="eyesColorFM" style="color: chocolate; padding-top: 5px">Цвет глаз:</label>
-        <select class="form-select" style="text-align: center" id="eyesColorFM" aria-label="eyesColorFM">            
+        <select class="form-select" style="text-align: center" id="eyesColorFM" aria-label="eyesColorFM" >
+            <option value="UNKNOWN" selected>Неизветный</option>        
             <option value="RED">Красный</option>
-            <option value="BROWN" selected>Коричневый</option>
+            <option value="BROWN" >Коричневый</option>
             <option value="BLACK">Черный</option>
             <option value="YELLOW">Желтый</option>
             <option value="BLUE">Голубой</option>
             <option value="GREEN">Зеленый</option>
         </select>
         <label for="hairColorFM" style="color: chocolate; padding-top: 5px">Цвет волос:</label>
-        <select class="form-select" style="text-align: center" id="hairColorFM" aria-label="hairColorFM">            
+        <select class="form-select" style="text-align: center" id="hairColorFM" aria-label="hairColorFM">
+            <option value="UNKNOWN" selected>Неизветный</option>               
             <option value="WHITE">Белый</option>
-            <option value="BROWN" selected>Коричневый</option>
+            <option value="BROWN" >Коричневый</option>
             <option value="BLACK">Черный</option>
             <option value="YELLOW">Желтый</option>
             <option value="RED">Рыжий</option>
@@ -358,7 +379,8 @@ function addFamilyMember() {
         <input class="form-control" type="text" id="birthHouseAddFM" name="birthHouseAddFM" >
         <label for="birthRegisterAddFM" style="color: chocolate; padding-top: 5px">Регистрационный орган:</label>
         <input class="form-control" type="text" id="birthRegisterAddFM" name="birthRegisterAddFM" >
-
+        <label for="birthPhoto" style="padding-top:12px; color: chocolate;">Файл фото</label>
+        <input class="form-control" style="padding-top: 2px;padding-bottom: 2px" type="file" id="birthPhoto" name="birthPhoto" value="DDD">
                         </span>
                         <span class="col" style="width: 20%"></span>
                     </div>
@@ -391,7 +413,9 @@ function addFamilyMember() {
         <label for="burialBuildingAddFM" style="color: chocolate; padding-top: 2px">Номер участка:</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialBuildingAddFM" name="burialBuildingAddFM" >
         <label for="burialFlatAddFM" style="color: chocolate; padding-top: 2px">Номер могилы:</label>
-        <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialFlatAddFM" name="burialFlatAddFM" >  
+        <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialFlatAddFM" name="burialFlatAddFM" >
+        <label for="burialPhoto" style="padding-top:12px; color: chocolate;">Файл фото</label>
+        <input class="form-control" style="padding-top: 2px;padding-bottom: 2px" type="file" id="burialPhoto" name="burialPhoto" value="DDD">  
                         </span>
                         <span class="col" style="width: 20%"></span>
                     </div>
@@ -399,16 +423,21 @@ function addFamilyMember() {
             </div>
         </div>
     </div>
-    <label for="primePhoto" style="padding-top:12px; color: chocolate;">Файл фото</label>
-    <input class="form-control" style="padding-top: 2px;padding-bottom: 2px" type="file" id="primePhoto" name="primePhoto" value="DDD">
+
     <br>
     <button class="btn btn-outline-warning" style="color: darkred" type="button" onclick="submitBaseFormAddFM()">Add Person</button>
     <br>  
         <span style="font-size: larger; font-family: 'Times New Roman',serif; text-align: left">Common Result: 
         <span style="font-size: larger;font-family: bold,'Monotype Corsiva',serif" id="resultListCreateFM"></span></span>
             <br>  
-        <span style="font-size: larger; font-family: 'Times New Roman',serif; text-align: left">Photo Result: 
+        <span style="font-size: larger; font-family: 'Times New Roman',serif; text-align: left">Prime Photo Result: 
         <span style="font-size: larger;font-family: bold,'Monotype Corsiva',serif" id="resultSavePrimePhoto"></span></span>
+                    <br>  
+        <span style="font-size: larger; font-family: 'Times New Roman',serif; text-align: left">Birth Photo Result: 
+        <span style="font-size: larger;font-family: bold,'Monotype Corsiva',serif" id="resultSaveBirthPhoto"></span></span>
+                    <br>  
+        <span style="font-size: larger; font-family: 'Times New Roman',serif; text-align: left">Burial Photo Result: 
+        <span style="font-size: larger;font-family: bold,'Monotype Corsiva',serif" id="resultSaveBurialPhoto"></span></span>
     <br>
 </form>
  `
@@ -481,7 +510,7 @@ function deleteEmailField(emailString) {
 function addOtherField() {
     if (countOtherNames <= 4) {
         document.getElementById("otherAddFM" + countOtherNames).innerHTML = `
-        <div id="deleteOtherAddFM0" class="col-1" style="width: 12%">
+        <div id="deleteOtherAddFM${countOtherNames}" class="col-1" style="width: 12%">
             <br> 
                 <button class="btn btn-outline-danger" style="font-size:14px" onclick="deleteOtherField(${countOtherNames})">X</button>
         </div>
@@ -518,6 +547,8 @@ function submitBaseFormAddFM() {
     let otherPhones = [];
     let otherEmails = [];
     let primePhotoExist=false;
+    let birthPhotoExist=false;
+    let burialPhotoExist=false;
 
     if (document.getElementById("primePhoto").files[0] != null) {
         primePhotoExist=true;
@@ -533,6 +564,36 @@ function submitBaseFormAddFM() {
             document.getElementById("resultSavePrimePhoto").innerHTML = await status.text();
         });
     } else document.getElementById("resultSavePrimePhoto").innerHTML = 'Prime photo not selected!';
+
+    if (document.getElementById("birthPhoto").files[0] != null) {
+        birthPhotoExist=true;
+        let birthPhoto = document.getElementById("birthPhoto").files[0];
+        let file = new FormData()
+        file.append("birthPhoto", birthPhoto);
+        fetch("/file/saveBirthPhoto", {
+            method: 'POST',
+            headers: {
+            },
+            body: file,
+        }).then(async status => {
+            document.getElementById("resultSaveBirthPhoto").innerHTML = await status.text();
+        });
+    } else document.getElementById("resultSaveBirthPhoto").innerHTML = 'BirthPhoto photo not selected!';
+
+    if (document.getElementById("burialPhoto").files[0] != null) {
+        burialPhotoExist=true;
+        let burialPhoto = document.getElementById("burialPhoto").files[0];
+        let file = new FormData()
+        file.append("burialPhoto", burialPhoto);
+        fetch("/file/saveBurialPhoto", {
+            method: 'POST',
+            headers: {
+            },
+            body: file,
+        }).then(async status => {
+            document.getElementById("resultSaveBurialPhoto").innerHTML = await status.text();
+        });
+    } else document.getElementById("resultSaveBurialPhoto").innerHTML = 'BurialPhoto photo not selected!';
 
     insertOther[0] = 'yes';
     for (let i = 0; i < 5; i++) {
@@ -556,13 +617,15 @@ function submitBaseFormAddFM() {
             );
         }
     }
+    let hairColor = (form.elements.hairColorFM.value==="UNKNOWN")?null:form.elements.hairColorFM.value;
+    let eyesColor = (form.elements.eyesColorFM.value==="UNKNOWN")?null:form.elements.eyesColorFM.value;
     let formData = {
         primePhoto: primePhotoExist,
+
         secretLevelPhoto: form.elements.chooseSecurePP.value,
         secretLevelEdit: form.elements.chooseSecureEE.value,
+        secretLevelMainInfo: form.elements.chooseSecureMain.value,
         secretLevelRemove: form.elements.chooseSecureRM.value,
-        secretLevelBirth: form.elements.chooseSecurePBur.value,
-        secretLevelBurial: form.elements.chooseSecurePBirth.value,
         firstName: form.elements.firstNameAddFM.value,
         middleName: form.elements.middleNameAddFM.value,
         lastName: form.elements.lastNameAddFM.value,
@@ -572,17 +635,40 @@ function submitBaseFormAddFM() {
         memberInfo: {
             mainPhone: form.elements.mainPhoneAddFM.value,
             mainEmail: form.elements.mainEmailAddFM.value,
+            photoBurialExist: burialPhotoExist,
+            photoBirthExist: birthPhotoExist,
+            secretLevelBirth: form.elements.chooseSecurePBur.value,
+            secretLevelBurial: form.elements.chooseSecurePBirth.value,
             secretLevelEmail: form.elements.chooseSecureME.value,
             secretLevelAddress: form.elements.chooseSecureMA.value,
             secretLevelPhone: form.elements.chooseSecureMP.value,
             secretLevelBiometric: form.elements.chooseSecureBio.value,
+            secretLevelDescription: form.elements.chooseSecureDes.value,
             biometric: {
                 height: form.elements.heightFM.value,
                 weight: form.elements.weightFM.value,
                 footSize: form.elements.footSizeFM.value,
-                hairColor: form.elements.hairColorFM.value,
-                eyesColor: form.elements.eyesColorFM.value,
+                hairColor: hairColor,
+                eyesColor: eyesColor,
                 shirtSize: form.elements.shirtSizeFM.value
+            },
+            birth: {
+                country: form.elements.birthCountryAddFM.value,
+                region: form.elements.birthRegionAddFM.value,
+                city: form.elements.birthCityAddFM.value,
+                street: form.elements.birthStreetAddFM.value,
+                birthHouse: form.elements.birthHouseAddFM.value,
+                registration: form.elements.birthRegisterAddFM.value
+            },
+            burial: {
+                country: form.elements.burialCountryAddFM.value,
+                region: form.elements.burialRegionAddFM.value,
+                city: form.elements.burialCityAddFM.value,
+                cemetery: form.elements.burialCemeteryAddFM.value,
+                street: form.elements.burialStreetAddFM.value,
+                chapter: form.elements.burialHouseAddFM.value,
+                square: form.elements.burialBuildingAddFM.value,
+                grave: form.elements.burialFlatAddFM.value
             },
             phones: otherPhones,
             emails: otherEmails,
@@ -595,7 +681,7 @@ function submitBaseFormAddFM() {
                     street: form.elements.streetAddFM.value,
                     house: form.elements.houseAddFM.value,
                     building: form.elements.buildingAddFM.value,
-                    flat: form.elements.flatAddFM.value
+                    flatNumber: form.elements.flatAddFM.value
                 }
             ]
         },
@@ -611,25 +697,7 @@ function submitBaseFormAddFM() {
             lastName: form.elements.lastNameFatherAddFM.value,
             birthday: form.elements.birthdayFatherAddFM.value
         },
-        fioDtos: other,
-        birth: {
-            country: form.elements.birthCountryAddFM.value,
-            region: form.elements.birthRegionAddFM.value,
-            city: form.elements.birthCityAddFM.value,
-            street: form.elements.birthStreetAddFM.value,
-            birthHouse: form.elements.birthHouseAddFM.value,
-            registration: form.elements.birthRegisterAddFM.value
-        },
-        burial: {
-            country: form.elements.burialCountryAddFM.value,
-            region: form.elements.burialRegionAddFM.value,
-            city: form.elements.burialCityAddFM.value,
-            cemetery: form.elements.burialCemeteryAddFM.value,
-            street: form.elements.burialStreetAddFM.value,
-            chapter: form.elements.burialHouseAddFM.value,
-            square: form.elements.burialBuildingAddFM.value,
-            grave: form.elements.burialFlatAddFM.value
-        }
+        fioDtos: other
     };
     const jsonData = JSON.stringify(formData);
     fetch("/base/family_member/add", {

@@ -1,6 +1,7 @@
 package com.example.repository;
 
 import com.example.dtos.SecurityDto;
+import com.example.entity.Address;
 import com.example.entity.FamilyMember;
 import com.example.entity.FamilyMemberInfo;
 import com.example.entity.OldFio;
@@ -12,14 +13,14 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 @AllArgsConstructor
 @Log4j2
-public class MainStorageRepository {
+public class  MainStorageRepository {
     private EntityManager entityManager;
+    MainInfoReposirory mainInfoReposirory;
 
     @Transactional(readOnly = true)
     public Optional<FamilyMember> findMemberWithInfoById(Long id) {
@@ -57,7 +58,6 @@ public class MainStorageRepository {
                     .setParameter("uuid", uuid)
                     .getSingleResult());
         } catch (RuntimeException e) {
-            log.warn("person in base not found");
             familyMember = Optional.empty();
         }
         return familyMember;
@@ -75,7 +75,7 @@ public class MainStorageRepository {
                 FamilyMemberInfo info = entityManager.createQuery("from FamilyMemberInfo a where a.uuid=:uuid", FamilyMemberInfo.class)
                         .setParameter("uuid", familyMember.get().getUuid())
                         .getSingleResult();
-                if (info != null) familyMember.get().setFamilyMemberInfo(info);
+                if (info != null) familyMember.get().setFamilyMemberInfo(List.of(info));
             }
         } catch (RuntimeException e) {
             log.warn("person in base not found");
@@ -85,42 +85,50 @@ public class MainStorageRepository {
     }
 
     @Transactional(readOnly = true)
-    public FamilyMember getFullFamilyMember(SecurityDto securityDto) {
-        FamilyMember familyMember;
+    public Optional<FamilyMember> getFullFamilyMember(SecurityDto securityDto) {
         try {
             CriteriaBuilder builder = entityManager.getCriteriaBuilder();
             CriteriaQuery<FamilyMember> query = builder.createQuery(FamilyMember.class);
             Root<FamilyMember> root = query.from(FamilyMember.class);
-            root.fetch("otherNames", JoinType.LEFT);
-            if (securityDto.getSecretLevelBirth() != SecretLevel.CLOSE) {
-                root.fetch("birth", JoinType.LEFT);
-            }
-            if (securityDto.getSecretLevelBurial() != SecretLevel.CLOSE) {
-                root.fetch("burial", JoinType.LEFT);
-            }
-            if (securityDto.isInfoExist()) {
-                var info=root.fetch("familyMemberInfo", JoinType.LEFT);
-
-                if (securityDto.getSecretLevelBiometric() != SecretLevel.CLOSE) {
-                    info.fetch("biometric", JoinType.LEFT);
-                }
-                if (securityDto.getSecretLevelPhone() != SecretLevel.CLOSE) {
-                    info.fetch("phones", JoinType.LEFT);
-                }
-                if (securityDto.getSecretLevelAddress() != SecretLevel.CLOSE) {
-                    info.fetch("addresses", JoinType.LEFT);
-                }
-                if (securityDto.getSecretLevelEmail() != SecretLevel.CLOSE) {
-                    info.fetch("emails", JoinType.LEFT);
-                }
-            }
+            if (securityDto.isOtherNamesExist()) root.fetch("otherNames", JoinType.LEFT);
+            if (securityDto.isInfoExist()) root.fetch("familyMemberInfo", JoinType.LEFT);
             query.where(builder.equal(root.get("id"), securityDto.getPersonId()));
-            familyMember = entityManager.createQuery(query).getSingleResult();
+            Optional<FamilyMember> familyMember = Optional.of(entityManager.createQuery(query).getSingleResult());
+            if (securityDto.isInfoExist()) {
+                mainInfoReposirory.getFullInfo(securityDto, familyMember.get().getFamilyMemberInfo().get(0));
+//                info.ifPresent(familyMemberInfo -> familyMember.get().setFamilyMemberInfo(List.of(familyMemberInfo)));
+            }
+            return familyMember;
         } catch (RuntimeException e) {
-            log.warn("Extension error");
-            familyMember = null;
+            log.warn("Extension error:", e);
+            return Optional.empty();
         }
-        return familyMember;
+    }
+
+    @Transactional
+    public void persistMember(FamilyMember familyMember) {
+        try {
+            entityManager.persist(familyMember);
+        } catch (RuntimeException e) {
+            log.warn("Person not save");
+        }
+    }
+
+    @Transactional
+    public void updateMember(FamilyMember familyMember) {
+        try {
+            entityManager.merge(familyMember);
+        } catch (RuntimeException e) {
+            log.warn("Person not update");
+        }
+    }
+    @Transactional
+    public void flushMember() {
+        try {
+            entityManager.flush();
+        } catch (RuntimeException e) {
+            log.warn("flush is corrupt");
+        }
     }
 
 }

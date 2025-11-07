@@ -87,6 +87,9 @@ public class ShortFamilyMember extends Fio {
     @Column(name = "create_time")
     private Timestamp createTime;
 
+    @Column(name = "update_time")
+    private Timestamp lastUpdate;
+
     @Column(name = "prime_photo")
     private boolean primePhoto;
 
@@ -97,16 +100,14 @@ public class ShortFamilyMember extends Fio {
     @Enumerated(EnumType.STRING)
     @Column(name = "security_edit")
     private SecretLevel secretLevelEdit;
-    @Enumerated(EnumType.STRING)
-    @Column(name = "security_remove")
-    private SecretLevel   secretLevelRemove;;
-    @Enumerated(EnumType.STRING)
-    @Column(name = "security_burial")
-    private SecretLevel secretLevelBurial;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "security_birth")
-    private SecretLevel secretLevelBirth;
+    @Column(name = "security_remove")
+    private SecretLevel   secretLevelRemove;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_main")
+    private SecretLevel secretLevelMainInfo;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "linkedPerson")
     private List<Guard> linkedGuard;

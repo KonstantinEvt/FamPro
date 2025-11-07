@@ -49,6 +49,19 @@ public class ShortFamilyMemberInfo {
     @Enumerated(EnumType.STRING)
     private SecretLevel secretLevelBiometric;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_burial")
+    private SecretLevel secretLevelBurial;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_birth")
+    private SecretLevel secretLevelBirth;
+
+    @Column(name = "photo_birth")
+    private boolean photoBirthExist;
+
+    @Column(name = "photo_burial")
+    private boolean photoBurialExist;
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

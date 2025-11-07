@@ -1,6 +1,5 @@
 package com.example.dtos;
 
-import com.example.enums.Localisation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -8,8 +7,9 @@ import lombok.*;
 @RequiredArgsConstructor
 @Setter
 @Getter
-@ToString (callSuper = true)
-public class PlaceDto extends InternDto{
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+public class PlaceDto extends InternDto {
     @Schema(description = "Страна")
     private String country;
     @Schema(description = "Регион или область")
@@ -19,5 +19,5 @@ public class PlaceDto extends InternDto{
     @Schema(description = "Название улицы")
     private String street;
     @Schema(description = "Наличие фото")
-    private Boolean photoExist;
+    private boolean photoExist;
 }

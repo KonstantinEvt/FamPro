@@ -5,7 +5,7 @@ import com.example.entity.InternEntity;
 import com.example.enums.Assignment;
 import com.example.enums.CheckStatus;
 import com.example.enums.SecretLevel;
-import com.example.enums.Status;
+import com.example.enums.WorkStatus;
 import com.example.repository.InternRepo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,7 +24,7 @@ public class InternServiceImp<T extends InternEntity> implements PlaceService<T>
     @Override
     public void check(T t) {
         if (t.getAssignment() == null) t.setAssignment(Assignment.HOME);
-        if (t.getStatus() == null) t.setStatus(Status.ON_LINK);
+        if (t.getWorkStatus() == null) t.setWorkStatus(WorkStatus.ON_LINK);
         if (t.getDescription() == null) t.setDescription("Info is absent");
         if (t.getCheckStatus() == null) t.setCheckStatus(CheckStatus.UNCHECKED);
         if (t.getSecretLevel() == null) t.setSecretLevel(SecretLevel.OPEN);
@@ -56,7 +56,7 @@ public class InternServiceImp<T extends InternEntity> implements PlaceService<T>
     public T merge(T oldT, T newT) {
         if (!oldT.getTechString().equals("COMMUNITY") || oldT.getUuid() != null) {
             if (newT.getAssignment() != null) oldT.setAssignment(newT.getAssignment());
-            if (newT.getStatus() != null) oldT.setStatus(newT.getStatus());
+            if (newT.getWorkStatus() != null) oldT.setWorkStatus(newT.getWorkStatus());
             if (newT.getDescription() != null) oldT.setDescription(newT.getDescription());
         }
         return oldT;

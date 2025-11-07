@@ -1,10 +1,10 @@
 package com.example.enums;
 
-public enum Status {
+public enum WorkStatus {
 
         ON_LINK("на_связи"), OUT_LINK("отключен"), BANNED("заблокирован");
         private final String rusStatus;
-        Status(String rus) {
+        WorkStatus(String rus) {
             this.rusStatus=rus;
         }
         /**

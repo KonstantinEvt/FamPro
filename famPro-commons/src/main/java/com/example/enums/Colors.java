@@ -1,6 +1,7 @@
 package com.example.enums;
 
 public enum Colors {
+    UNKNOWN("неизвестный"),
     RED("красный"),
     BROWN("коричневый"),
     BLACK("черный"),

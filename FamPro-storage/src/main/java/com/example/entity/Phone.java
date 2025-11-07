@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -19,9 +20,13 @@ public class Phone  extends InternEntity{
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqPhone")
     @SequenceGenerator(
             name = "genSeqPhone",
-            sequenceName = "MemPhone", initialValue = 1, allocationSize = 5)
+            sequenceName = "mem_phone", initialValue = 1, allocationSize = 5)
     private Long id;
+
     private String internName;
+
+    @ManyToMany(mappedBy = "phonesSet")
+    private Set<FamilyMemberInfo> familyMemberInfo;
 
     @Override
     public boolean equals(Object o) {

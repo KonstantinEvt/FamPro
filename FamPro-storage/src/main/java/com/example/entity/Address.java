@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @RequiredArgsConstructor
@@ -19,7 +20,7 @@ public class Address extends Place{
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqAddress")
     @SequenceGenerator(
             name = "genSeqAddress",
-            sequenceName = "seqAddress", initialValue = 1, allocationSize = 5)
+            sequenceName = "seq_address", initialValue = 1, allocationSize = 5)
     private Long id;
     /**
      * Полный адрес
@@ -45,8 +46,10 @@ public class Address extends Place{
      * Номер квартиры
      */
     @Column(name = "flat", length = 50)
-    private String flat;
+    private String flatNumber;
 
+    @ManyToMany(mappedBy = "addressesSet")
+    private Set<FamilyMemberInfo> familyMemberInfo;
 
     @Override
     public boolean equals(Object o) {

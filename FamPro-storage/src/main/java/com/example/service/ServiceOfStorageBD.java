@@ -29,7 +29,7 @@ public class ServiceOfStorageBD {
     public void saveDataToFile(String filename) {
 
 
-        List<FamilyMember> resultList = entityManager.createQuery("from FamilyMember a left join fetch a.familyMemberInfo b left join fetch a.father y  left join fetch a.mother x left join fetch a.otherNames n left join fetch b.phones left join fetch b.addresses left join fetch b.emails"
+        List<FamilyMember> resultList = entityManager.createQuery("from FamilyMember a left join fetch a.familyMemberInfo b left join fetch a.father y  left join fetch a.mother x left join fetch a.otherNames n left join fetch b.phonesSet left join fetch b.addressesSet left join fetch b.emailsSet"
                 , FamilyMember.class).getResultList();
 
         try (FileWriter fr = new FileWriter("c:/Family/" + filename + ".txt")) {
@@ -38,7 +38,7 @@ public class ServiceOfStorageBD {
             for (FamilyMember fm : resultList) {
                 FamilyMemberDto fmD = familyMemberMapper.entityToDto(fm);
                 if (fm.getFamilyMemberInfo() != null)
-                    fmD.setMemberInfo(familyMemberInfoMapper.entityToDto(fm.getFamilyMemberInfo()));
+                    fmD.setMemberInfo(familyMemberInfoMapper.entityToDto(fm.getFamilyMemberInfo().get(0)));
                 fr.write(objectMapper.writeValueAsString(fmD));
                 fr.write('\n');
             }

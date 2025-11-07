@@ -5,6 +5,7 @@ import com.example.entity.FamilyMemberInfo;
 import com.example.enums.CheckStatus;
 import com.example.repository.InternRepo;
 
+import com.example.repository.MainEmailRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -14,9 +15,10 @@ import java.util.*;
 @Service
 @Slf4j
 public class EmailService extends InternServiceImp<Email> {
-
-    public EmailService(@Qualifier("emailRepo") InternRepo<Email> internRepo) {
+private final MainEmailRepository mainEmailRepository;
+    EmailService(@Qualifier("emailRepo") InternRepo<Email> internRepo, MainEmailRepository mainEmailRepository) {
         super(internRepo);
+        this.mainEmailRepository = mainEmailRepository;
     }
 
     @Override
@@ -41,8 +43,8 @@ public class EmailService extends InternServiceImp<Email> {
                 namesEmails.add(mainEmail.getInternName());
             } else newFmi.setMainEmail(null);
         }
-        if (newFmi.getEmails() != null && !newFmi.getEmails().isEmpty()) {
-            for (Email email : newFmi.getEmails()) {
+        if (newFmi.getEmailsSet() != null && !newFmi.getEmailsSet().isEmpty()) {
+            for (Email email : newFmi.getEmailsSet()) {
                 check(email);
                 if (!email.getTechString().equals("uncorrected")) {
 //                    email.setUuid(newFmi.getUuid());
@@ -51,19 +53,18 @@ public class EmailService extends InternServiceImp<Email> {
                 }
             }
         }
-        if (newFmi.getMainEmail() == null && fmiFromBase.getMainEmail() != null) {
-            newFmi.setMainEmail(fmiFromBase.getMainEmail());
+        if (newFmi.getMainEmail() == null || newFmi.getMainEmail().isEmpty()) {
             log.info("Основной Email взят из старой записи, т.к. валидной информации об основном Email в новой записи нет");
-        }
+        }else fmiFromBase.setMainEmail(newFmi.getMainEmail());
 
         Set<Email> emailsFromBase;
         if (!namesEmails.isEmpty()) emailsFromBase = getAllInternEntityByNames(namesEmails);
         else emailsFromBase = new HashSet<>();
 
-        Map<String, Email> resultList = mergeSetsOfInterns(newFmi.getEmails(), fmiFromBase.getEmails(), emailsFromBase);
+        Map<String, Email> resultList = mergeSetsOfInterns(newFmi.getEmailsSet(), fmiFromBase.getEmailsSet(), emailsFromBase);
         if (mainEmail.getInternName() != null && !resultList.containsKey(mainEmail.getInternName())) {
             if (!emailsFromBase.isEmpty() && !mainEmail.getTechString().equals("uncorrected"))
-                this.checkForCommunity(mainEmail, fmiFromBase.getEmails(), emailsFromBase);
+                this.checkForCommunity(mainEmail, fmiFromBase.getEmailsSet(), emailsFromBase);
             if (!mainEmail.getTechString().equals("uncorrected")) {
                 if (!mainEmail.getTechString().equals("COMMUNITY")) {
                     mainEmail.setDescription("Main Email");
@@ -73,11 +74,14 @@ public class EmailService extends InternServiceImp<Email> {
                 resultList.put(mainEmail.getInternName(), mainEmail);
             }
         }
-        newFmi.setEmails(new HashSet<>());
+        fmiFromBase.setEmailsSet(new HashSet<>());
         for (Email email : resultList.values()) {
             if (!email.getTechString().equals("COMMUNITY")) email.setUuid(newFmi.getUuid()); else email.setUuid(null);
-            newFmi.getEmails().add(email);
+            fmiFromBase.getEmailsSet().add(email);
         }
         log.info("Email(s) установлен(ы)");
+    }
+    public Set<Email> getEmailsByInfoId(Long id){
+        return mainEmailRepository.findEmailsOfPerson(id);
     }
 }

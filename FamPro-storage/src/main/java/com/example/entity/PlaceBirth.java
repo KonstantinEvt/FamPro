@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @RequiredArgsConstructor
@@ -30,12 +31,16 @@ public class PlaceBirth extends Place{
      * Роддом
      */
     @Column(name = "birth_house", length = 255)
-    private String bithHouse;
+    private String birthHouse;
     /**
      * Кто зарегистрировал
      */
     @Column(name = "registration_entity", length = 255)
     private String registration;
+
+    @ManyToMany(mappedBy = "birthPlace")
+    private Set<FamilyMemberInfo> familyMemberInfo;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

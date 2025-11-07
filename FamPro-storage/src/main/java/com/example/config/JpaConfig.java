@@ -19,6 +19,7 @@ public class JpaConfig {
     @Value("${spring.application.datasource.password}")
     private String password;
 
+
     @Bean
     DataSource dataSource() {
         return DataSourceBuilder.create()

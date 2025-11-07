@@ -11,6 +11,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @ToString
+@EqualsAndHashCode
 public class BiometricDto {
     private Long id;
     private UUID uuid;

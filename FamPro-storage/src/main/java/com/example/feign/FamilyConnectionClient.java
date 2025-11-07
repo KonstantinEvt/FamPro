@@ -16,8 +16,12 @@ public interface FamilyConnectionClient {
 
     @GetMapping("/guard/check/{uuid}")
     boolean checkRights(@PathVariable("uuid") UUID uuid);
+
     @GetMapping("/guard/checkGuards/{uuid}")
     SecretLevel getGuardStatus(@PathVariable("uuid") UUID uuid);
+
+    @GetMapping("/guard/getLinkGuard")
+    String getGuardByLink();
 
     @Component
     class checkGuardFallbackFactory implements FallbackFactory<FallFamilyConnection> {
@@ -38,6 +42,11 @@ public interface FamilyConnectionClient {
         @Override
         public SecretLevel getGuardStatus(UUID uuid) {
             return SecretLevel.OPEN;
+        }
+
+        @Override
+        public String getGuardByLink() {
+            return null;
         }
     }
 }

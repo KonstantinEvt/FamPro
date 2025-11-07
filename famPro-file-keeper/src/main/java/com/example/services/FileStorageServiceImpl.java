@@ -39,6 +39,10 @@ public class FileStorageServiceImpl {
     private String commonNews;
     @Value("${minio.default_photo_bucket}")
     private String defaultPhoto;
+    @Value("${minio.photo_burial_bucket}")
+    private String burial;
+    @Value("${minio.photo_birth_bucket}")
+    private String birth;
 
     private Map<String, byte[]> systemPictures;
     private Map<String, byte[]> commonPictures;
@@ -64,6 +68,8 @@ public class FileStorageServiceImpl {
         createBucketInMinioIfNotExist(events);
         createBucketInMinioIfNotExist(sysNews);
         createBucketInMinioIfNotExist(commonNews);
+        createBucketInMinioIfNotExist(birth);
+        createBucketInMinioIfNotExist(burial);
         getSystemNews();
         getCommonNews();
         getDefaultPhotos();
@@ -104,7 +110,7 @@ public class FileStorageServiceImpl {
         } catch (ServerException | InternalException | XmlParserException | InvalidResponseException |
                  InvalidKeyException |
                  NoSuchAlgorithmException | ErrorResponseException | InsufficientDataException | IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Ошибка при сохранении файла на сервер MinIO", e);
         }
         ResponseEntity.ok("Photo is saved");
     }
@@ -199,5 +205,21 @@ public class FileStorageServiceImpl {
         }
         System.out.println("tyt_tyt");
     }
-
+public void deletePhoto(String bucket, String name) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        minioClient.removeObject( RemoveObjectArgs.builder()
+                .bucket(bucket)
+                .object(name)
+                .build());
+}
+public void renamePhoto(String bucket, String oldName, String newName) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        minioClient.copyObject(CopyObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(newName)
+                        .source(CopySource.builder()
+                                .bucket(bucket)
+                                .object(oldName)
+                                .build())
+                .build());
+        deletePhoto(bucket,oldName);
+}
 }

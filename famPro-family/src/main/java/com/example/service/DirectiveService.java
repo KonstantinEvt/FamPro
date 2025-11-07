@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -165,6 +166,8 @@ public class DirectiveService {
             default -> log.warn("Обнаружена неизвестная директива");
         }
         if (!grandChildFamilies.isEmpty()) familyRepo.saveAll(grandChildFamilies);
+        mainMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+        processMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         memberService.getShortMemberRepo().save(mainMember);
         memberService.getShortMemberRepo().save(processMember);
 
@@ -311,6 +314,7 @@ public class DirectiveService {
         guardService.addGuardToFamilies(shortFamilyMember.getFamilies(), linkGuard);
         guardService.addGuardToGlobalFamily(linkGuard, shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
         globalFamilyService.getGlobalFamilyRepo().save(shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
+        shortFamilyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         memberService.getShortMemberRepo().save(shortFamilyMember);
 //        familyRepo.saveAll(shortFamilyMember.getFamilies());
 
@@ -340,6 +344,7 @@ public class DirectiveService {
         DeferredDirective directive = directiveRepo.findById(UUID.fromString(directiveUuid)).orElseThrow(() -> new RuntimeException("directive is missing"));
         ShortFamilyMember shortFamilyMember = memberService.getShortMemberRepo().findByUuid(directive.getDirectiveMember().getUuid()).orElseThrow(() -> new RuntimeException("не найден человек"));
         shortFamilyMember.setCheckStatus(CheckStatus.CHECKED);
+        shortFamilyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         memberService.getShortMemberRepo().save(shortFamilyMember);
         storageDirective.add(FamilyDirective.builder()
                 .tokenUser(directive.getTokenUser())

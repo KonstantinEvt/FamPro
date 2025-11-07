@@ -21,17 +21,15 @@ public class LosingParent extends Fio {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqLosFio")
     @SequenceGenerator(
             name = "genSeqLosFio",
-            sequenceName = "losingParentsSeq", initialValue = 1, allocationSize = 5)
+            sequenceName = "losing_parents_seq", initialValue = 1, allocationSize = 5)
     private Long id;
+
     @Column(name = "losing_UUID")
     private UUID losingUUID;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "member_id")
     private FamilyMember member;
-
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "check_status")
-//    private CheckStatus checkStatus;
 
     @Override
     public boolean equals(Object o) {

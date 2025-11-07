@@ -17,7 +17,8 @@ create table if not exists short_family_members
                        'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
                        'GLOBAL_TREE'::character varying,
-                       'CLOSE'::character varying
+                       'CLOSE'::character varying,
+                       'UNDEFINED'::character varying
                        ])::text[])),
     security_edit varchar(255)
         constraint edit_security
@@ -29,7 +30,8 @@ create table if not exists short_family_members
                        'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
                        'GLOBAL_TREE'::character varying,
-                       'CLOSE'::character varying
+                       'CLOSE'::character varying,
+                       'UNDEFINED'::character varying
                        ])::text[])),
     father_id    bigint
         constraint short_family_member_father references short_family_members (id),

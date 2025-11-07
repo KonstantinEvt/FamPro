@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @RequiredArgsConstructor
@@ -46,6 +47,10 @@ public class PlaceBurial extends Place{
      */
     @Column(name = "grave", length = 50)
     private String grave;
+
+    @ManyToMany(mappedBy = "burialPlace")
+    private Set<FamilyMemberInfo> familyMemberInfo;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

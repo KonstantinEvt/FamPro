@@ -41,9 +41,11 @@ public class MemberService {
         if (dto.getMemberInfo() != null) {
             familyMember.setShortFamilyMemberInfo(familyMemberInfoMapper.dtoToEntity(dto.getMemberInfo()));
             familyMember.getShortFamilyMemberInfo().setId(null);
+            familyMember.setBirthExist(dto.getMemberInfo().getBirth() != null);
+            familyMember.setBurialExist(dto.getMemberInfo().getBurial() != null);
+
         }
-        familyMember.setBirthExist(dto.getBirth() != null);
-        familyMember.setBurialExist(dto.getBurial() != null);
+
         familyMember.setFamilies(new HashSet<>());
         familyMember.setChilds(new HashSet<>());
         familyMember.setFamilyWhereChildInLow(new HashSet<>());
@@ -73,9 +75,9 @@ public class MemberService {
         if (dto.getMotherInfo() != null && (familyMember.getMotherInfo() == null || !familyMember.getMotherInfo().equals(dto.getMotherInfo())))
             familyMember.setMotherInfo(dto.getMotherInfo());
         if (dto.getMemberInfo() != null)
-            familyMember.setShortFamilyMemberInfo(familyMemberInfoMapper.dtoToEntity(dto.getMemberInfo()));
-        familyMember.setBirthExist(dto.getBirth() != null);
-        familyMember.setBurialExist(dto.getBurial() != null);
+        {familyMember.setShortFamilyMemberInfo(familyMemberInfoMapper.dtoToEntity(dto.getMemberInfo()));
+        familyMember.setBirthExist(dto.getMemberInfo().getBirth() != null);
+        familyMember.setBurialExist(dto.getMemberInfo().getBurial() != null);}
         shortMemberRepo.save(familyMember);
     }
 

@@ -7,6 +7,7 @@ import com.example.exceptions.Dublicate;
 import com.example.mappers.FioMapper;
 import com.example.mappers.OldNamesMapper;
 import com.example.repository.FamilyMemberRepo;
+import com.example.repository.MainOtherFioRepository;
 import com.example.repository.OldFioRepo;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,12 +25,14 @@ import java.util.Set;
 @Setter
 public class OldFioService extends FioServiceImp<OldFio> {
     private final OldFioRepo fioRepo;
+    private final MainOtherFioRepository mainOtherFioRepository;
     private final OldNamesMapper oldNamesMapper;
     private final FamilyMemberRepo fmRepo;
 
-    public OldFioService(FioMapper fioMapper, OldFioRepo fioRepo, OldNamesMapper oldNamesMapper, FamilyMemberRepo fmRepo) {
+    public OldFioService(FioMapper fioMapper, OldFioRepo fioRepo, MainOtherFioRepository mainOtherFioRepository, OldNamesMapper oldNamesMapper, FamilyMemberRepo fmRepo) {
         super(fioMapper);
         this.fioRepo = fioRepo;
+        this.mainOtherFioRepository = mainOtherFioRepository;
         this.oldNamesMapper = oldNamesMapper;
         this.fmRepo = fmRepo;
     }
@@ -68,10 +71,12 @@ public class OldFioService extends FioServiceImp<OldFio> {
                 }
             }
         } else {
-            if (!enteringFio.isEmpty()) fioRepo.saveAll(enteringFio);
-            return enteringFio;
+            if (!enteringFio.isEmpty()) {fioRepo.saveAll(enteringFio);
+            familyMember.setOtherNamesExist(true);
+            return enteringFio;}
         }
-        if (!resultSet.isEmpty()) fioRepo.saveAll(resultSet);
+        if (!resultSet.isEmpty()) fioRepo.saveAll(resultSet); else familyMember.setOtherNamesExist(false);
+
         return resultSet;
     }
 
@@ -82,5 +87,8 @@ public class OldFioService extends FioServiceImp<OldFio> {
             o.setUuid(generateUUIDFromFio(o));
             o.setFullName(generateFioStringInfo(o));
         }
+    }
+    public Set<OldFio> getOtherNamesByInfoId(Long id){
+        return mainOtherFioRepository.findOldNamesOfPerson(id);
     }
 }

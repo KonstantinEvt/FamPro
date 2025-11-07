@@ -82,7 +82,14 @@ public class IncomingService {
         ShortFamilyMember anyBrother = null;
 
         if (mainDirective.getOperation() == KafkaOperation.RENAME) {
-            mainMember = memberService.getShortMemberRepo().findByUuid(UUID.fromString(mainDirective.getPerson())).orElseThrow(() -> new RuntimeException("не найден"));
+            System.out.println(UUID.fromString(mainDirective.getPerson()));
+            try {
+                mainMember = memberService.getShortMemberRepo().findByUuid(UUID.fromString(mainDirective.getPerson())).orElseThrow(() -> new RuntimeException("не найден"));
+            }
+            catch (Exception e){
+                System.out.println(e.getMessage());
+                return;
+            }
             if (mainMember.getCheckStatus() == CheckStatus.MODERATE && !mainDirective.getTokenUser().equals("moderator")) {
                 log.warn("Попытка изменения человека находящимся под голосованием или модерацией");
                 directiveGuardsList.add(DirectiveGuards.builder()
@@ -94,9 +101,13 @@ public class IncomingService {
                         .build());
                 return;
             }
+            System.out.println("ffttt");
             primeFamily = mainMember.getFamilyWhereChild();
-            if (mainDto.getCheckStatus() == CheckStatus.MODERATE || checkFamilyForGuard(primeFamily, guardFromDirective)) {
+            System.out.println("ffttt2");
+            if (checkFamilyForGuard(primeFamily, guardFromDirective)) {
+                System.out.println("ffttt3");
                 memberService.editFamilyMember(mainDto, mainMember);
+                System.out.println("ffttt4");
                 if ((mainDto.getFatherInfo() != null
                         && mainDto.getMotherInfo() != null) &&
                         ((mainDto.getFatherInfo().charAt(0) != '(' || mainDto.getFatherInfo().charAt(1) == 'A') ||
@@ -255,6 +266,7 @@ public class IncomingService {
             } else {
                 if (member.getCheckStatus() != CheckStatus.MODERATE) {
                     member.setCheckStatus(CheckStatus.MODERATE);
+                    member.setLastUpdate(new Timestamp(System.currentTimeMillis()));
                     memberService.getShortMemberRepo().save(member);
                     storageDirective.add(FamilyDirective.builder()
                             .person(member.getUuid().toString())
@@ -279,6 +291,7 @@ public class IncomingService {
         }
         if (!acceptedChild.isEmpty()) for (ShortFamilyMember child :
                 acceptedChild) {
+            child.setLastUpdate(new Timestamp(System.currentTimeMillis()));
             for (Family childFM :
                     childFamilies) {
                 if (!childFM.getChildren().contains(child))
@@ -290,15 +303,15 @@ public class IncomingService {
         System.out.println("Отправка статусных директив");
         if (!directiveList.isEmpty()) {
             mainMember.setCheckStatus(CheckStatus.MODERATE);
-            storageDirective.add(FamilyDirective.builder()
-                    .person(mainMember.getUuid().toString())
-                    .switchPosition(SwitchPosition.MAIN)
-                    .operation(KafkaOperation.RENAME)
-                    .build());
-            log.info("moderate directive is send");
+//            storageDirective.add(FamilyDirective.builder()
+//                    .person(mainMember.getUuid().toString())
+//                    .switchPosition(SwitchPosition.MAIN)
+//                    .operation(KafkaOperation.RENAME)
+//                    .build());
+//            log.info("moderate directive is send");
         } else if ((primeFamily.getGuard() != null && !primeFamily.getGuard().isEmpty())
                 || (primeFamily.getGlobalFamily().getGuard() != null && !primeFamily.getGlobalFamily().getGuard().isEmpty())) {
-            if (mainMember.getCheckStatus() != CheckStatus.LINKED && guardFromDirective.isPresent() && Objects.equals(mainMember.getLinkedGuard(), guardFromDirective.get())) {
+            if (guardFromDirective.isPresent() && Objects.equals(mainMember, guardFromDirective.get().getLinkedPerson())) {
                 mainMember.setCheckStatus(CheckStatus.LINKED);
                 storageDirective.add(FamilyDirective.builder()
                         .tokenUser(mainDirective.getTokenUser())
@@ -307,7 +320,7 @@ public class IncomingService {
                         .operation(KafkaOperation.RENAME)
                         .build());
                 log.info("person receive link status and directive is send");
-            } else if (mainMember.getCheckStatus() != CheckStatus.CHECKED) {
+            } else {
                 mainMember.setCheckStatus(CheckStatus.CHECKED);
                 storageDirective.add(FamilyDirective.builder()
                         .tokenUser(mainDirective.getTokenUser())
@@ -317,10 +330,21 @@ public class IncomingService {
                         .build());
                 log.info("person receive checked status and directive is send");
             }
+        } else {
+            mainMember.setCheckStatus(CheckStatus.UNCHECKED);
+            storageDirective.add(FamilyDirective.builder()
+                    .tokenUser(mainDirective.getTokenUser())
+                    .person(mainMember.getUuid().toString())
+                    .switchPosition(SwitchPosition.CHILD)
+                    .operation(KafkaOperation.RENAME)
+                    .build());
+            log.info("person receive checked status and directive is send");
         }
+
         if (!directiveList.isEmpty()) for (DeferredDirective dd : directiveList)
             if (dd.getGlobalFor() != primeFamily.getGlobalFamily().getNumber())
                 dd.setGlobalFor(primeFamily.getGlobalFamily().getNumber());
+        mainMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         memberService.getShortMemberRepo().save(mainMember);
         if (!childFamilies.isEmpty()) familyRepo.saveAll(childFamilies);
         if (!grandChildFamilies.isEmpty()) familyRepo.saveAll(grandChildFamilies);
@@ -376,6 +400,7 @@ public class IncomingService {
                 guardService.addGuardToFamilies(shortFamilyMember.getFamilies(), guard);
                 guardService.addGuardToGlobalFamily(guard, shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
                 globalFamilyService.getGlobalFamilyRepo().save(shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
+                shortFamilyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
                 memberService.getShortMemberRepo().save(shortFamilyMember);
                 log.info("New guard is created");
 
@@ -405,7 +430,7 @@ public class IncomingService {
                         .switchPosition(SwitchPosition.MAIN)
                         .guards(shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getGuard().stream().map(Guard::getTokenUser).collect(Collectors.toSet()))
                         .build());
-            return CheckStatus.LINKED;
+                return CheckStatus.LINKED;
             }
             default -> {
                 shortFamilyMember.setCheckStatus(CheckStatus.MODERATE);
@@ -503,7 +528,7 @@ public class IncomingService {
         if (mainMember.getCheckStatus() == CheckStatus.UNCHECKED
                 || (mainMember.getCheckStatus() == CheckStatus.LINKED && guardFromToken.getLinkedPerson().equals(mainMember)))
             return SecretLevel.CONFIDENTIAL;
-        Family primeFamily=mainFamilyRepo.findFamilyWithAllGuards(mainMember);
+        Family primeFamily = mainFamilyRepo.findFamilyWithAllGuards(mainMember);
         if ((primeFamily.getGuard() == null
                 && primeFamily.getGlobalFamily().getGuard() != null
                 && primeFamily.getGlobalFamily().getGuard().contains(guardFromToken))

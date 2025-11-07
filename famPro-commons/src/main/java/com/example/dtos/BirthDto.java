@@ -7,6 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class BirthDto extends PlaceDto{
 
     private String internName;
@@ -18,5 +19,4 @@ public class BirthDto extends PlaceDto{
      * Кто зарегистрировал
      */
     private String registration;
-
 }

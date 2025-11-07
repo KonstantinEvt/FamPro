@@ -25,7 +25,8 @@ create table if not exists addresses
                        'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
                        'GLOBAL_TREE'::character varying,
-                       'CLOSE'::character varying
+                       'CLOSE'::character varying,
+                       'UNDEFINED'::character varying
                        ])::text[])),
     status       varchar(255)
         constraint addresses_status_check

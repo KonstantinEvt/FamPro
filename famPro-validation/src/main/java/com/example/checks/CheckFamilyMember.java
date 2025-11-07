@@ -62,13 +62,14 @@ public class CheckFamilyMember {
                 if (addressDtos.isEmpty()) familyMemberDto.getMemberInfo().setAddresses(null);
                 else familyMemberDto.getMemberInfo().setAddresses(addressDtos);
             }
+            if (familyMemberDto.getMemberInfo().getBurial() != null)
+                if (!checkPlace(transcriterHolder, familyMemberDto.getMemberInfo().getBurial())) familyMemberDto.getMemberInfo().setBurial(null);
+                else checkBurial(transcriterHolder,familyMemberDto.getMemberInfo().getBurial());
+            if (familyMemberDto.getMemberInfo().getBirth() != null)
+                if (!checkPlace(transcriterHolder, familyMemberDto.getMemberInfo().getBirth())) familyMemberDto.getMemberInfo().setBirth(null);
+                else checkBirth(transcriterHolder, familyMemberDto.getMemberInfo().getBirth());
         }
-        if (familyMemberDto.getBurial() != null)
-            if (!checkPlace(transcriterHolder, familyMemberDto.getBurial())) familyMemberDto.setBurial(null);
-            else checkBurial(transcriterHolder,familyMemberDto.getBurial());
-        if (familyMemberDto.getBirth() != null)
-            if (!checkPlace(transcriterHolder, familyMemberDto.getBirth())) familyMemberDto.setBirth(null);
-            else checkBirth(transcriterHolder, familyMemberDto.getBirth());
+
 
         if (familyMemberDto.getFioDtos() != null) {
             Set<FioDto> oldNames = new HashSet<>();
@@ -159,10 +160,10 @@ public class CheckFamilyMember {
                 }
 
     }
-        if (addressDto.getFlat() != null) {
-            addressDto.setFlat(commonWordChecks.checkForBlanks(addressDto.getFlat()));
-            if (addressDto.getFlat() != null) {
-                addressDto.setFlat(commonWordChecks.checkForMulti(transcriterHolder, addressDto.getFlat(),true));
+        if (addressDto.getFlatNumber() != null) {
+            addressDto.setFlatNumber(commonWordChecks.checkForBlanks(addressDto.getFlatNumber()));
+            if (addressDto.getFlatNumber() != null) {
+                addressDto.setFlatNumber(commonWordChecks.checkForMulti(transcriterHolder, addressDto.getFlatNumber(),true));
             }
 
         }

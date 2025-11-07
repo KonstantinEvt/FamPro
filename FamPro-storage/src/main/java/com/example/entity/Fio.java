@@ -19,21 +19,25 @@ import java.util.UUID;
 @AllArgsConstructor
 @SuperBuilder
 public class Fio {
-    //    @Id
-//    private Long id;
     @Column(name = "first_name", length = 20)
     private String firstName;
+
     @Column(name = "middle_name", length = 50)
     private String middleName;
+
     @Column(name = "last_name", length = 50)
     private String lastName;
+
     @Column(name = "birthday")
     private Date birthday;
+
     @Column(name = "UUID", unique = true)
     private UUID uuid;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "sex")
     private Sex sex;
+
     @Column(name = "full_name")
     private String fullName;
 

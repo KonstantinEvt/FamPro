@@ -31,22 +31,24 @@ public class FamilyMemberDto extends FioDto implements Serializable {
     private FioDto fatherFio;
     @Schema(description = "Расширенная информация")
     private FamilyMemberInfoDto memberInfo;
+
+    private boolean otherNamesExist;
     @Schema(description = "Старые имена")
     private Set<FioDto> fioDtos;
     @Schema(description = "Дата смерти")
     private Date deathday;
-    private BurialDto burial;
-    private BirthDto birth;
+
     private String creator;
     private Timestamp createTime;
+    private Timestamp lastUpdate;
 //    @Schema(description = "Выбранная локализцаия")
 //    private String localisation;
     private boolean primePhoto;
     private SecretLevel secretLevelPhoto;
     private SecretLevel secretLevelEdit;
+    private SecretLevel secretLevelMainInfo;
     private SecretLevel secretLevelRemove;
-    private SecretLevel secretLevelBirth;
-    private SecretLevel secretLevelBurial;
+
     @Schema(name = "status")
     private CheckStatus checkStatus;
 }

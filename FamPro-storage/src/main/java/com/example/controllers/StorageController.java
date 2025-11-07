@@ -19,7 +19,7 @@ import java.util.Objects;
 @RestController
 @AllArgsConstructor
 @Log4j2
-@Tag(name="Операции со всеми данными")
+@Tag(name = "Операции со всеми данными")
 @RequestMapping("/storage/")
 public class StorageController {
     private final ServiceOfStorageBD serviceOfStorageBD;
@@ -27,23 +27,26 @@ public class StorageController {
     private final TokenService tokenService;
 
     @GetMapping("/database/save{filename}")
-    @Operation(method="Сохранить все данные в файл", description = "Данные в файл", summary = "Сохранить базу в файл")
-    public ResponseEntity<String> saveDataToFile(@PathVariable String filename){
+    @Operation(method = "Сохранить все данные в файл", description = "Данные в файл", summary = "Сохранить базу в файл")
+    public ResponseEntity<String> saveDataToFile(@PathVariable String filename) {
         serviceOfStorageBD.saveDataToFile(filename);
         return ResponseEntity.status(222).body("File is saved");
     }
+
     @GetMapping("/database/recover{filename}")
-    public  ResponseEntity<String> recoverBaseFromFile(@PathVariable String filename){
+    public ResponseEntity<String> recoverBaseFromFile(@PathVariable String filename) {
         serviceOfStorageBD.recoverBaseFromFile(filename);
         return ResponseEntity.status(223).body("base is good");
     }
+
     @GetMapping("/acceptPhoto/{uuid}")
     public boolean getAccept(@PathVariable("uuid") String uuid) {
-        String user=(String)tokenService.getTokenUser().getClaims().get("sub");
-        String exist=tempPhotoAccept.get(user);
-        if (exist==null) return false;
+        String user = ((String) tokenService.getTokenUser().getClaims().get("sub")).concat(String.valueOf(uuid.charAt(0)));
+        String exist = tempPhotoAccept.get(user);
+        log.info("Check photo exist: {}", uuid);
+        if (exist == null) return false;
         tempPhotoAccept.remove(user);
-        log.info("Check photo exist{}",uuid);
+        log.info("Photo is getting. Note is clear: {}", uuid);
         return Objects.equals(exist, uuid);
     }
 }

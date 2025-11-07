@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -19,8 +20,11 @@ public class Email extends InternEntity{
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genEmailSeq")
     @SequenceGenerator(
             name = "genEmailSeq",
-            sequenceName = "EmailSeq", allocationSize = 5)
+            sequenceName = "email_seq", allocationSize = 5)
     private Long id;
+
+    @ManyToMany(mappedBy = "emailsSet")
+    private Set<FamilyMemberInfo> familyMemberInfo;
 
     @Override
     public boolean equals(Object o) {

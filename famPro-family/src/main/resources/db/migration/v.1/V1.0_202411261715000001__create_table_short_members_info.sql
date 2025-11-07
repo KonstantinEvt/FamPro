@@ -12,7 +12,8 @@ create table if not exists short_members_info
                        'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
                        'GLOBAL_TREE'::character varying,
-                       'CLOSE'::character varying
+                       'CLOSE'::character varying,
+                       'UNDEFINED'::character varying
                        ])::text[])),
     main_phone   varchar(50),
     secret_main_phone varchar(255)
@@ -25,7 +26,8 @@ create table if not exists short_members_info
                        'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
                        'GLOBAL_TREE'::character varying,
-                       'CLOSE'::character varying
+                       'CLOSE'::character varying,
+                       'UNDEFINED'::character varying
                        ])::text[])),
     main_address varchar(50),
     secret_main_address varchar(255)
@@ -38,7 +40,8 @@ create table if not exists short_members_info
                        'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
                        'GLOBAL_TREE'::character varying,
-                       'CLOSE'::character varying
+                       'CLOSE'::character varying,
+                       'UNDEFINED'::character varying
                        ])::text[])),
     secret_biometric varchar(255)
         constraint biometric_secret
@@ -50,7 +53,8 @@ create table if not exists short_members_info
                        'GENETIC_TREE'::character varying,
                        'BLOOD_TWO'::character varying,
                        'GLOBAL_TREE'::character varying,
-                       'CLOSE'::character varying
+                       'CLOSE'::character varying,
+                       'UNDEFINED'::character varying
                        ])::text[])),
     uuid         uuid
 );

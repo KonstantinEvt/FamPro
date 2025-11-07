@@ -2,6 +2,7 @@ package com.example.services;
 
 import com.example.dtos.Directive;
 import com.example.dtos.FamilyMemberDto;
+import com.example.dtos.SecurityDto;
 import com.example.enums.CheckStatus;
 import com.example.enums.Localisation;
 import com.example.feign.BaseClient;
@@ -11,6 +12,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -27,9 +29,14 @@ public class BaseService {
         return baseClient.getFamilyMemberById(id, localisation);
 
     }
-
+    public FamilyMemberDto getYourself(Localisation localisation) {
+        return baseClient.getYourself(localisation);
+    }
+    public FamilyMemberDto getExtendedInfoFamilyMember(SecurityDto securityDto, Localisation localisation){
+        return baseClient.getExtendedInfoFamilyMember(securityDto, localisation);
+    }
     public void addFamilyMember(FamilyMemberDto familyMemberDto) {
-        FamilyMemberDto dto=baseClient.addFamilyMember(familyMemberDto);
+        baseClient.addFamilyMember(familyMemberDto);
      }
 
     public void editFamilyMember(FamilyMemberDto familyMemberDto) {

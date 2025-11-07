@@ -2,12 +2,15 @@ package com.example.service;
 
 import com.example.checks.CheckFamilyMember;
 import com.example.dtos.FamilyMemberDto;
+import com.example.dtos.SecurityDto;
 import com.example.enums.Localisation;
 import com.example.feign.FamilyMemberClient;
 import com.example.transcriters.TranscriterHolder;
 import com.example.transcriters.TranscritFamilyMember;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.text.ParseException;
 
 @Service
 @AllArgsConstructor
@@ -17,7 +20,7 @@ public class FamilyMembersValidationService {
     private final TranscritFamilyMember transcritFamilyMember;
     private final TokenService tokenService;
 
-    public FamilyMemberDto getFamilyMember(FamilyMemberDto familyMemberDto) {
+    public FamilyMemberDto getFamilyMember(FamilyMemberDto familyMemberDto) throws ParseException {
         TranscriterHolder transcriterHolder=new TranscriterHolder(tokenService.getTokenUser());
         transcriterHolder.setTranscriter(familyMemberDto);
         checkFamilyMember.check(transcriterHolder, familyMemberDto);
@@ -31,8 +34,18 @@ public class FamilyMembersValidationService {
         transcritFamilyMember.toGet(transcriterHolder,dto);
         return dto;
     }
-
-    public FamilyMemberDto getFamilyMemberById(Long id, Localisation localisation) {
+public  FamilyMemberDto getExtendedInfoFamilyMember(SecurityDto securityDto, Localisation localisation) throws ParseException {
+    FamilyMemberDto dto=familyMemberClient.getExtendedInfoFamilyMember(securityDto);
+    dto.setLocalisation(localisation);
+    System.out.println(localisation);
+    TranscriterHolder transcriterHolder=new TranscriterHolder(tokenService.getTokenUser());
+    transcriterHolder.setTranscriter(dto);
+    transcritFamilyMember.toGetInfo(transcriterHolder,dto);
+    transcritFamilyMember.toGetOtherNames(transcriterHolder,dto);
+    System.out.println(dto);
+    return dto;
+}
+    public FamilyMemberDto getFamilyMemberById(Long id, Localisation localisation) throws ParseException {
         FamilyMemberDto dto=familyMemberClient.getFamilyMemberById(id);
         dto.setLocalisation(localisation);
         TranscriterHolder transcriterHolder=new TranscriterHolder(tokenService.getTokenUser());
@@ -43,7 +56,17 @@ public class FamilyMembersValidationService {
         return dto;
 
     }
+    public FamilyMemberDto getYourself(Localisation localisation) throws ParseException {
+        FamilyMemberDto dto=familyMemberClient.getYourself();
+        dto.setLocalisation(localisation);
+        TranscriterHolder transcriterHolder=new TranscriterHolder(tokenService.getTokenUser());
+        transcriterHolder.setTranscriter(dto);
+        transcritFamilyMember.to(transcriterHolder,dto);
+        transcritFamilyMember.toGet(transcriterHolder,dto);
+        System.out.println(dto);
+        return dto;
 
+    }
     public FamilyMemberDto addFamilyMember(FamilyMemberDto familyMemberDto) {
         System.out.println("к нам пришел:" + familyMemberDto);
         TranscriterHolder transcriterHolder=new TranscriterHolder(tokenService.getTokenUser());

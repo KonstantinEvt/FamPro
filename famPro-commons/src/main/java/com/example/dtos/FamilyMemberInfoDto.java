@@ -33,4 +33,17 @@ public class FamilyMemberInfoDto {
 
     private BiometricDto biometric;
     private SecretLevel secretLevelBiometric;
+
+    private BurialDto burial;
+    private SecretLevel secretLevelBurial;
+
+    private BirthDto birth;
+    private SecretLevel secretLevelBirth;
+
+    private DescriptionDto description;
+    private SecretLevel secretLevelDescription;
+
+    private boolean photoBirthExist;
+
+    private boolean photoBurialExist;
 }

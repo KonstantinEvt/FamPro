@@ -1,6 +1,7 @@
 package com.example.feign;
 
 import com.example.dtos.FamilyMemberDto;
+import com.example.dtos.SecurityDto;
 import com.example.enums.Localisation;
 import lombok.extern.slf4j.Slf4j;
 import com.example.config.FeignRequestIntercepter;
@@ -9,11 +10,17 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @FeignClient(name = "FAMPRO-VALIDATION", configuration = FeignRequestIntercepter.class, fallbackFactory = BaseClient.FamilyMemberFallbackFactory.class)
 public interface BaseClient {
 
     @GetMapping("/validation/family_member/{id}/{localisation}")
     FamilyMemberDto getFamilyMemberById(@PathVariable("id") Long id, @PathVariable("localisation") Localisation localisation);
+    @GetMapping("/validation/family_member/i/{localisation}")
+    FamilyMemberDto getYourself(@PathVariable("localisation") Localisation localisation);
+    @PostMapping("/validation/family_member/get/extended/{localisation}")
+    FamilyMemberDto getExtendedInfoFamilyMember(@RequestBody SecurityDto securityDto, @PathVariable("localisation") Localisation localisation);
     @GetMapping("/family_members/database/link/{id}")
     FamilyMemberDto linkFamilyMember(@PathVariable("id") Long id);
 
@@ -41,6 +48,16 @@ public interface BaseClient {
 
         @Override
         public FamilyMemberDto getFamilyMemberById(Long id,Localisation localisation) {
+            throw new RuntimeException(reason);
+        }
+
+        @Override
+        public FamilyMemberDto getYourself(Localisation localisation) {
+            throw new RuntimeException(reason);
+        }
+
+        @Override
+        public FamilyMemberDto getExtendedInfoFamilyMember(SecurityDto securityDto, Localisation localisation) {
             throw new RuntimeException(reason);
         }
 

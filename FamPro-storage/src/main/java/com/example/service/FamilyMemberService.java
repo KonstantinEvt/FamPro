@@ -2,20 +2,18 @@ package com.example.service;
 
 
 import com.example.dtos.*;
-import com.example.entity.FamilyMember;
-import com.example.entity.OldFio;
+import com.example.entity.*;
 import com.example.enums.*;
 import com.example.exceptions.*;
 import com.example.feign.FamilyConnectionClient;
-import com.example.mappers.FamilyMemberMapper;
-import com.example.mappers.FioMapper;
+import com.example.mappers.*;
 import com.example.repository.FamilyMemberRepo;
+import com.example.repository.MainOtherFioRepository;
 import com.example.repository.MainStorageRepository;
 import com.example.utils.FamilyMemberUtils;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +37,13 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     private final LinkedList<Directive> directivePhotos;
     private final Map<String, String> tempPhotoAccept;
     private final MainStorageRepository mainStorageRepository;
+    private final MainOtherFioRepository mainOtherFioRepository;
+    private final OldNamesMapper oldNamesMapper;
+    private final Map<String, FamilyMemberDto> tempGuardStatus;
+
+    private final Map<String, FamilyMemberDto> tempExtendedDto;
+    private final Map<Long, Timestamp> lastUpdateMap;
+    private final Map<String, MainContact> tempMainContact;
 
     public FamilyMemberService(FioMapper fioMapper,
                                FamilyMemberMapper familyMemberMapper,
@@ -49,7 +54,14 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                                TokenService tokenService,
                                LinkedList<FamilyDirective> directives,
                                FamilyConnectionClient familyConnectionClient,
-                               LinkedList<DirectiveGuards> directiveGuardsList, LinkedList<Directive> directivePhotos, Map<String, String> tempPhotoAccept, MainStorageRepository mainStorageRepository) {
+                               LinkedList<DirectiveGuards> directiveGuardsList,
+                               LinkedList<Directive> directivePhotos,
+                               Map<String, String> tempPhotoAccept,
+                               MainStorageRepository mainStorageRepository,
+                               MainOtherFioRepository mainOtherFioRepository,
+                               OldNamesMapper oldNamesMapper,
+                               Map<String, FamilyMemberDto> tempGuardStatus,
+                               Map<String, FamilyMemberDto> tempExtendedDto, Map<Long, Timestamp> lastUpdateMap, Map<String, MainContact> tempMainContact) {
         super(fioMapper);
         this.familyMemberMapper = familyMemberMapper;
         this.familyMemberInfoService = familyMemberInfoService;
@@ -63,6 +75,12 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         this.directivePhotos = directivePhotos;
         this.tempPhotoAccept = tempPhotoAccept;
         this.mainStorageRepository = mainStorageRepository;
+        this.mainOtherFioRepository = mainOtherFioRepository;
+        this.oldNamesMapper = oldNamesMapper;
+        this.tempGuardStatus = tempGuardStatus;
+        this.tempExtendedDto = tempExtendedDto;
+        this.lastUpdateMap = lastUpdateMap;
+        this.tempMainContact = tempMainContact;
     }
 
     @Transactional(readOnly = true)
@@ -70,13 +88,42 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         FamilyMember familyMember = mainStorageRepository.findMemberWithInfoById(id)
                 .orElseThrow(() -> new FamilyMemberNotFound(StringUtils.join("person with id:", id, "not found", ' ')));
         FamilyMemberDto familyMemberDto = familyMemberMapper.entityToDto(familyMember);
+
+        lastUpdateMap.put(familyMember.getId(), familyMember.getLastUpdate());
+        log.info("put last update {}", lastUpdateMap.get(familyMember.getId()));
         if (familyMember.getFamilyMemberInfo() != null) {
-            familyMemberDto.setMemberInfo(familyMemberInfoService.getShortMemberInfo(familyMember));
+            familyMemberDto.setMemberInfo(familyMemberInfoService.getSimpleInfoDto(familyMember.getFamilyMemberInfo().get(0)));
         }
-        if (familyMemberDto.getCheckStatus() != CheckStatus.UNCHECKED) changeMemberDtoByGuardStatus(familyMemberDto);
-        else if (familyMemberDto.isPrimePhoto())
-            tempPhotoAccept.put((String) tokenService.getTokenUser().getClaims().get("sub"), familyMemberDto.getUuid().toString());
+        getAndSetTempStatus(familyMemberDto);
         return familyMemberDto;
+    }
+
+    private void getAndSetTempStatus(FamilyMemberDto familyMemberDto) {
+        String token = (String) tokenService.getTokenUser().getClaims().get("sub");
+        if (familyMemberDto.getCheckStatus() != CheckStatus.UNCHECKED && !Objects.equals(familyMemberDto.getCreator(), token) && token != null)
+            changeMemberDtoByGuardStatus(familyMemberDto);
+        else {
+            if (!Objects.equals(familyMemberDto.getCreator(), token) && token != null) {
+                familyMemberDto.setSecretLevelRemove(SecretLevel.CLOSE);
+                familyMemberDto.setSecretLevelMainInfo(SecretLevel.CLOSE);
+            }
+            if (familyMemberDto.isPrimePhoto())
+                tempPhotoAccept.put(token.concat(String.valueOf(SwitchPosition.PRIME.ordinal())), String.valueOf(SwitchPosition.PRIME.ordinal()).concat(familyMemberDto.getUuid().toString()));
+            if (familyMemberDto.getMemberInfo() != null && familyMemberDto.getMemberInfo().isPhotoBirthExist())
+                tempPhotoAccept.put(token.concat(String.valueOf(SwitchPosition.BIRTH.ordinal())), String.valueOf(SwitchPosition.BIRTH.ordinal()).concat(familyMemberDto.getUuid().toString()));
+            if (familyMemberDto.getMemberInfo() != null && familyMemberDto.getMemberInfo().isPhotoBurialExist())
+                tempPhotoAccept.put(token.concat(String.valueOf(SwitchPosition.BURIAL.ordinal())), String.valueOf(SwitchPosition.BURIAL.ordinal()).concat(familyMemberDto.getUuid().toString()));
+
+        }
+        if (familyMemberDto.getCheckStatus() == CheckStatus.MODERATE) {
+            familyMemberDto.setSecretLevelRemove(SecretLevel.CLOSE);
+            familyMemberDto.setSecretLevelEdit(SecretLevel.CLOSE);
+            familyMemberDto.setSecretLevelMainInfo(SecretLevel.CLOSE);
+        }
+        tempGuardStatus.put(token, familyMemberDto);
+        tempMainContact.put(token, new MainContact(familyMemberDto.getMemberInfo().getMainPhone(),
+                familyMemberDto.getMemberInfo().getMainEmail(),
+                familyMemberDto.getMemberInfo().getMainAddress()));
     }
 
     private void changeMemberDtoByGuardStatus(FamilyMemberDto familyMemberDto) {
@@ -87,47 +134,89 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         else if (roles.contains(UserRoles.LINKED_USER.getNameSSO()))
             guardStatus = familyConnectionClient.getGuardStatus(familyMemberDto.getUuid());
         else guardStatus = SecretLevel.OPEN;
+
         log.info(StringUtils.join("status user: ", guardStatus.name(), " photo status person: ", familyMemberDto.getSecretLevelPhoto().name(), ' '));
         if (familyMemberDto.isPrimePhoto() && guardStatus.ordinal() < familyMemberDto.getSecretLevelPhoto().ordinal())
             familyMemberDto.setSecretLevelPhoto(SecretLevel.CLOSE);
         else {
             if (familyMemberDto.isPrimePhoto())
-                tempPhotoAccept.put((String) tokenService.getTokenUser().getClaims().get("sub"), familyMemberDto.getUuid().toString());
+                tempPhotoAccept.put(((String) tokenService.getTokenUser().getClaims().get("sub")).concat(String.valueOf(SwitchPosition.PRIME.ordinal())), String.valueOf(SwitchPosition.PRIME.ordinal()).concat(familyMemberDto.getUuid().toString()));
         }
         if (guardStatus.ordinal() < familyMemberDto.getSecretLevelEdit().ordinal())
             familyMemberDto.setSecretLevelEdit(SecretLevel.CLOSE);
+        if (guardStatus.ordinal() < familyMemberDto.getSecretLevelRemove().ordinal())
+            familyMemberDto.setSecretLevelRemove(SecretLevel.CLOSE);
+
+
         if (familyMemberDto.getMemberInfo() != null) {
+            if (familyMemberDto.getMemberInfo().isPhotoBirthExist() && guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelBirth().ordinal()) {
+                familyMemberDto.getMemberInfo().setSecretLevelBirth(SecretLevel.CLOSE);
+            } else {
+                if (familyMemberDto.getMemberInfo().isPhotoBirthExist())
+                    tempPhotoAccept.put(((String) tokenService.getTokenUser().getClaims().get("sub")).concat(String.valueOf(SwitchPosition.BIRTH.ordinal())), String.valueOf(SwitchPosition.BIRTH.ordinal()).concat(familyMemberDto.getUuid().toString()));
+            }
+            if (familyMemberDto.getMemberInfo().isPhotoBurialExist() && guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelBurial().ordinal()) {
+                familyMemberDto.getMemberInfo().setSecretLevelBurial(SecretLevel.CLOSE);
+            } else {
+                if (familyMemberDto.getMemberInfo().isPhotoBurialExist())
+                    tempPhotoAccept.put(((String) tokenService.getTokenUser().getClaims().get("sub")).concat(String.valueOf(SwitchPosition.BURIAL.ordinal())), String.valueOf(SwitchPosition.BURIAL.ordinal()).concat(familyMemberDto.getUuid().toString()));
+            }
             if (familyMemberDto.getMemberInfo().getMainEmail() != null
                     && guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelEmail().ordinal()) {
                 familyMemberDto.getMemberInfo().setSecretLevelEmail(SecretLevel.CLOSE);
-                familyMemberDto.getMemberInfo().setEmails(null);
+//                familyMemberDto.getMemberInfo().setEmails(null);
                 familyMemberDto.getMemberInfo().setMainEmail(null);
             }
             if (familyMemberDto.getMemberInfo().getMainPhone() != null
                     && guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelPhone().ordinal()) {
                 familyMemberDto.getMemberInfo().setSecretLevelPhone(SecretLevel.CLOSE);
-                familyMemberDto.getMemberInfo().setPhones(null);
+//                familyMemberDto.getMemberInfo().setPhones(null);
                 familyMemberDto.getMemberInfo().setMainPhone(null);
             }
             if (familyMemberDto.getMemberInfo().getMainAddress() != null
                     && guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelAddress().ordinal()) {
                 familyMemberDto.getMemberInfo().setSecretLevelAddress(SecretLevel.CLOSE);
-                familyMemberDto.getMemberInfo().setAddresses(null);
+//                familyMemberDto.getMemberInfo().setAddresses(null);
                 familyMemberDto.getMemberInfo().setMainAddress(null);
+            }
+            if (guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelBiometric().ordinal()) {
+                familyMemberDto.getMemberInfo().setSecretLevelBiometric(SecretLevel.CLOSE);
+//                familyMemberDto.getMemberInfo().setBiometric(null);
+            }
+            if (guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelDescription().ordinal()) {
+                familyMemberDto.getMemberInfo().setSecretLevelDescription(SecretLevel.CLOSE);
+//                familyMemberDto.getMemberInfo().setDescription(null);
             }
         }
     }
 
     @Transactional(readOnly = true)
-    public FamilyMemberDto getFullFamilyMember(SecurityDto securityDto) {
-        if (!securityDto.getOwner().equals (tokenService.getTokenUser().getClaims().get("sub"))) {
+    public FamilyMemberDto getExtendedInfoFamilyMember(SecurityDto securityDto) {
+        if (!securityDto.getOwner().equals(tokenService.getTokenUser().getClaims().get("sub"))) {
             log.warn("попытка взлома");
             throw new RuntimeException("В доступе отказано. Не хорошо так делать. Мы же к Вам со свей душой, а Вы... ");
         }
-        FamilyMember familyMember = mainStorageRepository.getFullFamilyMember(securityDto);
-        FamilyMemberDto dto = familyMemberMapper.entityToDto(familyMember);
-        if (securityDto.isInfoExist()) dto.setMemberInfo(familyMemberInfoService.getShortMemberInfo(familyMember));
-        return dto;
+//        check for change
+        if (!Objects.equals(securityDto.getLastUpdate(), lastUpdateMap.get(securityDto.getPersonId()))) {
+            throw new RuntimeException("Между обычным и расширенным запросом запись изменилась. Найдите персону заново");
+        }
+        String token = (String) tokenService.getTokenUser().getClaims().get("sub");
+        FamilyMemberDto tempGuard = tempGuardStatus.get(token);
+        FamilyMemberInfoDto infoDto = familyMemberInfoService.covertSecurityDtoToInfo(securityDto);
+        if (!familyMemberInfoService.equalsSecurity(infoDto, tempGuard.getMemberInfo())) {
+            throw new RuntimeException("Secret status is forged");
+        }
+        FamilyMemberDto familyMemberDto = new FamilyMemberDto();
+        if (securityDto.isOtherNamesExist()) {
+            familyMemberDto.setFioDtos(oldNamesMapper.oldFiosSetToFioDtoSet(oldFioService.getOtherNamesByInfoId(securityDto.getPersonId())));
+            tempGuard.setFioDtos(familyMemberDto.getFioDtos());
+        }
+        if (securityDto.isInfoExist()) {
+            familyMemberDto.setMemberInfo(familyMemberInfoService.getInfoDto(familyMemberInfoService.getSimpleInfo(infoDto)));
+            tempGuard.setMemberInfo(familyMemberDto.getMemberInfo());
+        }
+        tempExtendedDto.put(token, tempGuard);
+        return familyMemberDto;
     }
 
     @Transactional(readOnly = true)
@@ -137,18 +226,37 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 (familyMemberDto.getLastName() != null) &&
                 familyMemberDto.getBirthday() != null) {
             UUID uuid = generateUUIDFromFio(familyMemberMapper.dtoToEntity(familyMemberDto));
-            FamilyMember familyMember = mainStorageRepository.findMemberWithInfoByUUID(uuid)
-                    .orElse(mainStorageRepository.findMemberWithInfoByOldNameUUID(uuid)
-                            .orElseThrow(() -> new FamilyMemberNotFound("Такой человек не найден")));
+            Optional<FamilyMember> fm = mainStorageRepository.findMemberWithInfoByUUID(uuid);
+            if (fm.isEmpty()) fm = mainStorageRepository.findMemberWithInfoByOldNameUUID(uuid);
+            FamilyMember familyMember = fm.orElseThrow(() -> new FamilyMemberNotFound("Такой человек не найден"));
             FamilyMemberDto dto = familyMemberMapper.entityToDto(familyMember);
+            lastUpdateMap.put(familyMember.getId(), familyMember.getLastUpdate());
             if (familyMember.getFamilyMemberInfo() != null) {
-                dto.setMemberInfo(familyMemberInfoService.getShortMemberInfo(familyMember));
+                dto.setMemberInfo(familyMemberInfoService.getSimpleInfoDto(familyMember.getFamilyMemberInfo().get(0)));
             }
-            if (familyMemberDto.getCheckStatus() != CheckStatus.UNCHECKED) changeMemberDtoByGuardStatus(dto);
-            else if (familyMemberDto.isPrimePhoto())
-                tempPhotoAccept.put((String) tokenService.getTokenUser().getClaims().get("sub"), familyMemberDto.getUuid().toString());
+            getAndSetTempStatus(dto);
             return dto;
         } else throw new RuntimeException("Info not fully");
+    }
+
+    @Transactional(readOnly = true)
+    public FamilyMemberDto getYourself() {
+        UUID uuid = UUID.fromString(familyConnectionClient.getGuardByLink());
+        FamilyMember familyMember = mainStorageRepository.findMemberWithInfoByUUID(uuid)
+                .orElseThrow(() -> new FamilyMemberNotFound("Странно... линк есть в фэмили, а человека в базе нет"));
+        FamilyMemberDto dto = familyMemberMapper.entityToDto(familyMember);
+        if (familyMember.isPrimePhoto())
+            tempPhotoAccept.put(((String) tokenService.getTokenUser().getClaims().get("sub")).concat(String.valueOf(SwitchPosition.PRIME.ordinal())), String.valueOf(SwitchPosition.PRIME.ordinal()).concat(uuid.toString()));
+        if (familyMember.isOtherNamesExist())
+            dto.setFioDtos(oldNamesMapper.oldFiosSetToFioDtoSet(oldFioService.getOtherNamesByInfoId(familyMember.getId())));
+        if (familyMember.getFamilyMemberInfo() != null && !familyMember.getFamilyMemberInfo().isEmpty()) {
+            dto.setMemberInfo(familyMemberInfoService.getInfoDto(familyMember.getFamilyMemberInfo().get(0)));
+            if (dto.getMemberInfo().isPhotoBurialExist())
+                tempPhotoAccept.put(((String) tokenService.getTokenUser().getClaims().get("sub")).concat(String.valueOf(SwitchPosition.BURIAL.ordinal())), String.valueOf(SwitchPosition.PRIME.ordinal()).concat(uuid.toString()));
+            if (dto.getMemberInfo().isPhotoBirthExist())
+                tempPhotoAccept.put(((String) tokenService.getTokenUser().getClaims().get("sub")).concat(String.valueOf(SwitchPosition.BIRTH.ordinal())), String.valueOf(SwitchPosition.PRIME.ordinal()).concat(uuid.toString()));
+        }
+        return dto;
     }
 
     @Transactional
@@ -171,34 +279,49 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             if (existOldFio.isPresent())
                 throw new Dublicate("Такой человек уже есть в базе. Это его альтернативное имя. ID человека " + (existOldFio.get().getMember()).getId());
         }
-        familyMember.setCreator((String) tokenService.getTokenUser().getClaims().get("sub"));
+        String token = (String) tokenService.getTokenUser().getClaims().get("sub");
+        familyMember.setCreator(token);
         familyMember.setCreateTime(new Timestamp(System.currentTimeMillis()));
-        FamilyMemberUtils.selectCheckStatus(familyMember, tokenService.getTokenUser().getRoles());
-        if (familyMemberDto.getBurial() != null) familyMember.getBurial().setUuid(familyMemberDto.getUuid());
-        if (familyMemberDto.getBirth() != null) familyMember.getBirth().setUuid(familyMemberDto.getUuid());
+        familyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+//        FamilyMemberUtils.selectCheckStatus(familyMember, tokenService.getTokenUser().getRoles());
+        familyMember.setCheckStatus(CheckStatus.MODERATE);
+        if (familyMemberDto.getFioDtos() == null) familyMember.setOtherNamesExist(false);
+        familyMember.setFullName(generateFioStringInfo(familyMember));
         log.info("Первичная информация установлена");
-        familyMemberRepo.save(familyMember);
+        Changing changing = new Changing();
+        changing.setChangingMain(true);
+        setUpParents(familyMemberDto, familyMember, "add", changing);
 
-        extractExtensionOfFamilyMember(familyMemberDto, familyMember);
+        FamilyMemberInfo familyMemberInfo = new FamilyMemberInfo();
+        familyMember.setFamilyMemberInfo(List.of(familyMemberInfo));
+        familyMemberInfoService.secretMerge(familyMemberDto.getMemberInfo(), familyMemberInfo);
 
-        familyMemberRepo.save(familyMember);
-        addChangingToBase(familyMemberDto, familyMember);
+        familyMemberInfoService.merge(familyMemberDto, familyMemberInfo, "add", true);
+        log.info("Forming result and save familyMember.");
+
+        mainStorageRepository.persistMember(familyMember);
+
+        addChangingToBase(familyMemberDto, familyMember, changing, "add");
         if (familyMember.getChilds() != null)
             addChangesInParensInfo(familyMember.getChilds(), familyMember, familyMember.getUuid());
 
-        FamilyMemberDto result = familyMemberMapper.entityToDto(familyMemberRepo.save(familyMember));
-        result.setMemberInfo(familyMemberInfoService.getMemberInfo(familyMember));
-        // Если нужны старые имена и прозвища в модуле family
-//        result.setFioDtos(oldFioService.getOldNamesMapper().oldFiosSetToFioDtoSet(familyMember.getOtherNames()));
+        FamilyMemberDto result = familyMemberMapper.entityToDto(familyMember);
+        result.setMemberInfo(familyMemberInfoService.getInfoDto(familyMemberInfo));
+//        добавить условие - другие имена
+        mainStorageRepository.flushMember();
+
         directives.add(FamilyDirective.builder()
                 .familyMemberDto(result)
-                .tokenUser(familyMember.getCreator())
+                .tokenUser(token)
                 .person(result.getUuid().toString())
                 .switchPosition(SwitchPosition.MAIN)
                 .operation(KafkaOperation.ADD).build());
         if (familyMember.isPrimePhoto())
-            directivePhotos.add(new Directive(familyMember.getCreator(), familyMember.getUuid().toString(), SwitchPosition.PRIME_PHOTO, KafkaOperation.ADD));
-
+            directivePhotos.add(new Directive(token, familyMember.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.ADD));
+        if (familyMember.getFamilyMemberInfo().get(0).getBirthPlace() != null && familyMember.getFamilyMemberInfo().get(0).isPhotoBirthExist())
+            directivePhotos.add(new Directive(token, familyMember.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.ADD));
+        if (familyMember.getFamilyMemberInfo().get(0).getBurialPlace() != null && familyMember.getFamilyMemberInfo().get(0).isPhotoBurialExist())
+            directivePhotos.add(new Directive(token, familyMember.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.ADD));
         return result;
     }
 
@@ -215,94 +338,145 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     }
 
     @Transactional
-    public FamilyMemberDto linkFamilyMember(Long id) {
-        FamilyMember fm = familyMemberRepo.findById(id).orElseThrow(() -> new FamilyMemberNotFound("Что-то пошло не так. Запись исчезла во время распределенной транзакции"));
-        fm.setCheckStatus(CheckStatus.LINKED);
-        fm.setCreator((String) tokenService.getTokenUser().getClaims().get("sub"));
-        familyMemberRepo.save(fm);
-        return familyMemberMapper.entityToDto(fm);
-    }
-
-    @Transactional
     public FamilyMemberDto updateFamilyMember(FamilyMemberDto familyMemberDto) {
         log.info("--------ИЗМЕНЯЕМ ЧЕЛОВЕКА-------");
         Long dtoId = familyMemberDto.getId();
-        FamilyMember fm;
-        if (dtoId != null) {
-            fm = familyMemberRepo.findById(dtoId).orElseThrow(() ->
-                    new FamilyMemberNotFound("Попытка изменить человека по Id, которого нет в базе"));
-        } else if (familyMemberDto.getUuid() != null) {
-            fm = familyMemberRepo.findFioByUuid(familyMemberDto.getUuid()).orElseThrow(() ->
-                    new FamilyMemberNotFound("Попытка изменить человека по UUID, которого нет в базе"));
-        } else throw new ProblemWithId("Ни Id, ни UUID не указан для поиска/изменения человека");
-
-        if (!FamilyMemberUtils.checkRightsToEdit(fm, tokenService.getTokenUser())) {
+        String token = (String) tokenService.getTokenUser().getClaims().get("sub");
+        FamilyMemberDto fromTemp = tempGuardStatus.get(token);
+        if (fromTemp.getSecretLevelEdit() != familyMemberDto.getSecretLevelEdit())
+            throw new RuntimeException("подделка прав");
+        if (fromTemp.getSecretLevelEdit() == SecretLevel.CLOSE) {
             directiveGuardsList.add(DirectiveGuards.builder()
                     .created(new Timestamp(System.currentTimeMillis()))
-                    .tokenUser((String) tokenService.getTokenUser().getClaims().get("sub"))
+                    .tokenUser(token)
                     .switchPosition(SwitchPosition.MAIN)
                     .info1("You are havent rights to change this person")
-                    .info2(fm.getFullName())
+                    .info2(fromTemp.getFullName())
                     .build());
             throw new RightsIsAbsent("У Вас нет прав для изменения");
         }
-        if (fm.getCheckStatus() == CheckStatus.CHECKED
-                && !tokenService.getTokenUser().getRoles().contains(UserRoles.MANAGER.getNameSSO())
-                && !tokenService.getTokenUser().getRoles().contains(UserRoles.ADMIN.getNameSSO())
-                && !familyConnectionClient.checkRights(fm.getUuid())) {
-            throw new RightsIsAbsent("У Вас нет прав для изменения");
-        }
+        FamilyMember fm;
+        Changing changing = new Changing();
+        if (dtoId != null) {
+            fm = mainStorageRepository.findFullFamilyMemberById(dtoId).orElseThrow(() ->
+                    new FamilyMemberNotFound("Попытка изменить человека по Id, которого нет в базе"));
+        } else if (familyMemberDto.getUuid() != null) {
+            fm = mainStorageRepository.findMemberWithInfoByUUID(familyMemberDto.getUuid()).orElseThrow(() ->
+                    new FamilyMemberNotFound("Попытка изменить человека по UUID, которого нет в базе"));
+        } else throw new ProblemWithId("Ни Id, ни UUID не указан для поиска/изменения человека");
+
+
         if (fm.getCheckStatus() == CheckStatus.MODERATE
                 && !FamilyMemberUtils.checkRightsToModerate(tokenService.getTokenUser())) {
             directiveGuardsList.add(DirectiveGuards.builder()
                     .created(new Timestamp(System.currentTimeMillis()))
-                    .tokenUser((String) tokenService.getTokenUser().getClaims().get("sub"))
+                    .tokenUser(token)
                     .switchPosition(SwitchPosition.MAIN)
                     .info1("trying changing person under voting or moderating")
                     .info2(fm.getFullName())
                     .build());
             throw new ModeratingContent("Находится на модерцаии");
         }
-        Set<FamilyMember> currentChildrenOfFamilyMember = fm.getChilds();
-        if (familyMemberDto.getFirstName() != null) fm.setFirstName(familyMemberDto.getFirstName());
-        if (familyMemberDto.getBirthday() != null && (currentChildrenOfFamilyMember == null || currentChildrenOfFamilyMember.isEmpty())) {
-            fm.setBirthday(familyMemberDto.getBirthday());
-            if (fm.getOtherNames() != null && !fm.getOtherNames().isEmpty())
-                oldFioService.changeOldFiosBirthday(fm);
-        } else if (familyMemberDto.getBirthday() != null && familyMemberDto.getBirthday().toLocalDate() != fm.getBirthday().toLocalDate()) {
-            throw new UncorrectedInformation("Изменять день рождения человека, у которого в базе имеются подтвержденные дети, невозможно");
+        if (!Objects.equals(fm.getLastUpdate(), lastUpdateMap.get(fm.getId()))) {
+            directiveGuardsList.add(DirectiveGuards.builder()
+                    .created(new Timestamp(System.currentTimeMillis()))
+                    .tokenUser(token)
+                    .switchPosition(SwitchPosition.MAIN)
+                    .info1("version of person is change between get and edit")
+                    .info2(fm.getFullName())
+                    .build());
+            throw new ModeratingContent("Version change");
         }
-        if (familyMemberDto.getLastName() != null) fm.setLastName(familyMemberDto.getLastName());
-        if (familyMemberDto.getMiddleName() != null) fm.setMiddleName(familyMemberDto.getMiddleName());
-        if (familyMemberDto.getSex() != null && (currentChildrenOfFamilyMember == null || currentChildrenOfFamilyMember.isEmpty()))
-            fm.setSex(familyMemberDto.getSex());
-        else if (familyMemberDto.getSex() != null && familyMemberDto.getSex() != fm.getSex()) {
-            throw new UncorrectedInformation("Изменять пол человека, у которого в базе имеются подтвержденные дети, невозможно");
+//        System.out.println(!Objects.equals(fm.getFirstName(), familyMemberDto.getFirstName()));
+//        System.out.println(!Objects.equals(fm.getMiddleName(), familyMemberDto.getMiddleName()));
+//        System.out.println(!Objects.equals(fm.getLastName(), familyMemberDto.getLastName()));
+//        System.out.println(fm.getSex() != familyMemberDto.getSex() );
+//        System.out.println(!Objects.equals(fm.getBirthday(), familyMemberDto.getBirthday().toLocalDate()));
+        fm.setCheckStatus(CheckStatus.MODERATE);
+        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE &&
+                (!Objects.equals(fm.getFirstName(), familyMemberDto.getFirstName()) ||
+                        !Objects.equals(fm.getMiddleName(), familyMemberDto.getMiddleName()) ||
+                        !Objects.equals(fm.getLastName(), familyMemberDto.getLastName()) ||
+                        fm.getSex() != familyMemberDto.getSex() ||
+                        !Objects.equals(fm.getBirthday().toLocalDate(), familyMemberDto.getBirthday().toLocalDate())
+                )) {
+            changing.setChangingMain(true);
+            Set<FamilyMember> currentChildrenOfFamilyMember = fm.getChilds();
+            if (familyMemberDto.getFirstName() != null) fm.setFirstName(familyMemberDto.getFirstName());
+            if (familyMemberDto.getBirthday() != null && (currentChildrenOfFamilyMember == null || currentChildrenOfFamilyMember.isEmpty())) {
+                fm.setBirthday(familyMemberDto.getBirthday());
+                if (fm.getOtherNames() != null && !fm.getOtherNames().isEmpty())
+                    oldFioService.changeOldFiosBirthday(fm);
+            } else if (familyMemberDto.getBirthday() != null && familyMemberDto.getBirthday().toLocalDate() != fm.getBirthday().toLocalDate()) {
+                throw new UncorrectedInformation("Изменять день рождения человека, у которого в базе имеются подтвержденные дети, невозможно");
+            }
+            if (familyMemberDto.getLastName() != null) fm.setLastName(familyMemberDto.getLastName());
+            if (familyMemberDto.getMiddleName() != null) fm.setMiddleName(familyMemberDto.getMiddleName());
+            if (familyMemberDto.getSex() != null && (currentChildrenOfFamilyMember == null || currentChildrenOfFamilyMember.isEmpty()))
+                fm.setSex(familyMemberDto.getSex());
+            else if (familyMemberDto.getSex() != null && familyMemberDto.getSex() != fm.getSex()) {
+                throw new UncorrectedInformation("Изменять пол человека, у которого в базе имеются подтвержденные дети, невозможно");
+            }
+
+            UUID freshUuid = generateUUIDFromFio(fm);
+            Optional<FamilyMember> existFM = familyMemberRepo.findFioByUuid(freshUuid);
+            if (existFM.isPresent() && !existFM.get().getId().equals(fm.getId()))
+                throw new Dublicate("Информация в результате изменения совпадает с существующим человеком в базе. Его ID " + existFM.get().getId());
+            else {
+                Optional<OldFio> existOldName = oldFioService.getFioRepo().findFioByUuid(freshUuid);
+                if (existOldName.isPresent() && !existOldName.get().getId().equals(fm.getId()))
+                    throw new Dublicate("Информация в результате изменения совпадает с альтернативным именем человека в базе. Его ID " + existOldName.get().getMember().getId());
+            }
+//            familyMemberDto.setUuid(freshUuid);
+            fm.setUuid(freshUuid);
+            fm.setFullName(generateFioStringInfo(fm));
         }
-
-        UUID freshUuid = generateUUIDFromFio(fm);
-        Optional<FamilyMember> existFM = familyMemberRepo.findFioByUuid(freshUuid);
-        if (existFM.isPresent() && !existFM.get().getId().equals(fm.getId()))
-            throw new Dublicate("Информация в результате изменения совпадает с существующим человеком в базе. Его ID " + existFM.get().getId());
-        else {
-            Optional<OldFio> existOldName = oldFioService.getFioRepo().findFioByUuid(freshUuid);
-            if (existOldName.isPresent() && !existOldName.get().getId().equals(fm.getId()))
-                throw new Dublicate("Информация в результате изменения совпадает с альтернативным именем человека в базе. Его ID " + existOldName.get().getMember().getId());
-        }
-        familyMemberDto.setUuid(freshUuid);
-        log.info("Первичная информация установлена");
-
-        extractExtensionOfFamilyMember(familyMemberDto, fm);
-
         familyMemberDto.setUuid(fm.getUuid());
-        fm.setUuid(freshUuid);
-        familyMemberRepo.save(fm);
-        addChangingToBase(familyMemberDto, fm);
-        if (fm.getChilds() != null) addChangesInParensInfo(fm.getChilds(), fm, familyMemberDto.getUuid());
-        familyMemberRepo.save(fm);
+        if (familyMemberDto.isPrimePhoto()) {
+            directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.ADD));
+            fm.setPrimePhoto(true);
+        }
+
+
+        if (fm.getFamilyMemberInfo() != null && !fm.getFamilyMemberInfo().isEmpty())
+            familyMemberInfoService.merge(familyMemberDto, fm.getFamilyMemberInfo().get(0), token, changing.isChangingMain());
+        else {
+            FamilyMemberInfo familyMemberInfo = new FamilyMemberInfo();
+            fm.setFamilyMemberInfo(List.of(familyMemberInfoService.merge(familyMemberDto, familyMemberInfo, token, changing.isChangingMain())));
+        }
+        log.info("Первичная информация установлена");
+        familyMemberDto.getMemberInfo().setId(fm.getId());
+
+        if (familyMemberDto.getSecretLevelMainInfo() != SecretLevel.CLOSE) {
+            familyMemberInfoService.secretMerge(familyMemberDto.getMemberInfo(), fm.getFamilyMemberInfo().get(0));
+            setUpParents(familyMemberDto, fm, token, changing);
+            addChangingToBase(familyMemberDto, fm, changing, token);
+            if (changing.isChangingMain() && fm.getChilds() != null)
+                addChangesInParensInfo(fm.getChilds(), fm, familyMemberDto.getUuid());
+        }
+        fm.setLastUpdate(new Timestamp(System.currentTimeMillis()));
 
         FamilyMemberDto result = familyMemberMapper.entityToDto(fm);
-        result.setMemberInfo(familyMemberInfoService.getMemberInfo(fm));
+        result.setMemberInfo(familyMemberInfoService.getSimpleInfoDto(fm.getFamilyMemberInfo().get(0)));
+        if (familyMemberDto.getMemberInfo().isPhotoBirthExist())
+            directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.ADD));
+        if (familyMemberDto.getMemberInfo().isPhotoBurialExist())
+            directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.ADD));
+        if (changing.isChangingMain()) {
+            if (familyMemberDto.isPrimePhoto())
+                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.REMOVE));
+            else if (fm.isPrimePhoto())
+                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.RENAME));
+            if (familyMemberDto.getMemberInfo().isPhotoBirthExist())
+                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.REMOVE));
+            else if (fm.getFamilyMemberInfo().get(0).isPhotoBirthExist())
+                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.RENAME));
+            if (familyMemberDto.getMemberInfo().isPhotoBurialExist())
+                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.REMOVE));
+            else if (fm.getFamilyMemberInfo().get(0).isPhotoBurialExist())
+                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.RENAME));
+        }
+        mainStorageRepository.flushMember();
 // Если нужны старые имена и прозвища в модуле family
         //        result.setFioDtos(oldFioService.getOldNamesMapper().oldFiosSetToFioDtoSet(fm.getOtherNames()));
         directives.add(FamilyDirective.builder()
@@ -311,6 +485,10 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 .person(familyMemberDto.getUuid().toString())
                 .switchPosition(SwitchPosition.MAIN)
                 .operation(KafkaOperation.RENAME).build());
+        tempGuardStatus.remove(token);
+        tempExtendedDto.remove(token);
+        tempMainContact.remove(token);
+        lastUpdateMap.put(fm.getId(), fm.getLastUpdate());
         return result;
     }
 
@@ -329,12 +507,14 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             for (FamilyMember child : setOfChilds) {
                 child.setFatherInfo(fm.getFullName());
                 child.setFather(fm);
+                child.setLastUpdate(new Timestamp(System.currentTimeMillis()));
                 familyMemberRepo.save(child);
                 sendChildDirective(child, uuid);
             }
         } else for (FamilyMember child : setOfChilds) {
             child.setMotherInfo(fm.getFullName());
             child.setMother(fm);
+            child.setLastUpdate(new Timestamp(System.currentTimeMillis()));
             familyMemberRepo.save(child);
             sendChildDirective(child, uuid);
         }
@@ -350,25 +530,36 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     }
 
     @Transactional
-    public void extractExtensionOfFamilyMember(FamilyMemberDto familyMemberDto, FamilyMember fm) {
-        fm.setFullName(generateFioStringInfo(fm));
+    public void setUpParents(FamilyMemberDto familyMemberDto, FamilyMember fm, String token, Changing changing) {
+
         if (familyMemberDto.getFatherFio() != null && familyMemberDto.getMotherFio() != null
                 && Objects.equals(familyMemberDto.getFatherFio().getFirstName(), familyMemberDto.getMotherFio().getFirstName())
                 && Objects.equals(familyMemberDto.getFatherFio().getMiddleName(), familyMemberDto.getMotherFio().getMiddleName())
                 && Objects.equals(familyMemberDto.getFatherFio().getLastName(), familyMemberDto.getMotherFio().getLastName())
         ) throw new UncorrectedInformation("It's not funny. Mother and Father must be different people");
 
-        if (familyMemberDto.getFatherFio() != null) {
+        if (familyMemberDto.getFatherFio() != null && (Objects.equals(token, "add") ||
+                familyMemberDto.getFatherFio().getFirstName() == null ||
+                familyMemberDto.getFatherFio().getMiddleName() == null ||
+                familyMemberDto.getFatherFio().getLastName() == null ||
+                familyMemberDto.getFatherFio().getBirthday() == null ||
+                (tempGuardStatus.get(token) != null && fm.getFatherInfo().charAt(0) == '(' &&
+                        !CheckStatus.ABSENT.getComment().concat(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getFatherFio()))).equals(tempGuardStatus.get(token).getFatherInfo())))) {
             losingParentsService.setUpFather(familyMemberDto.getFatherFio(), fm);
+            changing.setChangingFather(true);
         }
-        if (familyMemberDto.getMotherFio() != null) {
+        if (familyMemberDto.getMotherFio() != null && (Objects.equals(token, "add") ||
+                familyMemberDto.getMotherFio().getFirstName() == null ||
+                familyMemberDto.getMotherFio().getMiddleName() == null ||
+                familyMemberDto.getMotherFio().getLastName() == null ||
+                familyMemberDto.getMotherFio().getBirthday() == null ||
+                (tempGuardStatus.get(token) != null && fm.getMotherInfo().charAt(0) == '(' &&
+                        !CheckStatus.ABSENT.getComment().concat(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio()))).equals(tempGuardStatus.get(token).getMotherInfo())))) {
             losingParentsService.setUpMother(familyMemberDto.getMotherFio(), fm);
+            changing.setChangingMother(true);
         }
-        if (familyMemberDto.getMemberInfo() != null) {
-            familyMemberDto.getMemberInfo().setId(null);
-            fm.setFamilyMemberInfo(familyMemberInfoService.merge(familyMemberDto, fm.getUuid()));
-        }
-        log.info("Расширенная информация проверена и установлена");
+
+        log.info("Родители установлены");
     }
 
 
@@ -399,28 +590,40 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     }
 
     @Transactional
-    public void addChangingToBase(FamilyMemberDto familyMemberDto, FamilyMember familyMember) {
-        Set<FamilyMember> childrenOfFamilyMember = losingParentsService.checkForAdditionalChilds(familyMember.getUuid(), familyMember);
+    public void addChangingToBase(FamilyMemberDto familyMemberDto, FamilyMember familyMember, Changing changing, String token) {
+        Set<UUID> fromDto = new HashSet<>();
         if (familyMemberDto.getFioDtos() != null) {
-            Set<OldFio> oldFios = oldFioService.addAllNewOldNames(familyMemberDto.getFioDtos(), familyMember);
-            if (oldFios != null) {
-                checkOldNamesForAdditionalChilds(childrenOfFamilyMember, oldFios, familyMember);
-                if (familyMember.getOtherNames() != null) familyMember.getOtherNames().addAll(oldFios);
-                else familyMember.setOtherNames(oldFios);
+            for (FioDto old :
+                    familyMemberDto.getFioDtos()) {
+                old.setBirthday(familyMemberDto.getBirthday());
+                fromDto.add(generateUUIDFromFio(fioMapper.dtoToEntity(old)));
             }
+            if (tempExtendedDto.get(token) != null && tempExtendedDto.get(token).getFioDtos() != null)
+                for (FioDto tempExtended :
+                        tempExtendedDto.get(token).getFioDtos()) {
+                    fromDto.remove(tempExtended.getUuid());
+                }
         }
-        if (childrenOfFamilyMember != null)
-            if (familyMember.getChilds() != null && !familyMember.getChilds().isEmpty()) {
-                familyMember.getChilds().addAll(childrenOfFamilyMember);
-            } else familyMember.setChilds(childrenOfFamilyMember);
-
-        if (familyMember.getFather() == null &&
-                familyMemberDto.getFatherFio() != null && familyMember.getFatherInfo() != null &&
+        if (changing.isChangingMain() || !fromDto.isEmpty()) {
+            Set<FamilyMember> childrenOfFamilyMember = losingParentsService.checkForAdditionalChilds(familyMember.getUuid(), familyMember);
+            if (familyMemberDto.getFioDtos() != null) {
+                Set<OldFio> oldFios = oldFioService.addAllNewOldNames(familyMemberDto.getFioDtos(), familyMember);
+                if (oldFios != null) {
+                    checkOldNamesForAdditionalChilds(childrenOfFamilyMember, oldFios, familyMember);
+                    if (familyMember.getOtherNames() != null) familyMember.getOtherNames().addAll(oldFios);
+                    else familyMember.setOtherNames(oldFios);
+                }
+            }
+            if (childrenOfFamilyMember != null)
+                if (familyMember.getChilds() != null && !familyMember.getChilds().isEmpty()) {
+                    familyMember.getChilds().addAll(childrenOfFamilyMember);
+                } else familyMember.setChilds(childrenOfFamilyMember);
+        }
+        if (changing.isChangingFather() && familyMember.getFatherInfo() != null &&
                 familyMember.getFatherInfo().charAt(1) == 'A') {
             losingParentsService.addLosingParent(familyMemberDto.getFatherFio(), familyMember, Sex.MALE);
         }
-        if (familyMember.getMother() == null &&
-                familyMemberDto.getMotherFio() != null && familyMember.getMotherInfo() != null &&
+        if (changing.isChangingMother() && familyMember.getMotherInfo() != null &&
                 familyMember.getMotherInfo().charAt(1) == 'A') {
             losingParentsService.addLosingParent(familyMemberDto.getMotherFio(), familyMember, Sex.FEMALE);
         }
@@ -454,6 +657,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             }
             default -> log.warn("found unknown directive");
         }
+        familyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         familyMemberRepo.save(familyMember);
     }
 
@@ -465,15 +669,25 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             case FATHER -> {
                 familyMember.setCheckStatus(CheckStatus.LINKED);
                 if (directive.getTokenUser() != null) familyMember.setCreator(directive.getTokenUser());
+                clearTempGuardMaps(directive.getTokenUser());
             }
             case MOTHER -> {
                 familyMember.setCheckStatus(CheckStatus.CHECKED);
-                if (directive.getTokenUser() != null) familyMember.setCreator(directive.getTokenUser());
+                if (directive.getTokenUser() != null) familyMember.setCreator(null);
+                clearTempGuardMaps(directive.getTokenUser());
             }
             case CHILD -> familyMember.setCheckStatus(CheckStatus.UNCHECKED);
             default -> log.warn("found unknown directive");
         }
+        familyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         familyMemberRepo.save(familyMember);
+    }
+
+    void clearTempGuardMaps(String token) {
+        tempGuardStatus.remove(token);
+        tempPhotoAccept.remove(token.concat(String.valueOf(SwitchPosition.PRIME.ordinal())));
+        tempPhotoAccept.remove(token.concat(String.valueOf(SwitchPosition.BIRTH.ordinal())));
+        tempPhotoAccept.remove(token.concat(String.valueOf(SwitchPosition.BURIAL.ordinal())));
     }
 }
 

@@ -1,12 +1,15 @@
 package com.example.conrollers;
 
 import com.example.dtos.FamilyMemberDto;
+import com.example.dtos.SecurityDto;
 import com.example.models.OnlineUserHolder;
 import com.example.models.SimpleUserInfo;
 import com.example.services.BaseService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
@@ -44,5 +47,13 @@ public class BaseController {
         baseService.editFamilyMember(familyMemberDto);
         return ResponseEntity.ok("Person is update");
     }
+    @PostMapping("/family_member/i")
+    public FamilyMemberDto getYourself() {
+        return baseService.getYourself(onlineUserHolder.getSimpleUser().getLocalisation());
+    }
 
+    @PostMapping("/family_member/get/extended")
+    public FamilyMemberDto getFullFamilyMember(@RequestBody SecurityDto securityDto) {
+        return baseService.getExtendedInfoFamilyMember(securityDto, onlineUserHolder.getSimpleUser().getLocalisation());
+    }
 }

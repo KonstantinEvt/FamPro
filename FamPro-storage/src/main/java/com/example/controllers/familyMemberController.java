@@ -3,15 +3,13 @@ package com.example.controllers;
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.SecurityDto;
 import com.example.service.FamilyMemberService;
-import com.example.service.TokenService;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
+import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
@@ -24,10 +22,15 @@ public class FamilyMemberController {
     public FamilyMemberDto getFamilyMember(@PathVariable Long id) {
         return familyMemberService.getFamilyMemberById(id);
     }
-//    @GetMapping("/database/link/{id}")
+
+    //    @GetMapping("/database/link/{id}")
 //    public FamilyMemberDto linkFamilyMember(@PathVariable Long id) {
 //        return familyMemberService.linkFamilyMember(id);
 //    }
+    @GetMapping("/database/i")
+    public FamilyMemberDto getYourself() {
+        return familyMemberService.getYourself();
+    }
 
     @PostMapping("/database/")
     public ResponseEntity<FamilyMemberDto> addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
@@ -56,11 +59,12 @@ public class FamilyMemberController {
     public ResponseEntity<FamilyMemberDto> editFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
         return ResponseEntity.ok(familyMemberService.updateFamilyMember(familyMemberDto));
     }
-@PostMapping("/database/get/extended")
+
+    @PostMapping("/database/get/extended")
     public FamilyMemberDto getFullFamilyMember(@RequestBody SecurityDto securityDto) {
-    log.info("request for extension {}",securityDto);
-    FamilyMemberDto dto=familyMemberService.getFullFamilyMember(securityDto);
-    log.info("Result of extension: {}",dto);
+        log.info("request for extension {}", securityDto);
+        FamilyMemberDto dto = familyMemberService.getExtendedInfoFamilyMember(securityDto);
+        log.info("Result of extension: {}", dto);
         return dto;
-}
+    }
 }

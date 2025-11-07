@@ -33,8 +33,9 @@ public class CommonWordChecks {
                 else result.add(st1);
             } else result.add(setUpperFirst(st1.toLowerCase()));
         }
-        if (!enableMatrixOfChange) return (result.isEmpty()) ? null : String.join("-", result);
-        else return change + ((result.isEmpty()) ? null : String.join("-", result));
+        String res=String.join("-", result);
+        if (!enableMatrixOfChange) return (res.equals("null")) ? null : res;
+        else return (res.equals("null")) ? null : (change + res);
     }
 
     public String setUpperFirst(String string) {

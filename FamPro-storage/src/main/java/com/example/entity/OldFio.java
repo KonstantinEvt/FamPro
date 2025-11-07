@@ -22,15 +22,12 @@ public class OldFio extends Fio {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genSeqOldFio")
     @SequenceGenerator(
             name = "genSeqOldFio",
-            sequenceName = "oldFioSeq", initialValue = 1, allocationSize = 5)
+            sequenceName = "old_fio_seq", initialValue = 1, allocationSize = 5)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "member_id")
     private FamilyMember member;
-//    @Enumerated(EnumType.STRING)
-//    @Column(name = "check_status")
-//    private CheckStatus checkStatus;
 
 
 }
