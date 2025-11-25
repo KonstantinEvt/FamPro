@@ -19,7 +19,7 @@ public class MainFamilyRepo {
     @Transactional(readOnly = true)
     public DeferredDirective findDirectiveWithAllLinks(UUID uuid) {
         DeferredDirective deferredDirective;
-        String request = "from DeferredDirective a join fetch a.directiveMember g join fetch a.shortFamilyMemberLink f  left join fetch a.directiveFamily b  left join fetch b.globalFamily left join fetch a.processFamily c left join fetch c.globalFamily where a.id= :externId ";
+        String request = "from DeferredDirective a join fetch a.directiveMember g join fetch a.shortFamilyMemberLink f  left join fetch a.directiveFamily b  left join fetch a.processFamily c where a.id= :externId ";
         try {
             deferredDirective = entityManager.createQuery(request, DeferredDirective.class)
                     .setParameter("externId", uuid)
@@ -35,7 +35,7 @@ public class MainFamilyRepo {
     public Family findFamilyWithGlobal(ShortFamilyMember member) {
         Family family;
         try {
-            family = entityManager.createQuery("from Family a join fetch a.children b left join fetch a.globalFamily where b=:member", Family.class)
+            family = entityManager.createQuery("from Family a join fetch a.children b  where b=:member", Family.class)
                     .setParameter("member", member)
                     .getSingleResult();
 
@@ -51,7 +51,7 @@ public class MainFamilyRepo {
     public Family findFamilyWithAllGuards(ShortFamilyMember member) {
         Family family;
         try {
-            family = entityManager.createQuery("from Family a join fetch a.children b left join fetch a.globalFamily c left join fetch a.guard left join fetch c.guard where b=:member", Family.class)
+            family = entityManager.createQuery("from Family a join fetch a.children b  left join fetch a.guard where b=:member", Family.class)
                     .setParameter("member", member)
                     .getSingleResult();
 
@@ -60,30 +60,6 @@ public class MainFamilyRepo {
             family = null;
         }
         return family;
-    }
-
-    @Transactional(readOnly = true)
-    public Family findFamilyWithAllGuardsByExternId(String externId) {
-        Family family;
-        try {
-            family = entityManager.createQuery("from Family a join fetch a.children b left join fetch a.globalFamily c left join fetch a.guard left join fetch c.guard where a.externID=:externId", Family.class)
-                    .setParameter("externId", externId)
-                    .getSingleResult();
-
-        } catch (RuntimeException e) {
-            log.warn(e);
-            family = null;
-        }
-        return family;
-    }
-
-    @Transactional
-    public void persistNewPerson(ShortFamilyMember member) {
-        try {
-            entityManager.persist(member);
-        } catch (RuntimeException e) {
-            log.warn("familyMember not persist:", e);
-        }
     }
 
     @Transactional
@@ -95,32 +71,6 @@ public class MainFamilyRepo {
         }
     }
 
-    @Transactional(readOnly = true)
-    public ShortFamilyMember findMemberWithFamilyWithAllGuardsByUuid(UUID uuid) {
-        ShortFamilyMember member;
-        try {
-            member = entityManager.createQuery("from ShortFamilyMember m join fetch m.familyWhereChild a left join fetch a.globalFamily c left join fetch a.guard x left join fetch c.guard y left join fetch x.linkedPerson left join fetch y.linkedPerson where m.uuid=:uuid", ShortFamilyMember.class)
-                    .setParameter("uuid", uuid)
-                    .getSingleResult();
-        } catch (RuntimeException e) {
-            log.warn("Member not found");
-            member = null;
-        }
-        return member;
-    }
-    @Transactional(readOnly = true)
-    public ShortFamilyMember findMemberWithPrimeFamily(UUID uuid) {
-        ShortFamilyMember member;
-        try {
-            member = entityManager.createQuery("from ShortFamilyMember m join fetch m.familyWhereChild  where m.uuid=:uuid", ShortFamilyMember.class)
-                    .setParameter("uuid", uuid)
-                    .getSingleResult();
-        } catch (RuntimeException e) {
-            log.warn("Member not found");
-            member = null;
-        }
-        return member;
-    }
     @Transactional(readOnly = true)
     public Set<Guard> getFamilyGuardWithLinkedPerson(Family family) {
         Set<Guard> guards;
@@ -137,15 +87,15 @@ public class MainFamilyRepo {
     }
 
     @Transactional(readOnly = true)
-    public ShortFamilyMember getPersonForLinking(UUID uuid) {
-        ShortFamilyMember member;
+    public Optional<ShortFamilyMember> getPersonForLinking(UUID uuid) {
+        Optional<ShortFamilyMember> member;
         try {
-            member = entityManager.createQuery("from ShortFamilyMember a join fetch a.familyWhereChild b join fetch b.globalFamily join fetch a.families c left join fetch c.guard left join fetch a.linkedGuard where a.uuid=:uuid", ShortFamilyMember.class)
+            member = Optional.of(entityManager.createQuery("from ShortFamilyMember a join fetch a.familyWhereChild b join fetch a.families c left join fetch c.guard left join fetch a.linkedGuard where a.uuid=:uuid", ShortFamilyMember.class)
                     .setParameter("uuid", uuid)
-                    .getSingleResult();
+                    .getSingleResult());
         } catch (RuntimeException e) {
             log.warn("person not fond");
-            member = null;
+            member = Optional.empty();
         }
         return member;
     }
@@ -164,19 +114,19 @@ public class MainFamilyRepo {
         return directive;
     }
 
-    @Transactional(readOnly = true)
-    public Set<ShortFamilyMember> findFamilyMembersOfGlobal(GlobalFamily globalFamily) {
-        GlobalFamily globalFamily1;
-        try {
-            globalFamily1 = entityManager.createQuery("from GlobalFamily a join fetch a.members b join fetch b.familyMembers where a=:global", GlobalFamily.class)
-                    .setParameter("global", globalFamily)
-                    .getSingleResult();
-            return globalFamily1.getMembers().stream().flatMap(x -> x.getFamilyMembers().stream()).collect(Collectors.toSet());
-        } catch (RuntimeException e) {
-            log.warn("something wrong:", e);
-        }
-        return null;
-    }
+//    @Transactional(readOnly = true)
+//    public Set<ShortFamilyMember> findFamilyMembersOfGlobal(GlobalFamily globalFamily) {
+//        GlobalFamily globalFamily1;
+//        try {
+//            globalFamily1 = entityManager.createQuery("from GlobalFamily a join fetch a.members b join fetch b.familyMembers where a=:global", GlobalFamily.class)
+//                    .setParameter("global", globalFamily)
+//                    .getSingleResult();
+//            return globalFamily1.getMembers().stream().flatMap(x -> x.getFamilyMembers().stream()).collect(Collectors.toSet());
+//        } catch (RuntimeException e) {
+//            log.warn("something wrong:", e);
+//        }
+//        return null;
+//    }
 
     @Transactional
     public Set<DeferredDirective> findDirectivesConsistFamilyToRemove(Family family) {

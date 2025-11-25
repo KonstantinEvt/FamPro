@@ -12,6 +12,7 @@ import java.util.UUID;
 @Setter
 @Getter
 @Builder
+@ToString
 public class Guard {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "guardGen")

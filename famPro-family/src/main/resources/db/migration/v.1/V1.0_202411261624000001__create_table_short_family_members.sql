@@ -15,8 +15,8 @@ create table if not exists short_family_members
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
                        'GENETIC_TREE'::character varying,
-                       'BLOOD_TWO'::character varying,
-                       'GLOBAL_TREE'::character varying,
+                       'ANCESTOR'::character varying,
+                       'STRAIGHT_BLOOD'::character varying,
                        'CLOSE'::character varying,
                        'UNDEFINED'::character varying
                        ])::text[])),
@@ -28,23 +28,23 @@ create table if not exists short_family_members
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
                        'GENETIC_TREE'::character varying,
-                       'BLOOD_TWO'::character varying,
-                       'GLOBAL_TREE'::character varying,
+                       'ANCESTOR'::character varying,
+                       'STRAIGHT_BLOOD'::character varying,
                        'CLOSE'::character varying,
                        'UNDEFINED'::character varying
                        ])::text[])),
-    father_id    bigint
-        constraint short_family_member_father references short_family_members (id),
+--     father_id    bigint
+--         constraint short_family_member_father references short_family_members (id),
     father_info  varchar(255),
-    mother_id    bigint
-        constraint short_family_member_mother references short_family_members (id),
+--     mother_id    bigint
+--         constraint short_family_member_mother references short_family_members (id),
     mother_info  varchar(255),
     birthday     date,
     death_day    date,
     sex          varchar(50)
         constraint short_family_members_sex
             check ((sex)::text = ANY ((ARRAY ['MALE'::character varying, 'FEMALE'::character varying])::text[])),
-    uuid         uuid unique,
+    uuid         uuid,
     full_name    varchar(255),
     check_status varchar(50)
         constraint short_family_members_check

@@ -12,14 +12,14 @@ import java.util.UUID;
 
 @Repository
 @Qualifier("familyMemberRepo")
-public interface FamilyMemberRepo extends  JpaRepository<FamilyMember,Long> {
+public interface FamilyMemberRepo extends JpaRepository<FamilyMember, Long> {
 
     List<FamilyMember> findAllByFather_Id(Long father_id);
 
     List<FamilyMember> findAllByMother_Id(Long mother_id);
 
-    public Optional<FamilyMember> findFioByUuid(UUID uuid);
+    Optional<FamilyMember> findFioByUuid(UUID uuid);
 
-
+    Set<FamilyMember> findAllByUuidIn(Set<UUID> uuids);
 
 }

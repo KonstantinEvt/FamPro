@@ -46,11 +46,11 @@ public class DeferredDirective {
 
     @Enumerated(EnumType.STRING)
     private SwitchPosition switchPosition;
-    @Column(name="number_for")
+//    @Column(name="number_for")
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "directive_global")
     private int globalFor;
-    @Column(name="number_to")
+//    @Column(name="number_to")
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "link_global_family")
     private int globalTo;

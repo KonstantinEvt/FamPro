@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface ShortMemberRepo extends JpaRepository<ShortFamilyMember, Long> {
-    Optional<ShortFamilyMember> findByUuid(UUID uuid);
+
 }

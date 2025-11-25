@@ -35,8 +35,8 @@ public class BaseService {
     public FamilyMemberDto getExtendedInfoFamilyMember(SecurityDto securityDto, Localisation localisation){
         return baseClient.getExtendedInfoFamilyMember(securityDto, localisation);
     }
-    public void addFamilyMember(FamilyMemberDto familyMemberDto) {
-        baseClient.addFamilyMember(familyMemberDto);
+    public long addFamilyMember(FamilyMemberDto familyMemberDto) {
+        return baseClient.addFamilyMember(familyMemberDto).getId();
      }
 
     public void editFamilyMember(FamilyMemberDto familyMemberDto) {

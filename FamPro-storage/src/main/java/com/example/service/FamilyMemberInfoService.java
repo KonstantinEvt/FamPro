@@ -74,17 +74,18 @@ public class FamilyMemberInfoService {
     public FamilyMemberInfo merge(FamilyMemberDto familyMemberDto, FamilyMemberInfo fmiFromBase, String token, boolean changingMain) {
         FamilyMemberInfo fmi = familyMemberInfoMapper.dtoToEntity(familyMemberDto.getMemberInfo());
         fmi.setUuid(familyMemberDto.getUuid());
-        if (!familyMemberDto.getMemberInfo().isPhotoBurialExist() && fmiFromBase.isPhotoBurialExist()) {
-            familyMemberDto.getMemberInfo().getBurial().setPhotoExist(true);
-        }
-        if (!familyMemberDto.getMemberInfo().isPhotoBirthExist() && fmiFromBase.isPhotoBirthExist()) {
-            familyMemberDto.getMemberInfo().getBirth().setPhotoExist(true);
-        }
         boolean tempAcceptChange = false;
         FamilyMemberDto tempStatusEdit = tempExtendedDto.get(token);
         MainContact mainContact = tempMainContact.get(token);
 //        if (fmiFromBase.getId() != null)
 //            fmiFromBase = mainInfoReposirory.getFullFamilyMemberInfo(familyMemberDto.getMemberInfo(), fmiFromBase.getId()).orElseThrow(() -> new RuntimeException("MemberInfo is corrupt"));
+
+        if (familyMemberDto.getMemberInfo().getBurial() != null && !familyMemberDto.getMemberInfo().isPhotoBurialExist() && fmiFromBase.isPhotoBurialExist()) {
+            familyMemberDto.getMemberInfo().getBurial().setPhotoExist(true);
+        }
+        if (familyMemberDto.getMemberInfo().getBirth() != null && !familyMemberDto.getMemberInfo().isPhotoBirthExist() && fmiFromBase.isPhotoBirthExist()) {
+            familyMemberDto.getMemberInfo().getBirth().setPhotoExist(true);
+        }
         if ((fmi.getSecretLevelEmail() != SecretLevel.CLOSE && fmi.getSecretLevelEmail() != SecretLevel.UNDEFINED) &&
                 (fmi.getMainEmail() != null || familyMemberDto.getMemberInfo().getEmails() != null)) {
             if (tempStatusEdit != null && tempStatusEdit.getMemberInfo() != null && tempStatusEdit.getMemberInfo().getEmails() != null) {
@@ -96,7 +97,7 @@ public class FamilyMemberInfoService {
                 emailsDto.add(fmi.getMainEmail());
                 if (!Objects.equals(emailsExtended, emailsDto)) tempAcceptChange = true;
             }
-            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null ||
+            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getEmails() == null && familyMemberDto.getMemberInfo().getEmails() != null)||
                     !Objects.equals(familyMemberDto.getMemberInfo().getMainEmail(), mainContact.getMainEmail()) || tempAcceptChange)) {
                 if (familyMemberDto.getMemberInfo().getEmails() == null) fmi.setEmailsSet(new HashSet<>());
                 else
@@ -117,7 +118,7 @@ public class FamilyMemberInfoService {
                 phonesDto.add(fmi.getMainPhone());
                 if (!Objects.equals(phonesExtended, phonesDto)) tempAcceptChange = true;
             }
-            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null ||
+            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getPhones() == null && familyMemberDto.getMemberInfo().getPhones() != null)||
                     !Objects.equals(familyMemberDto.getMemberInfo().getMainPhone(), mainContact.getMainPhone()) || tempAcceptChange)) {
 
                 if (familyMemberDto.getMemberInfo().getPhones() == null) fmi.setPhonesSet(new HashSet<>());
@@ -140,7 +141,7 @@ public class FamilyMemberInfoService {
                 addressDto.removeAll(addressExtended);
                 if (!addressDto.isEmpty()) tempAcceptChange = true;
             }
-            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null ||
+            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getAddresses() == null && familyMemberDto.getMemberInfo().getAddresses() != null)||
                     tempAcceptChange)) {
 
                 if (familyMemberDto.getMemberInfo().getAddresses() == null) fmi.setAddressesSet(new HashSet<>());
@@ -162,7 +163,7 @@ public class FamilyMemberInfoService {
             }
             if (Objects.equals(token, "add") ||
                     tempStatusEdit == null ||
-                    tempStatusEdit.getMemberInfo() == null || tempAcceptChange) {
+                    tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getBiometric() == null && familyMemberDto.getMemberInfo().getBiometric() != null)|| tempAcceptChange) {
                 fmi.setBiometricData(List.of(biometricMapper.dtoToEntity(familyMemberDto.getMemberInfo().getBiometric())));
                 biometricService.mergeBiometric(fmi, fmiFromBase);
             }
@@ -177,7 +178,7 @@ public class FamilyMemberInfoService {
             }
             if (Objects.equals(token, "add") ||
                     tempStatusEdit == null ||
-                    tempStatusEdit.getMemberInfo() == null || tempAcceptChange) {
+                    tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getDescription() == null && familyMemberDto.getMemberInfo().getDescription() != null)|| tempAcceptChange) {
                 fmi.setDescriptionData(List.of(descriptionMapper.dtoToEntity(familyMemberDto.getMemberInfo().getDescription())));
                 descriptionService.mergeDescription(fmi, fmiFromBase);
             }
@@ -193,7 +194,7 @@ public class FamilyMemberInfoService {
             }
             if (Objects.equals(token, "add") ||
                     tempStatusEdit == null ||
-                    tempStatusEdit.getMemberInfo() == null || tempAcceptChange) {
+                    tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getBurial() == null && familyMemberDto.getMemberInfo().getBurial() != null) || tempAcceptChange) {
                 fmi.setBurialPlace(List.of(burialMapper.dtoToEntity(familyMemberDto.getMemberInfo().getBurial())));
                 burialService.checkMergeAndSetUp(fmi, fmiFromBase);
             }
@@ -210,11 +211,15 @@ public class FamilyMemberInfoService {
 
             if (Objects.equals(token, "add") ||
                     tempStatusEdit == null ||
-                    tempStatusEdit.getMemberInfo() == null || tempAcceptChange) {
+                    tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getBirth() == null && familyMemberDto.getMemberInfo().getBirth() != null) || tempAcceptChange) {
                 fmi.setBirthPlace(List.of(birthMapper.dtoToEntity(familyMemberDto.getMemberInfo().getBirth())));
                 birthService.checkMergeAndSetUp(fmi, fmiFromBase);
             }
         }
+        if (familyMemberDto.getMemberInfo().getBurial() == null && familyMemberDto.getMemberInfo().isPhotoBurialExist())
+            fmiFromBase.setPhotoBurialExist(true);
+        if (familyMemberDto.getMemberInfo().getBirth() == null && familyMemberDto.getMemberInfo().isPhotoBirthExist())
+            fmiFromBase.setPhotoBirthExist(true);
         if (changingMain) {
             fmiFromBase.setUuid(fmi.getUuid());
             if (!Objects.equals(token, "add") && tempStatusEdit != null && tempStatusEdit.getMemberInfo() != null)

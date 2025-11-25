@@ -1,7 +1,6 @@
 package com.example.service;
 
 import com.example.dtos.TokenUser;
-import com.example.enums.UserRoles;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -24,13 +23,5 @@ public class TokenService {
         Set<String> roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         tokenUser.setRoles(roles);
         return tokenUser;
-    }
-
-    public String getPriorityUserRole(TokenUser tokenUser) {
-        for (UserRoles role :
-                UserRoles.values()) {
-            if (tokenUser.getRoles().contains(role.getNameSSO())) return role.getNameSSO();
-        }
-        return "you are haven't role";
     }
 }

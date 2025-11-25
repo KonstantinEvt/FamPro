@@ -44,7 +44,7 @@ function editPersonInBase() {
         <label for="lastNameAddFM" style="color: chocolate; padding-top: 4px">LastName:</label>
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="text" id="lastNameAddFM" name="lastNameAddFM" value="${tempPerson.lastName}" required>
         <label for="birthdayAddFM" style="color: chocolate; padding-top: 5px">Birthday:</label>
-        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="birthdayAddFM" name="birthdayAddFM" value="${tempPerson.birthday}" required>
+        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="birthdayAddFM" name="birthdayAddFM">
         <label for="deathdayAddFM" style="color: chocolate; padding-top: 4px">Date of death:</label>
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="deathdayAddFM" name="deathdayAddFM" >
         <label for="chooseSexAddFM" style="color: chocolate; padding-top: 4px">Gender:</label>
@@ -228,91 +228,113 @@ function editPersonInBase() {
                     <div class="container-fluid row mh-100 no-gutters">
                         <span class="col" style="width: 30%"></span>
                         <span class="col-6" style="min-width: 300px">
-                                <label for="chooseSecurePP" style="color: chocolate; padding-top: 5px">Видимость фото:</label>
+                                <label for="chooseSecurePP" style="color: chocolate; padding-top: 5px" id="labelSecurePP">Видимость фото:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePP" aria-label="chooseSecurePP">            
-            <option value="OPEN" selected>Открыто</option>
-            <option value="GLOBAL_TREE">Родственники</option>
+            <option value="OPEN" selected>Открыто</option>            
+            <option value="CONFIDENTIAL">Личное</option>
+            <option value="ANCESTOR" >Предки</option>
+            <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="GENETIC_TREE">Семейное древо</option>
         </select>
-        <label for="chooseSecureEE" style="color: chocolate; padding-top: 5px">Secure edit:</label>
+        <label for="chooseSecureEE" style="color: chocolate; padding-top: 5px" id="labelSecureEE">Secure edit:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureEE" aria-label="chooseSecureEE">            
-            <option value="CONFIDENTIAL">Личное</option>
-            <option value="FAMILY" selected >Семейное</option>
+            <option value="OPEN" selected>Открыто</option>
+            <option value="CONFIDENTIAL" >Личное</option>
+            <option value="ANCESTOR" >Предки</option>
+            <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
-        <label for="chooseSecureMain" style="color: chocolate; padding-top: 5px">Secure edit main:</label>
+        <label for="chooseSecureMain" style="color: chocolate; padding-top: 5px" id="labelSecureMain">Secure edit main:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureMain" aria-label="chooseSecureMain">            
-            <option value="CONFIDENTIAL">Личное</option>
-            <option value="FAMILY" selected >Семейное</option>
+            <option value="OPEN">Открыто</option>
+            <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
+            <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
-        <label for="chooseSecureRM" style="color: chocolate; padding-top: 5px">Secure remove:</label>
-        <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureRM" aria-label="chooseSecureRM">            
-            <option value="CONFIDENTIAL">Личное</option>
-            <option value="FAMILY" selected >Семейное</option>
+        <label for="chooseSecureBirthday" style="color: chocolate; padding-top: 5px" id="labelSecureBirthday">Secure Birthday:</label>
+        <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureBirthday" aria-label="chooseSecureBirthday">            
+            <option value="OPEN">Открыто</option>
+            <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
+            <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
-        <label for="chooseSecureME" style="color: chocolate; padding-top: 5px">Secure main email:</label>
+        <label for="chooseSecureRM" style="color: chocolate; padding-top: 5px" id="labelSecureRM">Secure remove:</label>
+        <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureRM" aria-label="chooseSecureRM">          
+            
+            <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
+            <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="GENETIC_TREE">Семейное древо</option>
+        </select>
+        <label for="chooseSecureME" style="color: chocolate; padding-top: 5px" id="labelSecureME">Secure main email:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureME" aria-label="chooseSecureME">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
-                <label for="chooseSecurePBur" style="color: chocolate; padding-top: 5px">Secure place of burial:</label>
+                <label for="chooseSecurePBur" style="color: chocolate; padding-top: 5px" id="labelSecurePBur">Secure place of burial:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBur" aria-label="chooseSecurePBur">            
             <option value="OPEN">Открыто</option>
-            <option value="CONFIDENTIAL" >Личное</option>
+            <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE" selected>Все родственники</option>
         </select>
-        <label for="chooseSecurePBirth" style="color: chocolate; padding-top: 5px">Secure place of birth:</label>
+        <label for="chooseSecurePBirth" style="color: chocolate; padding-top: 5px" id="labelSecurePBirth">Secure place of birth:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBirth" aria-label="chooseSecurePBirth">            
             <option value="OPEN">Открыто</option>
-            <option value="CONFIDENTIAL" >Личное</option>
-            <option value="FAMILY" selected>Семейное</option>
+            <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
+            <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
-        <label for="chooseSecureMP" style="color: chocolate; padding-top: 5px">Secure main phone:</label>
+        <label for="chooseSecureMP" style="color: chocolate; padding-top: 5px" id="labelSecureMP">Secure main phone:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px; text-align: center" id="chooseSecureMP" aria-label="chooseSecureMP">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
-        <label for="chooseSecureMA" style="color: chocolate; padding-top: 5px">Secure main address:</label>
+        <label for="chooseSecureMA" style="color: chocolate; padding-top: 5px" id="labelSecureMA">Secure main address:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px; text-align: center" id="chooseSecureMA" aria-label="chooseSecureMA">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
-        <label for="chooseSecureBio" style="color: chocolate; padding-top: 5px">Secure biometric:</label>
+        <label for="chooseSecureBio" style="color: chocolate; padding-top: 5px" id="labelSecureBio">Secure biometric:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureBio" aria-label="chooseSecureBio">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
-        <label for="chooseSecureDes" style="color: chocolate; padding-top: 5px">Secure description:</label>
+        <label for="chooseSecureDes" style="color: chocolate; padding-top: 5px" id="labelSecureDes">Secure description:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureDes" aria-label="chooseSecureDes">            
+            <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
                         </span>
                         <span class="col" style="width: 30%"></span>
@@ -481,7 +503,7 @@ function editPersonInBase() {
 
         URL.revokeObjectURL(tempPerson.primePhotoImj);
     } else document.getElementById("frontPhoto").hidden = true;
-
+    if (tempPerson.birthday !== null) document.getElementById("birthdayAddFM").value = tempPerson.birthday;
     document.getElementById("chooseSexAddFM").value = tempPerson.sex;
     if (tempPerson.motherFio !== null && tempPerson.motherFio.firstName !== null) document.getElementById("firstNameMotherAddFM").value = tempPerson.motherFio.firstName;
     if (tempPerson.motherFio !== null && tempPerson.motherFio.middleName !== null) document.getElementById("middleNameMotherAddFM").value = tempPerson.motherFio.middleName;
@@ -504,10 +526,75 @@ function editPersonInBase() {
     } else {
         document.getElementById("otherNamesEdit").hidden = false;
         document.getElementById("securitySecurity").hidden = false;
+        if (tempPerson.secretLevelMainInfo !== "CLOSE")
+            document.getElementById("chooseSecureMain").value = tempPerson.secretLevelMainInfo;
+        if (tempPerson.secretLevelEdit !== "CLOSE")
+            document.getElementById("chooseSecureEE").value = tempPerson.secretLevelEdit;
+        if (tempPerson.secretLevelBirthday !== "CLOSE") {
+            document.getElementById("chooseSecureBirthday").value = tempPerson.secretLevelBirthday;
+        } else {
+            document.getElementById("chooseSecureBirthday").hidden = true;
+            document.getElementById("labelSecureBirthday").hidden = true;
+        }
+
         if (tempPerson.secretLevelPhoto !== "CLOSE") {
             document.getElementById("labelPrimePhoto").hidden = false;
             document.getElementById("primePhoto").hidden = false;
+            document.getElementById("chooseSecurePP").value = tempPerson.secretLevelPhoto;
+        } else {
+            document.getElementById("chooseSecurePP").hidden = true;
+            document.getElementById("labelSecurePP").hidden = true;
         }
+        if (tempPerson.secretLevelRemove !== "CLOSE") {
+            document.getElementById("chooseSecureRM").value = tempPerson.secretLevelRemove;
+        } else {
+            document.getElementById("chooseSecureRM").hidden = true;
+            document.getElementById("labelSecureRM").hidden = true;
+        }
+        if (tempPerson.memberInfo.secretLevelPhone !== "CLOSE") {
+            if (tempPerson.memberInfo.secretLevelPhone !== "UNDEFINED")
+                document.getElementById("chooseSecureMP").value = tempPerson.memberInfo.secretLevelPhone;
+        } else {
+            document.getElementById("chooseSecureMP").hidden = true;
+            document.getElementById("labelSecureMP").hidden = true;
+        }
+        if (tempPerson.memberInfo.secretLevelEmail !== "CLOSE") {
+            if (tempPerson.memberInfo.secretLevelEmail !== "UNDEFINED")
+                document.getElementById("chooseSecureME").value = tempPerson.memberInfo.secretLevelEmail;
+        } else {
+            document.getElementById("chooseSecureME").hidden = true;
+            document.getElementById("labelSecureME").hidden = true;
+        }
+        if (tempPerson.memberInfo.secretLevelAddress !== "CLOSE") {
+            if (tempPerson.memberInfo.secretLevelAddress !== "UNDEFINED")
+                document.getElementById("chooseSecureMA").value = tempPerson.memberInfo.secretLevelAddress;
+        } else {
+            document.getElementById("chooseSecureMA").hidden = true;
+            document.getElementById("labelSecureMA").hidden = true;
+        }
+        if (tempPerson.memberInfo.secretLevelBiometric !== "CLOSE") {
+            if (tempPerson.memberInfo.secretLevelBiometric !== "UNDEFINED")
+                document.getElementById("chooseSecureBio").value = tempPerson.memberInfo.secretLevelBiometric;
+        } else {
+            document.getElementById("chooseSecureBio").hidden = true;
+            document.getElementById("labelSecureBio").hidden = true;
+        }
+        if (tempPerson.memberInfo.secretLevelBurial !== "CLOSE") {
+            if (tempPerson.memberInfo.secretLevelBurial !== "UNDEFINED")
+                document.getElementById("chooseSecurePBur").value = tempPerson.memberInfo.secretLevelBurial;
+        } else {
+            document.getElementById("chooseSecurePBur").hidden = true;
+            document.getElementById("labelSecurePBur").hidden = true;
+        }
+        if (tempPerson.memberInfo.secretLevelDescription !== "CLOSE") {
+            if (tempPerson.memberInfo.secretLevelDescription !== "UNDEFINED")
+                document.getElementById("chooseSecureDes").value = tempPerson.memberInfo.secretLevelDescription;
+        } else {
+            document.getElementById("chooseSecureDes").hidden = true;
+            document.getElementById("labelSecureDes").hidden = true;
+        }
+
+
         if (tempPerson.motherInfo !== infoAbsent && tempPerson.motherInfo.charAt(0) !== '(' && tempPerson.motherInfo !== infoUncorrected) {
             lockMother();
             document.getElementById("lockParentsInfo").innerHTML = `
@@ -605,17 +692,18 @@ function editPersonInBase() {
     }
     if (tempPerson.memberInfo.secretLevelBurial !== "CLOSE") {
         document.getElementById("burialEdit").hidden = false;
-        if (tempPerson.memberInfo.burial !== null) {
-            if (tempPerson.memberInfo.photoBurialExist !== false) {
-                let tempURL = URL.createObjectURL(tempPerson.memberInfo.burialImj)
+        if (tempPerson.memberInfo.photoBurialExist !== false) {
+            let tempURL = URL.createObjectURL(tempPerson.memberInfo.burialImj)
 
-                document.getElementById("burialPhoto").innerHTML = `
+            document.getElementById("burialPhoto").innerHTML = `
                     <div class="card text-bg-dark" style="width: 250px">
                         <img src="${tempURL}" class="card-img" alt="loading...">                        
                     </div>`
 
-                URL.revokeObjectURL(tempPerson.memberInfo.burialImj);
-            } else document.getElementById("burialPhoto").hidden = true;
+            URL.revokeObjectURL(tempPerson.memberInfo.burialImj);
+        } else document.getElementById("burialPhoto").hidden = true;
+        if (tempPerson.memberInfo.burial !== null) {
+
             document.getElementById("burialCountryAddFM").value = tempPerson.memberInfo.burial.country;
             document.getElementById("burialRegionAddFM").value = tempPerson.memberInfo.burial.region;
             document.getElementById("burialCityAddFM").value = tempPerson.memberInfo.burial.city;
@@ -626,19 +714,20 @@ function editPersonInBase() {
             document.getElementById("burialFlatAddFM").value = tempPerson.memberInfo.burial.grave;
         }
     }
+
     if (tempPerson.memberInfo.secretLevelBirth !== "CLOSE") {
         document.getElementById("birthEdit").hidden = false;
-        if (tempPerson.memberInfo.birth !== null) {
-            if (tempPerson.memberInfo.photoBirthExist !== false) {
-                let tempURL = URL.createObjectURL(tempPerson.memberInfo.birthImj)
+        if (tempPerson.memberInfo.photoBirthExist !== false) {
+            let tempURL = URL.createObjectURL(tempPerson.memberInfo.birthImj)
 
-                document.getElementById("birthPhoto").innerHTML = `
+            document.getElementById("birthPhoto").innerHTML = `
                     <div class="card text-bg-dark" style="width: 250px">
                         <img src="${tempURL}" class="card-img" alt="loading...">                        
                     </div>`
 
-                URL.revokeObjectURL(tempPerson.memberInfo.birthImj);
-            } else document.getElementById("birthPhoto").hidden = true;
+            URL.revokeObjectURL(tempPerson.memberInfo.birthImj);
+        } else document.getElementById("birthPhoto").hidden = true;
+        if (tempPerson.memberInfo.birth !== null) {
             document.getElementById("birthCountryAddFM").value = tempPerson.memberInfo.birth.country;
             document.getElementById("birthRegionAddFM").value = tempPerson.memberInfo.birth.region;
             document.getElementById("birthCityAddFM").value = tempPerson.memberInfo.birth.city;
@@ -841,6 +930,7 @@ function submitBaseFormEditFM() {
         id: tempPerson.id,
         secretLevelPhoto: form.elements.chooseSecurePP.value,
         secretLevelEdit: form.elements.chooseSecureEE.value,
+        secretLevelBirthday: form.elements.chooseSecureBirthday.value,
         secretLevelMainInfo: form.elements.chooseSecureMain.value,
         secretLevelRemove: form.elements.chooseSecureRM.value,
         firstName: form.elements.firstNameAddFM.value,

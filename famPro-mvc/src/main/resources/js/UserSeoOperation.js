@@ -116,8 +116,12 @@ function linkUser() {
         method: 'GET',
         headers: {'Content-Type': 'application/json'}
 
-    }).then(async status => {
-        document.getElementById("footer-main").innerHTML = await status.text();
+    }).then(async status => {let linkStatus=await status.text()
+        document.getElementById("resultFindingPerson").innerHTML = `
+            <div class="container-fluid rclassName-100 no-gutters">
+                <span style="text-align: center; font-size: 18px; color: darkred; font-family: 'Times New Roman',serif">${linkStatus}</span>
+            </div>`
+
         loadOnlineUser();
         });
 

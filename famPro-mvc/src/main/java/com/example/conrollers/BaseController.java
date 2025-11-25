@@ -36,8 +36,8 @@ public class BaseController {
         SimpleUserInfo simpleUserInfo=onlineUserHolder.getSimpleUser();
         familyMemberDto.setLocalisation(simpleUserInfo.getLocalisation());
         System.out.println(familyMemberDto);
-        baseService.addFamilyMember(familyMemberDto);
-        return ResponseEntity.ok("Person is saved");
+        String success= "Person is saved with id:".concat(Long.toString(baseService.addFamilyMember(familyMemberDto)));
+        return ResponseEntity.ok(success);
     }
 
     @PostMapping("/family_member/edit")

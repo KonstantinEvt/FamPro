@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -106,8 +107,11 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             if (!Objects.equals(familyMemberDto.getCreator(), token) && token != null) {
                 familyMemberDto.setSecretLevelRemove(SecretLevel.CLOSE);
                 familyMemberDto.setSecretLevelMainInfo(SecretLevel.CLOSE);
+                familyMemberDto.setSecretLevelBirthday(SecretLevel.CLOSE);
+                if (familyMemberDto.getSecretLevelPhoto() != SecretLevel.OPEN)
+                    familyMemberDto.setSecretLevelPhoto(SecretLevel.CLOSE);
             }
-            if (familyMemberDto.isPrimePhoto())
+            if (familyMemberDto.getSecretLevelPhoto() != SecretLevel.CLOSE && familyMemberDto.isPrimePhoto())
                 tempPhotoAccept.put(token.concat(String.valueOf(SwitchPosition.PRIME.ordinal())), String.valueOf(SwitchPosition.PRIME.ordinal()).concat(familyMemberDto.getUuid().toString()));
             if (familyMemberDto.getMemberInfo() != null && familyMemberDto.getMemberInfo().isPhotoBirthExist())
                 tempPhotoAccept.put(token.concat(String.valueOf(SwitchPosition.BIRTH.ordinal())), String.valueOf(SwitchPosition.BIRTH.ordinal()).concat(familyMemberDto.getUuid().toString()));
@@ -119,6 +123,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             familyMemberDto.setSecretLevelRemove(SecretLevel.CLOSE);
             familyMemberDto.setSecretLevelEdit(SecretLevel.CLOSE);
             familyMemberDto.setSecretLevelMainInfo(SecretLevel.CLOSE);
+            familyMemberDto.setSecretLevelBirthday(SecretLevel.CLOSE);
         }
         tempGuardStatus.put(token, familyMemberDto);
         tempMainContact.put(token, new MainContact(familyMemberDto.getMemberInfo().getMainPhone(),
@@ -142,11 +147,14 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             if (familyMemberDto.isPrimePhoto())
                 tempPhotoAccept.put(((String) tokenService.getTokenUser().getClaims().get("sub")).concat(String.valueOf(SwitchPosition.PRIME.ordinal())), String.valueOf(SwitchPosition.PRIME.ordinal()).concat(familyMemberDto.getUuid().toString()));
         }
+        if (guardStatus.ordinal() < familyMemberDto.getSecretLevelMainInfo().ordinal())
+            familyMemberDto.setSecretLevelMainInfo(SecretLevel.CLOSE);
         if (guardStatus.ordinal() < familyMemberDto.getSecretLevelEdit().ordinal())
             familyMemberDto.setSecretLevelEdit(SecretLevel.CLOSE);
         if (guardStatus.ordinal() < familyMemberDto.getSecretLevelRemove().ordinal())
             familyMemberDto.setSecretLevelRemove(SecretLevel.CLOSE);
-
+        if (guardStatus.ordinal() < familyMemberDto.getSecretLevelBirthday().ordinal())
+            familyMemberDto.setSecretLevelBirthday(SecretLevel.CLOSE);
 
         if (familyMemberDto.getMemberInfo() != null) {
             if (familyMemberDto.getMemberInfo().isPhotoBirthExist() && guardStatus.ordinal() < familyMemberDto.getMemberInfo().getSecretLevelBirth().ordinal()) {
@@ -318,9 +326,9 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 .operation(KafkaOperation.ADD).build());
         if (familyMember.isPrimePhoto())
             directivePhotos.add(new Directive(token, familyMember.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.ADD));
-        if (familyMember.getFamilyMemberInfo().get(0).getBirthPlace() != null && familyMember.getFamilyMemberInfo().get(0).isPhotoBirthExist())
+        if (familyMember.getFamilyMemberInfo().get(0).isPhotoBirthExist())
             directivePhotos.add(new Directive(token, familyMember.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.ADD));
-        if (familyMember.getFamilyMemberInfo().get(0).getBurialPlace() != null && familyMember.getFamilyMemberInfo().get(0).isPhotoBurialExist())
+        if (familyMember.getFamilyMemberInfo().get(0).isPhotoBurialExist())
             directivePhotos.add(new Directive(token, familyMember.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.ADD));
         return result;
     }
@@ -343,7 +351,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         Long dtoId = familyMemberDto.getId();
         String token = (String) tokenService.getTokenUser().getClaims().get("sub");
         FamilyMemberDto fromTemp = tempGuardStatus.get(token);
-        if (fromTemp.getSecretLevelEdit() != familyMemberDto.getSecretLevelEdit())
+        if (fromTemp.getSecretLevelEdit() == SecretLevel.CLOSE && familyMemberDto.getSecretLevelEdit() != SecretLevel.CLOSE)
             throw new RuntimeException("подделка прав");
         if (fromTemp.getSecretLevelEdit() == SecretLevel.CLOSE) {
             directiveGuardsList.add(DirectiveGuards.builder()
@@ -392,8 +400,8 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 //        System.out.println(!Objects.equals(fm.getLastName(), familyMemberDto.getLastName()));
 //        System.out.println(fm.getSex() != familyMemberDto.getSex() );
 //        System.out.println(!Objects.equals(fm.getBirthday(), familyMemberDto.getBirthday().toLocalDate()));
-        fm.setCheckStatus(CheckStatus.MODERATE);
-        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE &&
+
+        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE && fromTemp.getSecretLevelBirthday() != SecretLevel.CLOSE &&
                 (!Objects.equals(fm.getFirstName(), familyMemberDto.getFirstName()) ||
                         !Objects.equals(fm.getMiddleName(), familyMemberDto.getMiddleName()) ||
                         !Objects.equals(fm.getLastName(), familyMemberDto.getLastName()) ||
@@ -407,7 +415,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 fm.setBirthday(familyMemberDto.getBirthday());
                 if (fm.getOtherNames() != null && !fm.getOtherNames().isEmpty())
                     oldFioService.changeOldFiosBirthday(fm);
-            } else if (familyMemberDto.getBirthday() != null && familyMemberDto.getBirthday().toLocalDate() != fm.getBirthday().toLocalDate()) {
+            } else if (familyMemberDto.getBirthday() != null && !Objects.equals(familyMemberDto.getBirthday().toLocalDate(), fm.getBirthday().toLocalDate())) {
                 throw new UncorrectedInformation("Изменять день рождения человека, у которого в базе имеются подтвержденные дети, невозможно");
             }
             if (familyMemberDto.getLastName() != null) fm.setLastName(familyMemberDto.getLastName());
@@ -448,6 +456,8 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         familyMemberDto.getMemberInfo().setId(fm.getId());
 
         if (familyMemberDto.getSecretLevelMainInfo() != SecretLevel.CLOSE) {
+            setMainSecurityOption(familyMemberDto, fm);
+
             familyMemberInfoService.secretMerge(familyMemberDto.getMemberInfo(), fm.getFamilyMemberInfo().get(0));
             setUpParents(familyMemberDto, fm, token, changing);
             addChangingToBase(familyMemberDto, fm, changing, token);
@@ -476,15 +486,16 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             else if (fm.getFamilyMemberInfo().get(0).isPhotoBurialExist())
                 directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.RENAME));
         }
-        mainStorageRepository.flushMember();
 // Если нужны старые имена и прозвища в модуле family
         //        result.setFioDtos(oldFioService.getOldNamesMapper().oldFiosSetToFioDtoSet(fm.getOtherNames()));
         directives.add(FamilyDirective.builder()
                 .familyMemberDto(result)
                 .tokenUser((String) tokenService.getTokenUser().getClaims().get("sub"))
-                .person(familyMemberDto.getUuid().toString())
+                .person(fromTemp.getUuid().toString())
                 .switchPosition(SwitchPosition.MAIN)
                 .operation(KafkaOperation.RENAME).build());
+        fm.setCheckStatus(CheckStatus.MODERATE);
+        mainStorageRepository.flushMember();
         tempGuardStatus.remove(token);
         tempExtendedDto.remove(token);
         tempMainContact.remove(token);
@@ -492,6 +503,20 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         return result;
     }
 
+    public void setMainSecurityOption(FamilyMemberDto familyMemberDto, FamilyMember fm) {
+        if (fm.getSecretLevelEdit() != SecretLevel.CLOSE && fm.getSecretLevelMainInfo() != SecretLevel.CLOSE) {
+            if (familyMemberDto.getSecretLevelEdit() != null)
+                fm.setSecretLevelEdit(familyMemberDto.getSecretLevelEdit());
+            if (familyMemberDto.getSecretLevelPhoto() != null && familyMemberDto.getSecretLevelPhoto() != SecretLevel.CLOSE)
+                fm.setSecretLevelPhoto(familyMemberDto.getSecretLevelPhoto());
+            if (familyMemberDto.getSecretLevelMainInfo() != null)
+                fm.setSecretLevelMainInfo(familyMemberDto.getSecretLevelMainInfo());
+            if (familyMemberDto.getSecretLevelRemove() != null && familyMemberDto.getSecretLevelRemove() != SecretLevel.CLOSE)
+                fm.setSecretLevelRemove(familyMemberDto.getSecretLevelRemove());
+            if (familyMemberDto.getSecretLevelBirthday() != null && familyMemberDto.getSecretLevelBirthday() != SecretLevel.CLOSE)
+                fm.setSecretLevelBirthday(familyMemberDto.getSecretLevelBirthday());
+        }
+    }
 
     public void checkOldNamesForAdditionalChilds(Set<FamilyMember> childrenOfFamilyMember, Set<OldFio> oldFios, FamilyMember familyMember) {
         if (childrenOfFamilyMember == null) childrenOfFamilyMember = new HashSet<>();
@@ -542,7 +567,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 familyMemberDto.getFatherFio().getFirstName() == null ||
                 familyMemberDto.getFatherFio().getMiddleName() == null ||
                 familyMemberDto.getFatherFio().getLastName() == null ||
-                familyMemberDto.getFatherFio().getBirthday() == null ||
+                familyMemberDto.getFatherFio().getBirthday() == null || fm.getFatherInfo() == null ||
                 (tempGuardStatus.get(token) != null && fm.getFatherInfo().charAt(0) == '(' &&
                         !CheckStatus.ABSENT.getComment().concat(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getFatherFio()))).equals(tempGuardStatus.get(token).getFatherInfo())))) {
             losingParentsService.setUpFather(familyMemberDto.getFatherFio(), fm);
@@ -552,7 +577,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 familyMemberDto.getMotherFio().getFirstName() == null ||
                 familyMemberDto.getMotherFio().getMiddleName() == null ||
                 familyMemberDto.getMotherFio().getLastName() == null ||
-                familyMemberDto.getMotherFio().getBirthday() == null ||
+                familyMemberDto.getMotherFio().getBirthday() == null || fm.getMotherInfo() == null ||
                 (tempGuardStatus.get(token) != null && fm.getMotherInfo().charAt(0) == '(' &&
                         !CheckStatus.ABSENT.getComment().concat(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio()))).equals(tempGuardStatus.get(token).getMotherInfo())))) {
             losingParentsService.setUpMother(familyMemberDto.getMotherFio(), fm);
@@ -630,7 +655,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     }
 
     @Transactional
-    public void changeParentsAfterVoting(FamilyDirective directive) {
+    public void changeParentsAfterVoting(DirectiveGuards directive) {
         FamilyMember familyMember = familyMemberRepo.findFioByUuid(UUID.fromString(directive.getPerson())).orElseThrow(() -> new RuntimeException("family member not found"));
         switch (directive.getSwitchPosition()) {
             case MAIN -> {
@@ -662,25 +687,56 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     }
 
     @Transactional
-    public void changeCheckStatus(FamilyDirective directive) {
-        FamilyMember familyMember = familyMemberRepo.findFioByUuid(UUID.fromString(directive.getPerson())).orElseThrow(() -> new RuntimeException("family member not found"));
-        switch (directive.getSwitchPosition()) {
-            case MAIN -> familyMember.setCheckStatus(CheckStatus.MODERATE);
-            case FATHER -> {
-                familyMember.setCheckStatus(CheckStatus.LINKED);
-                if (directive.getTokenUser() != null) familyMember.setCreator(directive.getTokenUser());
-                clearTempGuardMaps(directive.getTokenUser());
+    public void changeCheckStatus(DirectiveGuards directive) {
+        if (directive.getGuards() != null && !directive.getGuards().isEmpty()) {
+            Set<FamilyMember> members = familyMemberRepo.findAllByUuidIn(directive.getGuards().stream().map(UUID::fromString).collect(Collectors.toSet()));
+            for (FamilyMember fm :
+                    members) {
+                fm.setCheckStatus(directive.getCheckStatus());
+                if (directive.getCheckStatus()==CheckStatus.CHECKED) fm.setCreator(null);
+                fm.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+
             }
-            case MOTHER -> {
-                familyMember.setCheckStatus(CheckStatus.CHECKED);
-                if (directive.getTokenUser() != null) familyMember.setCreator(null);
-                clearTempGuardMaps(directive.getTokenUser());
-            }
-            case CHILD -> familyMember.setCheckStatus(CheckStatus.UNCHECKED);
-            default -> log.warn("found unknown directive");
+            familyMemberRepo.saveAll(members);
         }
-        familyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
-        familyMemberRepo.save(familyMember);
+        if (directive.getSwitchPosition() != null || directive.getGuards() == null) {
+            FamilyMember familyMember = familyMemberRepo.findFioByUuid(UUID.fromString(directive.getPerson())).orElseThrow(() -> new RuntimeException("family member not found"));
+            if (directive.getSwitchPosition() == null) {
+                switch (directive.getCheckStatus()) {
+                    case MODERATE -> familyMember.setCheckStatus(CheckStatus.MODERATE);
+                    case LINKED -> {
+                        familyMember.setCheckStatus(CheckStatus.LINKED);
+                        if (directive.getTokenUser() != null) {familyMember.setCreator(directive.getTokenUser());
+                        clearTempGuardMaps(directive.getTokenUser());}
+                    }
+                    case CHECKED -> {
+                        familyMember.setCheckStatus(CheckStatus.CHECKED);
+                        familyMember.setCreator(null);
+                        if (directive.getTokenUser() != null) clearTempGuardMaps(directive.getTokenUser());
+
+                    }
+                    case UNCHECKED -> familyMember.setCheckStatus(CheckStatus.UNCHECKED);
+                    default -> log.warn("found unknown directive");
+                }
+            } else switch (directive.getSwitchPosition()) {
+                case MAIN -> familyMember.setCheckStatus(CheckStatus.MODERATE);
+                case FATHER -> {
+                    familyMember.setCheckStatus(CheckStatus.LINKED);
+                    if (directive.getTokenUser() != null) {familyMember.setCreator(directive.getTokenUser());
+                    clearTempGuardMaps(directive.getTokenUser());}
+                }
+                case MOTHER -> {
+                    familyMember.setCheckStatus(CheckStatus.CHECKED);
+                    familyMember.setCreator(null);
+                    if (directive.getTokenUser() != null) clearTempGuardMaps(directive.getTokenUser());
+                }
+                case CHILD -> familyMember.setCheckStatus(CheckStatus.UNCHECKED);
+                default -> log.warn("found unknown directive");
+            }
+            familyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+            familyMemberRepo.save(familyMember);
+        }
+
     }
 
     void clearTempGuardMaps(String token) {

@@ -9,10 +9,10 @@ function getPersonFromBase(cause) {
             <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; text-align:center; font-size: 14px; color: darkred" for="search-radio1">ID</label>
             <input type="radio" class="btn-check" name="search-option" onclick="getPersonFromBaseByFio(${cause})" id="search-radio2" autocomplete="off"> 
             <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; font-size: 14px; color: darkred" for="search-radio2">ФИО/ДР</label>
-            <input type="radio" class="btn-check" name="search-option" id="search-radio3" autocomplete="off">           
-            <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; font-size: 14px; color: darkred" for="search-radio3">ФИО</label>
-            <input type="radio" class="btn-check" name="search-option" id="search-radio4" autocomplete="off">           
-            <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; font-size: 14px; color: darkred" for="search-radio4">Any</label>
+            <input type="radio" class="btn-check" name="search-option" id="search-radio3" autocomplete="off" hidden="hidden">           
+            <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; font-size: 14px; color: darkred" for="search-radio3" hidden="hidden">ФИО</label>
+            <input type="radio" class="btn-check" name="search-option" id="search-radio4" autocomplete="off" hidden="hidden">           
+            <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; font-size: 14px; color: darkred" for="search-radio4" hidden="hidden">Any</label>
         </div>
         <div id="link-block"></div>
 `
@@ -344,7 +344,7 @@ function checkAndSendStorageRequest() {
                     tempPerson.memberInfo.phones = person.memberInfo.phones;
                     tempPerson.memberInfo.addresses = person.memberInfo.addresses;
                     tempPerson.fioDtos = person.fioDtos;
-                }).then(() =>  editPersonInBase());
+                }).then(() => editPersonInBase());
                 break;
             }
             case "remove" : {
@@ -448,7 +448,7 @@ function paintExtendedPerson() {
     </table>
 </div>`;
     URL.revokeObjectURL(tempPerson.primePhotoImj);
-    if (tempPerson.otherNamesExist === true) paintOtherNames(); else document.getElementById("otherNameExt").innerHTML=`Другие имена: `+ infoAbsent;
+    if (tempPerson.otherNamesExist === true) paintOtherNames(); else document.getElementById("otherNameExt").innerHTML = `Другие имена: ` + infoAbsent;
 
     if (tempPerson.memberInfo.biometric !== null && tempPerson.memberInfo.biometric !== undefined) paintBiometric();
     else if (tempPerson.memberInfo.secretLevelBiometric === "CLOSE") document.getElementById("biometricExt").innerHTML = infoClosed;
@@ -466,11 +466,11 @@ function paintExtendedPerson() {
     else if (tempPerson.memberInfo.secretLevelAddress === "CLOSE") document.getElementById("addressExt").innerHTML = infoClosed;
     else document.getElementById("addressExt").innerHTML = infoAbsent;
 
-    if (tempPerson.memberInfo.burial !== null && tempPerson.memberInfo.burial !== undefined) paintBurial();
+    if ((tempPerson.memberInfo.burial !== null && tempPerson.memberInfo.burial !== undefined) || (tempPerson.memberInfo.photoBurialExist && tempPerson.memberInfo.secretLevelBurial !== "CLOSE")) paintBurial();
     else if (tempPerson.memberInfo.secretLevelBurial === "CLOSE") document.getElementById("burialExt").innerHTML = infoClosed;
     else document.getElementById("burialExt").innerHTML = infoAbsent;
 
-    if (tempPerson.memberInfo.birth !== null && tempPerson.memberInfo.birth !== undefined) paintBirth();
+    if ((tempPerson.memberInfo.birth !== null && tempPerson.memberInfo.birth !== undefined) || (tempPerson.memberInfo.photoBirthExist && tempPerson.memberInfo.secretLevelBirth !== "CLOSE")) paintBirth();
     else if (tempPerson.memberInfo.secretLevelBirth === "CLOSE") document.getElementById("birthExt").innerHTML = infoClosed;
     else document.getElementById("birthExt").innerHTML = infoAbsent;
 }
@@ -546,8 +546,10 @@ function paintBurial() {
         `;
         URL.revokeObjectURL(tempPerson.memberInfo.burialImj);
     }
-    tempBurial+=`<div>${tempPerson.memberInfo.burial.internName}</div>`;
-    document.getElementById("burialExt").innerHTML = tempBurial;
+    if (tempPerson.memberInfo.burial !== null && tempPerson.memberInfo.burial.internName !== null) {
+        tempBurial += `<div>${tempPerson.memberInfo.burial.internName}</div>`;}
+        document.getElementById("burialExt").innerHTML = tempBurial;
+
 }
 
 function paintBirth() {
@@ -564,8 +566,10 @@ function paintBirth() {
         `;
         URL.revokeObjectURL(tempPerson.memberInfo.birthImj);
     }
-    tempBirth+=`<div>${tempPerson.memberInfo.birth.internName}</div>`;
-    document.getElementById("birthExt").innerHTML = tempBirth;
+    if (tempPerson.memberInfo.birth !== null && tempPerson.memberInfo.birth.internName !== null) {
+        tempBirth += `<div>${tempPerson.memberInfo.birth.internName}</div>`;}
+        document.getElementById("birthExt").innerHTML = tempBirth;
+
 }
 
 function paintingFindPerson() {

@@ -89,6 +89,11 @@ public class RusTranscriter implements AbstractTranscriter {
     }
 
     @Override
+    public String getClose() {
+        return "Скрыто";
+    }
+
+    @Override
     public String empty() {
         return "<пусто>";
     }

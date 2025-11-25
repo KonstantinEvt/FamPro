@@ -32,8 +32,8 @@ create table if not exists family_members
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
                        'GENETIC_TREE'::character varying,
-                       'BLOOD_TWO'::character varying,
-                       'GLOBAL_TREE'::character varying,
+                       'ANCESTOR'::character varying,
+                       'STRAIGHT_BLOOD'::character varying,
                        'CLOSE'::character varying,
                        'UNDEFINED'::character varying
                        ])::text[])),
@@ -45,8 +45,8 @@ create table if not exists family_members
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
                        'GENETIC_TREE'::character varying,
-                       'BLOOD_TWO'::character varying,
-                       'GLOBAL_TREE'::character varying,
+                       'STRAIGHT_BLOOD'::character varying,
+                       'ANCESTOR'::character varying,
                        'CLOSE'::character varying,
                        'UNDEFINED'::character varying
                        ])::text[]))

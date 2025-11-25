@@ -10,6 +10,7 @@ String getInfoNotFully();
 String getIncorrectInfo();
 String getBirthdayString();
 String getOut();
+String getClose();
 String empty();
 Map<String,String> getMatrixOfChange();
 }

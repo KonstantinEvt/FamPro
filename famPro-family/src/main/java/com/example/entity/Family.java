@@ -1,5 +1,6 @@
 package com.example.entity;
 
+import com.example.enums.SecretLevel;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,12 +21,16 @@ public class Family {
             sequenceName = "seqFamilyGen", initialValue = 1, allocationSize = 5
     )
     private Long id;
-    @Column(name = "stringId")
-    private String externID;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name = "global_family")
-    private GlobalFamily globalFamily;
+    @Column(name = "UUID")
+    private UUID uuid;
+
+//    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+//    @JoinColumn(name = "global_family")
+//    private GlobalFamily globalFamily;
+
+//    @Column(name = "activeStatus")
+//    private boolean activeStatus;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "family_member",
@@ -54,13 +59,22 @@ public class Family {
             inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id"))
     private Set<ShortFamilyMember> halfChildrenByMother;
 
+    @Column(name = "halfMother")
+    private boolean halfMotherExist;
+
+    @Column(name = "halfFather")
+    private boolean halfFatherExist;
+
+    @Column(name = "InLow")
+    private boolean inLowExist;
+
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "children-in-low",
             joinColumns = @JoinColumn(name = "family_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id"))
     private Set<ShortFamilyMember> childrenInLow;
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "family_guard",
             joinColumns = @JoinColumn(name = "family_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "guard_id", referencedColumnName = "id"))
@@ -80,6 +94,9 @@ public class Family {
     @JoinColumn(name = "wife")
     private ShortFamilyMember wife;
 
+    @Column(name = "activeGuard")
+    private String activeGuard;
+
     @Column(name = "Birthday")
     private Date birthday;
 
@@ -88,4 +105,20 @@ public class Family {
 
     @Column(name = "description")
     private String description;
+    @Enumerated(EnumType.STRING)
+
+    @Column(name = "security_photo")
+    private SecretLevel secretLevelPhoto;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_edit")
+    private SecretLevel secretLevelEdit;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_remove")
+    private SecretLevel secretLevelRemove;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_get")
+    private SecretLevel secretLevelGet;
 }

@@ -2,6 +2,7 @@ package com.example.transcriters;
 
 import com.example.checks.CommonWordChecks;
 import com.example.dtos.*;
+import com.example.enums.SecretLevel;
 import com.ibm.icu.text.SimpleDateFormat;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,22 +23,26 @@ public class TranscritFamilyMember {
 //            transcritToFio(transcriterHolder, familyMemberDto.getMotherFio());
 //        if (familyMemberDto.getFatherFio() != null)
 //            transcritToFio(transcriterHolder, familyMemberDto.getFatherFio());
-       toGetOtherNames(transcriterHolder,familyMemberDto);
+        toGetOtherNames(transcriterHolder, familyMemberDto);
     }
-public void toGetOtherNames(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto){
-    if (familyMemberDto.getFioDtos() != null) {
-        for (FioDto fioDto :
-                familyMemberDto.getFioDtos())
-            transcritToFio(transcriterHolder, fioDto);
+
+    public void toGetOtherNames(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto) {
+        if (familyMemberDto.getFioDtos() != null) {
+            for (FioDto fioDto :
+                    familyMemberDto.getFioDtos())
+                transcritToFio(transcriterHolder, fioDto);
+        }
     }
-}
+
     public void toGet(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto) throws ParseException {
-        AbstractTranscriter trans= transcriterHolder.getTranscriter();
-        familyMemberDto.setFullName(parseFullName(trans, familyMemberDto.getFullName(), new FioDto()));
+        AbstractTranscriter trans = transcriterHolder.getTranscriter();
+        boolean secret = familyMemberDto.getSecretLevelBirthday() == SecretLevel.CLOSE;
+        familyMemberDto.setFullName(parseFullName(trans, familyMemberDto.getFullName(), new FioDto(), secret));
+        if (secret) familyMemberDto.setBirthday(null);
         FioDto fatherFio = new FioDto();
         FioDto motherFio = new FioDto();
-        familyMemberDto.setMotherInfo(parseFullName(trans, familyMemberDto.getMotherInfo(), motherFio));
-        familyMemberDto.setFatherInfo(parseFullName(trans, familyMemberDto.getFatherInfo(), fatherFio));
+        familyMemberDto.setMotherInfo(parseFullName(trans, familyMemberDto.getMotherInfo(), motherFio, secret));
+        familyMemberDto.setFatherInfo(parseFullName(trans, familyMemberDto.getFatherInfo(), fatherFio, secret));
         if (!Objects.equals(familyMemberDto.getMotherInfo(), trans.getOut()) || !Objects.equals(familyMemberDto.getMotherInfo(), trans.getIncorrectInfo()))
             familyMemberDto.setMotherFio(motherFio);
         if (!Objects.equals(familyMemberDto.getFatherInfo(), trans.getOut()) || !Objects.equals(familyMemberDto.getFatherInfo(), trans.getIncorrectInfo()))
@@ -49,32 +54,34 @@ public void toGetOtherNames(TranscriterHolder transcriterHolder, FamilyMemberDto
             familyMemberDto.getMemberInfo().setMainPhone(trans.getOut());
         familyMemberDto.getMemberInfo().setMainAddress(parseFullAddressTo(trans, familyMemberDto.getMemberInfo().getMainAddress()));
     }
-public void toGetInfo(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto){
-    AbstractTranscriter trans = transcriterHolder.getTranscriter();
-    if (familyMemberDto.getMemberInfo() != null) {
-        if (familyMemberDto.getMemberInfo().getAddresses() != null) {
-            for (AddressDto address : familyMemberDto.getMemberInfo().getAddresses()) {
-                transcritToAddress(trans, address);
-                address.setInternName(parseFullAddressTo(trans,address.getInternName()));
-            }
-        }
-        if (familyMemberDto.getMemberInfo().getBirth() != null) {
-            transcritToBirth(trans, familyMemberDto.getMemberInfo().getBirth());
-            familyMemberDto.getMemberInfo().getBirth().setInternName(parseFullAddressTo(trans,familyMemberDto.getMemberInfo().getBirth().getInternName()));
-        }
-        if (familyMemberDto.getMemberInfo().getBurial() != null) {
-            transcritToBurial(trans, familyMemberDto.getMemberInfo().getBurial());
-            familyMemberDto.getMemberInfo().getBurial().setInternName(parseFullAddressTo(trans,familyMemberDto.getMemberInfo().getBurial().getInternName()));
-        }
 
+    public void toGetInfo(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto) {
+        AbstractTranscriter trans = transcriterHolder.getTranscriter();
+        if (familyMemberDto.getMemberInfo() != null) {
+            if (familyMemberDto.getMemberInfo().getAddresses() != null) {
+                for (AddressDto address : familyMemberDto.getMemberInfo().getAddresses()) {
+                    transcritToAddress(trans, address);
+                    address.setInternName(parseFullAddressTo(trans, address.getInternName()));
+                }
+            }
+            if (familyMemberDto.getMemberInfo().getBirth() != null) {
+                transcritToBirth(trans, familyMemberDto.getMemberInfo().getBirth());
+                familyMemberDto.getMemberInfo().getBirth().setInternName(parseFullAddressTo(trans, familyMemberDto.getMemberInfo().getBirth().getInternName()));
+            }
+            if (familyMemberDto.getMemberInfo().getBurial() != null) {
+                transcritToBurial(trans, familyMemberDto.getMemberInfo().getBurial());
+                familyMemberDto.getMemberInfo().getBurial().setInternName(parseFullAddressTo(trans, familyMemberDto.getMemberInfo().getBurial().getInternName()));
+            }
+
+        }
     }
-}
+
     private String parseFullAddressTo(AbstractTranscriter trans, String str) {
         if (str == null || str.isEmpty()) return trans.getOut();
         else return trans.transcritWordToLocalisation(str);
     }
 
-    private String parseFullName(AbstractTranscriter trans, String str, FioDto fioDto) throws ParseException {
+    private String parseFullName(AbstractTranscriter trans, String str, FioDto fioDto, boolean secret) throws ParseException {
         String result;
         SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd");
         if (str == null || str.isEmpty()) return trans.getOut();
@@ -85,7 +92,8 @@ public void toGetInfo(TranscriterHolder transcriterHolder, FamilyMemberDto famil
                 fioDto.setFirstName(trans.transcritWordToLocalisation(strings[0]));
                 fioDto.setMiddleName(trans.transcritWordToLocalisation(strings[1]));
                 fioDto.setLastName(trans.transcritWordToLocalisation(strings[2]));
-                fioDto.setBirthday(new Date(format.parse(strings[6]).getTime()));
+                if (!secret) fioDto.setBirthday(new Date(format.parse(strings[6]).getTime()));
+                else strings[6] = trans.getClose();
                 result = String.join(" ", trans.getAbsent(), fioDto.getFirstName(),
                         fioDto.getMiddleName(),
                         fioDto.getLastName(),
@@ -96,7 +104,9 @@ public void toGetInfo(TranscriterHolder transcriterHolder, FamilyMemberDto famil
                 if (!strings[0].equals("null")) fioDto.setFirstName(trans.transcritWordToLocalisation(strings[0]));
                 if (!strings[1].equals("null")) fioDto.setFirstName(trans.transcritWordToLocalisation(strings[1]));
                 if (!strings[2].equals("null")) fioDto.setFirstName(trans.transcritWordToLocalisation(strings[2]));
-                if (!strings[6].equals("null")) fioDto.setBirthday(new Date(format.parse(strings[6]).getTime()));
+                if (!strings[6].equals("null"))
+                    if (!secret) fioDto.setBirthday(new Date(format.parse(strings[6]).getTime()));
+                    else strings[6] = trans.getClose();
                 result = String.join(" ", trans.getInfoNotFully(), strings[0].equals("null") ? trans.empty() : fioDto.getFirstName(),
                         strings[1].equals("null") ? trans.empty() : fioDto.getMiddleName(),
                         strings[2].equals("null") ? trans.empty() : fioDto.getLastName(),
@@ -108,7 +118,8 @@ public void toGetInfo(TranscriterHolder transcriterHolder, FamilyMemberDto famil
             fioDto.setFirstName(trans.transcritWordToLocalisation(strings[0]));
             fioDto.setMiddleName(trans.transcritWordToLocalisation(strings[1]));
             fioDto.setLastName(trans.transcritWordToLocalisation(strings[2]));
-            fioDto.setBirthday(new Date(format.parse(strings[6]).getTime()));
+            if (!secret) fioDto.setBirthday(new Date(format.parse(strings[6]).getTime()));
+            else strings[6] = trans.getClose();
             result = String.join(" ", trans.transcritWordToLocalisation(strings[0]),
                     trans.transcritWordToLocalisation(strings[1]),
                     trans.transcritWordToLocalisation(strings[2]),
@@ -211,6 +222,7 @@ public void toGetInfo(TranscriterHolder transcriterHolder, FamilyMemberDto famil
             fioDto.setLastName(transcriterHolder.getTranscriter().transcritWordFromLocalisation(fioDto.getLastName()));
         }
     }
+
     public void transcritToAddress(AbstractTranscriter trans, AddressDto address) {
         if (address.getHouse() != null)
             address.setHouse(trans.transcritWordToLocalisation(address.getHouse()));

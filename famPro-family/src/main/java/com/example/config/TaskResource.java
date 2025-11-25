@@ -26,6 +26,10 @@ public class TaskResource {
         return new LinkedList<>();
     }
 
+    @Bean("checkLevelDirective")
+    LinkedList<DirectiveGuards> checkLevelDirective() {
+        return new LinkedList<>();
+    }
     @Bean("contactDirective")
     LinkedList<DirectiveGuards> contactDirective() {
         return new LinkedList<>();

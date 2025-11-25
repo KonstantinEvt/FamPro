@@ -48,7 +48,7 @@ public class FamilyMemberDto extends FioDto implements Serializable {
     private SecretLevel secretLevelEdit;
     private SecretLevel secretLevelMainInfo;
     private SecretLevel secretLevelRemove;
-
+    private SecretLevel secretLevelBirthday;
     @Schema(name = "status")
     private CheckStatus checkStatus;
 }

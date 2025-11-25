@@ -111,6 +111,10 @@ public class FamilyMember extends Fio {
     @Column(name = "security_remove")
     private SecretLevel secretLevelRemove;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_birthday")
+    private SecretLevel secretLevelBirthday;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

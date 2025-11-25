@@ -10,7 +10,7 @@ let tempPerson;
 let tempTextPhoto;
 const infoAbsent = "Информация отсутствует";
 const infoClosed = "Информация закрыта";
-const infoUncorrected="Неверная информация"
+const infoUncorrected = "Неверная информация"
 
 let tempPrimePhoto;
 let tempBirthPhoto;
@@ -115,7 +115,7 @@ function getDate(datetime) {
 }
 
 function getAge(birthday, deathday) {
-    if (deathday===infoAbsent) return deathday;
+    if (deathday === infoAbsent) return deathday;
     let age;
     let alife = false;
     if (deathday === undefined || deathday === null || deathday === '') {
@@ -183,10 +183,22 @@ function loadNewsCounts() {
             "Content-Type": "text/javascript; charset=UTF-8"
             // "Access-Control-Allow-Origin": "*"
         }
-    }).then(r => r.json()).then(cou => {
-        if (document.getElementById("message-list") !== null && document.getElementById("family-list") !== undefined && counts[3] !== cou[3]) loadingIndividualNews("family", false);
-        if (document.getElementById("message-list") !== null && document.getElementById("private-list") !== undefined && counts[4] !== cou[4]) loadingIndividualNews("private", false);
-        counts = cou;
+    }).then(r => {
+        if (r.status!==0) r.json().then(cou => {
+            if (document.getElementById("message-list") !== null && document.getElementById("family-list") !== undefined && counts[3] !== cou[3]) loadingIndividualNews("family", false);
+            if (document.getElementById("message-list") !== null && document.getElementById("private-list") !== undefined && counts[4] !== cou[4]) loadingIndividualNews("private", false);
+            counts = cou;
+        }); else throw new Error("Count is corrupt")
+    // }).catch((err) => {
+        // console.log(err.message);
+        // fetch("/token", {
+        //     method: "GET",
+        //     headers: {
+        //         "Content-Type": "text/javascript; charset=UTF-8"
+        //         // "Access-Control-Allow-Origin": "*"
+        //     }
+        // }).then(() => console.log("Fatality"));
+        // window.location.href = "https://88.201.226.46:9898";
     })
     if (document.getElementById("badge0") !== null && document.getElementById("badge0") !== undefined && counts[0] !== 0) {
         document.getElementById("badge0").innerHTML =

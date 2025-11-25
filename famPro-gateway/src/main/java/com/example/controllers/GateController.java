@@ -24,10 +24,10 @@ import java.io.InputStream;
 public class GateController {
 
 private FrontBackgroundHolder frontBackgroundHolder;
-//    @GetMapping(value = "/token")
-//    public Mono<String> getHome(@RegisteredOAuth2AuthorizedClient OAuth2AuthorizedClient authorizedClient) {
-//        return Mono.just(authorizedClient.getAccessToken().getTokenValue());
-//    }
+    @GetMapping(value = "/token")
+    public Mono<String> getHome(@RegisteredOAuth2AuthorizedClient OAuth2AuthorizedClient authorizedClient) {
+        return Mono.just(authorizedClient.getAccessToken().getTokenValue());
+    }
 //    @GetMapping(value = "/token1")
 //    public Mono<Authentication> getHome1() {
 //        SecurityContext context = SecurityContextHolder.getContext();

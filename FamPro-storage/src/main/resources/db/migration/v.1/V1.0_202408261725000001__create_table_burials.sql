@@ -23,8 +23,8 @@ create table if not exists burials
                        'CONFIDENTIAL'::character varying,
                        'FAMILY'::character varying,
                        'GENETIC_TREE'::character varying,
-                       'BLOOD_TWO'::character varying,
-                       'GLOBAL_TREE'::character varying,
+                       'ANCESTOR'::character varying,
+                       'STRAIGHT_BLOOD'::character varying,
                        'CLOSE'::character varying
                        ])::text[])),
     status       varchar(255)

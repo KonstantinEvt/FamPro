@@ -220,88 +220,107 @@ function addFamilyMember() {
                                 <label for="chooseSecurePP" style="color: chocolate; padding-top: 5px">Видимость фото:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePP" aria-label="chooseSecurePP">            
             <option value="OPEN" selected>Открыто</option>
-            <option value="GLOBAL_TREE">Родственники</option>
+            <option value="CONFIDENTIAL">Личное</option>
+            <option value="ANCESTOR" >Предки</option>
+            <option value="FAMILY" >Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="GENETIC_TREE">Семейное древо</option>
+            
         </select>
         <label for="chooseSecureEE" style="color: chocolate; padding-top: 5px">Secure edit:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureEE" aria-label="chooseSecureEE">            
             <option value="CONFIDENTIAL">Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY" selected >Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
         <label for="chooseSecureMain" style="color: chocolate; padding-top: 5px">Secure edit main:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureMain" aria-label="chooseSecureMain">            
-            <option value="CONFIDENTIAL">Личное</option>
+            <option value="CONFIDENTIAL">Личное</option>            
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY" selected >Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
+        </select>
+        <label for="chooseSecureBirthday" style="color: chocolate; padding-top: 5px">Secure Birthday:</label>
+        <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureBirthday" aria-label="chooseSecureBirthday">            
+            <option value="OPEN" selected>Открыто</option>
+            <option value="CONFIDENTIAL">Личное</option>
+            <option value="ANCESTOR" >Предки</option>
+            <option value="FAMILY" >Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureRM" style="color: chocolate; padding-top: 5px">Secure remove:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureRM" aria-label="chooseSecureRM">            
             <option value="CONFIDENTIAL">Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY" selected >Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
         <label for="chooseSecureME" style="color: chocolate; padding-top: 5px">Secure main email:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureME" aria-label="chooseSecureME">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
                 <label for="chooseSecurePBur" style="color: chocolate; padding-top: 5px">Secure place of burial:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBur" aria-label="chooseSecurePBur">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" >Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE" selected>Все родственники</option>
         </select>
         <label for="chooseSecurePBirth" style="color: chocolate; padding-top: 5px">Secure place of birth:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBirth" aria-label="chooseSecurePBirth">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" >Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY" selected>Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
         <label for="chooseSecureMP" style="color: chocolate; padding-top: 5px">Secure main phone:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px; text-align: center" id="chooseSecureMP" aria-label="chooseSecureMP">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
         <label for="chooseSecureMA" style="color: chocolate; padding-top: 5px">Secure main address:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px; text-align: center" id="chooseSecureMA" aria-label="chooseSecureMA">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="BLOOD_TWO">Древо+</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
         <label for="chooseSecureBio" style="color: chocolate; padding-top: 5px">Secure biometric:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureBio" aria-label="chooseSecureBio">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
         <label for="chooseSecureDes" style="color: chocolate; padding-top: 5px">Secure description:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureDes" aria-label="chooseSecureDes">            
             <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
+            <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
-            <option value="GLOBAL_TREE">Все родственники</option>
         </select>
                         </span>
                         <span class="col" style="width: 30%"></span>
@@ -625,6 +644,7 @@ function submitBaseFormAddFM() {
         secretLevelPhoto: form.elements.chooseSecurePP.value,
         secretLevelEdit: form.elements.chooseSecureEE.value,
         secretLevelMainInfo: form.elements.chooseSecureMain.value,
+        secretLevelBirthday: form.elements.chooseSecureBirthday.value,
         secretLevelRemove: form.elements.chooseSecureRM.value,
         firstName: form.elements.firstNameAddFM.value,
         middleName: form.elements.middleNameAddFM.value,
@@ -658,7 +678,8 @@ function submitBaseFormAddFM() {
                 city: form.elements.birthCityAddFM.value,
                 street: form.elements.birthStreetAddFM.value,
                 birthHouse: form.elements.birthHouseAddFM.value,
-                registration: form.elements.birthRegisterAddFM.value
+                registration: form.elements.birthRegisterAddFM.value,
+                photoExist: birthPhotoExist
             },
             burial: {
                 country: form.elements.burialCountryAddFM.value,
@@ -668,7 +689,8 @@ function submitBaseFormAddFM() {
                 street: form.elements.burialStreetAddFM.value,
                 chapter: form.elements.burialHouseAddFM.value,
                 square: form.elements.burialBuildingAddFM.value,
-                grave: form.elements.burialFlatAddFM.value
+                grave: form.elements.burialFlatAddFM.value,
+                photoExist: burialPhotoExist
             },
             phones: otherPhones,
             emails: otherEmails,

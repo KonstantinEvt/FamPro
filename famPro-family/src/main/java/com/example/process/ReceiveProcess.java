@@ -3,7 +3,7 @@ package com.example.process;
 import com.example.dtos.FamilyDirective;
 import com.example.enums.SwitchPosition;
 import com.example.holders.DirectiveHolder;
-import com.example.service.IncomingService;
+import com.example.service.FacadeService;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.messaging.Message;
@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 @AllArgsConstructor
 public class ReceiveProcess implements Consumer<Message<FamilyDirective>> {
     private final DirectiveHolder directiveHolder;
-    private IncomingService incomingService;
+    private FacadeService facadeService;
 
     @Override
     public void accept(Message<FamilyDirective> directiveMessage) {
@@ -29,7 +29,7 @@ public class ReceiveProcess implements Consumer<Message<FamilyDirective>> {
         if (!directiveHolder.getDirectiveMap().get(keyOperation).contains(directive)) {
             directiveHolder.getDirectiveMap().get(keyOperation).add(directive);
             if (directive.getSwitchPosition() == SwitchPosition.MAIN) {
-                incomingService.checkFamilyDirectives(directiveHolder.getDirectiveMap().get(keyOperation));
+                facadeService.checkFamilyDirectives(directiveHolder.getDirectiveMap().get(keyOperation));
                 directiveHolder.getDirectiveMap().remove(keyOperation);
             }
         }

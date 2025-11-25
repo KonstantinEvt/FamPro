@@ -45,6 +45,11 @@ public class EmptyTranscriter implements AbstractTranscriter {
     }
 
     @Override
+    public String getClose() {
+        return "Hidden";
+    }
+
+    @Override
     public String empty() {
         return "<empty>";
     }

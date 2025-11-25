@@ -33,7 +33,6 @@ public class DirectiveService {
     private final FamilyServiceImp familyService;
     private final MemberService memberService;
     private final DirectiveRepo directiveRepo;
-    private final GlobalFamilyService globalFamilyService;
     private final List<FamilyDirective> storageDirective;
     private final List<DirectiveGuards> contactDirective;
     private final List<Directive> cloakDirective;
@@ -45,7 +44,6 @@ public class DirectiveService {
                             FamilyServiceImp familyService,
                             MemberService memberService,
                             DirectiveRepo directiveRepo,
-                            GlobalFamilyService globalFamilyService,
                             List<FamilyDirective> storageDirective,
                             @Qualifier("contactDirective") List<DirectiveGuards> contactDirective, List<Directive> cloakDirective) {
         this.guardService = guardService;
@@ -55,7 +53,6 @@ public class DirectiveService {
         this.familyService = familyService;
         this.memberService = memberService;
         this.directiveRepo = directiveRepo;
-        this.globalFamilyService = globalFamilyService;
         this.storageDirective = storageDirective;
         this.contactDirective = contactDirective;
         this.cloakDirective = cloakDirective;
@@ -64,14 +61,14 @@ public class DirectiveService {
     public void formGuardDirective(List<DeferredDirective> directiveList) {
 
         for (DeferredDirective directive : directiveList) {
-            Set<String> guards = guardService.findFamilyGuards(directive.getProcessFamily())
-                    .stream()
-                    .map(Guard::getTokenUser)
-                    .collect(Collectors.toSet());
+//            Set<String> guards = guardService.findFamilyGuards(directive.getProcessFamily())
+//                    .stream()
+//                    .map(Guard::getTokenUser)
+//                    .collect(Collectors.toSet());
             DirectiveGuards directiveGuards = DirectiveGuards.builder()
                     .id(directive.getId().toString())
                     .created(directive.getCreated())
-                    .guards(guards)
+                    .guards(null)
                     .tokenUser(directive.getTokenUser())
                     .switchPosition(directive.getSwitchPosition())
                     .info1(directive.getDirectiveMember().getFullName())
@@ -131,8 +128,8 @@ public class DirectiveService {
                         processFamily,
                         mainMember,
                         processMember);
-                grandChildFamilies.addAll(familyService.addGrandLinks(mainMember.getChilds(), processMember));
-                familyToRemove = checkForUnique(processMember, mainMember, mainFamily);
+//                grandChildFamilies.addAll(familyService.addGrandLinks(mainMember.getChilds(), processMember));
+//                familyToRemove = checkForUnique(processMember, mainMember, mainFamily);
                 log.info("father is setup");
             }
             case MOTHER -> {
@@ -140,8 +137,8 @@ public class DirectiveService {
                         processFamily,
                         mainMember,
                         processMember);
-                grandChildFamilies.addAll(familyService.addGrandLinks(mainMember.getChilds(), processMember));
-                familyToRemove = checkForUnique(processMember, mainMember, mainFamily);
+//                grandChildFamilies.addAll(familyService.addGrandLinks(mainMember.getChilds(), processMember));
+//                familyToRemove = checkForUnique(processMember, mainMember, mainFamily);
                 log.info("mother is setup");
             }
             case CHILD -> {
@@ -157,19 +154,19 @@ public class DirectiveService {
                             mainFamily,
                             processMember,
                             mainMember);
-                grandChildFamilies.addAll(familyService.addGrandLinks(processMember.getChilds(), mainMember));
-                familyToRemove = checkForUnique(mainMember, processMember, processFamily);
+//                grandChildFamilies.addAll(familyService.addGrandLinks(processMember.getChilds(), mainMember));
+//                familyToRemove = checkForUnique(mainMember, processMember, processFamily);
                 memberService.addChildToFamilyMember(mainMember, processMember);
-                memberService.getShortMemberRepo().save(processMember);
+                memberService.updateMember(processMember);
                 log.info("child is setup");
             }
             default -> log.warn("Обнаружена неизвестная директива");
         }
-        if (!grandChildFamilies.isEmpty()) familyRepo.saveAll(grandChildFamilies);
+//        if (!grandChildFamilies.isEmpty()) familyRepo.saveAll(grandChildFamilies);
         mainMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         processMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
-        memberService.getShortMemberRepo().save(mainMember);
-        memberService.getShortMemberRepo().save(processMember);
+        memberService.updateMember(mainMember);
+        memberService.updateMember(processMember);
 
         if (familyToRemove != null) {
             Set<DeferredDirective> deferredDirectives = mainFamilyRepo.findDirectivesConsistFamilyToRemove(familyToRemove);
@@ -184,10 +181,10 @@ public class DirectiveService {
             familyRepo.delete(familyToRemove);
         }
 
-        if (mainFamily.getGlobalFamily().getNumber() > processFamily.getGlobalFamily().getNumber())
-            globalFamilyService.mergeGlobalFamilies(mainFamily.getGlobalFamily(), processFamily.getGlobalFamily());
-        else
-            globalFamilyService.mergeGlobalFamilies(processFamily.getGlobalFamily(), mainFamily.getGlobalFamily());
+//        if (mainFamily.getGlobalFamily().getNumber() > processFamily.getGlobalFamily().getNumber())
+//            globalFamilyService.mergeGlobalFamilies(mainFamily.getGlobalFamily(), processFamily.getGlobalFamily());
+//        else
+//            globalFamilyService.mergeGlobalFamilies(processFamily.getGlobalFamily(), mainFamily.getGlobalFamily());
 
         if (existByMain == null) storageDirective.add(FamilyDirective.builder()
                 .person(mainMember.getUuid().toString())
@@ -202,27 +199,27 @@ public class DirectiveService {
         contactDirective.add(DirectiveGuards.builder()
                 .operation(KafkaOperation.ADD)
                 .switchPosition(SwitchPosition.MAIN)
-                .guards(mainFamily.getGlobalFamily().getGuard().stream().map(Guard::getTokenUser).collect(Collectors.toSet()))
+                .guards(null)
                 .build());
     }
 
-    private Family checkForUnique(ShortFamilyMember parent, ShortFamilyMember child, Family childFamily) {
-        boolean unique = true;
-        Set<Family> childFamilies = parent.getChilds().stream().map(ShortFamilyMember::getFamilyWhereChild).collect(Collectors.toSet());
-        for (Family fam : childFamilies) {
-            if (unique && fam.getExternID().equals(childFamily.getExternID()) && fam != childFamily) {
-                familyService.mergeFamilies(childFamily, fam);
-                child.setFamilyWhereChild(fam);
-                familyRepo.save(fam);
-                unique = false;
-            }
-        }
-        if (unique) {
-            familyRepo.save(childFamily);
-            return null;
-        } else
-            return childFamily;
-    }
+//    private Family checkForUnique(ShortFamilyMember parent, ShortFamilyMember child, Family childFamily) {
+//        boolean unique = true;
+//        Set<Family> childFamilies = parent.getChilds().stream().map(ShortFamilyMember::getFamilyWhereChild).collect(Collectors.toSet());
+//        for (Family fam : childFamilies) {
+//            if (unique && fam.getExternID().equals(childFamily.getExternID()) && fam != childFamily) {
+//                familyService.mergeFamilies(childFamily, fam);
+//                child.setFamilyWhereChild(fam);
+//                familyRepo.save(fam);
+//                unique = false;
+//            }
+//        }
+//        if (unique) {
+//            familyRepo.save(childFamily);
+//            return null;
+//        } else
+//            return childFamily;
+//    }
 
     @Transactional
     public void negativeVoting(String directiveUuid) {
@@ -238,7 +235,7 @@ public class DirectiveService {
                 deferredDirective.getDirectiveMember().setFatherInfo(null);
                 deferredDirective.getDirectiveFamily().setWifeInfo(null);
                 deferredDirective.getDirectiveFamily().setHusbandInfo(null);
-                deferredDirective.getDirectiveFamily().setExternID(deferredDirective.getDirectiveMember().getUuid().toString());
+                deferredDirective.getDirectiveFamily().setUuid(UUID.fromString(deferredDirective.getDirectiveMember().getUuid().toString()));
                 storageDirective.add(FamilyDirective.builder()
                         .person(deferredDirective.getDirectiveMember().getUuid().toString())
                         .switchPosition(SwitchPosition.MAIN)
@@ -249,9 +246,9 @@ public class DirectiveService {
                 deferredDirective.getDirectiveMember().setMotherInfo(null);
                 if (deferredDirective.getDirectiveFamily().getChildren().size() == 1) {
                     deferredDirective.getDirectiveFamily().setWifeInfo(null);
-                    deferredDirective.getDirectiveFamily().setExternID(deferredDirective.getDirectiveMember().getUuid().toString());
+                    deferredDirective.getDirectiveFamily().setUuid(UUID.fromString(deferredDirective.getDirectiveMember().getUuid().toString()));
                 } else
-                    familyService.ejectionPersonFromFamily(deferredDirective.getDirectiveMember(), deferredDirective.getDirectiveFamily());
+//                    familyService.ejectionPersonFromFamily(deferredDirective.getDirectiveMember(), deferredDirective.getDirectiveFamily());
                 storageDirective.add(FamilyDirective.builder()
                         .person(deferredDirective.getDirectiveMember().getUuid().toString())
                         .switchPosition(SwitchPosition.MOTHER)
@@ -262,9 +259,9 @@ public class DirectiveService {
                 deferredDirective.getDirectiveMember().setFatherInfo(null);
                 if (deferredDirective.getDirectiveFamily().getChildren().size() == 1) {
                     deferredDirective.getDirectiveFamily().setHusbandInfo(null);
-                    deferredDirective.getDirectiveFamily().setExternID(deferredDirective.getDirectiveMember().getUuid().toString());
+                    deferredDirective.getDirectiveFamily().setUuid(UUID.fromString(deferredDirective.getDirectiveMember().getUuid().toString()));
                 } else
-                    familyService.ejectionPersonFromFamily(deferredDirective.getDirectiveMember(), deferredDirective.getDirectiveFamily());
+//                    familyService.ejectionPersonFromFamily(deferredDirective.getDirectiveMember(), deferredDirective.getDirectiveFamily());
                 storageDirective.add(FamilyDirective.builder()
                         .person(deferredDirective.getDirectiveMember().getUuid().toString())
                         .switchPosition(SwitchPosition.FATHER)
@@ -276,9 +273,9 @@ public class DirectiveService {
                     deferredDirective.getShortFamilyMemberLink().setFatherInfo(null);
                     if (deferredDirective.getProcessFamily().getChildren().size() == 1) {
                         deferredDirective.getProcessFamily().setHusbandInfo(null);
-                        deferredDirective.getProcessFamily().setExternID(deferredDirective.getShortFamilyMemberLink().getUuid().toString());
+                        deferredDirective.getProcessFamily().setUuid(UUID.fromString(deferredDirective.getShortFamilyMemberLink().getUuid().toString()));
                     } else
-                        familyService.ejectionPersonFromFamily(deferredDirective.getShortFamilyMemberLink(), deferredDirective.getProcessFamily());
+//                        familyService.ejectionPersonFromFamily(deferredDirective.getShortFamilyMemberLink(), deferredDirective.getProcessFamily());
                     storageDirective.add(FamilyDirective.builder()
                             .person(deferredDirective.getShortFamilyMemberLink().getUuid().toString())
                             .switchPosition(SwitchPosition.FATHER)
@@ -288,9 +285,9 @@ public class DirectiveService {
                     deferredDirective.getShortFamilyMemberLink().setMotherInfo(null);
                     if (deferredDirective.getProcessFamily().getChildren().size() == 1) {
                         deferredDirective.getProcessFamily().setWifeInfo(null);
-                        deferredDirective.getProcessFamily().setExternID(deferredDirective.getShortFamilyMemberLink().getUuid().toString());
+                        deferredDirective.getProcessFamily().setUuid(UUID.fromString(deferredDirective.getShortFamilyMemberLink().getUuid().toString()));
                     } else
-                        familyService.ejectionPersonFromFamily(deferredDirective.getShortFamilyMemberLink(), deferredDirective.getProcessFamily());
+//                        familyService.ejectionPersonFromFamily(deferredDirective.getShortFamilyMemberLink(), deferredDirective.getProcessFamily());
                     storageDirective.add(FamilyDirective.builder()
                             .person(deferredDirective.getShortFamilyMemberLink().getUuid().toString())
                             .switchPosition(SwitchPosition.MOTHER)
@@ -308,14 +305,12 @@ public class DirectiveService {
         DeferredDirective directive = mainFamilyRepo.getLinkingDirective(UUID.fromString(directiveUuid)).orElseThrow(() -> new RuntimeException("directive is missing"));
         if (directive.getDirectiveMember() == null || !directive.getDirectiveMember().getLinkedGuard().isEmpty())
             throw new RuntimeException("directive is corrupt");
-        ShortFamilyMember shortFamilyMember = mainFamilyRepo.getPersonForLinking(directive.getDirectiveMember().getUuid());
+        ShortFamilyMember shortFamilyMember = mainFamilyRepo.getPersonForLinking(directive.getDirectiveMember().getUuid()).orElseThrow(()->new RuntimeException("Member not found"));
         if (shortFamilyMember == null) throw new RuntimeException("человек не найден");
         Guard linkGuard = guardService.creatGuard(shortFamilyMember, directive.getTokenUser());
         guardService.addGuardToFamilies(shortFamilyMember.getFamilies(), linkGuard);
-        guardService.addGuardToGlobalFamily(linkGuard, shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
-        globalFamilyService.getGlobalFamilyRepo().save(shortFamilyMember.getFamilyWhereChild().getGlobalFamily());
         shortFamilyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
-        memberService.getShortMemberRepo().save(shortFamilyMember);
+        memberService.getMemberRepository().updateMember(shortFamilyMember);
 //        familyRepo.saveAll(shortFamilyMember.getFamilies());
 
         log.info("New guard is created");
@@ -333,7 +328,7 @@ public class DirectiveService {
         contactDirective.add(DirectiveGuards.builder()
                 .operation(KafkaOperation.ADD)
                 .switchPosition(SwitchPosition.MAIN)
-                .guards(shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getGuard().stream().map(Guard::getTokenUser).collect(Collectors.toSet()))
+                .guards(null)
                 .build());
         directiveRepo.delete(directive);
 
@@ -342,10 +337,10 @@ public class DirectiveService {
     @Transactional
     public void rejectLinkGuard(String directiveUuid) {
         DeferredDirective directive = directiveRepo.findById(UUID.fromString(directiveUuid)).orElseThrow(() -> new RuntimeException("directive is missing"));
-        ShortFamilyMember shortFamilyMember = memberService.getShortMemberRepo().findByUuid(directive.getDirectiveMember().getUuid()).orElseThrow(() -> new RuntimeException("не найден человек"));
+        ShortFamilyMember shortFamilyMember = memberService.getMemberByUuid(directive.getDirectiveMember().getUuid()).orElseThrow(() -> new RuntimeException("не найден человек"));
         shortFamilyMember.setCheckStatus(CheckStatus.CHECKED);
         shortFamilyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
-        memberService.getShortMemberRepo().save(shortFamilyMember);
+        memberService.updateMember(shortFamilyMember);
         storageDirective.add(FamilyDirective.builder()
                 .tokenUser(directive.getTokenUser())
                 .person(shortFamilyMember.getUuid().toString())
