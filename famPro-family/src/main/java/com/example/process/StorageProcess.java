@@ -21,7 +21,7 @@ public class StorageProcess implements Supplier<Message<FamilyDirective>> {
     @Override
     public Message<FamilyDirective> get() {
         if (!storageDirective.isEmpty()) {
-            log.info("Sending directive to change member Status in Storage: {}",storageDirective.peek());
+            log.info("Sending directive to change member in Storage: {}",storageDirective.peek());
             return MessageBuilder.withPayload(Objects.requireNonNull(storageDirective.poll())).build();
         }
         return null;

@@ -7,7 +7,6 @@ create table if not exists family
     death_day    date,
     description  varchar(255),
     uuid         uuid,
-    string_id    varchar(255),
     husband_info varchar(255),
     wife_info    varchar(255),
     husband      bigint

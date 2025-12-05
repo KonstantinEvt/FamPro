@@ -23,7 +23,7 @@ public class NotificationRepo {
     public Recipient findRecipientWithReceivedLetter(String externId) {
         Recipient recipient;
         try {
-            recipient = entityManager.createQuery("select a from Recipient a left join fetch a.receivedLetters b where a.externId=: user", Recipient.class)
+            recipient = entityManager.createQuery("select a from Recipient a left join fetch a.receivedLetters b where a.externUuid=: user", Recipient.class)
                     .setParameter("user", externId)
                     .getSingleResult();
         } catch (RuntimeException e) {
@@ -65,7 +65,7 @@ public class NotificationRepo {
     public List<AloneNew> getLettersWithSendersByCategory(List<AloneNew> aloneNewListEntering, NewsCategory category) {
         List<AloneNew> aloneNewList;
         try {
-            aloneNewList = entityManager.createQuery("select a from AloneNew a left join fetch a.sendFrom where a in :letters and a.category= :category", AloneNew.class)
+            aloneNewList = entityManager.createQuery("from AloneNew a left join fetch a.sendFrom where a in :letters and a.category= :category", AloneNew.class)
                     .setParameter("letters", aloneNewListEntering)
                     .setParameter("category", category)
                     .getResultList();
@@ -80,7 +80,7 @@ public class NotificationRepo {
     public Recipient findRecipientWithContacts(String externId) {
         Recipient owner;
         try {
-            owner = entityManager.createQuery("select a from Recipient a left join fetch a.contacts where a.externId= :externId", Recipient.class)
+            owner = entityManager.createQuery("select a from Recipient a left join fetch a.contacts where a.externUuid= :externId", Recipient.class)
                     .setParameter("externId", externId)
                     .getSingleResult();
         } catch (RuntimeException e) {
@@ -122,7 +122,7 @@ public class NotificationRepo {
     public Recipient findRecipientWithPodpisota(String externId) {
         Recipient owner;
         try {
-            owner = entityManager.createQuery("from Recipient a left join fetch a.podpisota where a.externId= :externId", Recipient.class)
+            owner = entityManager.createQuery("from Recipient a left join fetch a.podpisota where a.externUuid= :externId", Recipient.class)
                     .setParameter("externId", externId)
                     .getSingleResult();
         } catch (RuntimeException e) {
@@ -136,7 +136,7 @@ public class NotificationRepo {
     public Set<Recipient> findGuards(Set<String> guardExternId) {
         Set<Recipient> recipientSet;
         try {
-            recipientSet = new HashSet<>(entityManager.createQuery("FROM Recipient a where a.externId in :guards", Recipient.class)
+            recipientSet = new HashSet<>(entityManager.createQuery("FROM Recipient a where a.externUuid in :guards", Recipient.class)
                     .setParameter("guards", guardExternId)
                     .getResultList());
         } catch (RuntimeException e) {
@@ -192,7 +192,7 @@ public class NotificationRepo {
     public Optional<Contact> getContact(String owner, String recipient) {
         Optional<Contact> contact;
         try {
-            contact = Optional.of(entityManager.createQuery("from Contact a join fetch a.owner b join fetch a.person where b.externId= :owner and a.externId= :recipient", Contact.class)
+            contact = Optional.of(entityManager.createQuery("from Contact a join fetch a.owner b join fetch a.person where b.externUuid= :owner and a.externId= :recipient", Contact.class)
                     .setParameter("owner", owner)
                     .setParameter("recipient", recipient)
                     .getSingleResult());

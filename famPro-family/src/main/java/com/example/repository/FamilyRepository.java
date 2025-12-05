@@ -18,18 +18,6 @@ import java.util.UUID;
 public class FamilyRepository {
     private EntityManager entityManager;
 
-    //    public Family getFamilyWithAllGuard(Family family) {
-//        Family family1;
-//        try {
-//            family1 = entityManager.createQuery("select a from Family a left join fetch a.guard join fetch a.globalFamily b left join fetch b.guard where a= :family", Family.class)
-//                    .setParameter("family", family)
-//                    .getSingleResult();
-//        } catch (RuntimeException e) {
-//            log.warn("family is absent");
-//            family1 = null;
-//        }
-//        return family1;
-//    }
     public void saveNewFamily(Family family) {
         try {
             entityManager.persist(family);
@@ -52,20 +40,7 @@ public class FamilyRepository {
             log.warn("family not update:", e);
         }
     }
-    @Transactional(readOnly = true)
-    public Optional<Family> findFamilyWithGuardsByUUID(UUID uuid) {
-        Optional<Family> family;
-        try {
-            family = Optional.of(entityManager.createQuery("from Family a left join fetch a.guard where a.uuid=:uuid", Family.class)
-                    .setParameter("uuid", uuid)
-                    .getSingleResult());
 
-        } catch (RuntimeException e) {
-            log.warn("Error in finding family with guard: {}", e.getMessage());
-            family = Optional.empty();
-        }
-        return family;
-    }
     @Transactional
     public void flush() {
         try {
@@ -87,7 +62,6 @@ public class FamilyRepository {
         } catch (RuntimeException e) {
             log.warn("Error in finding family with children");
             family = Optional.empty();
-//            "Error in finding family with children: {}",
         }
         return family;
     }

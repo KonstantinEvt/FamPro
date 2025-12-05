@@ -22,7 +22,7 @@ public class ReceiveProcess implements Consumer<Message<FamilyDirective>> {
     @Override
     public void accept(Message<FamilyDirective> directiveMessage) {
         FamilyDirective directive = directiveMessage.getPayload();
-        log.info("Receiving directive from storage: {}",directive);
+        log.info("Receiving directive from storage: {}", directive);
         String keyOperation = directive.getTokenUser().concat(directive.getPerson());
 
         directiveHolder.getDirectiveMap().putIfAbsent(keyOperation, new LinkedList<>());
@@ -31,7 +31,9 @@ public class ReceiveProcess implements Consumer<Message<FamilyDirective>> {
             if (directive.getSwitchPosition() == SwitchPosition.MAIN) {
                 facadeService.checkFamilyDirectives(directiveHolder.getDirectiveMap().get(keyOperation));
                 directiveHolder.getDirectiveMap().remove(keyOperation);
-            }
+            } else if (directive.getSwitchPosition() == SwitchPosition.BURIAL)
+                directiveHolder.getDirectiveMap().remove(keyOperation);
+
         }
     }
 }

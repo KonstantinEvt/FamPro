@@ -21,8 +21,8 @@ public class CheckLevelProcess implements Consumer<Message<DirectiveGuards>> {
     public void accept(Message<DirectiveGuards> directiveMessage) {
         DirectiveGuards directive = directiveMessage.getPayload();
         log.info("Receiving directive to change member Parents/Status: {}",directive);
-        if (directive.getOperation() == KafkaOperation.EDIT )
-            familyMemberService.changeParentsAfterVoting(directive);
+//        if (directive.getOperation() == KafkaOperation.EDIT )
+//            familyMemberService.changeParentsAfterVoting(directive);
         if (directive.getOperation() == KafkaOperation.RENAME)
             familyMemberService.changeCheckStatus(directive);
     }

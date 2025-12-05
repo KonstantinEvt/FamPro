@@ -18,14 +18,19 @@ public class Voting {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID uuid;
+
     @Column(name="letter_externId")
     private String letter;
+
     @Column(name="guard_size")
     private int guardSize;
+
     @Column(name="rejects")
     private int rejects;
+
     @Column(name="accepts")
     private int accepts;
+
     @ManyToMany(cascade = CascadeType.MERGE)
     @JoinTable(name = "voting_recipient",
             joinColumns = @JoinColumn(name = "voting_id", referencedColumnName = "uuid"),

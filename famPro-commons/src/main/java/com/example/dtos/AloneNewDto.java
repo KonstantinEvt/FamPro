@@ -1,5 +1,6 @@
 package com.example.dtos;
 
+import com.example.enums.Attention;
 import com.example.enums.Localisation;
 import com.example.enums.NewsCategory;
 import lombok.*;
@@ -20,6 +21,7 @@ public class AloneNewDto {
     private String sendingFrom;
     private String sendingFromAlt;
     private String sendingTo;
+    private Attention attention;
     private Date creationDate;
     private String subject;
     private String textInfo;

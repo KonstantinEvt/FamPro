@@ -6,6 +6,7 @@ import com.example.dtos.RecipientDto;
 import com.example.entity.AloneNew;
 import com.example.entity.Recipient;
 import com.example.entity.Voting;
+import com.example.enums.Attention;
 import com.example.enums.KafkaOperation;
 import com.example.enums.NewsCategory;
 import com.example.holders.StandardInfoHolder;
@@ -63,7 +64,7 @@ public class VotingService {
             Set<String> guards = new HashSet<>();
             for (Recipient recipient :
                     voting.getRecipients()) {
-                guards.add(recipient.getExternId());
+                guards.add(recipient.getExternUuid());
             }
             if (!guards.contains(user)) return "You are not guard";
             if (value) voting.setAccepts(voting.getAccepts() + 1);
@@ -86,7 +87,7 @@ public class VotingService {
             AloneNewDto letter = aloneNewMapper.entityToDto(alone);
             for (Recipient recipient :
                     alone.getSendTo()) {
-                standardInfoHolder.removeMessageFromPerson(recipient.getExternId(), letter);
+                standardInfoHolder.removeMessageFromPerson(recipient.getExternUuid(), letter);
             }
         }
         if (value) {
@@ -107,7 +108,7 @@ public class VotingService {
                 aloneNew.setSendTo(Set.of((i == 0) ? contactPerson.get(1) : contactPerson.get(0)));
                 aloneNewRepo.save(aloneNew);
                 AloneNewDto letter = aloneNewMapper.entityToDto(aloneNew);
-                letter.setSendingTo((i == 0) ? contactPerson.get(1).getExternId() : contactPerson.get(0).getExternId());
+                letter.setSendingTo((i == 0) ? contactPerson.get(1).getExternUuid() : contactPerson.get(0).getExternUuid());
                 letter.setSendingFromAlt(contactPerson.get(i).getNickName());
                 standardInfoHolder.addNewMessageToPerson(letter);
 
@@ -124,7 +125,7 @@ public class VotingService {
             aloneNew.setExternId(lettersOfVoting.get(i).getExternId().concat("i"));
             aloneNewRepo.save(aloneNew);
             AloneNewDto letter = aloneNewMapper.entityToDto(aloneNew);
-            letter.setSendingTo(aloneNew.getSendTo().stream().findFirst().orElseThrow().getExternId());
+            letter.setSendingTo(aloneNew.getSendTo().stream().findFirst().orElseThrow().getExternUuid());
             letter.setSendingFromAlt("System");
             standardInfoHolder.addNewMessageToPerson(letter);
             if (i == 0) aloneNewRepo.delete(lettersOfVoting.get(1));
@@ -146,11 +147,11 @@ public class VotingService {
         String extern = null;
         for (AloneNew forLinking :
                 lettersOfVoting) {
-            if (forLinking.getSubject().equals("Link to person")) {
+            if (forLinking.getAttention()== Attention.VOTING) {
                 requester = forLinking.getSendTo().stream().findFirst().orElseThrow();
-                requester.setUrlPhoto(forLinking.getImageUrl().equals("1"));
+//                requester.setUrlPhoto(forLinking.getImageUrl().equals("1"));
             }
-            if (forLinking.getSubject().equals("Linking to person")) extern = forLinking.getImageUrl();
+            if (forLinking.getAttention()==Attention.VOTING_REQUESTER) extern = forLinking.getImageUrl();
         }
         if (requester != null) requester.setLinkExternId(extern);
         String[] parseText = lettersOfVoting.get(0).getTextInfo().split("<br>");
@@ -159,6 +160,7 @@ public class VotingService {
         AloneNew aloneNew = AloneNew.builder()
                 .alreadyRead(false)
                 .externId(voting.getLetter())
+                .subject("Голосование завершено")
                 .creationDate(new Timestamp(System.currentTimeMillis()))
                 .category(NewsCategory.FAMILY)
                 .sendFrom(recipientRepo.findById(3L).orElseThrow(() -> new RuntimeException("Informer recipient not found")))
@@ -172,12 +174,12 @@ public class VotingService {
             AloneNewDto letter = aloneNewMapper.entityToDto(alone);
             for (Recipient recipient :
                     alone.getSendTo()) {
-                standardInfoHolder.removeMessageFromPerson(recipient.getExternId(), letter);
+                standardInfoHolder.removeMessageFromPerson(recipient.getExternUuid(), letter);
             }
         }
         if (voting.getAccepts() >= voting.getRejects()) {
-            aloneNew.setSubject("Positive result");
-            if (lettersOfVoting.get(0).getSubject().equals("Link request") || lettersOfVoting.get(0).getSubject().equals("Request link")) {
+            aloneNew.setAttention(Attention.VOTING_POSITIVE);
+            if (lettersOfVoting.get(0).getAttention()!=Attention.LINK && lettersOfVoting.get(1).getAttention()!=Attention.LINK) {
                 aloneNew.setTextInfo(StringUtils.join("Подтверждена "
                         , parseText[2]
                         , " между"
@@ -188,14 +190,14 @@ public class VotingService {
                 directive.setOperation(KafkaOperation.ADD);
             } else {
                 if (requester != null) {
-                    aloneNew.setTextInfo(StringUtils.join("User ", parseText[1], "теперь связан с человеком: ", parseText[4], " "));
+                    aloneNew.setTextInfo(StringUtils.join("User ", parseText[1], "теперь связан с человеком: ", parseText[3], " "));
                     recipientRepo.save(requester);
                     directive.setOperation(KafkaOperation.EDIT);
                 }
             }
         } else {
-            aloneNew.setSubject("Negative result");
-            if (lettersOfVoting.get(0).getSubject().equals("Link request") || lettersOfVoting.get(0).getSubject().equals("Request link")) {
+            aloneNew.setAttention(Attention.VOTING_NEGATIVE);
+            if (lettersOfVoting.get(0).getAttention()!=Attention.LINK && lettersOfVoting.get(1).getAttention()!=Attention.LINK) {
                 aloneNew.setTextInfo(StringUtils.join("Отклонена "
                         , parseText[2]
                         , " между"
@@ -205,7 +207,7 @@ public class VotingService {
                         , parseText[3], " "));
                 directive.setOperation(KafkaOperation.REMOVE);
             } else {
-                aloneNew.setTextInfo(StringUtils.join("Связь ", parseText[1], " с человеком: ", parseText[4], " отклонена.", " "));
+                aloneNew.setTextInfo(StringUtils.join("Связь ", parseText[1], " с человеком: ", parseText[3], " отклонена.", " "));
                 directive.setOperation(KafkaOperation.RENAME);
             }
         }
@@ -214,7 +216,7 @@ public class VotingService {
         AloneNewDto letterForGuard = aloneNewMapper.entityToDto(aloneNew);
         for (Recipient guard :
                 aloneNew.getSendTo()) {
-            letterForGuard.setSendingTo(guard.getExternId());
+            letterForGuard.setSendingTo(guard.getExternUuid());
             letterForGuard.setSendingFromAlt("Informer");
             standardInfoHolder.addNewMessageToPerson(letterForGuard);
         }

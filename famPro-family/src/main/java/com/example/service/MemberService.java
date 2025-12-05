@@ -73,6 +73,7 @@ public class MemberService implements SimpleFamilyService {
                 familyMember.setMiddleName(dto.getMiddleName());
             if (!familyMember.getLastName().equals(dto.getLastName())) familyMember.setLastName(dto.getLastName());
             if (!familyMember.getBirthday().equals(dto.getBirthday())) familyMember.setBirthday(dto.getBirthday());
+            familyMember.setFullName(dto.getFullName());
             info.ifPresent(shortFamilyMemberInfo -> shortFamilyMemberInfo.setUuid(dto.getUuid()));
             familyMember.setUuid(dto.getUuid());
         }
@@ -84,6 +85,8 @@ public class MemberService implements SimpleFamilyService {
             familyMember.setSecretLevelRemove(dto.getSecretLevelRemove());
         if (familyMember.getSecretLevelMainInfo() != dto.getSecretLevelMainInfo())
             familyMember.setSecretLevelMainInfo(dto.getSecretLevelMainInfo());
+        if (familyMember.getSecretLevelBirthday() != dto.getSecretLevelBirthday())
+            familyMember.setSecretLevelBirthday(dto.getSecretLevelBirthday());
 
         if (familyMember.getCreator() != null && !familyMember.getCreator().equals(dto.getCreator()))
             familyMember.setCreator(dto.getCreator());
@@ -108,19 +111,34 @@ public class MemberService implements SimpleFamilyService {
 
     @Transactional
     public void uncheckedMergeInfo(UUID uuid, FamilyMemberInfoDto infoDto) {
-        ShortFamilyMemberInfo oldInfo = memberRepository.getInfoByUuid(uuid).orElseThrow(()->new RuntimeException("info not found"));
+        ShortFamilyMemberInfo oldInfo = memberRepository.getInfoByUuid(uuid).orElseThrow(() -> new RuntimeException("info not found"));
 
-        if (infoDto.getMainAddress() != null) {oldInfo.setMainAddress(infoDto.getMainAddress());oldInfo.setSecretLevelAddress(infoDto.getSecretLevelAddress());}
+        if (infoDto.getMainAddress() != null) {
+            oldInfo.setMainAddress(infoDto.getMainAddress());
+            oldInfo.setSecretLevelAddress(infoDto.getSecretLevelAddress());
+        }
 
-        if (infoDto.getMainEmail() != null) {oldInfo.setMainEmail(infoDto.getMainEmail());oldInfo.setSecretLevelEmail(infoDto.getSecretLevelEmail());}
+        if (infoDto.getMainEmail() != null) {
+            oldInfo.setMainEmail(infoDto.getMainEmail());
+            oldInfo.setSecretLevelEmail(infoDto.getSecretLevelEmail());
+        }
 
-        if (infoDto.getMainPhone() != null) {oldInfo.setMainPhone(infoDto.getMainPhone());oldInfo.setSecretLevelPhone(infoDto.getSecretLevelPhone());}
+        if (infoDto.getMainPhone() != null) {
+            oldInfo.setMainPhone(infoDto.getMainPhone());
+            oldInfo.setSecretLevelPhone(infoDto.getSecretLevelPhone());
+        }
 
         oldInfo.setSecretLevelBiometric(infoDto.getSecretLevelBiometric());
 
-        if (infoDto.isPhotoBirthExist()) {oldInfo.setPhotoBirthExist(true);oldInfo.setSecretLevelBirth(infoDto.getSecretLevelBirth());}
+        if (infoDto.isPhotoBirthExist()) {
+            oldInfo.setPhotoBirthExist(true);
+            oldInfo.setSecretLevelBirth(infoDto.getSecretLevelBirth());
+        }
 
-        if (infoDto.isPhotoBurialExist()) {oldInfo.setPhotoBurialExist(true);oldInfo.setSecretLevelBurial(infoDto.getSecretLevelBurial());}
+        if (infoDto.isPhotoBurialExist()) {
+            oldInfo.setPhotoBurialExist(true);
+            oldInfo.setSecretLevelBurial(infoDto.getSecretLevelBurial());
+        }
 
         memberRepository.updateInfo(oldInfo);
 
@@ -142,7 +160,10 @@ public class MemberService implements SimpleFamilyService {
     public Optional<ShortFamilyMember> getMemberByUuid(UUID uuid) {
         return memberRepository.getMemberByUuid(uuid);
     }
-
+@Transactional
+public Family getPrimeFamily(ShortFamilyMember member){
+    return memberRepository.getPrimeFamily(member).orElse(null);
+}
     @Transactional
     public void mergeInfo(ShortFamilyMemberInfo oldInfo, FamilyMemberInfoDto newInfo) {
         if (newInfo.getSecretLevelAddress() != SecretLevel.CLOSE && newInfo.getSecretLevelAddress() != SecretLevel.UNDEFINED) {
@@ -171,22 +192,22 @@ public class MemberService implements SimpleFamilyService {
         memberRepository.updateInfo(oldInfo);
     }
 
-    public SecretLevel getSecretStatus(ShortFamilyMember member, UUID directiveGuard, Set<UUID> treeGuards) {
+    public SecretLevel getSecretStatus(ShortFamilyMember member, UUID directiveGuard, Set<UUID> treeGuards, boolean geneticTreeCheck) {
         if (Objects.equals(member.getLinkGuard(), directiveGuard.toString())) return SecretLevel.CONFIDENTIAL;
         if (findUuidInInfo(member.getAncestorsGuard(), directiveGuard)) return SecretLevel.ANCESTOR;
         if (findUuidInInfo(member.getActiveGuard(), directiveGuard)) return SecretLevel.FAMILY;
         if (findUuidInInfo(member.getDescendantsGuard(), directiveGuard))
             return SecretLevel.STRAIGHT_BLOOD;
-        if (treeGuards.contains(directiveGuard)) return SecretLevel.GENETIC_TREE;
+        if (geneticTreeCheck&&treeGuards.contains(directiveGuard)) return SecretLevel.GENETIC_TREE;
         return SecretLevel.OPEN;
     }
 
-    public SecretLevel getMaxSecretLevelForMember(ShortFamilyMember member, Set<UUID> treeGuards) {
+    public SecretLevel getMaxSecretLevelForMember(ShortFamilyMember member, Set<UUID> treeGuards, boolean geneticTreeCheck) {
         if (member.getLinkGuard() != null) return SecretLevel.CONFIDENTIAL;
         if (member.getAncestorsGuard() != null) return SecretLevel.ANCESTOR;
         if (member.getActiveGuard() != null) return SecretLevel.FAMILY;
         if (member.getDescendantsGuard() != null) return SecretLevel.STRAIGHT_BLOOD;
-        if (treeGuards != null && !treeGuards.isEmpty()) return SecretLevel.GENETIC_TREE;
+        if (geneticTreeCheck&&treeGuards != null && !treeGuards.isEmpty()) return SecretLevel.GENETIC_TREE;
         return SecretLevel.OPEN;
     }
 
@@ -256,7 +277,7 @@ public class MemberService implements SimpleFamilyService {
         for (ShortFamilyMember fm :
                 topAncestors) {
             if (fm.getDescendants() != null && !fm.getDescendants().isBlank())
-                treeMembersUuids.addAll(Arrays.stream(fm.getDescendants().split(" ")).map(UUID::fromString).collect(Collectors.toSet()));
+                treeMembersUuids.addAll(Arrays.stream(fm.getDescendants().split(" ")).filter(Objects::nonNull).map(UUID::fromString).collect(Collectors.toSet()));
         }
         if (!treeMembersUuids.isEmpty()) result.addAll(memberRepository.getAllMembersByUuids(treeMembersUuids));
         return result;
@@ -269,22 +290,25 @@ public class MemberService implements SimpleFamilyService {
                 topAncestors) {
             if (member.getLinkGuard() != null) result.add(UUID.fromString(member.getLinkGuard()));
             if (member.getDescendantsGuard() != null)
-                result.addAll(Arrays.stream(member.getDescendantsGuard().split(" ")).map(UUID::fromString).collect(Collectors.toSet()));
+                result.addAll(Arrays.stream(member.getDescendantsGuard().split(" ")).filter(Objects::nonNull).map(UUID::fromString).collect(Collectors.toSet()));
         }
         return result;
     }
 
     @Transactional(readOnly = true)
     public boolean checkThemeSecretForSecretLevel(SecretLevel secretLevel, ShortFamilyMember member, Optional<Guard> directiveGuard, Set<ShortFamilyMember> topAncestors) {
-        if (directiveGuard.isPresent()) {
+        if (directiveGuard.isPresent()&&directiveGuard.get().getId()!=null) {
             UUID uuid = UUID.fromString(directiveGuard.get().getTokenUser());
             Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors);
-            SecretLevel directiveGuardStatus = getSecretStatus(member, uuid, geneticTreeGuard);
-            SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard);
+            SecretLevel directiveGuardStatus = getSecretStatus(member, uuid, geneticTreeGuard,true);
+            SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard,true);
             if (directiveGuardStatus == max) return true;
             else return secretLevel.ordinal() < directiveGuardStatus.ordinal();
+        } else {
+            Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors);
+            SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard,true);
+            return SecretLevel.OPEN == max;
         }
-        return secretLevel == SecretLevel.OPEN;
     }
 
     @Transactional
@@ -299,20 +323,20 @@ public class MemberService implements SimpleFamilyService {
         bloodKin.remove(member);
         for (ShortFamilyMember fm :
                 bloodKin) {
-            if (fm.getDescendants() != null) changeUuidInInfo(fm.getDescendants(), oldUuid, member.getUuid());
-            if (fm.getAncestors() != null) changeUuidInInfo(fm.getAncestors(), oldUuid, member.getUuid());
-            if (fm.getTopAncestors() != null) changeUuidInInfo(fm.getTopAncestors(), oldUuid, member.getUuid());
+            if (fm.getDescendants() != null) fm.setDescendants(changeUuidInInfo(fm.getDescendants(), oldUuid, member.getUuid()));
+            if (fm.getAncestors() != null) fm.setAncestors(changeUuidInInfo(fm.getAncestors(), oldUuid, member.getUuid()));
+            if (fm.getTopAncestors() != null) fm.setTopAncestors(changeUuidInInfo(fm.getTopAncestors(), oldUuid, member.getUuid()));
         }
         log.warn("uuid in bloodKin is changed");
     }
 
     @Transactional
-    public void addChildToFamilyMember(ShortFamilyMember child, ShortFamilyMember parent) {
-        if (parent.getSex() == Sex.MALE) {
+    public void addChildToFamilyMember(ShortFamilyMember child, ShortFamilyMember parent, Sex parentSex) {
+        if (parentSex == Sex.MALE) {
             child.setFatherUuid(parent.getUuid());
             child.setFatherInfo(parent.getFullName());
-        } else {
-            child.setMotherUuid(parent.getMotherUuid());
+        } else if (parentSex == Sex.FEMALE) {
+            child.setMotherUuid(parent.getUuid());
             child.setMotherInfo(parent.getFullName());
         }
         Set<ShortFamilyMember> childDescendants;
@@ -337,20 +361,20 @@ public class MemberService implements SimpleFamilyService {
         Set<UUID> parentAncestorsGuards = getAllUuidFromInfo(parent.getAncestorsGuard());
         parentAncestorsUuids.add(parent.getUuid());
         if (parent.getLinkGuard() != null) parentAncestorsGuards.add(UUID.fromString(parent.getLinkGuard()));
-        if (!parentTopAncestorsUuids.isEmpty()) parentTopAncestorsUuids.add(parent.getUuid());
+        if (parentTopAncestorsUuids.isEmpty()) parentTopAncestorsUuids.add(parent.getUuid());
         for (ShortFamilyMember des :
                 childDescendants) {
             Set<UUID> desAnc = getAllUuidFromInfo(des.getAncestors());
-
             Set<UUID> desTopAnc = getAllUuidFromInfo(des.getTopAncestors());
             desAnc.addAll(parentAncestorsUuids);
+            desTopAnc.remove(child.getUuid());
             desTopAnc.addAll(parentTopAncestorsUuids);
-            des.setAncestors(desAnc.stream().map(UUID::toString).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
-            des.setTopAncestors(desTopAnc.stream().map(UUID::toString).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
+            des.setAncestors(desAnc.stream().map(UUID::toString).filter(Objects::nonNull).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
+            des.setTopAncestors(desTopAnc.stream().map(UUID::toString).filter(Objects::nonNull).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
             if (!parentAncestorsGuards.isEmpty()) {
                 Set<UUID> desAncGuards = getAllUuidFromInfo(des.getAncestorsGuard());
                 desAncGuards.addAll(parentAncestorsGuards);
-                des.setAncestorsGuard(desAncGuards.stream().map(UUID::toString).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
+                des.setAncestorsGuard(desAncGuards.stream().map(UUID::toString).filter(Objects::nonNull).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
 
             }
         }
@@ -358,11 +382,11 @@ public class MemberService implements SimpleFamilyService {
                 parentAncestors) {
             Set<UUID> ancDes = getAllUuidFromInfo(anc.getDescendants());
             ancDes.addAll(childDescendantsUuids);
-            anc.setDescendants(ancDes.stream().map(UUID::toString).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
+            anc.setDescendants(ancDes.stream().map(UUID::toString).filter(Objects::nonNull).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
             if (!childDescendantsGuard.isEmpty()) {
                 Set<UUID> ancDesGuards = getAllUuidFromInfo(anc.getDescendantsGuard());
                 ancDesGuards.addAll(childDescendantsGuard);
-                anc.setDescendantsGuard(ancDesGuards.stream().map(UUID::toString).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
+                anc.setDescendantsGuard(ancDesGuards.stream().map(UUID::toString).filter(Objects::nonNull).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
             }
         }
 
@@ -375,7 +399,6 @@ public class MemberService implements SimpleFamilyService {
         Set<ShortFamilyMember> members = getGeneticTreeMembers(newTopAc);
         for (ShortFamilyMember member :
                 members) {
-            System.out.println(member.getFullName());
             if (member.getCheckStatus() == CheckStatus.UNCHECKED) {
                 member.setCheckStatus(CheckStatus.CHECKED);
                 member.setCreator(null);
@@ -412,5 +435,9 @@ public class MemberService implements SimpleFamilyService {
             des.setAncestorsGuard(addUuidToInfo(des.getAncestorsGuard(), guard.getTokenUser()));
             memberRepository.updateMember(des);
         }
+    }
+    @Transactional
+    public void flush() {
+        memberRepository.flush();
     }
 }

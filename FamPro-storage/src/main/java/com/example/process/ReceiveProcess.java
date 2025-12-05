@@ -20,8 +20,8 @@ public class ReceiveProcess implements Consumer<Message<FamilyDirective>> {
     public void accept(Message<FamilyDirective> directiveMessage) {
         FamilyDirective directive = directiveMessage.getPayload();
         log.info("Receiving directive to change member Parents/Status: {}",directive);
-//        if (directive.getOperation() == KafkaOperation.EDIT && directive.getFamilyMemberDto() == null)
-//            familyMemberService.changeParentsAfterVoting(directive);
+        if (directive.getOperation() == KafkaOperation.EDIT && directive.getFamilyMemberDto() == null)
+            familyMemberService.changeParentsAfterVoting(directive);
 //        if (directive.getOperation() == KafkaOperation.RENAME && directive.getFamilyMemberDto() == null)
 //            familyMemberService.changeCheckStatus(directive);
     }

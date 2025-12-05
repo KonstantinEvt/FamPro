@@ -26,23 +26,23 @@ public interface SimpleFamilyService {
     }
 
     default String changeUuidInInfo(String string, UUID oldUuid, UUID newUuid) {
-        return changeUuidInInfo(string, newUuid.toString(), newUuid.toString());
+        return changeUuidInInfo(string, oldUuid.toString(), newUuid.toString());
     }
 
     default String changeUuidInInfo(String string, String oldUuid, String newUuid) {
         if (string == null || string.equals("")) return "";
         Optional<String> str = Arrays.stream(string.split(" ")).filter(x -> !Objects.equals(x, oldUuid)).reduce((x, y) -> x.concat(" ").concat(y));
-        return str.map(s -> s.concat(" ").concat(newUuid)).orElseGet(() -> " ".concat(newUuid));
+        return str.map(s -> s.concat(" ").concat(newUuid)).orElseGet(() -> newUuid);
     }
 
     default boolean findUuidInInfo(String string, String uuid) {
-        if (string == null || string.equals("")) return false;
+        if (string == null || string.equals("")||string.isBlank()) return false;
         return Arrays.asList(string.split(" ")).contains(uuid);
     }
 
     default String addUuidToInfo(String string, String uuid) {
-        if (string == null) string = "";
-        return string.concat(" ").concat(uuid);
+        if (string == null) return uuid;
+        else return string.concat(" ").concat(uuid);
     }
 
     default Optional<String> removeUuidFromInfo(String string, String uuid) {

@@ -75,15 +75,6 @@ public class ShortFamilyMember extends Fio {
     @JoinColumn(name = "active_family")
     private Family activeFamily;
 
-
-//    @OneToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "mother_id")
-//    private ShortFamilyMember mother;
-//
-//    @OneToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "father_id")
-//    private ShortFamilyMember father;
-
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "info_id")
     private List<ShortFamilyMemberInfo> shortFamilyMemberInfo;
@@ -92,18 +83,11 @@ public class ShortFamilyMember extends Fio {
     @Column(name = "check_status")
     private CheckStatus checkStatus;
 
-
-//    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-//    @JoinTable(name = "parents_childs_shorts",
-//            joinColumns = @JoinColumn(name = "parent_id", referencedColumnName = "id"),
-//            inverseJoinColumns = @JoinColumn(name = "child_id", referencedColumnName = "id"))
-//    private Set<ShortFamilyMember> childs;
+    @OneToMany(mappedBy = "directiveMember", cascade = {CascadeType.REMOVE})
+    private List<DirectiveMembers> directiveMembers;
 
     @ManyToMany(mappedBy = "familyMembers")
     private Set<Family> families;
-
-    @ManyToMany(mappedBy = "parents")
-    private Set<Family> familyWhereParent;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "prime_family")
@@ -148,6 +132,10 @@ public class ShortFamilyMember extends Fio {
     @Enumerated(EnumType.STRING)
     @Column(name = "security_main")
     private SecretLevel secretLevelMainInfo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_birthday")
+    private SecretLevel secretLevelBirthday;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "linkedPerson")
     private List<Guard> linkedGuard;

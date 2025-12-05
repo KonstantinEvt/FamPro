@@ -24,18 +24,9 @@ public class MessageController {
     @PostMapping("/sendMessage")
     public ResponseEntity<String> sendMessage(@RequestBody AloneNewDto aloneNewDto) {
         messageService.sendMessage(tokenService.getTokenUser(), aloneNewDto);
-        System.out.println("Letter is sending");
     return ResponseEntity.status(200).body("Letter is sending");
     }
 
-
-    @GetMapping("/counts")
-    public ResponseEntity<StandardInfo> getNewsCounts() {
-        StandardInfo standardInfo = new StandardInfo();
-//                infoHolder.getOnlineInfo().get((String) tokenService.getTokenUser().getClaims().get("sub"));
-        System.out.println("hi");
-        return ResponseEntity.ok(standardInfo);
-    }
     @GetMapping("/readMessage/{id}")
     public ResponseEntity<String> readMessage(@PathVariable("id") UUID id){
         messageService.readIndividualMessage((String) tokenService.getTokenUser().getClaims().get("sub"),id);

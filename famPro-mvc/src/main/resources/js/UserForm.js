@@ -239,6 +239,11 @@ function loadNewsCounts() {
                 <span class="visually-hidden">unread messages</span>
             </span>`
         } else if (document.getElementById("badge4") !== null) document.getElementById("badge4").innerHTML = "";
-    } else document.getElementById("badge0").innerHTML = "";
+    } else {document.getElementById("badge0").innerHTML = "";
+        if (document.getElementById("badge1") !== null) document.getElementById("badge1").innerHTML = "";
+        if (document.getElementById("badge2") !== null) document.getElementById("badge2").innerHTML = "";
+        if (document.getElementById("badge3") !== null) document.getElementById("badge3").innerHTML = "";
+        if (document.getElementById("badge4") !== null) document.getElementById("badge4").innerHTML = "";
+    }
 }
 

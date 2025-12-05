@@ -1,6 +1,5 @@
 package com.example.repository;
 
-import com.example.entity.Family;
 import com.example.entity.Guard;
 import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 @AllArgsConstructor
@@ -45,7 +43,7 @@ private EntityManager entityManager;
     return guard;
 }
 @Transactional
-    public Guard saveNewGuard(Guard guard) {
+    public Guard persistGuard(Guard guard) {
         try {
             entityManager.persist(guard);
         } catch (RuntimeException e) {

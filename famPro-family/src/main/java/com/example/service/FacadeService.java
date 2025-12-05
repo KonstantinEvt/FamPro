@@ -1,13 +1,15 @@
 package com.example.service;
 
 
-import com.example.dtos.*;
+import com.example.dtos.FamilyDirective;
+import com.example.dtos.FamilyMemberDto;
+import com.example.dtos.TokenUser;
 import com.example.entity.*;
 import com.example.enums.*;
-import com.example.repository.*;
+import com.example.repository.FamilyRepo;
+import com.example.repository.FamilyRepository;
+import com.example.repository.MemberRepository;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,12 +23,9 @@ import java.util.stream.Collectors;
 public class FacadeService implements SimpleFamilyService {
     private final FamilyRepo familyRepo;
     private final MemberService memberService;
-    private final DirectiveRepo directiveRepo;
     private final GuardService guardService;
     private final FamilyServiceImp familyService;
     private final DirectiveService directiveService;
-    private final List<DirectiveGuards> directiveGuardsList;
-    private final List<DirectiveGuards> contactDirective;
     private final MemberRepository memberRepository;
     private final FamilyRepository familyRepository;
     private final SendAndFormService sendAndFormService;
@@ -34,20 +33,17 @@ public class FacadeService implements SimpleFamilyService {
 
     public FacadeService(FamilyRepo familyRepo,
                          MemberService memberService,
-                         DirectiveRepo directiveRepo,
                          GuardService guardService,
                          FamilyServiceImp familyService,
                          DirectiveService directiveService,
-                         @Qualifier("directiveGuards") List<DirectiveGuards> directiveGuardsList,
-                         List<DirectiveGuards> contactDirective, MemberRepository memberRepository, FamilyRepository familyRepository, SendAndFormService sendAndFormService) {
+                         MemberRepository memberRepository,
+                         FamilyRepository familyRepository,
+                         SendAndFormService sendAndFormService) {
         this.familyRepo = familyRepo;
         this.memberService = memberService;
-        this.directiveRepo = directiveRepo;
         this.guardService = guardService;
         this.familyService = familyService;
         this.directiveService = directiveService;
-        this.directiveGuardsList = directiveGuardsList;
-        this.contactDirective = contactDirective;
         this.memberRepository = memberRepository;
         this.familyRepository = familyRepository;
         this.sendAndFormService = sendAndFormService;
@@ -86,7 +82,7 @@ public class FacadeService implements SimpleFamilyService {
             log.info("changing member with uuid: {}", mainMember.getUuid().toString());
             if (mainMember.getCheckStatus() == CheckStatus.MODERATE && !mainDirective.getTokenUser().equals("moderator")) {
                 log.warn("Попытка изменения человека находящимся под голосованием или модерацией");
-                sendAndFormService.sendAttentionOfModerate(mainDirective.getTokenUser(), mainMember.getFullName(), mainDirective.getSwitchPosition());
+                sendAndFormService.sendAttentionToUser(mainDirective.getTokenUser(), mainMember.getFullName(), null, Attention.MODERATE);
 // тут нужен откат в storage модуль и смена статуса там на Moderate
                 return;
             } else {
@@ -170,14 +166,13 @@ public class FacadeService implements SimpleFamilyService {
                                     memberService.clearParentInfo(mainMember, SwitchPosition.MOTHER);
                                 if (changing.getChangingFather().ordinal() > 2)
                                     memberService.clearParentInfo(mainMember, SwitchPosition.FATHER);
+                                Set<DirectiveMembers> directiveMembers = potentialBloodBrothers.stream().map(x -> DirectiveMembers.builder().directiveMember(x).build()).collect(Collectors.toSet());
                                 directiveList.add(DeferredDirective
                                         .builder()
                                         .created(new Timestamp(System.currentTimeMillis()))
-                                        .directiveFamily(primeFamily)
                                         .directiveMember(mainMember)
-                                        .shortFamilyMemberLink(potentialBloodBrothers.stream().findFirst().orElseThrow(() -> new RuntimeException("nonsence!!")))
+                                        .shortFamilyMemberLink(directiveMembers)
                                         .info(possibleId.toString())
-                                        .processFamily(possiblePrime.get())
                                         .tokenUser(mainDirective.getTokenUser())
                                         .switchPosition(SwitchPosition.MAIN)
                                         .build());
@@ -193,18 +188,12 @@ public class FacadeService implements SimpleFamilyService {
                     }
                 }
             } else {
-                if (mainMember.getCheckStatus() == CheckStatus.UNCHECKED) {
-                    memberService.uncheckedMergeInfo(mainMember.getUuid(), mainDto.getMemberInfo());
-                    return;
-                }
+//                if (mainMember.getCheckStatus() == CheckStatus.UNCHECKED) {
+//                    memberService.uncheckedMergeInfo(mainMember.getUuid(), mainDto.getMemberInfo());
+//                    return;
+//                }
                 log.warn("Попытка изменения человека под защитой");
-                directiveGuardsList.add(DirectiveGuards.builder()
-                        .created(new Timestamp(System.currentTimeMillis()))
-                        .tokenUser(mainDirective.getTokenUser())
-                        .switchPosition(mainDirective.getSwitchPosition())
-                        .info1("trying changing person without rights")
-                        .info2(mainMember.getFullName())
-                        .build());
+                sendAndFormService.sendAttentionToUser(mainDirective.getTokenUser(), mainMember.getFullName(), null, Attention.RIGHTS);
 // тут нужен откат в storage модуль (и смена статуса?)
                 return;
             }
@@ -241,15 +230,14 @@ public class FacadeService implements SimpleFamilyService {
                                 memberService.clearParentInfo(mainMember, SwitchPosition.MOTHER);
                             if (changing.getChangingFather().ordinal() > 2)
                                 memberService.clearParentInfo(mainMember, SwitchPosition.FATHER);
-                            primeFamily = familyService.creatFreeFamily(mainDto.getFatherInfo(), mainDto.getMotherInfo(), possibleId);
+                            primeFamily = familyService.creatFreeFamily(mainMember.getFatherInfo(), mainMember.getMotherInfo(), mainDto.getUuid());
+                            Set<DirectiveMembers> directiveMembers = potentialBloodBrothers.stream().map(x -> DirectiveMembers.builder().directiveMember(x).build()).collect(Collectors.toSet());
                             directiveList.add(DeferredDirective
                                     .builder()
                                     .created(new Timestamp(System.currentTimeMillis()))
-                                    .directiveFamily(primeFamily)
                                     .directiveMember(mainMember)
-                                    .shortFamilyMemberLink(potentialBloodBrothers.stream().findFirst().orElseThrow(() -> new RuntimeException("nonsence!!")))
+                                    .shortFamilyMemberLink(directiveMembers)
                                     .info(possibleId.toString())
-                                    .processFamily(possiblePrime.get())
                                     .tokenUser(mainDirective.getTokenUser())
                                     .switchPosition(SwitchPosition.MAIN)
                                     .build());
@@ -300,29 +288,29 @@ public class FacadeService implements SimpleFamilyService {
                                 family.setWife(mainMember);
                             }
                             family.getFamilyMembers().add(mainMember);
-                            if (family.getHusbandInfo() != null && family.getWifeInfo() != null)
+                            if (family.getHusbandInfo() != null && family.getWifeInfo() != null && (family.getHusbandInfo().charAt(0) != '(' || family.getHusbandInfo().charAt(1) == 'A')
+                                    && (family.getWifeInfo().charAt(0) != '(' || family.getWifeInfo().charAt(1) == 'A'))
                                 family.setUuid(UUID.nameUUIDFromBytes(family.getHusbandInfo().concat(family.getWifeInfo()).getBytes()));
                             for (Family fam :
                                     childFamilies) {
                                 if (fam.getUuid().equals(family.getUuid()) && fam != family) {
                                     familyService.mergeFamilies(family, fam);
-//                                    familiesToRemove.add(family);
                                 }
                             }
 // проверить нужно ли сохранение
 //                            familyRepository.updateFamily(family);
                         }
-                        memberService.addChildToFamilyMember(member, mainMember);
+                        memberService.addChildToFamilyMember(member, mainMember, mainMember.getSex());
                         memberService.updateMember(member);
                         log.info("child is setup");
 
                     }
                     case FATHER -> {
-                        familyService.addChangesFromFather(primeFamily, family, mainMember, member);
+                        familyService.addChangesFromFather(primeFamily, mainMember, member);
                         log.info("father is setup");
                     }
                     case MOTHER -> {
-                        familyService.addChangesFromMother(primeFamily, family, mainMember, member);
+                        familyService.addChangesFromMother(primeFamily, mainMember, member);
                         log.info("mother is setup");
                     }
                     default -> log.warn("Обнаружена нераспознанная директива");
@@ -333,20 +321,13 @@ public class FacadeService implements SimpleFamilyService {
                     member.setLastUpdate(new Timestamp(System.currentTimeMillis()));
                     memberService.updateMember(member);
                     tempModerate.add(member.getUuid().toString());
-//                    storageDirective.add(FamilyDirective.builder()
-//                            .person(member.getUuid().toString())
-//                            .switchPosition(SwitchPosition.MAIN)
-//                            .operation(KafkaOperation.RENAME)
-//                            .build());
                 }
                 directiveList.add(DeferredDirective
                         .builder()
-                        .directiveFamily(primeFamily)
                         .directiveMember(mainMember)
                         .created(new Timestamp(System.currentTimeMillis()))
                         .info(member.getFullName())
-                        .shortFamilyMemberLink(member)
-                        .processFamily(family)
+                        .shortFamilyMemberLink(Set.of(DirectiveMembers.builder().directiveMember(member).build()))
                         .tokenUser(mainDirective.getTokenUser())
                         .switchPosition(processDirective.getSwitchPosition())
                         .build());
@@ -389,39 +370,6 @@ public class FacadeService implements SimpleFamilyService {
         } else if (tempModerate.isEmpty())
             sendAndFormService.formDirectiveToStorageForChangeStatus(null, mainMember.getUuid().toString(), null, KafkaOperation.RENAME, null, tempChecked);
 
-
-//        if (directiveList.isEmpty()) {
-//            if (memberService.getMaxSecretLevelForMember(mainMember, memberService.getGeneticTreeGuards(newTopAc)) != SecretLevel.OPEN) {
-//                if (guardFromDirective.isPresent() && Objects.equals(mainMember.getLinkGuard(), guardFromDirective.get().getTokenUser())) {
-//                    mainMember.setCheckStatus(CheckStatus.LINKED);
-//                    storageDirective.add(FamilyDirective.builder()
-//                            .tokenUser(mainDirective.getTokenUser())
-//                            .person(mainMember.getUuid().toString())
-//                            .switchPosition(SwitchPosition.FATHER)
-//                            .operation(KafkaOperation.RENAME)
-//                            .build());
-//                    log.info("person receive link status and directive will be prepare");
-//                } else {
-//                    mainMember.setCheckStatus(CheckStatus.CHECKED);
-//                    storageDirective.add(FamilyDirective.builder()
-//                            .tokenUser(mainDirective.getTokenUser())
-//                            .person(mainMember.getUuid().toString())
-//                            .switchPosition(SwitchPosition.MOTHER)
-//                            .operation(KafkaOperation.RENAME)
-//                            .build());
-//                    log.info("person receive checked status and directive will be prepare");
-//                }
-//            } else {
-//                mainMember.setCheckStatus(CheckStatus.UNCHECKED);
-//                storageDirective.add(FamilyDirective.builder()
-//                        .tokenUser(mainDirective.getTokenUser())
-//                        .person(mainMember.getUuid().toString())
-//                        .switchPosition(SwitchPosition.CHILD)
-//                        .operation(KafkaOperation.RENAME)
-//                        .build());
-//                log.info("person receive unchecked status and directive is send");
-//            }
-//        }
         mainMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         memberService.updateMember(mainMember);
         if (!childFamilies.isEmpty()) familyRepo.saveAll(childFamilies);
@@ -429,11 +377,8 @@ public class FacadeService implements SimpleFamilyService {
 
         if (!directiveList.isEmpty()) {
             log.info("Acceptable changes is done. Directives will be send");
-            if (directiveList.size() > 1 && directiveList.get(0).getSwitchPosition() == SwitchPosition.MAIN && (directiveList.get(1).getSwitchPosition() == SwitchPosition.FATHER || directiveList.get(1).getSwitchPosition() == SwitchPosition.MOTHER))
-                directiveList.remove(0);
+            directiveService.checkSaveAndSendVotingDirective(directiveList);
 
-            directiveRepo.saveAll(directiveList);
-            directiveService.formGuardDirective(directiveList);
         }
         memberRepository.flush();
 //need???
@@ -461,6 +406,7 @@ public class FacadeService implements SimpleFamilyService {
 
     @Transactional
     public CheckStatus addGuardByLink(FamilyMemberDto familyMemberDto, TokenUser tokenUser) {
+        String token = (String) tokenUser.getClaims().get("sub");
         if (tokenUser.getRoles().contains(UserRoles.LINKED_USER.getNameSSO())) {
             log.warn("this user is already linked");
             throw new RuntimeException("you are already linked");
@@ -476,103 +422,49 @@ public class FacadeService implements SimpleFamilyService {
                 throw new RuntimeException("person is under voting or moderate. Try linking later");
             }
             case UNCHECKED -> {
-                Guard guard = guardService.creatGuard(shortFamilyMember, (String) tokenUser.getClaims().get("sub"));
-                memberService.addGuardToMemberByLinking(shortFamilyMember, guard);
-                memberService.addGuardToMemberKin(shortFamilyMember, guard);
-                Set<String> changingStatus = memberService.repairGeneticTreeCheckStatus(memberService.getAllTopAncestors(shortFamilyMember));
-//                guardService.addGuardToFamilies(shortFamilyMember.getFamilies(), guard);
-
-                memberService.updateMember(shortFamilyMember);
-                memberRepository.flush();
-                log.info("New guard is created");
-                sendAndFormService.formDirectiveToStorageForChangeStatus((String) tokenUser.getClaims().get("sub"), shortFamilyMember.getUuid().toString(), SwitchPosition.FATHER, KafkaOperation.RENAME, changingStatus, CheckStatus.CHECKED);
-                DirectiveGuards directiveGuards = DirectiveGuards.builder()
-                        .created(new Timestamp(System.currentTimeMillis()))
-                        .id((String) tokenUser.getClaims().get("sub"))
-                        .tokenUser((String) tokenUser.getClaims().get("sub"))
-                        .person(shortFamilyMember.getUuid().toString())
-                        .switchPosition(SwitchPosition.MAIN)
-                        .operation(KafkaOperation.ADD)
-                        .info1(StringUtils.join("You are successful linked with", "<br>",
-                                shortFamilyMember.getFullName(),
-                                " "))
-                        .build();
-                directiveGuardsList.add(directiveGuards);
-                contactDirective.add(DirectiveGuards.builder()
-                        .operation(KafkaOperation.ADD)
-                        .switchPosition(SwitchPosition.MAIN)
-                        .guards(shortFamilyMember.getFamilyWhereChild().getGuard().stream().map(Guard::getTokenUser).collect(Collectors.toSet()))
-                        .build());
-
+                guardService.creatLinkingGuard(shortFamilyMember, token);
                 return CheckStatus.LINKED;
             }
             default -> {
-//                shortFamilyMember.setCheckStatus(CheckStatus.MODERATE);
-//                log.info("New guard is prepare to voting");
-//                DeferredDirective directive = DeferredDirective
-//                        .builder()
-//                        .directiveFamily(shortFamilyMember.getFamilyWhereChild())
-//                        .directiveMember(shortFamilyMember)
-//                        .created(new Timestamp(System.currentTimeMillis()))
-//                        .info(tokenUser.getUsername())
-//                        .tokenUser((String) tokenUser.getClaims().get("sub"))
-//                        .switchPosition(SwitchPosition.MAIN)
-//
-//                        .build();
-//                directiveRepo.save(directive);
-//                Set<String> guards;
-//                if (shortFamilyMember.getFamilyWhereChild().getGuard() != null
-//                        && !shortFamilyMember.getFamilyWhereChild().getGuard().isEmpty()) {
-//                    guards = shortFamilyMember.getFamilyWhereChild().getGuard().stream()
-//                            .map(Guard::getTokenUser)
-//                            .collect(Collectors.toSet());
-//                } else if (shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getGuard() != null && !shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getGuard().isEmpty()) {
-//                    guards = shortFamilyMember.getFamilyWhereChild().getGlobalFamily().getGuard().stream()
-//                            .map(Guard::getTokenUser)
-//                            .collect(Collectors.toSet());
-//                } else throw new RuntimeException("check status off person is wrong");
-//                DirectiveGuards directiveGuards = DirectiveGuards.builder()
-//                        .id(directive.getId().toString())
-//                        .created(directive.getCreated())
-//                        .person(shortFamilyMember.getUuid().toString())
-//                        .guards(guards)
-//                        .tokenUser(directive.getTokenUser())
-//                        .switchPosition(directive.getSwitchPosition())
-//                        .info1(StringUtils.join("User: ", "<br>",
-//                                tokenUser.getUsername(), "<br>",
-//                                " with NickName: ",
-//                                tokenUser.getNickName(),
-//                                " with Email: ",
-//                                tokenUser.getEmail(), "<br>",
-//                                "want to be linking with ", "<br>",
-//                                directive.getDirectiveMember().getFullName(),
-//                                " "))
-//                        .build();
-//                directiveGuards.setGlobalNumber1(directive.getGlobalFor());
-//                directiveGuards.setGlobalNumber2(directive.getGlobalTo());
-//                directiveGuardsList.add(directiveGuards);
-//
-//                storageDirective.add(FamilyDirective.builder()
-//                        .person(shortFamilyMember.getUuid().toString())
-//                        .switchPosition(SwitchPosition.MAIN)
-//                        .operation(KafkaOperation.RENAME)
-//                        .build());
+                shortFamilyMember.setCheckStatus(CheckStatus.MODERATE);
+                log.info("New guard is prepare to voting");
+                DeferredDirective directive = DeferredDirective
+                        .builder()
+                        .directiveMember(shortFamilyMember)
+                        .shortFamilyMemberLink(new HashSet<>())
+                        .created(new Timestamp(System.currentTimeMillis()))
+                        .info(tokenUser.getUsername())
+                        .tokenUser(token)
+                        .switchPosition(SwitchPosition.BIRTH)
+                        .build();
+                directiveService.checkSaveAndSendVotingDirective(List.of(directive));
+                sendAndFormService.formDirectiveToStorageForChangeStatus(token, shortFamilyMember.getUuid().toString(), null, KafkaOperation.RENAME, null, CheckStatus.MODERATE);
                 return CheckStatus.MODERATE;
             }
         }
-
     }
 
     @Transactional
     public SecretLevel getGuardStatus(UUID uuid, String tokenUser) {
         ShortFamilyMember member = memberRepository.findMemberWithPrimeFamily(uuid).orElseThrow(() -> new RuntimeException("person not found"));
         Optional<Guard> guardFromToken = guardService.findGuard(tokenUser);
-        if (member == null || guardFromToken.isEmpty()) throw new RuntimeException("Status check is falled");
-        Set<ShortFamilyMember> topAncestors = memberService.getAllTopAncestors(member);
-        Set<UUID> geneticTreeGuard = memberService.getGeneticTreeGuards(topAncestors);
-        SecretLevel tempStatus = memberService.getSecretStatus(member, UUID.fromString(guardFromToken.get().getTokenUser()), geneticTreeGuard);
-        SecretLevel max = memberService.getMaxSecretLevelForMember(member, geneticTreeGuard);
-
+        if (member == null || guardFromToken.isEmpty()) throw new RuntimeException("Status check is failed");
+        SecretLevel max = memberService.getMaxSecretLevelForMember(member, null, false);
+        if (max == SecretLevel.OPEN) {
+            Set<ShortFamilyMember> topAncestors = memberService.getAllTopAncestors(member);
+            Set<UUID> geneticTreeGuard = memberService.getGeneticTreeGuards(topAncestors);
+            if (geneticTreeGuard == null || geneticTreeGuard.isEmpty() || geneticTreeGuard.contains(UUID.fromString(guardFromToken.get().getTokenUser())))
+                return SecretLevel.CONFIDENTIAL;
+            else return SecretLevel.OPEN;
+        }
+        SecretLevel tempStatus = memberService.getSecretStatus(member, UUID.fromString(guardFromToken.get().getTokenUser()), null, false);
+        if (tempStatus == SecretLevel.OPEN) {
+            Set<ShortFamilyMember> topAncestors = memberService.getAllTopAncestors(member);
+            Set<UUID> geneticTreeGuard = memberService.getGeneticTreeGuards(topAncestors);
+            if (geneticTreeGuard != null && !geneticTreeGuard.isEmpty() && geneticTreeGuard.contains(UUID.fromString(guardFromToken.get().getTokenUser())))
+                return SecretLevel.GENETIC_TREE;
+            else return SecretLevel.OPEN;
+        }
         if (tempStatus == max) return SecretLevel.CONFIDENTIAL;
         else return tempStatus;
     }

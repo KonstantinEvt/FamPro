@@ -32,6 +32,20 @@ public class MemberRepository {
             log.warn("familyMember not update:", e);
         }
     }
+    @Transactional(readOnly = true)
+    public Optional  <Family> getPrimeFamily(ShortFamilyMember member) {
+        Optional<Family> family;
+        try {
+            family = Optional.of(entityManager.createQuery("from ShortFamilyMember a left join fetch a.familyWhereChild where a=:member", ShortFamilyMember.class)
+                    .setParameter("member", member)
+                    .getSingleResult().getFamilyWhereChild());
+
+        } catch (RuntimeException e) {
+            log.warn("Error in finding prime family : {}", e.getMessage());
+            family=Optional.empty();
+        }
+        return family;
+    }
     @Transactional
     public void updateInfo(ShortFamilyMemberInfo memberInfo) {
         try {

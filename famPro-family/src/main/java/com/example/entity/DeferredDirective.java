@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.sql.Timestamp;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -17,40 +18,39 @@ import java.util.UUID;
 public class DeferredDirective {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private UUID uuid;
 
-    @Column(name="created")
+    @Column(name = "created")
     private Timestamp created;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "directive_family")
-    private Family directiveFamily;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "directive_family")
+//    private Family directiveFamily;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "directive_member")
     private ShortFamilyMember directiveMember;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "family_member")
-    private ShortFamilyMember shortFamilyMemberLink;
+    @OneToMany(mappedBy = "directive",cascade = {CascadeType.REMOVE})
+    private Set<DirectiveMembers> shortFamilyMemberLink;
 
-    @Column(name="info_link")
+    @Column(name = "info_link")
     private String info;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "process_family")
-    private Family processFamily;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "process_family")
+//    private Family processFamily;
 
-    @Column(name="tokenUser")
+    @Column(name = "tokenUser")
     private String tokenUser;
 
     @Enumerated(EnumType.STRING)
     private SwitchPosition switchPosition;
-//    @Column(name="number_for")
+    //    @Column(name="number_for")
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "directive_global")
     private int globalFor;
-//    @Column(name="number_to")
+    //    @Column(name="number_to")
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "link_global_family")
     private int globalTo;

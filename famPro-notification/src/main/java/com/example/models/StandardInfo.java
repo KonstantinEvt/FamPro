@@ -1,7 +1,6 @@
 package com.example.models;
 
 import com.example.dtos.AloneNewDto;
-import com.example.enums.NewsCategory;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
@@ -22,7 +21,7 @@ public class StandardInfo {
     private List<Integer> systemGlobalRead = new ArrayList<>();
     private List<Integer> commonGlobalRead = new ArrayList<>();
 
-    public void addNewMessageToPerson(AloneNewDto aloneNewDto) {
+    public void addNewMessage(AloneNewDto aloneNewDto) {
         boolean success = false;
         switch (aloneNewDto.getCategory()) {
             case SYSTEM -> {
@@ -42,7 +41,7 @@ public class StandardInfo {
         if (success) this.counts[0] = this.counts[1] + this.counts[3] + this.counts[4];
     }
 
-    public void removeNew(AloneNewDto aloneNewDto) {
+    public void removeNewMessage(AloneNewDto aloneNewDto) {
         boolean success = false;
         switch (aloneNewDto.getCategory()) {
             case SYSTEM -> {
@@ -62,7 +61,7 @@ public class StandardInfo {
         if (success) this.counts[0] = this.counts[1] + this.counts[3] + this.counts[4];
     }
 
-    public int viewGlobalMessage(List<Integer> mask, List<Integer> read) {
+    public int viewNewGlobalMessage(List<Integer> mask, List<Integer> read) {
         int countGlobal = 0;
         for (int i = 0; i < mask.size(); i++) {
             if (i == read.size()) read.add(0);

@@ -11,6 +11,7 @@ import com.example.mappers.ContactMapper;
 import com.example.models.StandardInfo;
 import com.example.repository.NotificationRepo;
 import com.example.repository.RecipientRepo;
+import com.example.repository.RecipientRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,10 +35,11 @@ public class RecipientService {
     private ContactService contactService;
     private NotificationRepo notificationRepo;
     private LinkedList<DirectiveGuards> directiveRights;
+    private RecipientRepository recipientRepository;
 
     @Transactional(readOnly = true)
     public Recipient findRecipient(String externId) {
-        return recipientRepo.findByExternId(externId).orElse(null);
+        return recipientRepo.findByExternUuid(externId).orElse(null);
     }
 
     @Transactional(readOnly = true)
@@ -52,10 +54,18 @@ public class RecipientService {
     }
 
     @Transactional
+    public void changeRecipient(DirectiveGuards directiveGuards) {
+        Recipient requester = findRecipient(directiveGuards.getTokenUser());
+        requester.setUrlPhoto(directiveGuards.isPhotoExist());
+        requester.setLinkExternId(directiveGuards.getPerson());
+        recipientRepository.update(requester);
+    }
+
+    @Transactional
     public Recipient creatRecipient(TokenUser tokenUser) {
         Recipient recipient = Recipient.builder()
                 .nickName(tokenUser.getNickName())
-                .externId((String) tokenUser.getClaims().get("sub"))
+                .externUuid((String) tokenUser.getClaims().get("sub"))
                 .commonReading("")
                 .systemReading("")
                 .build();
@@ -65,65 +75,62 @@ public class RecipientService {
     }
 
     @Transactional
-    public void creatRecipient(FamilyDirective directive) {
-        Recipient recipient = Recipient.builder()
-                .nickName(directive.getPerson())
-                .externId(directive.getTokenUser())
-                .commonReading("")
-                .systemReading("")
-                .build();
-        recipientRepo.save(recipient);
-    }
-
-    @Transactional
     public void saveRecipient(Recipient recipient) {
         recipientRepo.save(recipient);
     }
 
     @Transactional
     public void inlineProcess(FamilyDirective directive) {
-        Recipient recipient = notificationRepo.findRecipientWithReceivedLetter(directive.getTokenUser());
+        Optional<Recipient> recipient = recipientRepository.getRecipientWithReceiveLettersByExternId(directive.getTokenUser());
+
+        if (recipient.isEmpty()) {
+            StandardInfo standardInfo = new StandardInfo();
+            recipientRepository.persistNewRecipient(Recipient.builder()
+                    .nickName(directive.getPerson())
+                    .externUuid(directive.getTokenUser())
+                    .commonReading("")
+                    .systemReading("")
+                    .build());
+            standardInfoHolder.getOnlineInfo().put(directive.getTokenUser(), standardInfo);
+        } else reloadOnlineRecipient(recipient.get(), directive.getPerson());
+    }
+
+    @Transactional
+    public void reloadOnlineRecipient(Recipient recipient, String nickName) {
+        List<AloneNew> receivedLetters = recipient.getReceivedLetters();
         StandardInfo standardInfo = new StandardInfo();
-
-        if (recipient == null) {
-            creatRecipient(directive);
-            standardInfo.getSystemGlobalRead().addAll(standardInfoHolder.getSystemGlobalMask());
-            standardInfo.getCommonGlobalRead().addAll(standardInfoHolder.getCommonGlobalMask());
-            standardInfoHolder.getOnlineInfo().put(directive.getTokenUser(), standardInfo);
-        } else {
-            List<AloneNew> aloneNewList0 = recipient.getReceivedLetters();
-            if (aloneNewList0 != null && !aloneNewList0.isEmpty()) {
-                List<AloneNew> aloneNewNewList = notificationRepo.getNewLettersWithSenders(aloneNewList0);
-                for (AloneNew letter :
-                        aloneNewNewList) {
-                    AloneNewDto aloneNewDto = letterMapper.entityToDto(letter);
-                    if (letter.getSendFrom() != null) {
-                        aloneNewDto.setSendingFromAlt(letter.getSendFrom().getNickName());
-                    } else {
-                        aloneNewDto.setSendingFrom(aloneNewDto.getId().toString());
-                    }
-                    standardInfo.addNewMessageToPerson(aloneNewDto);
+        if (receivedLetters != null && !receivedLetters.isEmpty()) {
+            List<AloneNew> listWithSenders = notificationRepo.getNewLettersWithSenders(receivedLetters);
+            for (AloneNew letter :
+                    listWithSenders) {
+                AloneNewDto aloneNewDto = letterMapper.entityToDto(letter);
+                if (letter.getSendFrom() != null) {
+                    aloneNewDto.setSendingFromAlt(letter.getSendFrom().getNickName());
+                } else {
+                    aloneNewDto.setSendingFrom(aloneNewDto.getId().toString());
                 }
+                standardInfo.addNewMessage(aloneNewDto);
             }
+        }
+        standardInfo.getSystemGlobalRead().addAll(recipient.getSystemReading().chars().map(x -> x - 48).boxed().toList());
+        standardInfo.getCommonGlobalRead().addAll(recipient.getCommonReading().chars().map(x -> x - 48).boxed().toList());
 
-            standardInfo.getSystemGlobalRead().addAll(recipient.getSystemReading().chars().map(x -> x - 48).boxed().toList());
-            standardInfoHolder.getOnlineInfo().put(directive.getTokenUser(), standardInfo);
-            if (!recipient.getNickName().equals(directive.getPerson())) {
-                recipient.setNickName(directive.getPerson());
-
-                recipientRepo.save(recipient);
-            }
+        standardInfoHolder.getOnlineInfo().put(recipient.getExternUuid(), standardInfo);
+        if (!Objects.equals(recipient.getNickName(), nickName)) {
+            recipient.setNickName(nickName);
+            recipientRepository.update(recipient);
         }
     }
 
     @Transactional(readOnly = true)
     public Set<ContactDto> getContactDtos(String recipientExternId) {
         Recipient recipient = notificationRepo.findRecipientWithContacts(recipientExternId);
-        if (recipient != null && recipient.getContacts() != null&&!recipient.getContacts().isEmpty()) directiveRights.add(DirectiveGuards.builder()
-                .operation(KafkaOperation.ADD)
-                .person(recipient.getExternId())
-                .guards(recipient.getContacts().stream().map(Contact::getExternId).collect(Collectors.toSet()))
-                .build());
+        if (recipient != null && recipient.getContacts() != null && !recipient.getContacts().isEmpty())
+            directiveRights.add(DirectiveGuards.builder()
+                    .operation(KafkaOperation.ADD)
+                    .person(recipient.getExternUuid())
+                    .guards(recipient.getContacts().stream().map(Contact::getExternId).collect(Collectors.toSet()))
+                    .build());
         else return new HashSet<>();
         return contactMapper.entitySetToDtoSet(recipient.getContacts());
     }
@@ -161,7 +168,7 @@ public class RecipientService {
             }
         }
         ContactDto contactDto = contactMapper.entityToDto(contactService.addContact(owner, recipientDto, person));
-        contactDto.setOwnerId(owner.getExternId());
+        contactDto.setOwnerId(owner.getExternUuid());
         return contactDto;
     }
 
@@ -174,7 +181,7 @@ public class RecipientService {
                 podpisota) {
             if (contact.getOwner() == owner) {
                 ContactDto contactDto = contactMapper.entityToDto(contactService.editContact(person, recipientDto, contact));
-                contactDto.setOwnerId(owner.getExternId());
+                contactDto.setOwnerId(owner.getExternUuid());
                 return contactDto;
             }
         }

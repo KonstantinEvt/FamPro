@@ -30,33 +30,46 @@ async function getSystemNews() {
     cards = [];
     numCards = [];
     document.getElementById("resultPart").innerHTML = `
-        <div style="padding-right: 0;padding-left:0;text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 20px">SYSTEM NEWS </div>
-        <div id="sys-empty" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">
-        <div id="system-list" class="card-group" style="height: 84vh; max-width:100%; overflow-x: auto"></div></div>`
+    <div class="container-fluid row" style=" margin-right: 0">
+        <span class="col" style="padding-right: 0;padding-left:0;text-align: right; color: chocolate;font-family: 'Times New Roman',serif; font-size: 20px">SYSTEM NEWS</span>
+        <span class="col-1" style="padding-right: 0;padding-left:0"></span>
+        <span class="col-5" style="padding-left:0; padding-right: 0">
+           <div class="btn-group-horizontal" role="group" aria-label="Vertical button group" style="margin-left: 5px; text-align: right">
+                <input type="radio" class="btn-check" name="news-choice"  id="news-choice1" autoComplete="off">
+                <label class="btn btn-outline-warning" style="padding: 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice1" onclick="refreshGlobalNews('system',true)">Все</label>
+                <input type="radio" class="btn-check" name="news-choice"  id="news-choice2" autoComplete="off" checked>
+                <label class="btn btn-outline-warning" style="padding: 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice2" onclick="refreshGlobalNews('system',false)">Новые </label>
+           </div>
+        </span>
+    </div>        
+    <div id="system-empty" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">
+        <div id="system-list" class="card-group" style="height: 84vh; max-width:100%; overflow-x: auto"></div>
+    </div>
+`
     if (counts[1] !== null && counts[1] !== 0) {
-        await loadCategoryNews("system")
+        await loadCategoryNews("system", false)
     } else {
-        document.getElementById("sys-empty").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">We are glad to see you</div>`;
+        document.getElementById("system-empty").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">We are glad to see you</div>`;
     }
 }
 
-// private String sendingFrom;
-// private String sendingTo;
-// private Date creationDate;
-// private String subject;
-// private byte[] image;
-// private String textInfo;
-// private NewsCategory category;
-// private boolean alreadyRead;
+async function refreshGlobalNews(category, choice) {
+    document.getElementById(category+'-empty').innerHTML=``;
+    await loadCategoryNews(category, choice)
+}
 
-async function loadCategoryNews(category) {
 
+async function loadCategoryNews(category, choice) {
     let temp1 = ``;
     let i = 0;
+    // cards = [];
+    // numCards = [];
     let linkOn = category + "-list";
+    if (document.getElementById(linkOn) === undefined || document.getElementById(linkOn) === null) document.getElementById(category + "-empty").innerHTML = `<div id='${linkOn}' class="card-group" style="height: 84vh; max-width:100%; overflow-x: auto"></div>`
     // console.log(document.getElementById(linkOn).innerHTML);
     if (!document.getElementById(linkOn).innerHTML || /^\s*$/.test(document.getElementById(linkOn).innerHTML)) {
         let url = "/news/" + category;
+        if (choice) url += "All";
         cards = [];
         numCards = [];
         let newsForm = []
@@ -77,6 +90,7 @@ async function loadCategoryNews(category) {
                             subjectJS: aloneNew.subject,
                             textInfoJS: aloneNew.textInfo,
                             categoryJS: aloneNew.category,
+                            attention: aloneNew.attention,
                             imj: ``
                         }
                         i += 1;
@@ -92,6 +106,7 @@ async function loadCategoryNews(category) {
             newsForm[j].imj = await loadPicture(imjUrl);
             console.log("picture is loading", newsForm);
             numCards[j] = true;
+            let operation=choice?'Remove':'Read'
             let pictureUrl = URL.createObjectURL(newsForm[j].imj)
             cards[j] = `
                 <div class="card" style="max-height:700px; min-width:290px; max-width: 290px; margin-bottom: 10px">
@@ -99,8 +114,9 @@ async function loadCategoryNews(category) {
                     <div class="card-body" style="text-align: center">
                         <h5 class="card-title">${newsForm[j].subjectJS}</h5>
                         <p class="card-text">${newsForm[j].textInfoJS}</p>
-                        <a class="btn btn-outline-success" onclick="readCategoryMessage('${newsForm[j].sendingFromJS}','${j}','${category}')" href="#">See</a>   
-                        <br>                   
+                        <br>                        
+                        <a class="btn btn-outline-warning" onclick="readCategoryMessage('${newsForm[j].sendingFromJS}','${j}','${category}','${operation}')" href="#">${operation}</a>   
+                        
                     </div> 
                     <div class="card-footer">
                         <small class="text-body-secondary">
@@ -126,37 +142,47 @@ async function loadCategoryNews(category) {
 
 }
 
-async function readCategoryMessage(id, i, category) {
+async function readCategoryMessage(id, i, category, operation) {
     numCards[i] = false;
-    let url = "/news/globalNewsRead/" + id
+    let url = "/news/globalNews" + operation + "/" + category.toUpperCase() + "/" + id
     fetch(url, {
         method: 'GET',
         headers: {},
     }).then(r => r).then(() => {
-            counts[0] = counts[0] - 1;
-            if (counts[0] !== 0) document.getElementById("newsCount").innerHTML = counts[0] + "";
-            else document.getElementById("badge0").innerHTML = "";
-            if (category === "system") {
-                counts[1] = counts[1] - 1;
-                if (counts[1] !== 0) document.getElementById("countNew1").innerHTML = counts[1] + "";
-                else {
-                    document.getElementById("badge1").innerHTML = "";
-                    document.getElementById("system-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">Больше системных сообщений нет</div>`;
-                }
-            } else if (category === "common") {
-                counts[2] = counts[2] - 1;
-                if (counts[2] !== 0) document.getElementById("countNew2").innerHTML = counts[2] + "";
-                else {
-                    document.getElementById("badge2").innerHTML = "";
-                    document.getElementById("common-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">Больше общих сообщений нет</div>`;
+            if (operation==='Read') {
+                counts[0] = counts[0] - 1;
+                if (counts[0] !== 0) document.getElementById("newsCount").innerHTML = counts[0] + "";
+                else document.getElementById("badge0").innerHTML = "";
+                if (category === "system") {
+                    counts[1] = counts[1] - 1;
+                    if (counts[1] !== 0) document.getElementById("countNew1").innerHTML = counts[1] + "";
+                    else {
+                        document.getElementById("badge1").innerHTML = "";
+                        document.getElementById("system-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">Больше системных сообщений нет</div>`;
+                    }
+                } else if (category === "common") {
+                    counts[2] = counts[2] - 1;
+                    if (counts[2] !== 0) document.getElementById("countNew2").innerHTML = counts[2] + "";
+                    else {
+                        document.getElementById("badge2").innerHTML = "";
+                        document.getElementById("common-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">Больше общих сообщений нет</div>`;
+                    }
                 }
             }
         }
     )
     loadNewsCounts();
-    await loadCategoryNews(category)
+    redrawGlobalCards(category);
+    // await loadCategoryNews(category, false)
 }
 
+function redrawGlobalCards(category){
+    let temp1=``;
+    for (let j = 0; j < numCards.length; j++) {
+        if (numCards[j]) temp1 += cards[j];
+    }
+    document.getElementById(category+'-list').innerHTML = temp1;
+}
 async function getCommonNews() {
     cards = [];
     numCards = [];
@@ -166,7 +192,7 @@ async function getCommonNews() {
             <div class="card-group" id="common-list" style="height: 84vh; max-width: 100%; overflow-x: auto" >           
             </div> </div>`;
     if (counts[2] !== null && counts[2] !== 0) {
-        await loadCategoryNews("common");
+        await loadCategoryNews("common", false);
     } else {
         document.getElementById("common-empty").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Common messages are absent</div>`;
     }
@@ -255,19 +281,22 @@ async function loadingIndividualNews(category, choice) {
                     sendingFromJS: from,
                     subjectJS: aloneNew.subject,
                     textInfoJS: aloneNew.textInfo,
+                    attention: aloneNew.attention,
                     categoryJS: aloneNew.category.toLowerCase(),
                     imj: ``,
                     alreadyRead: aloneNew.alreadyRead,
                     num: num
                 }
 
-                if ((fetchData.subjectJS === "Positive result" || fetchData.subjectJS === "Contact added" || fetchData.subjectJS === "Accept change") && defaultPhotos.approved !== null) fetchData.imj = defaultPhotos.approved;
-                if ((fetchData.subjectJS === "Negative result" || fetchData.subjectJS === "Reject change" || fetchData.subjectJS === "Contact reject") && defaultPhotos.rejected !== null) fetchData.imj = defaultPhotos.rejected;
-                if ((fetchData.subjectJS === "Link request" || fetchData.subjectJS === "Request link") && defaultPhotos.election !== null) fetchData.imj = defaultPhotos.election;
+                if ((fetchData.attention === "VOTING_POSITIVE" || fetchData.attention === "POSITIVE" ||fetchData.subjectJS === "Contact added" || fetchData.subjectJS === "Accept change") && defaultPhotos.approved !== null) fetchData.imj = defaultPhotos.approved;
+                if ((fetchData.attention === "VOTING_NEGATIVE" || fetchData.attention === "NEGATIVE" || fetchData.subjectJS === "Reject change" || fetchData.subjectJS === "Contact reject") && defaultPhotos.rejected !== null) fetchData.imj = defaultPhotos.rejected;
+                if ((fetchData.attention === "VOTING") && defaultPhotos.election !== null) fetchData.imj = defaultPhotos.election;
                 if ((fetchData.subjectJS === "Request for contact" || fetchData.subjectJS === "Contact request") && defaultPhotos.contact !== null) fetchData.imj = defaultPhotos.contact;
-                if ((fetchData.subjectJS === "Link to person" || fetchData.subjectJS === "Linking to person") && defaultPhotos.linking !== null) fetchData.imj = defaultPhotos.linking;
+                if ((fetchData.attention === "LINK") && defaultPhotos.linking !== null) fetchData.imj = defaultPhotos.linking;
                 if (fetchData.imj === ``) fetchData.imj = contactImage;
                 if (fetchData.imj === `` && defaultPhotos.person !== null) fetchData.imj = defaultPhotos.person;
+
+                if (fetchData.externIdJS===null) fetchData.externIdJS=fetchData.idJS;
 
                 lets[num] = fetchData;
                 cards[num] = drawCard(fetchData, choice);
@@ -355,10 +384,9 @@ function drawButtons(letter, choice) {
         temp = `<span class="col" style=" text-align: center;color:chocolate">Letter is already read"</span>`
     } else {
         if (letter.sendingFromJS === "Informer")
-            switch (letter.subjectJS) {
-                case "Link request":
-                case "Contact request":
-                case "Linking to person":
+            switch (letter.attention) {
+                case "VOTING":
+
                     temp = `<span class="col-2">
                             <a type="button" class="btn btn-outline-success"
                                 onClick="acceptMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">Accept</a></span>
@@ -367,15 +395,21 @@ function drawButtons(letter, choice) {
                             <a type="button" class="btn btn-outline-danger" onClick="rejectMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')"
                                 href="#">Reject</a></span>`;
                     break;
-                case "Positive result":
-                case "Request for contact":
-                case "Contact added":
-                case "Contact reject":
-                case "Accept change":
-                case "Negative result":
-                case "Request link":
-                case "Link to person":
+                case "RIGHTS":
+                case "MODERATE":
+                case "LINK":
+                case "NEGATIVE":
+                case "DATE":
+                case "POSITIVE":
                     temp = `<span class="col-4"></span>
+                        <span class="col">
+                            <a type="button" class="btn btn-outline-warning"
+                                onClick="seeMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">See</a></span>
+                        <span class="col-4"></span>`;
+                    break;
+                case "VOTING_NEGATIVE":
+                case "VOTING_POSITIVE":
+                case "VOTING_REQUESTER":temp = `<span class="col-4"></span>
                         <span class="col">
                             <a type="button" class="btn btn-outline-warning"
                                 onClick="readResult('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">See</a></span>
@@ -507,7 +541,7 @@ async function getPrivateNews(category) {
 
 async function acceptMessage(id, num, category) {
     fetch("/message/accept/" + id, {method: "GET"}).then(r => r.text())
-        .then(r => document.getElementById("footer-main").innerHTML = r);
+        .then(r => console.log(r));
     rawNews.forEach(letter => {
         if (letter.externIdJS === id) letter.alreadyRead = true;
     })
@@ -519,7 +553,7 @@ async function acceptMessage(id, num, category) {
 
 async function rejectMessage(id, num, category) {
     fetch("/message/reject/" + id, {method: "GET"}).then(r => r.text())
-        .then(r => document.getElementById("footer-main").innerHTML = r);
+        .then(r => console.log(r));
     rawNews.forEach(letter => {
         if (letter.externIdJS === id) letter.alreadyRead = true;
     })

@@ -18,7 +18,7 @@ public class Family {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "familyGen")
     @SequenceGenerator(name = "familyGen",
-            sequenceName = "seqFamilyGen", initialValue = 1, allocationSize = 5
+            sequenceName = "seq_family_gen", initialValue = 1, allocationSize = 5
     )
     private Long id;
 
@@ -38,11 +38,11 @@ public class Family {
             inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id"))
     private Set<ShortFamilyMember> familyMembers;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "family_parents",
-            joinColumns = @JoinColumn(name = "family_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id"))
-    private Set<ShortFamilyMember> parents;
+//    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+//    @JoinTable(name = "family_parents",
+//            joinColumns = @JoinColumn(name = "family_id", referencedColumnName = "id"),
+//            inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id"))
+//    private Set<ShortFamilyMember> parents;
 
     @OneToMany(mappedBy = "familyWhereChild")
     private Set<ShortFamilyMember> children;

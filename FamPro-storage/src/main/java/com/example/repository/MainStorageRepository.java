@@ -37,17 +37,30 @@ public class  MainStorageRepository {
     }
 
     @Transactional(readOnly = true)
-    public Optional<FamilyMember> findFullFamilyMemberById(Long id) {
+    public Optional<FamilyMember> findFamilyMemberByUuid(UUID uuid) {
         Optional<FamilyMember> familyMember;
         try {
-            familyMember = Optional.of(entityManager.createQuery("from FamilyMember a left join fetch a.familyMemberInfo where a.id=:id", FamilyMember.class)
-                    .setParameter("id", id)
+            familyMember = Optional.of(entityManager.createQuery("from FamilyMember a where a.uuid=:uuid", FamilyMember.class)
+                    .setParameter("uuid", uuid)
                     .getSingleResult());
         } catch (RuntimeException e) {
             log.warn("person in base not found");
             familyMember = Optional.empty();
         }
         return familyMember;
+    }
+    @Transactional(readOnly = true)
+    public Set<FamilyMember> findAllFamilyMemberByUuid(Set<UUID> uuids) {
+        Set<FamilyMember> familyMembers;
+        try {
+            familyMembers = new HashSet<>(entityManager.createQuery("from FamilyMember a where a.uuid in: uuids", FamilyMember.class)
+                    .setParameter("uuids", uuids)
+                    .getResultList());
+        } catch (RuntimeException e) {
+            log.warn("person in base not found");
+            familyMembers = new HashSet<>();
+        }
+        return familyMembers;
     }
 
     @Transactional(readOnly = true)

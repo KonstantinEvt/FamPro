@@ -5,10 +5,9 @@ import com.example.entity.Changing;
 import com.example.entity.Family;
 import com.example.entity.ShortFamilyMember;
 import com.example.enums.ChangingStatus;
-import com.example.enums.SecretLevel;
+import com.example.enums.Sex;
 import com.example.repository.FamilyRepo;
 import com.example.repository.FamilyRepository;
-import com.example.repository.MainFamilyRepo;
 import com.example.repository.ShortMemberRepo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,15 +28,9 @@ public class FamilyServiceImp {
     private FamilyRepo familyRepo;
     private ShortMemberRepo memberRepo;
     private GuardService guardService;
-    private MainFamilyRepo mainFamilyRepo;
     private MemberService memberService;
     private FamilyRepository familyRepository;
 
-    public void addChangesToFamilyInfo(Family family, String husbandInfo, String
-            wifeInfo) {
-        if (husbandInfo != null) family.setHusbandInfo(husbandInfo);
-        if (wifeInfo != null) family.setWifeInfo(wifeInfo);
-    }
 
     @Transactional
     public Family creatFreeFamily(String fatherInfo, String motherInfo, UUID externId) {
@@ -126,19 +119,6 @@ public void setFamilySecretLevels(Family family,ShortFamilyMember member){
             }
         }
     }
-//    @Transactional
-//    public Family creatOrFindFamilyByInfo(ShortFamilyMember member) {
-//        if ((member.getFatherInfo() != null
-//                && member.getMotherInfo() != null) &&
-//                ((member.getFatherInfo().charAt(0) != '(' || member.getFatherInfo().charAt(1) == 'A') ||
-//                        (member.getMotherInfo().charAt(0) != '(' || member.getMotherInfo().charAt(1) == 'A'))) {
-//            String externId = member.getFatherInfo().concat(member.getMotherInfo());
-//            System.out.println("Поиск семьи по инфо");
-//            Family family = mainFamilyRepo.findFamilyWithAllGuardsByExternId(externId);
-//            return (family == null) ? creatFreeFamily(member.getFatherInfo(), member.getMotherInfo(), externId) : family;
-//        } else
-//            return creatFreeFamily(member.getFatherInfo(), member.getMotherInfo(), member.getUuid().toString());
-//    }
 
     @Transactional
     public void mergeFamilies(Family donor, Family merged) {
@@ -172,13 +152,12 @@ public void setFamilySecretLevels(Family family,ShortFamilyMember member){
 
     @Transactional
     public void addChangesFromFather(Family primeFamily,
-                                     Family family,
                                      ShortFamilyMember mainMember,
                                      ShortFamilyMember member) {
         primeFamily.setHusband(member);
         primeFamily.getFamilyMembers().add(member);
         primeFamily.setHusbandInfo(member.getFullName());
-        if (primeFamily.getWifeInfo() != null && (primeFamily.getWifeInfo().charAt(0) != '(' || primeFamily.getWifeInfo().charAt(1) != 'A'))
+        if (primeFamily.getWifeInfo() != null && (primeFamily.getWifeInfo().charAt(0) != '(' || primeFamily.getWifeInfo().charAt(1) == 'A'))
             primeFamily.setUuid(UUID.nameUUIDFromBytes(primeFamily.getHusbandInfo().concat(primeFamily.getWifeInfo()).getBytes()));
         Set<Family> familiesOfBrothersByFather = familyRepo.findAllByHusband(member);
         if (!familiesOfBrothersByFather.isEmpty()) {
@@ -196,19 +175,18 @@ public void setFamilySecretLevels(Family family,ShortFamilyMember member){
                 }
             }
         }
-        memberService.addChildToFamilyMember(mainMember, member);
+        memberService.addChildToFamilyMember(mainMember, member, Sex.MALE);
         familyRepo.saveAll(familiesOfBrothersByFather);
     }
 
     @Transactional
     public void addChangesFromMother(Family primeFamily,
-                                     Family family,
                                      ShortFamilyMember mainMember,
                                      ShortFamilyMember member) {
         primeFamily.setWife(member);
         primeFamily.getFamilyMembers().add(member);
         primeFamily.setWifeInfo(member.getFullName());
-        if (primeFamily.getHusbandInfo() != null && (primeFamily.getHusbandInfo().charAt(0) != '(' || primeFamily.getHusbandInfo().charAt(1) != 'A'))
+        if (primeFamily.getHusbandInfo() != null && (primeFamily.getHusbandInfo().charAt(0) != '(' || primeFamily.getHusbandInfo().charAt(1) == 'A'))
             primeFamily.setUuid(UUID.nameUUIDFromBytes(primeFamily.getHusbandInfo().concat(primeFamily.getWifeInfo()).getBytes()));
         Set<Family> familiesOfBrothersByMother = familyRepo.findAllByWife(member);
         if (!familiesOfBrothersByMother.isEmpty()) {
@@ -226,7 +204,7 @@ public void setFamilySecretLevels(Family family,ShortFamilyMember member){
                 }
             }
         }
-        memberService.addChildToFamilyMember(mainMember, member);
+        memberService.addChildToFamilyMember(mainMember, member,Sex.FEMALE);
         familyRepo.saveAll(familiesOfBrothersByMother);
     }
 

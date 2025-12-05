@@ -1,5 +1,7 @@
 package com.example.entity;
 
+import com.example.enums.Attention;
+import com.example.enums.CheckStatus;
 import com.example.enums.NewsCategory;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,27 +23,40 @@ public class AloneNew {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
     @Column(name = "extern_id")
     private String externId;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "sending_from")
     private Recipient sendFrom;
+
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "letter_recipient",
             joinColumns = @JoinColumn(name = "letter_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "man_id", referencedColumnName = "id"))
     private Set<Recipient> sendTo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attention")
+    private Attention attention;
+
     @Column(name = "creation_date")
     private Date creationDate;
+
     @Column(name = "subject")
     private String subject;
+
     @Column(name = "image_url")
     private String imageUrl;
+
     @Column(name = "text_info", length = 2043)
     private String textInfo;
+
     @Column(name = "category")
     @Enumerated(EnumType.STRING)
     private NewsCategory category;
+
     @Column(name = "already_read")
     private boolean alreadyRead;
 

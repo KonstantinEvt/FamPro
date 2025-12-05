@@ -17,21 +17,29 @@ public class Contact {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID uuid;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner")
     private Recipient owner;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private Recipient person;
+
     @Column(name = "contact_name")
     private String name;
+
     @Column(name = "contact_info")
     private String info;
+
     @Column(name = "extern_id")
     private String externId;
+
     @Column(name = "contact_photo")
     private boolean contactPhoto;
+
     @Column(name = "prime_photo")
     private boolean primePhoto;
+
     @Column(name = "status")
     private KafkaOperation status;
 
