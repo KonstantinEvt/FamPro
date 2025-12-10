@@ -1,13 +1,19 @@
 package com.example.transcriters;
 
 
+import com.example.enums.Attention;
 import com.example.enums.CheckStatus;
+import com.example.enums.Subject;
+import com.example.enums.SwitchPosition;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class EmptyTranscriter implements AbstractTranscriter {
+public class EnglishTranscripter implements AbstractTranscripter {
     public static final Map<String,String> matrixOfChange=new HashMap<>();
+    public final Map<String,String> matrixOfTextGeneration= Map.ofEntries(
+
+    );
 
     @Override
     public String transcritWordToLocalisation(String str) {
@@ -59,6 +65,23 @@ public class EmptyTranscriter implements AbstractTranscriter {
         return matrixOfChange;
     }
 
+    @Override
+    public String getTextSubject(Subject subject) {
+        return subject.getCommit();
+    }
 
+    @Override
+    public Map<String, String> getMatrixOfTextGeneration() {
+        return matrixOfTextGeneration;
+    }
+    @Override
+    public String getTextSwitchPosition(SwitchPosition switchPosition) {
+        return switchPosition.getCommit();
+    }
+
+    @Override
+    public String getAnd() {
+        return " and ";
+    }
 }
 

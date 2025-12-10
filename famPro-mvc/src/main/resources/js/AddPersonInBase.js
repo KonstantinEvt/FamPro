@@ -229,24 +229,24 @@ function addFamilyMember() {
         </select>
         <label for="chooseSecureEE" style="color: chocolate; padding-top: 5px">Secure edit:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureEE" aria-label="chooseSecureEE">            
-            <option value="CONFIDENTIAL">Личное</option>
+            <option value="CONFIDENTIAL" selected>Личное</option>
             <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY" selected >Семейное</option>
+            <option value="FAMILY"  >Семейное</option>
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureMain" style="color: chocolate; padding-top: 5px">Secure edit main:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureMain" aria-label="chooseSecureMain">            
-            <option value="CONFIDENTIAL">Личное</option>            
+            <option value="CONFIDENTIAL" selected>Личное</option>            
             <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY" selected >Семейное</option>
+            <option value="FAMILY"  >Семейное</option>
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureBirthday" style="color: chocolate; padding-top: 5px">Secure Birthday:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureBirthday" aria-label="chooseSecureBirthday">            
-            <option value="OPEN" selected>Открыто</option>
-            <option value="CONFIDENTIAL">Личное</option>
+            <option value="OPEN" >Открыто</option>
+            <option value="CONFIDENTIAL" selected>Личное</option>
             <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY" >Семейное</option>
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
@@ -254,9 +254,9 @@ function addFamilyMember() {
         </select>
         <label for="chooseSecureRM" style="color: chocolate; padding-top: 5px">Secure remove:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureRM" aria-label="chooseSecureRM">            
-            <option value="CONFIDENTIAL">Личное</option>
+            <option value="CONFIDENTIAL" selected>Личное</option>
             <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY" selected >Семейное</option>
+            <option value="FAMILY"  >Семейное</option>
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
@@ -272,7 +272,7 @@ function addFamilyMember() {
                 <label for="chooseSecurePBur" style="color: chocolate; padding-top: 5px">Secure place of burial:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBur" aria-label="chooseSecurePBur">            
             <option value="OPEN">Открыто</option>
-            <option value="CONFIDENTIAL" >Личное</option>
+            <option value="CONFIDENTIAL" selected>Личное</option>
             <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
@@ -281,9 +281,9 @@ function addFamilyMember() {
         <label for="chooseSecurePBirth" style="color: chocolate; padding-top: 5px">Secure place of birth:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBirth" aria-label="chooseSecurePBirth">            
             <option value="OPEN">Открыто</option>
-            <option value="CONFIDENTIAL" >Личное</option>
+            <option value="CONFIDENTIAL" selected>Личное</option>
             <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY" selected>Семейное</option>
+            <option value="FAMILY" >Семейное</option>
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>

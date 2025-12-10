@@ -4,19 +4,13 @@ import com.example.dtos.DirectiveGuards;
 import com.example.dtos.FamilyDirective;
 import com.example.entity.DeferredDirective;
 import com.example.entity.ShortFamilyMember;
-import com.example.enums.Attention;
-import com.example.enums.CheckStatus;
-import com.example.enums.KafkaOperation;
-import com.example.enums.SwitchPosition;
+import com.example.enums.*;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Log4j2
@@ -25,16 +19,19 @@ public class SendAndFormService {
     private final LinkedList<DirectiveGuards> guardsLetters;
     private final LinkedList<FamilyDirective> storageDirective;
     private final List<DirectiveGuards> contactDirective;
+    private final Map<UUID, Localisation> tempLocalisation;
 
 
     SendAndFormService(@Qualifier("checkLevelDirective") LinkedList<DirectiveGuards> checkLevelDirective,
                        @Qualifier("directiveGuards") LinkedList<DirectiveGuards> guardsLetters,
                        @Qualifier("storageDirective") LinkedList<FamilyDirective> storageDirective,
-                       @Qualifier("contactDirective") List<DirectiveGuards> contactDirective) {
+                       @Qualifier("contactDirective") List<DirectiveGuards> contactDirective,
+                       @Qualifier("tempLocalisation") Map<UUID, Localisation> tempLocalisation) {
         this.checkLevelDirective = checkLevelDirective;
         this.guardsLetters = guardsLetters;
         this.storageDirective = storageDirective;
         this.contactDirective = contactDirective;
+        this.tempLocalisation = tempLocalisation;
     }
 
     /***
@@ -69,37 +66,36 @@ public class SendAndFormService {
      * @param attention место влияния
      */
     public void sendAttentionToUser(String userUuid, String personInfo, ShortFamilyMember person, Attention attention) {
-        DirectiveGuards directiveGuards=DirectiveGuards.builder()
+        DirectiveGuards directiveGuards = DirectiveGuards.builder()
                 .created(new Timestamp(System.currentTimeMillis()))
                 .tokenUser(userUuid)
                 .operation(KafkaOperation.ADD)
+                .localisation(Objects.requireNonNullElse(tempLocalisation.get(UUID.fromString(userUuid)),Localisation.EN))
                 .info2(personInfo)
                 .build();
         switch (attention) {
             case MODERATE -> {
-                directiveGuards.setInfo1("You are trying changing person under voting or moderation");
+                directiveGuards.setSubject(Subject.MODERATION_WARNING);
+                ;
                 directiveGuards.setSwitchPosition(SwitchPosition.MAIN);
             }
             case RIGHTS -> {
-                directiveGuards.setInfo1("You are trying changing person without rights");
+                directiveGuards.setSubject(Subject.RIGHTS);
                 directiveGuards.setSwitchPosition(SwitchPosition.FATHER);
             }
             case LINK -> {
                 if (person == null) {
-                    directiveGuards.setInfo1("Link is rejected");
+                    directiveGuards.setSubject(Subject.LINK_NEGATIVE);
+                    directiveGuards.setPerson(personInfo);
                 } else {
-                    directiveGuards.setInfo1("You are successful linked");
+                    directiveGuards.setSubject(Subject.LINK_POSITIVE);
                     directiveGuards.setPerson(person.getUuid().toString());
                     directiveGuards.setPhotoExist(person.isPrimePhoto());
                 }
                 directiveGuards.setSwitchPosition(SwitchPosition.PRIME);
             }
-            case NEGATIVE -> {
-                directiveGuards.setInfo1("You request for linking is reject");
-                directiveGuards.setSwitchPosition(SwitchPosition.MOTHER);
-            }
             default -> {
-                directiveGuards.setInfo1("You are do something. But we are unknown that");
+                directiveGuards.setSubject(Subject.UNKNOWN);
                 directiveGuards.setSwitchPosition(SwitchPosition.CHILD);
             }
         }
@@ -116,14 +112,15 @@ public class SendAndFormService {
                 .switchPosition(directive.getSwitchPosition())
                 .info1(directive.getDirectiveMember().getFullName())
                 .info2(directive.getInfo())
+                .localisation(Objects.requireNonNullElse(directive.getLocalisation(), Localisation.RU))
                 .build();
-        directiveGuards.setNumber1(0L);
-        directiveGuards.setNumber2(0);
+        if (directive.getSwitchPosition() == SwitchPosition.BIRTH) directiveGuards.setSubject(Subject.LINK);
+        else directiveGuards.setSubject(Subject.VOTING);
         guardsLetters.add(directiveGuards);
     }
 
     public void sendChangeInStorageByNegative(DeferredDirective directive, String person) {
-        storageDirective.add(FamilyDirective.builder()
+        checkLevelDirective.add(DirectiveGuards.builder()
                 .tokenUser(directive.getTokenUser())
                 .operation(KafkaOperation.EDIT)
                 .switchPosition(directive.getSwitchPosition())

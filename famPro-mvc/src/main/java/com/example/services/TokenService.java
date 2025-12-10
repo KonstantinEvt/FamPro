@@ -1,12 +1,14 @@
 package com.example.services;
 
+import com.example.dtos.DirectiveGuards;
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.TokenUser;
 import com.example.enums.CheckStatus;
+import com.example.enums.KafkaOperation;
 import com.example.enums.Localisation;
 import com.example.enums.UserRoles;
 import com.example.feign.KeyCloakManageClient;
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,11 +18,20 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-@AllArgsConstructor
 @SuppressWarnings("unchecked")
 public class TokenService {
 //    private WebClient webClient;
-    private KeyCloakManageClient keyCloakManageClient;
+    private final KeyCloakManageClient keyCloakManageClient;
+    private final LinkedList<DirectiveGuards> setLanguishFamily;
+    private final LinkedList<DirectiveGuards> setLanguishStorage ;
+
+    public TokenService(KeyCloakManageClient keyCloakManageClient,
+                        @Qualifier("languishFamily") LinkedList<DirectiveGuards> setLanguishFamily,
+                        @Qualifier("languishStorage") LinkedList<DirectiveGuards> setLanguishStorage) {
+        this.keyCloakManageClient = keyCloakManageClient;
+        this.setLanguishFamily = setLanguishFamily;
+        this.setLanguishStorage = setLanguishStorage;
+    }
 
     public TokenUser getTokenUser() {
         SecurityContext context = SecurityContextHolder.getContext();
@@ -73,4 +84,14 @@ public class TokenService {
         }
         return Localisation.EN;
     }
+    public void setGlobalLocalisation(String inlineUuid, String localisationString){
+        Localisation localisation=Localisation.EN;
+        for (Localisation loc :
+                Localisation.values()) {
+            if (localisationString.toUpperCase().equals(loc.name()))
+                localisation=loc;
+        }
+        DirectiveGuards directive=DirectiveGuards.builder().tokenUser(inlineUuid).operation(KafkaOperation.GET).localisation(localisation).build();
+        setLanguishStorage.add(directive);
+        setLanguishFamily.add(directive);}
 }

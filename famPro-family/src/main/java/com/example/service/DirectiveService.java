@@ -1,6 +1,8 @@
 package com.example.service;
 
 import com.example.dtos.Directive;
+import com.example.dtos.DirectiveGuards;
+import com.example.dtos.FamilyDirective;
 import com.example.entity.*;
 import com.example.enums.*;
 import com.example.repository.DirectiveRepo;
@@ -23,13 +25,14 @@ public class DirectiveService {
     private final DirectiveRepo directiveRepo;
     private final List<Directive> cloakDirective;
     private final SendAndFormService sendAndFormService;
+    private final Map<UUID, Localisation> tempLocalisation;
 
     public DirectiveService(DirectiveRepository directiveRepository, GuardService guardService,
                             FamilyServiceImp familyService,
                             MemberService memberService,
                             DirectiveRepo directiveRepo,
                             List<Directive> cloakDirective,
-                            SendAndFormService sendAndFormService) {
+                            SendAndFormService sendAndFormService, Map<UUID, Localisation> tempLocalisation) {
         this.directiveRepository = directiveRepository;
         this.guardService = guardService;
         this.familyService = familyService;
@@ -37,11 +40,13 @@ public class DirectiveService {
         this.directiveRepo = directiveRepo;
         this.cloakDirective = cloakDirective;
         this.sendAndFormService = sendAndFormService;
+        this.tempLocalisation = tempLocalisation;
     }
 
     @Transactional
     public void checkSaveAndSendVotingDirective(List<DeferredDirective> directiveList) {
         boolean remove = false;
+        Set<DirectiveMember> directiveMembersFromMain = new HashSet<>();
         if (directiveList.size() > 1 && directiveList.get(0).getSwitchPosition() == SwitchPosition.MAIN)
             for (DeferredDirective dd :
                     directiveList) {
@@ -50,23 +55,55 @@ public class DirectiveService {
                     break;
                 }
             }
+        if (directiveList.get(0).getSwitchPosition() == SwitchPosition.MAIN)
+            directiveMembersFromMain = directiveList.get(0).getShortFamilyMemberLink();
         if (remove) directiveList.remove(0);
         directiveRepo.saveAll(directiveList);
 
-        List<DirectiveMembers> list = new ArrayList<>();
-        for (DeferredDirective dd :
-                directiveList) {
-            list.add(DirectiveMembers.builder().directive(dd).directiveMember(dd.getDirectiveMember()).build());
-        }
-        directiveRepository.saveAllDirectiveMembers(list);
+        List<DirectiveMember> list = new ArrayList<>();
 
         for (DeferredDirective dd :
                 directiveList) {
-            sendAndFormService.sendVotingDirective(dd, guardService.getMaxLevelGuards(dd.getShortFamilyMemberLink().stream()
-                    .map(DirectiveMembers::getDirectiveMember)
-                    .filter(x -> !Objects.equals(dd.getDirectiveMember(), x) || dd.getSwitchPosition() == SwitchPosition.BIRTH)
-                    .findFirst()
-                    .orElseThrow(()->new RuntimeException("object under guarding not found in directive"))));
+            DirectiveMember mainMember = DirectiveMember.builder()
+                    .directive(dd)
+                    .directiveMember(dd.getDirectiveMember())
+                    .build();
+            if (dd.getSwitchPosition() != SwitchPosition.MAIN) {
+                DirectiveMember directiveLinkPerson = dd.getShortFamilyMemberLink().stream().findFirst().orElseThrow(() -> new RuntimeException("corrupt directive"));
+                directiveLinkPerson.setDirective(dd);
+                if (dd.getSwitchPosition() == SwitchPosition.BIRTH) dd.getShortFamilyMemberLink().add(mainMember);
+                list.add(directiveLinkPerson);
+            }
+            if (dd.getSwitchPosition() == SwitchPosition.MAIN ||
+                    (remove && (dd.getSwitchPosition() == SwitchPosition.MOTHER || dd.getSwitchPosition() == SwitchPosition.FATHER))) {
+                for (DirectiveMember dm :
+                        directiveMembersFromMain) {
+                    dm.setDirective(dd);
+                }
+                list.addAll(directiveMembersFromMain);
+            }
+            list.add(mainMember);
+
+        }
+        directiveRepository.saveAllDirectiveMembers(list);
+
+
+        for (DeferredDirective dd :
+                directiveList) {
+
+            if (dd.getSwitchPosition() != SwitchPosition.MAIN) {
+                sendAndFormService.sendVotingDirective(dd, guardService.getMaxLevelGuards(dd.getShortFamilyMemberLink().stream()
+                        .map(DirectiveMember::getDirectiveMember)
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("object under guarding not found in directive"))));
+            } else {
+//                Set<ShortFamilyMember> members = dd.getShortFamilyMemberLink().stream().map(DirectiveMember::getDirectiveMember).collect(Collectors.toSet());
+//                Set<String> guards = members.stream().flatMap(x -> guardService.getMaxLevelGuards(x).stream()).collect(Collectors.toSet());
+                sendAndFormService.sendVotingDirective(dd, dd.getShortFamilyMemberLink().stream()
+                        .map(DirectiveMember::getDirectiveMember)
+                        .flatMap(x -> guardService.getMaxLevelGuards(x).stream())
+                        .collect(Collectors.toSet()));
+            }
         }
     }
 
@@ -75,8 +112,8 @@ public class DirectiveService {
         DeferredDirective deferredDirective = directiveRepository.findDirectiveWithPrimeMember(UUID.fromString(directiveUuid)).orElseThrow(() -> new RuntimeException("Deferred directive is missing or corrupt"));
 
         ShortFamilyMember mainMember = deferredDirective.getDirectiveMember();
-        Set<DirectiveMembers> directiveMembers=directiveRepository.getListMembersOfDirective(deferredDirective);
-        Set<ShortFamilyMember> processMembers = directiveMembers.stream().map(DirectiveMembers::getDirectiveMember).collect(Collectors.toSet());
+        Set<DirectiveMember> directiveMembers = directiveRepository.getListMembersOfDirective(deferredDirective);
+        Set<ShortFamilyMember> processMembers = directiveMembers.stream().map(DirectiveMember::getDirectiveMember).collect(Collectors.toSet());
         SwitchPosition switchPosition = deferredDirective.getSwitchPosition();
         directiveRepo.delete(deferredDirective);
 
@@ -85,12 +122,14 @@ public class DirectiveService {
 
         for (ShortFamilyMember processMember :
                 processMembers) {
-            if (directiveRepository.checkForExistDirectiveMember(processMember) == 0) {
+            List<DirectiveMember> existOtherDirective = directiveRepository.checkForExistDirectiveMember(processMember);
+            if (existOtherDirective.isEmpty()) {
                 if (processMember.getLinkGuard() != null && !processMember.getLinkGuard().isBlank()) {
                     processMember.setCheckStatus(CheckStatus.LINKED);
                     setLinkedStatus.add(processMember.getUuid().toString());
                 } else {
                     processMember.setCheckStatus(CheckStatus.CHECKED);
+                    processMember.setCreator(null);
                     setCheckedStatus.add(processMember.getUuid().toString());
                 }
             }
@@ -104,7 +143,7 @@ public class DirectiveService {
             mainMember.setFamilyWhereChild(processFamily);
             log.info("merge family is done");
         } else {
-
+            Set<String> repair = new HashSet<>();
             Set<Family> childFamilies = new HashSet<>();
             for (ShortFamilyMember processMember :
                     processMembers) {
@@ -116,6 +155,7 @@ public class DirectiveService {
                                 processMember);
                         childFamilies.add(mainFamily);
                         log.info("father is setup");
+                        repair.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(processMember)));
                     }
                     case MOTHER -> {
                         familyService.addChangesFromMother(mainFamily,
@@ -123,6 +163,7 @@ public class DirectiveService {
                                 processMember);
                         childFamilies.add(mainFamily);
                         log.info("mother is setup");
+                        repair.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(processMember)));
                     }
                     case CHILD -> {
                         Family processFamily = processMember.getFamilyWhereChild();
@@ -136,16 +177,17 @@ public class DirectiveService {
                                     processFamily,
                                     processMember,
                                     mainMember);
-                        memberService.addChildToFamilyMember(mainMember, processMember, processMember.getSex());
-//                        memberService.updateMember(processMember);
                         childFamilies.add(processFamily);
                         log.info("child is setup");
+                        Set<ShortFamilyMember> newTopAc = memberService.getAllTopAncestors(mainMember);
+                        repair.addAll(memberService.repairGeneticTreeCheckStatus(newTopAc));
                     }
                     default -> log.warn("Обнаружена неизвестная директива");
                 }
                 processMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
                 checkForUnique(childFamilies);
             }
+            setCheckedStatus.addAll(repair);
         }
         mainMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
 
@@ -175,8 +217,8 @@ public class DirectiveService {
     public void negativeVoting(String directiveUuid) {
         DeferredDirective deferredDirective = directiveRepository.findDirectiveWithPrimeMember(UUID.fromString(directiveUuid)).orElseThrow();
         ShortFamilyMember mainMember = deferredDirective.getDirectiveMember();
-        Set<DirectiveMembers> directiveMembers=directiveRepository.getListMembersOfDirective(deferredDirective);
-        Set<ShortFamilyMember> processMembers = directiveMembers.stream().map(DirectiveMembers::getDirectiveMember).collect(Collectors.toSet());
+        Set<DirectiveMember> directiveMembers = directiveRepository.getListMembersOfDirective(deferredDirective);
+        Set<ShortFamilyMember> processMembers = directiveMembers.stream().map(DirectiveMember::getDirectiveMember).collect(Collectors.toSet());
         SwitchPosition switchPosition = deferredDirective.getSwitchPosition();
         directiveRepo.delete(deferredDirective);
 
@@ -186,13 +228,15 @@ public class DirectiveService {
 
         for (ShortFamilyMember processMember :
                 processMembers) {
-            if (directiveRepository.checkForExistDirectiveMember(processMember) == 0) {
+
+            List<DirectiveMember> existOtherDirective = directiveRepository.checkForExistDirectiveMember(processMember);
+            if (existOtherDirective.isEmpty()) {
                 if (processMember.getLinkGuard() != null && !processMember.getLinkGuard().isBlank()) {
                     processMember.setCheckStatus(CheckStatus.LINKED);
                     setLinkedStatus.add(processMember.getUuid().toString());
                 } else {
                     if ((processMember.getDescendantsGuard() != null && !processMember.getDescendantsGuard().isBlank()) ||
-                            (processMember.getAncestorsGuard() != null && !processMember.getActiveGuard().isBlank()) || (
+                            (processMember.getAncestorsGuard() != null && !processMember.getAncestorsGuard().isBlank()) || (
                             processMember.getActiveGuard() != null && !processMember.getActiveGuard().isBlank())) {
                         processMember.setCheckStatus(CheckStatus.CHECKED);
                         setCheckedStatus.add(processMember.getUuid().toString());
@@ -296,5 +340,13 @@ public class DirectiveService {
         sendAndFormService.sendAttentionToUser(directive.getTokenUser(), shortFamilyMember.getFullName(), null, Attention.LINK);
         log.info("reject request for linking");
         directiveRepo.delete(directive);
+    }
+
+    public void setLangvuish(DirectiveGuards directive) {
+        tempLocalisation.put(UUID.fromString(directive.getTokenUser()), directive.getLocalisation());
+    }
+
+    public void setLangvuish(FamilyDirective directive) {
+        tempLocalisation.put(UUID.fromString(directive.getTokenUser()), directive.getLocalisation());
     }
 }

@@ -80,25 +80,25 @@ public class RecipientService {
     }
 
     @Transactional
-    public void inlineProcess(FamilyDirective directive) {
+    public void inlineProcess(DirectiveGuards directive) {
         Optional<Recipient> recipient = recipientRepository.getRecipientWithReceiveLettersByExternId(directive.getTokenUser());
-
+        StandardInfo standardInfo = new StandardInfo();
+        standardInfo.setLocalisation(directive.getLocalisation());
         if (recipient.isEmpty()) {
-            StandardInfo standardInfo = new StandardInfo();
             recipientRepository.persistNewRecipient(Recipient.builder()
                     .nickName(directive.getPerson())
                     .externUuid(directive.getTokenUser())
                     .commonReading("")
                     .systemReading("")
+                    .localisation(directive.getLocalisation())
                     .build());
             standardInfoHolder.getOnlineInfo().put(directive.getTokenUser(), standardInfo);
-        } else reloadOnlineRecipient(recipient.get(), directive.getPerson());
+        } else reloadOnlineRecipient(recipient.get(), directive.getPerson(),standardInfo);
     }
 
     @Transactional
-    public void reloadOnlineRecipient(Recipient recipient, String nickName) {
+    public void reloadOnlineRecipient(Recipient recipient, String nickName,StandardInfo standardInfo) {
         List<AloneNew> receivedLetters = recipient.getReceivedLetters();
-        StandardInfo standardInfo = new StandardInfo();
         if (receivedLetters != null && !receivedLetters.isEmpty()) {
             List<AloneNew> listWithSenders = notificationRepo.getNewLettersWithSenders(receivedLetters);
             for (AloneNew letter :
@@ -116,8 +116,9 @@ public class RecipientService {
         standardInfo.getCommonGlobalRead().addAll(recipient.getCommonReading().chars().map(x -> x - 48).boxed().toList());
 
         standardInfoHolder.getOnlineInfo().put(recipient.getExternUuid(), standardInfo);
-        if (!Objects.equals(recipient.getNickName(), nickName)) {
+        if (!Objects.equals(recipient.getNickName(), nickName)||!Objects.equals(recipient.getLocalisation(), standardInfo.getLocalisation())) {
             recipient.setNickName(nickName);
+            recipient.setLocalisation(standardInfo.getLocalisation());
             recipientRepository.update(recipient);
         }
     }

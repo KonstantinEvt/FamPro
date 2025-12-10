@@ -413,6 +413,7 @@ public Family getPrimeFamily(ShortFamilyMember member){
     public void addGuardToMemberByLinking(ShortFamilyMember member, Guard guard) {
         member.setCheckStatus(CheckStatus.LINKED);
         member.setLinkGuard(guard.getTokenUser());
+        member.setCreator(guard.getTokenUser());
     }
 
     /***

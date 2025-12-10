@@ -1,5 +1,6 @@
 package com.example.entity;
 
+import com.example.enums.Localisation;
 import com.example.enums.SwitchPosition;
 import jakarta.persistence.*;
 import lombok.*;
@@ -32,7 +33,7 @@ public class DeferredDirective {
     private ShortFamilyMember directiveMember;
 
     @OneToMany(mappedBy = "directive",cascade = {CascadeType.REMOVE})
-    private Set<DirectiveMembers> shortFamilyMemberLink;
+    private Set<DirectiveMember> shortFamilyMemberLink;
 
     @Column(name = "info_link")
     private String info;
@@ -49,11 +50,15 @@ public class DeferredDirective {
     //    @Column(name="number_for")
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "directive_global")
+
     private int globalFor;
     //    @Column(name="number_to")
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "link_global_family")
     private int globalTo;
+
+    @Enumerated(EnumType.STRING)
+    private Localisation localisation;
 
 
 }

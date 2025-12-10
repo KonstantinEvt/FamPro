@@ -1,8 +1,7 @@
 package com.example.repository;
 
 import com.example.entity.DeferredDirective;
-import com.example.entity.DirectiveMembers;
-import com.example.entity.Family;
+import com.example.entity.DirectiveMember;
 import com.example.entity.ShortFamilyMember;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 @AllArgsConstructor
@@ -20,9 +18,9 @@ import java.util.stream.Collectors;
 public class DirectiveRepository {
     private EntityManager entityManager;
 
-    public void saveAllDirectiveMembers(List<DirectiveMembers> directiveMembers) {
+    public void saveAllDirectiveMembers(List<DirectiveMember> directiveMembers) {
         try {
-            for (DirectiveMembers dm :
+            for (DirectiveMember dm :
                     directiveMembers) {
                 entityManager.persist(dm);
             }
@@ -31,26 +29,25 @@ public class DirectiveRepository {
         }
     }
 
-    public int checkForExistDirectiveMember(ShortFamilyMember member) {
-        int result;
+    public List<DirectiveMember> checkForExistDirectiveMember(ShortFamilyMember member) {
+        List<DirectiveMember> result;
         try {
-            result = entityManager.createQuery("from DirectiveMembers a left join fetch a.directiveMember where a.directiveMember=:member", DirectiveMembers.class)
+            result = entityManager.createQuery("from DirectiveMember a left join fetch a.directiveMember where a.directiveMember=:member", DirectiveMember.class)
                     .setParameter("member", member)
-                    .getFirstResult();
-//            инта хватит?
+                    .getResultList();
         } catch (RuntimeException e) {
-            result = 0;
+            result = new ArrayList<>();
             log.warn("not found");
         }
+        log.info("result of Moderation {}",result);
         return result;
     }
-    public Set<DirectiveMembers> getListMembersOfDirective(DeferredDirective directive) {
-        Set<DirectiveMembers> result;
+    public Set<DirectiveMember> getListMembersOfDirective(DeferredDirective directive) {
+        Set<DirectiveMember> result;
         try {
-            result = new HashSet<>(entityManager.createQuery("from DirectiveMembers a left join fetch a.directiveMember left join fetch a.directive where a.directive=:directive", DirectiveMembers.class)
+            result = new HashSet<>(entityManager.createQuery("from DirectiveMember a left join fetch a.directiveMember left join fetch a.directive where a.directive=:directive", DirectiveMember.class)
                     .setParameter("directive", directive)
                     .getResultList());
-//            инта хватит?
         } catch (RuntimeException e) {
             result=new HashSet<>();
             log.warn("not found");

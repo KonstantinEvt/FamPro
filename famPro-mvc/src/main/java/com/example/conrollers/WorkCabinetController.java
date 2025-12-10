@@ -61,13 +61,13 @@ public class WorkCabinetController {
 //        return "Edit-user";
 //    }
 
-    @PostMapping("/edit")
-    public String editUser(@RequestBody TokenUser tokenUser) {
-        SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
-        tokenService.editUser(tokenUser);
-        onlineUserHolder.addUser(simpleUserInfo.editUser(tokenUser));
-        return "redirect:http/localhost:9898/logout";
-    }
+//    @PostMapping("/edit")
+//    public String editUser(@RequestBody TokenUser tokenUser) {
+//        SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
+//        tokenService.editUser(tokenUser);
+//        onlineUserHolder.addUser(simpleUserInfo.editUser(tokenUser));
+//        return "redirect:http/localhost:9898/logout";
+//    }
 
 //    @PreAuthorize("hasAuthority('BaseUser')")
 //    @ResponseBody
@@ -105,6 +105,7 @@ public class WorkCabinetController {
 
         SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
         simpleUserInfo.setLocalisation(tokenService.chooseLocalisation(loc));
+        tokenService.setGlobalLocalisation((String) tokenService.getTokenUser().getClaims().get("sub"),loc);
         return new RedirectView(gateway + "/cabinet/page");
     }
 }

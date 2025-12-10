@@ -44,7 +44,7 @@ public class Family {
 //            inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id"))
 //    private Set<ShortFamilyMember> parents;
 
-    @OneToMany(mappedBy = "familyWhereChild")
+    @OneToMany(mappedBy = "familyWhereChild",cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<ShortFamilyMember> children;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})

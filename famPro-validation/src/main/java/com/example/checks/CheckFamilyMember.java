@@ -1,7 +1,7 @@
 package com.example.checks;
 
 import com.example.dtos.*;
-import com.example.transcriters.TranscriterHolder;
+import com.example.transcriters.AbstractTranscripter;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -21,12 +21,12 @@ public class CheckFamilyMember {
         this.commonWordChecks = commonWordChecks;
     }
 
-    public void check(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto) {
-        checkFio(transcriterHolder, familyMemberDto);
+    public void check(AbstractTranscripter transcripter, FamilyMemberDto familyMemberDto) {
+        checkFio(transcripter, familyMemberDto);
         if (familyMemberDto.getMotherFio() != null)
-            if (!checkFio(transcriterHolder, familyMemberDto.getMotherFio())) familyMemberDto.setMotherFio(null);
+            if (!checkFio(transcripter, familyMemberDto.getMotherFio())) familyMemberDto.setMotherFio(null);
         if (familyMemberDto.getFatherFio() != null)
-            if (!checkFio(transcriterHolder, familyMemberDto.getFatherFio())) familyMemberDto.setFatherFio(null);
+            if (!checkFio(transcripter, familyMemberDto.getFatherFio())) familyMemberDto.setFatherFio(null);
         if (familyMemberDto.getDeathday() != null) if (familyMemberDto.getBirthday() != null
                 && (familyMemberDto.getDeathday().before(familyMemberDto.getBirthday())))
             familyMemberDto.setDeathday(null);
@@ -54,8 +54,8 @@ public class CheckFamilyMember {
             if (familyMemberDto.getMemberInfo().getAddresses() != null) {
                 Set<AddressDto> addressDtos = new HashSet<>();
                 for (AddressDto address : familyMemberDto.getMemberInfo().getAddresses()) {
-                    if (checkPlace(transcriterHolder, address)) {
-                        checkAddressFM(transcriterHolder, address);
+                    if (checkPlace(transcripter, address)) {
+                        checkAddressFM(transcripter, address);
                         addressDtos.add(address);
                     }
                 }
@@ -63,11 +63,11 @@ public class CheckFamilyMember {
                 else familyMemberDto.getMemberInfo().setAddresses(addressDtos);
             }
             if (familyMemberDto.getMemberInfo().getBurial() != null)
-                if (!checkPlace(transcriterHolder, familyMemberDto.getMemberInfo().getBurial())) familyMemberDto.getMemberInfo().setBurial(null);
-                else checkBurial(transcriterHolder,familyMemberDto.getMemberInfo().getBurial());
+                if (!checkPlace(transcripter, familyMemberDto.getMemberInfo().getBurial())) familyMemberDto.getMemberInfo().setBurial(null);
+                else checkBurial(transcripter,familyMemberDto.getMemberInfo().getBurial());
             if (familyMemberDto.getMemberInfo().getBirth() != null)
-                if (!checkPlace(transcriterHolder, familyMemberDto.getMemberInfo().getBirth())) familyMemberDto.getMemberInfo().setBirth(null);
-                else checkBirth(transcriterHolder, familyMemberDto.getMemberInfo().getBirth());
+                if (!checkPlace(transcripter, familyMemberDto.getMemberInfo().getBirth())) familyMemberDto.getMemberInfo().setBirth(null);
+                else checkBirth(transcripter, familyMemberDto.getMemberInfo().getBirth());
         }
 
 
@@ -75,7 +75,7 @@ public class CheckFamilyMember {
             Set<FioDto> oldNames = new HashSet<>();
             for (FioDto fioDto :
                     familyMemberDto.getFioDtos())
-                if (checkFio(transcriterHolder, fioDto)) oldNames.add(fioDto);
+                if (checkFio(transcripter, fioDto)) oldNames.add(fioDto);
             if (oldNames.isEmpty()) familyMemberDto.setFioDtos(null);
             else familyMemberDto.setFioDtos(oldNames);
         }
@@ -91,26 +91,26 @@ public class CheckFamilyMember {
         else return false;
     }
 
-    public boolean checkFio(TranscriterHolder transcriterHolder, FioDto fioDto) {
+    public boolean checkFio(AbstractTranscripter transcripter, FioDto fioDto) {
         boolean enable = false;
         if (fioDto.getFirstName() != null) {
             fioDto.setFirstName(commonWordChecks.checkForBlanks(fioDto.getFirstName()));
             if (fioDto.getFirstName() != null) {
-                fioDto.setFirstName(commonWordChecks.checkForMulti(transcriterHolder, fioDto.getFirstName(),false));
+                fioDto.setFirstName(commonWordChecks.checkForMulti(transcripter, fioDto.getFirstName(),false));
                 enable = true;
             }
         }
         if (fioDto.getMiddleName() != null) {
             fioDto.setMiddleName(commonWordChecks.checkForBlanks(fioDto.getMiddleName()));
             if (fioDto.getMiddleName() != null) {
-                fioDto.setMiddleName(commonWordChecks.checkForMulti(transcriterHolder, fioDto.getMiddleName(),false));
+                fioDto.setMiddleName(commonWordChecks.checkForMulti(transcripter, fioDto.getMiddleName(),false));
                 enable = true;
             }
         }
         if (fioDto.getLastName() != null) {
             fioDto.setLastName(commonWordChecks.checkForBlanks(fioDto.getLastName()));
             if (fioDto.getLastName() != null) {
-                fioDto.setLastName(commonWordChecks.checkForMulti(transcriterHolder, fioDto.getLastName(),false));
+                fioDto.setLastName(commonWordChecks.checkForMulti(transcripter, fioDto.getLastName(),false));
                 enable = true;
             }
         }
@@ -120,104 +120,104 @@ public class CheckFamilyMember {
         return enable;
     }
 
-    public boolean checkPlace(TranscriterHolder transcriterHolder, PlaceDto placeDto) {
+    public boolean checkPlace(AbstractTranscripter transcripter, PlaceDto placeDto) {
         boolean enable = false;
         if (placeDto.getCountry() != null) {
             placeDto.setCountry(commonWordChecks.checkForBlanks(placeDto.getCountry()));
             if (placeDto.getCountry() != null) {
-                placeDto.setCountry(commonWordChecks.checkForMulti(transcriterHolder, placeDto.getCountry(),true));
+                placeDto.setCountry(commonWordChecks.checkForMulti(transcripter, placeDto.getCountry(),true));
                 enable = true;
             }
         }
         if (placeDto.getRegion() != null) {
             placeDto.setRegion(commonWordChecks.checkForBlanks(placeDto.getRegion()));
             if (placeDto.getRegion() != null) {
-                placeDto.setRegion(commonWordChecks.checkForMulti(transcriterHolder, placeDto.getRegion(),true));
+                placeDto.setRegion(commonWordChecks.checkForMulti(transcripter, placeDto.getRegion(),true));
                 enable = true;
             }
         }
         if (placeDto.getCity() != null) {
             placeDto.setCity(commonWordChecks.checkForBlanks(placeDto.getCity()));
             if (placeDto.getCity() != null) {
-                placeDto.setCity(commonWordChecks.checkForMulti(transcriterHolder, placeDto.getCity(),true));
+                placeDto.setCity(commonWordChecks.checkForMulti(transcripter, placeDto.getCity(),true));
                 enable = true;
             }
         }
         if (placeDto.getStreet() != null) {
             placeDto.setStreet(commonWordChecks.checkForBlanks(placeDto.getStreet()));
             if (placeDto.getStreet() != null) {
-                placeDto.setStreet(commonWordChecks.checkForMulti(transcriterHolder, placeDto.getStreet(),true));
+                placeDto.setStreet(commonWordChecks.checkForMulti(transcripter, placeDto.getStreet(),true));
                 enable = true;
             }
         }
         return enable;
     }
-    public void checkAddressFM(TranscriterHolder transcriterHolder, AddressDto addressDto){
+    public void checkAddressFM(AbstractTranscripter transcripter, AddressDto addressDto){
         if (addressDto.getHouse() != null) {
             addressDto.setHouse(commonWordChecks.checkForBlanks(addressDto.getHouse()));
             if (addressDto.getHouse() != null) {
-                addressDto.setHouse(commonWordChecks.checkForMulti(transcriterHolder, addressDto.getHouse(),true));
+                addressDto.setHouse(commonWordChecks.checkForMulti(transcripter, addressDto.getHouse(),true));
                 }
 
     }
         if (addressDto.getFlatNumber() != null) {
             addressDto.setFlatNumber(commonWordChecks.checkForBlanks(addressDto.getFlatNumber()));
             if (addressDto.getFlatNumber() != null) {
-                addressDto.setFlatNumber(commonWordChecks.checkForMulti(transcriterHolder, addressDto.getFlatNumber(),true));
+                addressDto.setFlatNumber(commonWordChecks.checkForMulti(transcripter, addressDto.getFlatNumber(),true));
             }
 
         }
         if (addressDto.getBuilding() != null) {
             addressDto.setBuilding(commonWordChecks.checkForBlanks(addressDto.getBuilding()));
             if (addressDto.getBuilding() != null) {
-                addressDto.setBuilding(commonWordChecks.checkForMulti(transcriterHolder, addressDto.getBuilding(),true));
+                addressDto.setBuilding(commonWordChecks.checkForMulti(transcripter, addressDto.getBuilding(),true));
             }
 
         }
         if (addressDto.getIndex() != null) {
             addressDto.setIndex(commonWordChecks.checkForBlanks(addressDto.getIndex()));
             if (addressDto.getIndex() != null) {
-                addressDto.setIndex(commonWordChecks.checkForMulti(transcriterHolder, addressDto.getIndex(),true));
+                addressDto.setIndex(commonWordChecks.checkForMulti(transcripter, addressDto.getIndex(),true));
             }
         }
     }
-    public void checkBurial(TranscriterHolder transcriterHolder, BurialDto burialDto){
+    public void checkBurial(AbstractTranscripter transcripter, BurialDto burialDto){
         if (burialDto.getGrave() != null) {
             burialDto.setGrave(commonWordChecks.checkForBlanks(burialDto.getGrave()));
             if (burialDto.getGrave() != null) {
-                burialDto.setGrave(commonWordChecks.checkForMulti(transcriterHolder, burialDto.getGrave(),true));
+                burialDto.setGrave(commonWordChecks.checkForMulti(transcripter, burialDto.getGrave(),true));
             }
         }
         if (burialDto.getSquare() != null) {
             burialDto.setSquare(commonWordChecks.checkForBlanks(burialDto.getSquare()));
             if (burialDto.getSquare() != null) {
-                burialDto.setSquare(commonWordChecks.checkForMulti(transcriterHolder, burialDto.getSquare(),true));
+                burialDto.setSquare(commonWordChecks.checkForMulti(transcripter, burialDto.getSquare(),true));
             }
         }
         if (burialDto.getCemetery() != null) {
             burialDto.setCemetery(commonWordChecks.checkForBlanks(burialDto.getCemetery()));
             if (burialDto.getCemetery() != null) {
-                burialDto.setCemetery(commonWordChecks.checkForMulti(transcriterHolder, burialDto.getCemetery(),true));
+                burialDto.setCemetery(commonWordChecks.checkForMulti(transcripter, burialDto.getCemetery(),true));
             }
         }
         if (burialDto.getChapter() != null) {
             burialDto.setChapter(commonWordChecks.checkForBlanks(burialDto.getChapter()));
             if (burialDto.getChapter() != null) {
-                burialDto.setChapter(commonWordChecks.checkForMulti(transcriterHolder, burialDto.getChapter(),true));
+                burialDto.setChapter(commonWordChecks.checkForMulti(transcripter, burialDto.getChapter(),true));
             }
         }
     }
-    public void checkBirth(TranscriterHolder transcriterHolder, BirthDto birthDto){
+    public void checkBirth(AbstractTranscripter transcripter, BirthDto birthDto){
         if (birthDto.getBirthHouse() != null) {
             birthDto.setBirthHouse(commonWordChecks.checkForBlanks(birthDto.getBirthHouse()));
             if (birthDto.getBirthHouse() != null) {
-                birthDto.setBirthHouse(commonWordChecks.checkForMulti(transcriterHolder, birthDto.getBirthHouse(),true));
+                birthDto.setBirthHouse(commonWordChecks.checkForMulti(transcripter, birthDto.getBirthHouse(),true));
             }
         }
         if (birthDto.getRegistration() != null) {
             birthDto.setRegistration(commonWordChecks.checkForBlanks(birthDto.getRegistration()));
             if (birthDto.getRegistration() != null) {
-                birthDto.setRegistration(commonWordChecks.checkForMulti(transcriterHolder, birthDto.getRegistration(),true));
+                birthDto.setRegistration(commonWordChecks.checkForMulti(transcripter, birthDto.getRegistration(),true));
             }
         }
     }

@@ -1,23 +1,20 @@
 package com.example.config;
 
 import com.example.dtos.*;
-import com.example.entity.FamilyMemberInfo;
 import com.example.entity.MainContact;
-import com.example.enums.SecretLevel;
+import com.example.enums.Localisation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
 public class TaskResource {
 
     @Bean("directiveResource")
-    LinkedList<FamilyDirective> sender() {
-        return new LinkedList<>();
+    LinkedList<LinkedList<FamilyDirective>> sender() { return new LinkedList<>();
     }
 
     @Bean("directiveGuards")
@@ -51,5 +48,8 @@ public class TaskResource {
     }
 
     @Bean("tempMainContact")
-    Map<String, MainContact> tempMainContact(){return new ConcurrentHashMap<>();};
+    Map<String, MainContact> tempMainContact(){return new ConcurrentHashMap<>();}
+
+    @Bean("tempLocalisation")
+    Map<UUID, Localisation> tempLocalisation(){return new ConcurrentHashMap<>();}
 }

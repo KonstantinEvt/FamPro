@@ -15,7 +15,13 @@ public enum Subject {
     WRONG_INFO_SEX("Wrong information","Неверная информация"),
     WRONG_INFO_DATE("Wrong information","Неверная информация"),
     WRONG_INFO_OTHER("Wrong information","Неверная информация"),
+    VOTING("Voting","Голосование"),
+    LINK("Linking","Линкование"),
+    LINK_POSITIVE("Positive linking","Успешное связывание"),
+    LINK_NEGATIVE("Negative linking","Неудачное связывание"),
+    UNKNOWN("Unknown operation","Операция неизвестна"),
     NOT_FULLY("Information not fully","Информация не полна");
+
 
 
     private final String commit;

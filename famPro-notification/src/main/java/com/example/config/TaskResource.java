@@ -25,7 +25,7 @@ public class TaskResource {
         return new LinkedList<>();
     }
     @Bean("directiveVoting")
-    LinkedList<Directive> senderVoting() {
+    LinkedList<DirectiveGuards> senderVoting() {
         return new LinkedList<>();
     }
 

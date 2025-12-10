@@ -1,7 +1,7 @@
 package com.example.service;
 
 import com.example.dtos.AloneNewDto;
-import com.example.dtos.Directive;
+import com.example.dtos.DirectiveGuards;
 import com.example.dtos.RecipientDto;
 import com.example.entity.AloneNew;
 import com.example.entity.Recipient;
@@ -35,7 +35,7 @@ public class VotingService {
     private final AloneNewRepo aloneNewRepo;
     private final RecipientRepo recipientRepo;
     private final VotingRepo votingRepo;
-    private final LinkedList<Directive> votingDirective;
+    private final LinkedList<DirectiveGuards> votingDirective;
     private final ContactService contactService;
 
     public VotingService(NotificationRepo notificationRepo,
@@ -44,7 +44,7 @@ public class VotingService {
                          AloneNewMapper aloneNewMapper,
                          AloneNewRepo aloneNewRepo,
                          RecipientRepo recipientRepo,
-                         VotingRepo votingRepo, @Qualifier("directiveVoting") LinkedList<Directive> votingDirective, ContactService contactService) {
+                         VotingRepo votingRepo, @Qualifier("directiveVoting") LinkedList<DirectiveGuards> votingDirective, ContactService contactService) {
         this.notificationRepo = notificationRepo;
         this.messageService = messageService;
         this.standardInfoHolder = standardInfoHolder;
@@ -166,7 +166,7 @@ public class VotingService {
                 .sendFrom(recipientRepo.findById(3L).orElseThrow(() -> new RuntimeException("Informer recipient not found")))
                 .sendTo(voting.getRecipients())
                 .build();
-        Directive directive = Directive.builder()
+        DirectiveGuards directive = DirectiveGuards.builder()
                 .person(lettersOfVoting.get(0).getExternId())
                 .build();
         for (AloneNew alone :

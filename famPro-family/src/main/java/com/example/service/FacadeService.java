@@ -29,7 +29,7 @@ public class FacadeService implements SimpleFamilyService {
     private final MemberRepository memberRepository;
     private final FamilyRepository familyRepository;
     private final SendAndFormService sendAndFormService;
-
+    private final Map<UUID, Localisation> tempLocalisation;
 
     public FacadeService(FamilyRepo familyRepo,
                          MemberService memberService,
@@ -38,7 +38,7 @@ public class FacadeService implements SimpleFamilyService {
                          DirectiveService directiveService,
                          MemberRepository memberRepository,
                          FamilyRepository familyRepository,
-                         SendAndFormService sendAndFormService) {
+                         SendAndFormService sendAndFormService, Map<UUID, Localisation> tempLocalisation) {
         this.familyRepo = familyRepo;
         this.memberService = memberService;
         this.guardService = guardService;
@@ -47,6 +47,7 @@ public class FacadeService implements SimpleFamilyService {
         this.memberRepository = memberRepository;
         this.familyRepository = familyRepository;
         this.sendAndFormService = sendAndFormService;
+        this.tempLocalisation = tempLocalisation;
     }
 
     @Transactional
@@ -166,14 +167,15 @@ public class FacadeService implements SimpleFamilyService {
                                     memberService.clearParentInfo(mainMember, SwitchPosition.MOTHER);
                                 if (changing.getChangingFather().ordinal() > 2)
                                     memberService.clearParentInfo(mainMember, SwitchPosition.FATHER);
-                                Set<DirectiveMembers> directiveMembers = potentialBloodBrothers.stream().map(x -> DirectiveMembers.builder().directiveMember(x).build()).collect(Collectors.toSet());
+                                Set<DirectiveMember> directiveMembers = potentialBloodBrothers.stream().map(x -> DirectiveMember.builder().directiveMember(x).build()).collect(Collectors.toSet());
                                 directiveList.add(DeferredDirective
                                         .builder()
                                         .created(new Timestamp(System.currentTimeMillis()))
                                         .directiveMember(mainMember)
                                         .shortFamilyMemberLink(directiveMembers)
-                                        .info(possibleId.toString())
+                                        .info(mainMember.getFatherInfo().concat("<br>").concat(mainMember.getMotherInfo()))
                                         .tokenUser(mainDirective.getTokenUser())
+                                        .localisation(tempLocalisation.get(UUID.fromString(mainDirective.getTokenUser())))
                                         .switchPosition(SwitchPosition.MAIN)
                                         .build());
                             }
@@ -231,13 +233,13 @@ public class FacadeService implements SimpleFamilyService {
                             if (changing.getChangingFather().ordinal() > 2)
                                 memberService.clearParentInfo(mainMember, SwitchPosition.FATHER);
                             primeFamily = familyService.creatFreeFamily(mainMember.getFatherInfo(), mainMember.getMotherInfo(), mainDto.getUuid());
-                            Set<DirectiveMembers> directiveMembers = potentialBloodBrothers.stream().map(x -> DirectiveMembers.builder().directiveMember(x).build()).collect(Collectors.toSet());
+                            Set<DirectiveMember> directiveMembers = potentialBloodBrothers.stream().map(x -> DirectiveMember.builder().directiveMember(x).build()).collect(Collectors.toSet());
                             directiveList.add(DeferredDirective
                                     .builder()
                                     .created(new Timestamp(System.currentTimeMillis()))
                                     .directiveMember(mainMember)
                                     .shortFamilyMemberLink(directiveMembers)
-                                    .info(possibleId.toString())
+                                    .info(mainMember.getFatherInfo().concat("<br>").concat(mainMember.getMotherInfo()))
                                     .tokenUser(mainDirective.getTokenUser())
                                     .switchPosition(SwitchPosition.MAIN)
                                     .build());
@@ -260,7 +262,7 @@ public class FacadeService implements SimpleFamilyService {
         while (!directiveLinkedList.isEmpty()) {
             FamilyDirective processDirective = directiveLinkedList.pollFirst();
             if (processDirective == null) throw new RuntimeException("corrupt directive");
-            else log.info("process {} directive", processDirective.getSwitchPosition().getInfo());
+            else log.info("process {} directive", processDirective.getSwitchPosition().getCommit());
 
             ShortFamilyMember member;
             try {
@@ -327,7 +329,8 @@ public class FacadeService implements SimpleFamilyService {
                         .directiveMember(mainMember)
                         .created(new Timestamp(System.currentTimeMillis()))
                         .info(member.getFullName())
-                        .shortFamilyMemberLink(Set.of(DirectiveMembers.builder().directiveMember(member).build()))
+                        .localisation(tempLocalisation.get(UUID.fromString(mainDirective.getTokenUser())))
+                        .shortFamilyMemberLink(Set.of(DirectiveMember.builder().directiveMember(member).build()))
                         .tokenUser(mainDirective.getTokenUser())
                         .switchPosition(processDirective.getSwitchPosition())
                         .build());
@@ -435,6 +438,7 @@ public class FacadeService implements SimpleFamilyService {
                         .created(new Timestamp(System.currentTimeMillis()))
                         .info(tokenUser.getUsername())
                         .tokenUser(token)
+                        .localisation(Objects.requireNonNullElse(tempLocalisation.get(UUID.fromString(token)), Localisation.RU))
                         .switchPosition(SwitchPosition.BIRTH)
                         .build();
                 directiveService.checkSaveAndSendVotingDirective(List.of(directive));
@@ -465,6 +469,8 @@ public class FacadeService implements SimpleFamilyService {
                 return SecretLevel.GENETIC_TREE;
             else return SecretLevel.OPEN;
         }
+        log.info("Status user: {}", tempStatus.name());
+        log.info("Status person: {}", max.name());
         if (tempStatus == max) return SecretLevel.CONFIDENTIAL;
         else return tempStatus;
     }

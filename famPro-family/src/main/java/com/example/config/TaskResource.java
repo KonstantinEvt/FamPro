@@ -3,10 +3,15 @@ package com.example.config;
 import com.example.dtos.Directive;
 import com.example.dtos.DirectiveGuards;
 import com.example.dtos.FamilyDirective;
+import com.example.enums.Localisation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
 public class TaskResource {
@@ -22,7 +27,7 @@ public class TaskResource {
     }
 
     @Bean("storageDirective")
-    LinkedList<FamilyDirective> storageDirective() {
+    LinkedList<LinkedList<FamilyDirective>> storageDirective() {
         return new LinkedList<>();
     }
 
@@ -39,4 +44,6 @@ public class TaskResource {
     LinkedList<Directive> cloakDirective() {
         return new LinkedList<>();
     }
+    @Bean("tempLocalisation")
+    Map<UUID, Localisation> tempLocalisation(){return new ConcurrentHashMap<>();}
 }

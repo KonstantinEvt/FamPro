@@ -32,7 +32,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     private final FamilyMemberRepo familyMemberRepo;
     private final TokenService tokenService;
     private final FormAndSendService formAndSendService;
-    private final LinkedList<FamilyDirective> directives;
+    private final LinkedList<LinkedList<FamilyDirective>> directives;
     private final FamilyConnectionClient familyConnectionClient;
 
     private final LinkedList<Directive> directivePhotos;
@@ -46,6 +46,8 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     private final Map<Long, Timestamp> lastUpdateMap;
     private final Map<String, MainContact> tempMainContact;
 
+    private final Map<UUID, Localisation> tempLocalisation;
+
     public FamilyMemberService(FioMapper fioMapper,
                                FamilyMemberMapper familyMemberMapper,
                                FamilyMemberInfoService familyMemberInfoService,
@@ -53,7 +55,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                                OldFioService oldFioService,
                                FamilyMemberRepo familyMemberRepo,
                                TokenService tokenService,
-                               FormAndSendService formAndSendService, LinkedList<FamilyDirective> directives,
+                               FormAndSendService formAndSendService, LinkedList<LinkedList<FamilyDirective>> directives,
                                FamilyConnectionClient familyConnectionClient,
                                LinkedList<DirectiveGuards> directiveGuardsList,
                                LinkedList<Directive> directivePhotos,
@@ -61,8 +63,12 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                                MainStorageRepository mainStorageRepository,
                                MainOtherFioRepository mainOtherFioRepository,
                                OldNamesMapper oldNamesMapper,
-                               OldFioRepository oldFioRepository, Map<String, FamilyMemberDto> tempGuardStatus,
-                               Map<String, FamilyMemberDto> tempExtendedDto, Map<Long, Timestamp> lastUpdateMap, Map<String, MainContact> tempMainContact) {
+                               OldFioRepository oldFioRepository,
+                               Map<String, FamilyMemberDto> tempGuardStatus,
+                               Map<String, FamilyMemberDto> tempExtendedDto,
+                               Map<Long, Timestamp> lastUpdateMap,
+                               Map<String, MainContact> tempMainContact,
+                               Map<UUID, Localisation> tempLocalisation) {
         super(fioMapper);
         this.familyMemberMapper = familyMemberMapper;
         this.familyMemberInfoService = familyMemberInfoService;
@@ -82,6 +88,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         this.tempExtendedDto = tempExtendedDto;
         this.lastUpdateMap = lastUpdateMap;
         this.tempMainContact = tempMainContact;
+        this.tempLocalisation = tempLocalisation;
     }
 
     @Transactional(readOnly = true)
@@ -272,7 +279,12 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         log.info("--------ВНОСИМ НОВОГО ЧЕЛОВЕКА-------");
         TokenUser tokenUser = tokenService.getTokenUser();
         String token = (String) tokenUser.getClaims().get("sub");
-        Localisation localisation = (tokenUser.getClaims().get("localisation").equals("ru")) ? Localisation.RU : Localisation.EN;
+        Localisation localisation = tempLocalisation.get(UUID.fromString(token));
+        if (localisation == null) {
+            if (tokenUser.getClaims().get("localisation") != null)
+                localisation = getLocalisation(((String) tokenUser.getClaims().get("localisation")).toUpperCase());
+            else localisation = getLocalisation("EN");
+        }
         if (familyMemberDto.getId() != null) throw new ProblemWithId("Удалите ID нового человека");
         if (familyMemberDto.getFirstName() == null
                 || familyMemberDto.getMiddleName() == null
@@ -319,7 +331,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         try {
             children = new HashSet<>(losingParentsService.findAdditionalChildren(changing, familyMember, otherNames));
         } catch (ModeratingContent e) {
-            formAndSendService.sendNotification(token, Attention.MODERATE, e.getMessage(), 0L, Subject.MODERATION_CHILD, localisation);
+            formAndSendService.sendNotification(token, Attention.POSITIVE, e.getMessage(), 0L, Subject.MODERATION_CHILD, localisation);
             throw new ModeratingContent("Linking person child is under moderation");
         } catch (UncorrectedInformationSex e) {
             formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.WRONG_INFO_SEX, localisation);
@@ -347,19 +359,22 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         result.setMemberInfo(familyMemberInfoService.getInfoDto(familyMemberInfo));
 
         mainStorageRepository.flushMember();
-
+        LinkedList<FamilyDirective> toFamily = new LinkedList<>();
         for (FamilyDirective directive :
                 listToFamily) {
             directive.setPerson(result.getUuid().toString());
             directive.setTokenUser(token);
-            directives.add(directive);
+            directive.setLocalisation(localisation);
+            toFamily.add(directive);
         }
-        directives.add(FamilyDirective.builder()
+        toFamily.add(FamilyDirective.builder()
                 .familyMemberDto(result)
                 .tokenUser(token)
                 .person(result.getUuid().toString())
                 .switchPosition(SwitchPosition.MAIN)
+                .localisation(localisation)
                 .operation(KafkaOperation.ADD).build());
+        directives.add(toFamily);
         formAndSendService.sendAllNotifications(token, localisation, notifications);
         if (familyMember.isPrimePhoto())
             directivePhotos.add(new Directive(token, familyMember.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.ADD));
@@ -388,7 +403,12 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         Long dtoId = familyMemberDto.getId();
         TokenUser tokenUser = tokenService.getTokenUser();
         String token = (String) tokenUser.getClaims().get("sub");
-        Localisation localisation = (tokenUser.getClaims().get("localisation").equals("ru")) ? Localisation.RU : Localisation.EN;
+        Localisation localisation = tempLocalisation.get(UUID.fromString(token));
+        if (localisation == null) {
+            if (tokenUser.getClaims().get("localisation") != null)
+                localisation = getLocalisation(((String) tokenUser.getClaims().get("localisation")).toUpperCase());
+            else localisation = getLocalisation("EN");
+        }
         FamilyMemberDto fromTemp = tempGuardStatus.get(token);
         if (fromTemp.getSecretLevelEdit() == SecretLevel.CLOSE && familyMemberDto.getSecretLevelEdit() != SecretLevel.CLOSE)
             throw new RuntimeException("подделка прав");
@@ -409,7 +429,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
         if (fm.getCheckStatus() == CheckStatus.MODERATE
                 && !FamilyMemberUtils.checkRightsToModerate(tokenService.getTokenUser())) {
-            formAndSendService.sendNotification(token, Attention.MODERATE, fm.getFullName(), dtoId, Subject.MODERATION_WARNING, localisation);
+            formAndSendService.sendNotification(token, Attention.NEGATIVE, fm.getFullName(), dtoId, Subject.MODERATION_WARNING, localisation);
             throw new ModeratingContent("Находится на модерцаии");
         }
         if (!Objects.equals(fm.getLastUpdate(), lastUpdateMap.get(fm.getId()))) {
@@ -467,14 +487,14 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             if (!otherNames.isEmpty() || changing.isChangingMain())
                 children.addAll(losingParentsService.findAdditionalChildren(changing, fm, otherNames));
         } catch (ModeratingContent e) {
-            formAndSendService.sendNotification(token, Attention.MODERATE, e.getMessage(), 0L, Subject.MODERATION_CHILD, localisation);
+            formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.MODERATION_CHILD, localisation);
             throw new ModeratingContent("Linking person child is under moderation");
         } catch (UncorrectedInformationSex e) {
             formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.WRONG_INFO_SEX, localisation);
             throw new UncorrectedInformationSex("Linking children have another sex of parent");
         }
         if (!otherNames.isEmpty()) {
-            if (fm.getOtherNames() == null) {
+            if (fm.getOtherNames() == null||fm.getOtherNames().isEmpty()) {
                 fm.setOtherNamesExist(true);
                 fm.setOtherNames(otherNames);
             } else fm.getOtherNames().addAll(otherNames);
@@ -536,22 +556,25 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         }
 
         fm.setCheckStatus(CheckStatus.MODERATE);
+//        mainStorageRepository.updateMember(fm);
         mainStorageRepository.flushMember();
-
+        LinkedList<FamilyDirective> toFamily = new LinkedList<>();
         for (FamilyDirective directive :
                 listToFamily) {
             directive.setPerson(fromTemp.getUuid().toString());
             directive.setTokenUser(token);
-            directives.add(directive);
+            directive.setLocalisation(localisation);
+            toFamily.add(directive);
         }
-        directives.add(FamilyDirective.builder()
+        toFamily.add(FamilyDirective.builder()
                 .familyMemberDto(result)
                 .tokenUser(token)
                 .person(fromTemp.getUuid().toString())
+                .localisation(localisation)
                 .switchPosition(SwitchPosition.MAIN)
                 .operation(KafkaOperation.RENAME).build());
         formAndSendService.sendAllNotifications(token, localisation, notifications);
-
+        directives.add(toFamily);
 
         tempGuardStatus.remove(token);
         tempExtendedDto.remove(token);
@@ -720,7 +743,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     }
 
     @Transactional
-    public void changeParentsAfterVoting(FamilyDirective directive) {
+    public void changeParentsAfterVoting(DirectiveGuards directive) {
         FamilyMember familyMember = familyMemberRepo.findFioByUuid(UUID.fromString(directive.getPerson())).orElseThrow(() -> new RuntimeException("family member not found"));
         switch (directive.getSwitchPosition()) {
             case MAIN -> {
@@ -813,6 +836,14 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         tempPhotoAccept.remove(token.concat(String.valueOf(SwitchPosition.PRIME.ordinal())));
         tempPhotoAccept.remove(token.concat(String.valueOf(SwitchPosition.BIRTH.ordinal())));
         tempPhotoAccept.remove(token.concat(String.valueOf(SwitchPosition.BURIAL.ordinal())));
+    }
+
+    Localisation getLocalisation(String loc) {
+        for (Localisation local :
+                Localisation.values()) {
+            if (Objects.equals(local.name(), loc)) return local;
+        }
+        return Localisation.EN;
     }
 }
 

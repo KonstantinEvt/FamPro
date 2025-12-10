@@ -1,6 +1,6 @@
 package com.example.checks;
 
-import com.example.transcriters.TranscriterHolder;
+import com.example.transcriters.AbstractTranscripter;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,10 +14,10 @@ public class CommonWordChecks {
         return (string.isBlank()) ? null : string;
     }
 
-    public void checkForSwears(TranscriterHolder transcriterHolder, String t) {
+    public void checkForSwears(AbstractTranscripter transcripter, String t) {
     }
 
-    public String checkForMulti(TranscriterHolder transcriterHolder, String string, boolean enableMatrixOfChange) {
+    public String checkForMulti(AbstractTranscripter transcripter, String string, boolean enableMatrixOfChange) {
         List<String> result = new LinkedList<>();
         String change = "";
         String[] str = string.split("[.,\\- _()№]");
@@ -25,11 +25,11 @@ public class CommonWordChecks {
                 str) {
             String st1 = checkForBlanks(st);
             if (st1 == null) continue;
-            checkForSwears(transcriterHolder, st1);
+            checkForSwears(transcripter, st1);
             if (enableMatrixOfChange) {
                 st1 = setUpperFirst(st1.toLowerCase());
-                if (transcriterHolder.getTranscriter().getMatrixOfChange().containsKey(st1))
-                    change = checkForChange(transcriterHolder, st1);
+                if (transcripter.getMatrixOfChange().containsKey(st1))
+                    change = checkForChange(transcripter, st1);
                 else result.add(st1);
             } else result.add(setUpperFirst(st1.toLowerCase()));
         }
@@ -44,7 +44,7 @@ public class CommonWordChecks {
         else return firthChar + string.substring(1).toLowerCase();
     }
 
-    public String checkForChange(TranscriterHolder transcriterHolder, String string) {
-        return transcriterHolder.getTranscriter().getMatrixOfChange().getOrDefault(string, string);
+    public String checkForChange(AbstractTranscripter transcripter, String string) {
+        return transcripter.getMatrixOfChange().getOrDefault(string, string);
     }
 }

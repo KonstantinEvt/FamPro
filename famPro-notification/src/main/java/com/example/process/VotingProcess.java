@@ -1,6 +1,7 @@
 package com.example.process;
 
 import com.example.dtos.Directive;
+import com.example.dtos.DirectiveGuards;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.messaging.Message;
@@ -13,16 +14,16 @@ import java.util.function.Supplier;
 
 @Component
 @Log4j2
-public class VotingProcess implements Supplier<Message<Directive>> {
+public class VotingProcess implements Supplier<Message<DirectiveGuards>> {
 
-    private final LinkedList<Directive> directives;
+    private final LinkedList<DirectiveGuards> directives;
 
-    public VotingProcess(@Qualifier("directiveVoting") LinkedList<Directive> directives) {
+    public VotingProcess(@Qualifier("directiveVoting") LinkedList<DirectiveGuards> directives) {
         this.directives = directives;
     }
 
     @Override
-    public Message<Directive> get() {
+    public Message<DirectiveGuards> get() {
         if (!directives.isEmpty()) {
             log.info("Sending voting directive: {}", directives.peek());
             return MessageBuilder.withPayload(Objects.requireNonNull(directives.poll())).build();

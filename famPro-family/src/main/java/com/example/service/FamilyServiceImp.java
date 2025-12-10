@@ -15,10 +15,7 @@ import lombok.Setter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -124,16 +121,16 @@ public void setFamilySecretLevels(Family family,ShortFamilyMember member){
     public void mergeFamilies(Family donor, Family merged) {
         merged.getFamilyMembers().addAll(donor.getFamilyMembers());
         merged.getChildren().addAll(donor.getChildren());
-        if (donor.getHalfChildrenByMother() != null && !donor.getHalfChildrenByMother().isEmpty()) {
-            if (merged.getHalfChildrenByMother() != null)
-                merged.getHalfChildrenByMother().addAll(donor.getHalfChildrenByMother());
-            else merged.setHalfChildrenByMother(donor.getHalfChildrenByMother());
-        }
-        if (donor.getHalfChildrenByFather() != null && !donor.getHalfChildrenByFather().isEmpty()) {
-            if (merged.getHalfChildrenByFather() != null)
-                merged.getHalfChildrenByFather().addAll(donor.getHalfChildrenByFather());
-            else merged.setHalfChildrenByFather(donor.getHalfChildrenByFather());
-        }
+//        if (donor.getHalfChildrenByMother() != null && !donor.getHalfChildrenByMother().isEmpty()) {
+//            if (merged.getHalfChildrenByMother() != null)
+//                merged.getHalfChildrenByMother().addAll(donor.getHalfChildrenByMother());
+//            else merged.setHalfChildrenByMother(donor.getHalfChildrenByMother());
+//        }
+//        if (donor.getHalfChildrenByFather() != null && !donor.getHalfChildrenByFather().isEmpty()) {
+//            if (merged.getHalfChildrenByFather() != null)
+//                merged.getHalfChildrenByFather().addAll(donor.getHalfChildrenByFather());
+//            else merged.setHalfChildrenByFather(donor.getHalfChildrenByFather());
+//        }
         for (ShortFamilyMember child :
                 merged.getChildren()) {
             if (merged.getHalfChildrenByFather() != null)
@@ -165,14 +162,14 @@ public void setFamilySecretLevels(Family family,ShortFamilyMember member){
                 primeFamily.setHalfChildrenByFather(new HashSet<>());
             for (Family fam :
                     familiesOfBrothersByFather) {
-                if (!fam.equals(primeFamily)) {
+                if (!Objects.equals(fam.getUuid(),primeFamily.getUuid())) {
                     primeFamily.getHalfChildrenByFather().addAll(fam.getChildren());
                     primeFamily.getFamilyMembers().addAll(fam.getChildren());
                     if (fam.getHalfChildrenByFather() == null)
                         fam.setHalfChildrenByFather(new HashSet<>());
                     fam.getHalfChildrenByFather().add(mainMember);
                     fam.getFamilyMembers().add(mainMember);
-                }
+                }mergeFamilies(primeFamily,fam);
             }
         }
         memberService.addChildToFamilyMember(mainMember, member, Sex.MALE);
@@ -189,19 +186,20 @@ public void setFamilySecretLevels(Family family,ShortFamilyMember member){
         if (primeFamily.getHusbandInfo() != null && (primeFamily.getHusbandInfo().charAt(0) != '(' || primeFamily.getHusbandInfo().charAt(1) == 'A'))
             primeFamily.setUuid(UUID.nameUUIDFromBytes(primeFamily.getHusbandInfo().concat(primeFamily.getWifeInfo()).getBytes()));
         Set<Family> familiesOfBrothersByMother = familyRepo.findAllByWife(member);
+
         if (!familiesOfBrothersByMother.isEmpty()) {
             if (primeFamily.getHalfChildrenByMother() == null)
                 primeFamily.setHalfChildrenByMother(new HashSet<>());
             for (Family fam :
                     familiesOfBrothersByMother) {
-                if (!fam.equals(primeFamily)) {
+                if (!Objects.equals(fam.getUuid(),primeFamily.getUuid())) {
                     if (fam.getHalfChildrenByMother() == null)
                         fam.setHalfChildrenByMother(new HashSet<>());
                     primeFamily.getHalfChildrenByMother().addAll(fam.getChildren());
                     primeFamily.getFamilyMembers().addAll(fam.getChildren());
                     fam.getHalfChildrenByMother().add(mainMember);
                     fam.getFamilyMembers().add(mainMember);
-                }
+                }else mergeFamilies(primeFamily,fam);
             }
         }
         memberService.addChildToFamilyMember(mainMember, member,Sex.FEMALE);

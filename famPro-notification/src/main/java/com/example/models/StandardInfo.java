@@ -1,6 +1,7 @@
 package com.example.models;
 
 import com.example.dtos.AloneNewDto;
+import com.example.enums.Localisation;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
@@ -20,6 +21,7 @@ public class StandardInfo {
 
     private List<Integer> systemGlobalRead = new ArrayList<>();
     private List<Integer> commonGlobalRead = new ArrayList<>();
+    private Localisation localisation;
 
     public void addNewMessage(AloneNewDto aloneNewDto) {
         boolean success = false;
@@ -68,6 +70,12 @@ public class StandardInfo {
             if (mask.get(i) + read.get(i) == 0) countGlobal += 1;
         }
         return countGlobal;
+    }
+    public void setLocalisation(Localisation localisation){
+        this.localisation=localisation;
+    }
+    public Localisation getLocalisation(){
+        return localisation;
     }
 }
 

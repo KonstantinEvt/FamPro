@@ -52,8 +52,6 @@ function editPersonInBase() {
             <option value="MALE" selected>MALE</option>
             <option value="FEMALE">FEMALE</option>
         </select>
-        
-        
                         </span>
                         <span class="col" style="width: 20%"></span>
                     </div>
@@ -168,7 +166,6 @@ function editPersonInBase() {
         <div id="addedPhoneAddFM2" ></div>
         <div id="addedPhoneAddFM3" ></div>
         <div id="addedPhoneAddFM4" ></div>
-        
                         </span>
                         <span id="addButtons" class="col" style="text-align: left; width: 20%">                        
                         <br> 
@@ -239,8 +236,8 @@ function editPersonInBase() {
         </select>
         <label for="chooseSecureEE" style="color: chocolate; padding-top: 5px" id="labelSecureEE">Secure edit:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureEE" aria-label="chooseSecureEE">            
-            <option value="OPEN" selected>Открыто</option>
-            <option value="CONFIDENTIAL" >Личное</option>
+            <option value="OPEN" >Открыто</option>
+            <option value="CONFIDENTIAL" selected>Личное</option>
             <option value="ANCESTOR" >Предки</option>
             <option value="FAMILY">Семейное</option>
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
@@ -463,7 +460,6 @@ function editPersonInBase() {
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialBuildingAddFM" name="burialBuildingAddFM" >
         <label for="burialFlatAddFM" style="color: chocolate; padding-top: 2px">Номер могилы:</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialFlatAddFM" name="burialFlatAddFM" >
- 
                         </span>
                         <span class="col" style="width: 20%"></span>
                     </div>
@@ -499,7 +495,6 @@ function editPersonInBase() {
                             <div class="card-text" style="padding-top: 35%">${tempTextPhoto}</div>
                         </div>
                     </div>`
-
 
         URL.revokeObjectURL(tempPerson.primePhotoImj);
     } else document.getElementById("frontPhoto").hidden = true;
@@ -649,7 +644,6 @@ function editPersonInBase() {
         } else {
             document.getElementById("mainEmailAddFM").value = infoClosed;
         }
-
         if (tempPerson.memberInfo.secretLevelPhone !== "CLOSE") {
             document.getElementById("mainPhoneAddFM").disabled = false;
             document.getElementById("addPhoneButtom").hidden = false;
@@ -703,7 +697,6 @@ function editPersonInBase() {
             URL.revokeObjectURL(tempPerson.memberInfo.burialImj);
         } else document.getElementById("burialPhoto").hidden = true;
         if (tempPerson.memberInfo.burial !== null) {
-
             document.getElementById("burialCountryAddFM").value = tempPerson.memberInfo.burial.country;
             document.getElementById("burialRegionAddFM").value = tempPerson.memberInfo.burial.region;
             document.getElementById("burialCityAddFM").value = tempPerson.memberInfo.burial.city;
@@ -714,7 +707,6 @@ function editPersonInBase() {
             document.getElementById("burialFlatAddFM").value = tempPerson.memberInfo.burial.grave;
         }
     }
-
     if (tempPerson.memberInfo.secretLevelBirth !== "CLOSE") {
         document.getElementById("birthEdit").hidden = false;
         if (tempPerson.memberInfo.photoBirthExist !== false) {
@@ -724,7 +716,6 @@ function editPersonInBase() {
                     <div class="card text-bg-dark" style="width: 250px">
                         <img src="${tempURL}" class="card-img" alt="loading...">                        
                     </div>`
-
             URL.revokeObjectURL(tempPerson.memberInfo.birthImj);
         } else document.getElementById("birthPhoto").hidden = true;
         if (tempPerson.memberInfo.birth !== null) {
@@ -737,35 +728,30 @@ function editPersonInBase() {
         }
     }
 }
-
 function lockMother() {
     document.getElementById("firstNameMotherAddFM").disabled = "disabled";
     document.getElementById("middleNameMotherAddFM").disabled = "disabled";
     document.getElementById("lastNameMotherAddFM").disabled = "disabled";
     document.getElementById("birthdayMotherAddFM").disabled = "disabled";
 }
-
 function lockFather() {
     document.getElementById("firstNameFatherAddFM").disabled = "disabled";
     document.getElementById("middleNameFatherAddFM").disabled = "disabled";
     document.getElementById("lastNameFatherAddFM").disabled = "disabled";
     document.getElementById("birthdayFatherAddFM").disabled = "disabled";
 }
-
 function addPhonesFieldEdit() {
     if (countPhoneEdit < 4) {
         document.getElementById("deleteButtonsPhoneAddFM").innerHTML += `
         <div id="leftPhoneAddFM${countPhoneEdit}">            
             <br> 
             <button class="btn btn-outline-danger" style="padding: 1px 4px; margin-top: 5px" onclick="deletePhoneFieldEdit(${countPhoneEdit})">X</button>  
-        </div>     
-`
+        </div>`
         document.getElementById("addedPhoneAddFM" + countPhoneEdit).innerHTML = ` 
         <span id="centrePhoneAddFM${countPhoneEdit}">
             <label for="phoneAddFM${countPhoneEdit}" style="color: black; padding-top: 5px">Additional phone:</label>
             <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="phoneAddFM${countPhoneEdit}" name="phoneAddFM${countPhoneEdit}" autoComplete="off">
-        </span>
-`
+        </span>`
         document.getElementById("addedButtonsPhoneAddFM").innerHTML += `
         <span id="rightPhoneAddFM${countPhoneEdit}">
             <br>
@@ -776,21 +762,18 @@ function addPhonesFieldEdit() {
         document.getElementById("tryPhone").innerHTML = (4 - countPhoneEdit) + ``;
     }
 }
-
 function addEmailsFieldEdit() {
     if (countEmailEdit < 4) {
         document.getElementById("deleteButtonsEmailAddFM").innerHTML += `          
         <div id="leftEmailAddFM${countEmailEdit}">            
             <br> 
             <button class="btn btn-outline-danger" style="padding: 1px 4px; margin-top: 5px" onclick="deleteEmailFieldEdit(${countEmailEdit})">X</button>  
-        </div>     
-`
+        </div>`
         document.getElementById("addedEmailAddFM" + countEmailEdit).innerHTML = `
         <span id="centerEmailAddFM${countEmailEdit}">
             <label for="emailAddFM${countEmailEdit}" style="color: black; padding-top: 5px" >Additional Email:</label>
             <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="emailAddFM${countEmailEdit}" name="emailAddFM${countEmailEdit}" autoComplete="off">
-        </span>
-`
+        </span>`
         document.getElementById("addedButtonsEmailAddFM").innerHTML += `
         <span id="rightEmailAddFM${countEmailEdit}">
             <br>
@@ -801,21 +784,18 @@ function addEmailsFieldEdit() {
         document.getElementById("tryEmail").innerHTML = (4 - countEmailEdit) + ``;
     }
 }
-
 function deletePhoneFieldEdit(phoneString) {
     document.getElementById("leftPhoneAddFM" + phoneString).innerHTML = ``
     document.getElementById("centrePhoneAddFM" + phoneString).innerHTML = ``
     document.getElementById("rightPhoneAddFM" + phoneString).innerHTML = ``
     insertPhoneEdit[phoneString] = null;
 }
-
 function deleteEmailFieldEdit(emailString) {
     document.getElementById("leftEmailAddFM" + emailString).innerHTML = ``
     document.getElementById("centerEmailAddFM" + emailString).innerHTML = ``
     document.getElementById("rightEmailAddFM" + emailString).innerHTML = ``
     insertEmailEdit[emailString] = null;
 }
-
 function addOtherFieldEdit() {
     if (countOtherNamesEdit <= 4) {
         document.getElementById("otherAddFM" + countOtherNamesEdit).innerHTML = `
@@ -841,12 +821,10 @@ function addOtherFieldEdit() {
         document.getElementById("tryOther").innerHTML = (5 - countOtherNamesEdit) + ``;
     }
 }
-
 function deleteOtherFieldEdit(otherNamesString) {
     document.getElementById("otherAddFM" + otherNamesString).innerHTML = ``;
     insertOtherEdit[otherNamesString] = null;
 }
-
 function submitBaseFormEditFM() {
     const form = document.getElementById('baseFormAddFM');
     let other = [];
@@ -1018,9 +996,4 @@ function submitBaseFormEditFM() {
     }).then(async status => {
         document.getElementById("resultListCreateFM").innerHTML = await status.text();
     });
-    // var input = document.querySelector('input[type="file"]')
-    // let file = new FormData()
-    // file.append('primePhoto', input.files[0])
-    // file.append('user', 'id')
-
 }

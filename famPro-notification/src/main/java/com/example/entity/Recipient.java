@@ -1,5 +1,6 @@
 package com.example.entity;
 
+import com.example.enums.Localisation;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Cache;
@@ -56,6 +57,10 @@ public class Recipient {
 
     @OneToMany(mappedBy = "person")
     private Set<Contact> podpisota;
+
+    @Enumerated(EnumType.STRING)
+    private Localisation localisation;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

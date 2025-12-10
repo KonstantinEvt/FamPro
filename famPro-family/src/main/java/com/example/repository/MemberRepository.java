@@ -102,19 +102,19 @@ public class MemberRepository {
         }
         return info;
     }
-    @Transactional(readOnly = true)
-    public Optional<ShortFamilyMember> getPersonForLinking(UUID uuid) {
-        Optional<ShortFamilyMember> member;
-        try {
-            member = Optional.of(entityManager.createQuery("from ShortFamilyMember a join fetch a.familyWhereChild b join fetch b.globalFamily join fetch a.families c left join fetch c.guard left join fetch a.linkedGuard where a.uuid=:uuid", ShortFamilyMember.class)
-                    .setParameter("uuid", uuid)
-                    .getSingleResult());
-        } catch (RuntimeException e) {
-            log.warn("Error in finding familyMember: {} to linking", uuid.toString());
-            member = Optional.empty();
-        }
-        return member;
-    }
+//    @Transactional(readOnly = true)
+//    public Optional<ShortFamilyMember> getPersonForLinking(UUID uuid) {
+//        Optional<ShortFamilyMember> member;
+//        try {
+//            member = Optional.of(entityManager.createQuery("from ShortFamilyMember a join fetch a.familyWhereChild b join fetch b.globalFamily join fetch a.families c left join fetch c.guard left join fetch a.linkedGuard where a.uuid=:uuid", ShortFamilyMember.class)
+//                    .setParameter("uuid", uuid)
+//                    .getSingleResult());
+//        } catch (RuntimeException e) {
+//            log.warn("Error in finding familyMember: {} to linking", uuid.toString());
+//            member = Optional.empty();
+//        }
+//        return member;
+//    }
     @Transactional(readOnly = true)
     public Set<ShortFamilyMember> getAllMembersByUuids(Set<UUID> uuids) {
         Set<ShortFamilyMember> members;

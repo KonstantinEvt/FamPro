@@ -22,6 +22,7 @@ import java.util.UUID;
 @Setter
 @Getter
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "short_family_members")
 public class ShortFamilyMember extends Fio {
@@ -44,28 +45,28 @@ public class ShortFamilyMember extends Fio {
     @Column(name = "father_uuid")
     private UUID fatherUuid;
 
-    @Column(name = "ancestors")
+    @Column(name = "ancestors",length = 4095)
     private String ancestors;
 
-    @Column(name = "ancestorsGuard")
+    @Column(name = "ancestorsGuard",length = 4095)
     private String ancestorsGuard;
 
     @Column(name = "linkGuard")
     private String linkGuard;
 
-    @Column(name = "topAncestors")
+    @Column(name = "topAncestors",length = 4095)
     private String topAncestors;
 
-    @Column(name = "descendants")
+    @Column(name = "descendants",length = 65535)
     private String descendants;
 
-    @Column(name = "descendantsGuard")
+    @Column(name = "descendantsGuard",length = 65535)
     private String descendantsGuard;
 
-    @Column(name = "activeMembers")
+    @Column(name = "activeMembers",length = 4095)
     private String activeMember;
 
-    @Column(name = "activeGuard")
+    @Column(name = "activeGuard",length = 4095)
     private String activeGuard;
 
     @Column(name = "lowChildren")
@@ -75,7 +76,7 @@ public class ShortFamilyMember extends Fio {
     @JoinColumn(name = "active_family")
     private Family activeFamily;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     @JoinColumn(name = "info_id")
     private List<ShortFamilyMemberInfo> shortFamilyMemberInfo;
 
@@ -84,22 +85,22 @@ public class ShortFamilyMember extends Fio {
     private CheckStatus checkStatus;
 
     @OneToMany(mappedBy = "directiveMember", cascade = {CascadeType.REMOVE})
-    private List<DirectiveMembers> directiveMembers;
+    private List<DirectiveMember> directiveMembers;
 
-    @ManyToMany(mappedBy = "familyMembers")
+    @ManyToMany(mappedBy = "familyMembers", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Family> families;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "prime_family")
     private Family familyWhereChild;
 
-    @ManyToMany(mappedBy = "halfChildrenByFather")
+    @ManyToMany(mappedBy = "halfChildrenByFather",cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Family> familyWhereHalfChildByFather;
 
-    @ManyToMany(mappedBy = "halfChildrenByMother")
+    @ManyToMany(mappedBy = "halfChildrenByMother",cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Family> familyWhereHalfChildByMother;
 
-    @ManyToMany(mappedBy = "childrenInLow")
+    @ManyToMany(mappedBy = "childrenInLow",cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Family> familyWhereChildInLow;
 
     @Column(name = "death_day")
@@ -145,17 +146,5 @@ public class ShortFamilyMember extends Fio {
     @Column(name = "birth_exist")
     private boolean birthExist;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ShortFamilyMember that = (ShortFamilyMember) o;
-        return Objects.equals(id, that.id) && Objects.equals(super.getUuid(), that.getUuid());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 }
 

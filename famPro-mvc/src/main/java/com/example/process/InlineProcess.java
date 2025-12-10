@@ -1,8 +1,7 @@
 package com.example.process;
 
-import com.example.dtos.Directive;
-import com.example.dtos.FamilyDirective;
-import lombok.AllArgsConstructor;
+import com.example.dtos.DirectiveGuards;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
@@ -12,18 +11,18 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 @Component
-@AllArgsConstructor
-public class InlineProcess implements Supplier<Message<FamilyDirective>> {
-    private final LinkedList<FamilyDirective> inline;
+public class InlineProcess implements Supplier<Message<DirectiveGuards>> {
+    private final LinkedList<DirectiveGuards> inline;
+
+    public InlineProcess(@Qualifier("inlineResource") LinkedList<DirectiveGuards> inline) {
+        this.inline = inline;
+    }
 
     @Override
-    public Message<FamilyDirective> get() {
+    public Message<DirectiveGuards> get() {
         if (!inline.isEmpty()) {
-            System.out.println("tyt3");
-            System.out.println(inline.peek());
             return MessageBuilder.withPayload(Objects.requireNonNull(inline.poll())).build();
         }
-        System.out.println("tyt2");
         return null;
     }
 }

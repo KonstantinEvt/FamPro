@@ -2,6 +2,7 @@ package com.example.entity;
 
 import com.example.enums.Attention;
 import com.example.enums.CheckStatus;
+import com.example.enums.Localisation;
 import com.example.enums.NewsCategory;
 import jakarta.persistence.*;
 import lombok.*;
@@ -59,6 +60,9 @@ public class AloneNew {
 
     @Column(name = "already_read")
     private boolean alreadyRead;
+
+    @Enumerated(EnumType.STRING)
+    private Localisation localisation;
 
     @Override
     public boolean equals(Object o) {

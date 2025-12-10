@@ -12,7 +12,7 @@ import java.util.UUID;
 @ToString
 @AllArgsConstructor
 @Builder
-public class DirectiveMembers {
+public class DirectiveMember {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

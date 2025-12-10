@@ -1,8 +1,9 @@
-package com.example.transcriters;
+package com.example.service;
 
 import com.example.checks.CommonWordChecks;
 import com.example.dtos.*;
 import com.example.enums.SecretLevel;
+import com.example.transcriters.AbstractTranscripter;
 import com.ibm.icu.text.SimpleDateFormat;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,72 +17,70 @@ import java.util.Objects;
 public class TranscritFamilyMember {
     CommonWordChecks commonWordChecks;
 
-    public void to(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto) {
-        transcritToFio(transcriterHolder, familyMemberDto);
+    public void to(AbstractTranscripter transcripter, FamilyMemberDto familyMemberDto) {
+        transcritToFio(transcripter, familyMemberDto);
 
 //        if (familyMemberDto.getMotherFio() != null)
-//            transcritToFio(transcriterHolder, familyMemberDto.getMotherFio());
+//            transcritToFio(transcripter, familyMemberDto.getMotherFio());
 //        if (familyMemberDto.getFatherFio() != null)
-//            transcritToFio(transcriterHolder, familyMemberDto.getFatherFio());
-        toGetOtherNames(transcriterHolder, familyMemberDto);
+//            transcritToFio(transcripter, familyMemberDto.getFatherFio());
+        toGetOtherNames(transcripter, familyMemberDto);
     }
 
-    public void toGetOtherNames(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto) {
+    public void toGetOtherNames(AbstractTranscripter transcripter, FamilyMemberDto familyMemberDto) {
         if (familyMemberDto.getFioDtos() != null) {
             for (FioDto fioDto :
                     familyMemberDto.getFioDtos())
-                transcritToFio(transcriterHolder, fioDto);
+                transcritToFio(transcripter, fioDto);
         }
     }
 
-    public void toGet(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto) throws ParseException {
-        AbstractTranscriter trans = transcriterHolder.getTranscriter();
+    public void toGet(AbstractTranscripter transcripter, FamilyMemberDto familyMemberDto) throws ParseException {
         boolean secret = familyMemberDto.getSecretLevelBirthday() == SecretLevel.CLOSE;
-        familyMemberDto.setFullName(parseFullName(trans, familyMemberDto.getFullName(), new FioDto(), secret));
+        familyMemberDto.setFullName(parseFullName(transcripter, familyMemberDto.getFullName(), new FioDto(), secret));
         if (secret) familyMemberDto.setBirthday(null);
         FioDto fatherFio = new FioDto();
         FioDto motherFio = new FioDto();
-        familyMemberDto.setMotherInfo(parseFullName(trans, familyMemberDto.getMotherInfo(), motherFio, secret));
-        familyMemberDto.setFatherInfo(parseFullName(trans, familyMemberDto.getFatherInfo(), fatherFio, secret));
-        if (!Objects.equals(familyMemberDto.getMotherInfo(), trans.getOut()) || !Objects.equals(familyMemberDto.getMotherInfo(), trans.getIncorrectInfo()))
+        familyMemberDto.setMotherInfo(parseFullName(transcripter, familyMemberDto.getMotherInfo(), motherFio, secret));
+        familyMemberDto.setFatherInfo(parseFullName(transcripter, familyMemberDto.getFatherInfo(), fatherFio, secret));
+        if (!Objects.equals(familyMemberDto.getMotherInfo(), transcripter.getOut()) || !Objects.equals(familyMemberDto.getMotherInfo(), transcripter.getIncorrectInfo()))
             familyMemberDto.setMotherFio(motherFio);
-        if (!Objects.equals(familyMemberDto.getFatherInfo(), trans.getOut()) || !Objects.equals(familyMemberDto.getFatherInfo(), trans.getIncorrectInfo()))
+        if (!Objects.equals(familyMemberDto.getFatherInfo(), transcripter.getOut()) || !Objects.equals(familyMemberDto.getFatherInfo(), transcripter.getIncorrectInfo()))
             familyMemberDto.setFatherFio(fatherFio);
         if (familyMemberDto.getMemberInfo() == null) familyMemberDto.setMemberInfo(new FamilyMemberInfoDto());
         if (familyMemberDto.getMemberInfo().getMainEmail() == null)
-            familyMemberDto.getMemberInfo().setMainEmail(trans.getOut());
+            familyMemberDto.getMemberInfo().setMainEmail(transcripter.getOut());
         if (familyMemberDto.getMemberInfo().getMainPhone() == null)
-            familyMemberDto.getMemberInfo().setMainPhone(trans.getOut());
-        familyMemberDto.getMemberInfo().setMainAddress(parseFullAddressTo(trans, familyMemberDto.getMemberInfo().getMainAddress()));
+            familyMemberDto.getMemberInfo().setMainPhone(transcripter.getOut());
+        familyMemberDto.getMemberInfo().setMainAddress(parseFullAddressTo(transcripter, familyMemberDto.getMemberInfo().getMainAddress()));
     }
 
-    public void toGetInfo(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto) {
-        AbstractTranscriter trans = transcriterHolder.getTranscriter();
+    public void toGetInfo(AbstractTranscripter transcripter, FamilyMemberDto familyMemberDto) {
         if (familyMemberDto.getMemberInfo() != null) {
             if (familyMemberDto.getMemberInfo().getAddresses() != null) {
                 for (AddressDto address : familyMemberDto.getMemberInfo().getAddresses()) {
-                    transcritToAddress(trans, address);
-                    address.setInternName(parseFullAddressTo(trans, address.getInternName()));
+                    transcritToAddress(transcripter, address);
+                    address.setInternName(parseFullAddressTo(transcripter, address.getInternName()));
                 }
             }
             if (familyMemberDto.getMemberInfo().getBirth() != null) {
-                transcritToBirth(trans, familyMemberDto.getMemberInfo().getBirth());
-                familyMemberDto.getMemberInfo().getBirth().setInternName(parseFullAddressTo(trans, familyMemberDto.getMemberInfo().getBirth().getInternName()));
+                transcritToBirth(transcripter, familyMemberDto.getMemberInfo().getBirth());
+                familyMemberDto.getMemberInfo().getBirth().setInternName(parseFullAddressTo(transcripter, familyMemberDto.getMemberInfo().getBirth().getInternName()));
             }
             if (familyMemberDto.getMemberInfo().getBurial() != null) {
-                transcritToBurial(trans, familyMemberDto.getMemberInfo().getBurial());
-                familyMemberDto.getMemberInfo().getBurial().setInternName(parseFullAddressTo(trans, familyMemberDto.getMemberInfo().getBurial().getInternName()));
+                transcritToBurial(transcripter, familyMemberDto.getMemberInfo().getBurial());
+                familyMemberDto.getMemberInfo().getBurial().setInternName(parseFullAddressTo(transcripter, familyMemberDto.getMemberInfo().getBurial().getInternName()));
             }
 
         }
     }
 
-    private String parseFullAddressTo(AbstractTranscriter trans, String str) {
+    private String parseFullAddressTo(AbstractTranscripter trans, String str) {
         if (str == null || str.isEmpty()) return trans.getOut();
         else return trans.transcritWordToLocalisation(str);
     }
 
-    private String parseFullName(AbstractTranscriter trans, String str, FioDto fioDto, boolean secret) throws ParseException {
+    public String parseFullName(AbstractTranscripter trans, String str, FioDto fioDto, boolean secret) throws ParseException {
         String result;
         SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd");
         if (str == null || str.isEmpty()) return trans.getOut();
@@ -128,102 +127,102 @@ public class TranscritFamilyMember {
         return result;
     }
 
-    public void transcritToFio(TranscriterHolder transcriterHolder, FioDto fioDto) {
+    public void transcritToFio(AbstractTranscripter transcripter, FioDto fioDto) {
         if (fioDto.getFirstName() != null) {
-            fioDto.setFirstName(commonWordChecks.setUpperFirst(transcriterHolder.getTranscriter().transcritWordToLocalisation(fioDto.getFirstName())));
+            fioDto.setFirstName(commonWordChecks.setUpperFirst(transcripter.transcritWordToLocalisation(fioDto.getFirstName())));
 
         }
         if (fioDto.getMiddleName() != null) {
-            fioDto.setMiddleName(commonWordChecks.setUpperFirst(transcriterHolder.getTranscriter().transcritWordToLocalisation(fioDto.getMiddleName())));
+            fioDto.setMiddleName(commonWordChecks.setUpperFirst(transcripter.transcritWordToLocalisation(fioDto.getMiddleName())));
         }
         if (fioDto.getLastName() != null) {
-            fioDto.setLastName(commonWordChecks.setUpperFirst(transcriterHolder.getTranscriter().transcritWordToLocalisation(fioDto.getLastName())));
+            fioDto.setLastName(commonWordChecks.setUpperFirst(transcripter.transcritWordToLocalisation(fioDto.getLastName())));
         }
     }
 
-    public void from(TranscriterHolder transcriterHolder, FamilyMemberDto familyMemberDto) {
-        transcritFromFio(transcriterHolder, familyMemberDto);
+    public void from(AbstractTranscripter transcripter, FamilyMemberDto familyMemberDto) {
+        transcritFromFio(transcripter, familyMemberDto);
 
         if (familyMemberDto.getMotherFio() != null)
-            transcritFromFio(transcriterHolder, familyMemberDto.getMotherFio());
-        if (familyMemberDto.getFatherFio() != null) transcritFromFio(transcriterHolder, familyMemberDto.getFatherFio());
+            transcritFromFio(transcripter, familyMemberDto.getMotherFio());
+        if (familyMemberDto.getFatherFio() != null) transcritFromFio(transcripter, familyMemberDto.getFatherFio());
 
         if (familyMemberDto.getFioDtos() != null) {
             for (FioDto fioDto :
                     familyMemberDto.getFioDtos())
-                transcritFromFio(transcriterHolder, fioDto);
+                transcritFromFio(transcripter, fioDto);
         }
         if (familyMemberDto.getMemberInfo() != null) {
             if (familyMemberDto.getMemberInfo().getAddresses() != null) {
                 for (AddressDto address : familyMemberDto.getMemberInfo().getAddresses()) {
-                    transcritFromAddress(transcriterHolder, address);
+                    transcritFromAddress(transcripter, address);
                 }
             }
             if (familyMemberDto.getMemberInfo().getBirth() != null)
-                transcritFromBirth(transcriterHolder, familyMemberDto.getMemberInfo().getBirth());
+                transcritFromBirth(transcripter, familyMemberDto.getMemberInfo().getBirth());
             if (familyMemberDto.getMemberInfo().getBurial() != null)
-                transcritFromBurial(transcriterHolder, familyMemberDto.getMemberInfo().getBurial());
+                transcritFromBurial(transcripter, familyMemberDto.getMemberInfo().getBurial());
 
         }
     }
 
-    public void transcritFromAddress(TranscriterHolder transcriterHolder, AddressDto address) {
+    public void transcritFromAddress(AbstractTranscripter transcripter, AddressDto address) {
         if (address.getHouse() != null)
-            address.setHouse(transcriterHolder.getTranscriter().transcritWordFromLocalisation(address.getHouse()));
+            address.setHouse(transcripter.transcritWordFromLocalisation(address.getHouse()));
         if (address.getIndex() != null)
-            address.setIndex(transcriterHolder.getTranscriter().transcritWordFromLocalisation(address.getIndex()));
+            address.setIndex(transcripter.transcritWordFromLocalisation(address.getIndex()));
         if (address.getBuilding() != null)
-            address.setBuilding(transcriterHolder.getTranscriter().transcritWordFromLocalisation(address.getBuilding()));
+            address.setBuilding(transcripter.transcritWordFromLocalisation(address.getBuilding()));
         if (address.getFlatNumber() != null)
-            address.setFlatNumber(transcriterHolder.getTranscriter().transcritWordFromLocalisation(address.getFlatNumber()));
-        transcritFromPlace(transcriterHolder, address);
+            address.setFlatNumber(transcripter.transcritWordFromLocalisation(address.getFlatNumber()));
+        transcritFromPlace(transcripter, address);
     }
 
-    public void transcritFromBirth(TranscriterHolder transcriterHolder, BirthDto birthDto) {
+    public void transcritFromBirth(AbstractTranscripter transcripter, BirthDto birthDto) {
         if (birthDto.getBirthHouse() != null)
-            birthDto.setBirthHouse(transcriterHolder.getTranscriter().transcritWordFromLocalisation(birthDto.getBirthHouse()));
+            birthDto.setBirthHouse(transcripter.transcritWordFromLocalisation(birthDto.getBirthHouse()));
         if (birthDto.getRegistration() != null)
-            birthDto.setRegistration(transcriterHolder.getTranscriter().transcritWordFromLocalisation(birthDto.getRegistration()));
-        transcritFromPlace(transcriterHolder, birthDto);
+            birthDto.setRegistration(transcripter.transcritWordFromLocalisation(birthDto.getRegistration()));
+        transcritFromPlace(transcripter, birthDto);
     }
 
-    public void transcritFromBurial(TranscriterHolder transcriterHolder, BurialDto burialDto) {
+    public void transcritFromBurial(AbstractTranscripter transcripter, BurialDto burialDto) {
         if (burialDto.getCemetery() != null)
-            burialDto.setCemetery(transcriterHolder.getTranscriter().transcritWordFromLocalisation(burialDto.getCemetery()));
+            burialDto.setCemetery(transcripter.transcritWordFromLocalisation(burialDto.getCemetery()));
         if (burialDto.getChapter() != null)
-            burialDto.setChapter(transcriterHolder.getTranscriter().transcritWordFromLocalisation(burialDto.getChapter()));
+            burialDto.setChapter(transcripter.transcritWordFromLocalisation(burialDto.getChapter()));
         if (burialDto.getSquare() != null)
-            burialDto.setSquare(transcriterHolder.getTranscriter().transcritWordFromLocalisation(burialDto.getSquare()));
+            burialDto.setSquare(transcripter.transcritWordFromLocalisation(burialDto.getSquare()));
         if (burialDto.getGrave() != null)
-            burialDto.setGrave(transcriterHolder.getTranscriter().transcritWordFromLocalisation(burialDto.getGrave()));
-        transcritFromPlace(transcriterHolder, burialDto);
+            burialDto.setGrave(transcripter.transcritWordFromLocalisation(burialDto.getGrave()));
+        transcritFromPlace(transcripter, burialDto);
     }
 
-    public void transcritFromPlace(TranscriterHolder transcriterHolder, PlaceDto placeDto) {
+    public void transcritFromPlace(AbstractTranscripter transcripter, PlaceDto placeDto) {
         if (placeDto.getCountry() != null)
-            placeDto.setCountry(transcriterHolder.getTranscriter().transcritWordFromLocalisation(placeDto.getCountry()));
+            placeDto.setCountry(transcripter.transcritWordFromLocalisation(placeDto.getCountry()));
         if (placeDto.getRegion() != null)
-            placeDto.setRegion(transcriterHolder.getTranscriter().transcritWordFromLocalisation(placeDto.getRegion()));
+            placeDto.setRegion(transcripter.transcritWordFromLocalisation(placeDto.getRegion()));
         if (placeDto.getStreet() != null)
-            placeDto.setStreet(transcriterHolder.getTranscriter().transcritWordFromLocalisation(placeDto.getStreet()));
+            placeDto.setStreet(transcripter.transcritWordFromLocalisation(placeDto.getStreet()));
         if (placeDto.getCity() != null)
-            placeDto.setCity(transcriterHolder.getTranscriter().transcritWordFromLocalisation(placeDto.getCity()));
+            placeDto.setCity(transcripter.transcritWordFromLocalisation(placeDto.getCity()));
     }
 
 
-    public void transcritFromFio(TranscriterHolder transcriterHolder, FioDto fioDto) {
+    public void transcritFromFio(AbstractTranscripter transcripter, FioDto fioDto) {
         if (fioDto.getFirstName() != null) {
-            fioDto.setFirstName(transcriterHolder.getTranscriter().transcritWordFromLocalisation(fioDto.getFirstName()));
+            fioDto.setFirstName(transcripter.transcritWordFromLocalisation(fioDto.getFirstName()));
         }
         if (fioDto.getMiddleName() != null) {
-            fioDto.setMiddleName(transcriterHolder.getTranscriter().transcritWordFromLocalisation(fioDto.getMiddleName()));
+            fioDto.setMiddleName(transcripter.transcritWordFromLocalisation(fioDto.getMiddleName()));
         }
         if (fioDto.getLastName() != null) {
-            fioDto.setLastName(transcriterHolder.getTranscriter().transcritWordFromLocalisation(fioDto.getLastName()));
+            fioDto.setLastName(transcripter.transcritWordFromLocalisation(fioDto.getLastName()));
         }
     }
 
-    public void transcritToAddress(AbstractTranscriter trans, AddressDto address) {
+    public void transcritToAddress(AbstractTranscripter trans, AddressDto address) {
         if (address.getHouse() != null)
             address.setHouse(trans.transcritWordToLocalisation(address.getHouse()));
         if (address.getIndex() != null)
@@ -235,7 +234,7 @@ public class TranscritFamilyMember {
         transcritToPlace(trans, address);
     }
 
-    public void transcritToBirth(AbstractTranscriter trans, BirthDto birthDto) {
+    public void transcritToBirth(AbstractTranscripter trans, BirthDto birthDto) {
         if (birthDto.getBirthHouse() != null)
             birthDto.setBirthHouse(trans.transcritWordToLocalisation(birthDto.getBirthHouse()));
         if (birthDto.getRegistration() != null)
@@ -243,7 +242,7 @@ public class TranscritFamilyMember {
         transcritToPlace(trans, birthDto);
     }
 
-    public void transcritToBurial(AbstractTranscriter trans, BurialDto burialDto) {
+    public void transcritToBurial(AbstractTranscripter trans, BurialDto burialDto) {
         if (burialDto.getCemetery() != null)
             burialDto.setCemetery(trans.transcritWordToLocalisation(burialDto.getCemetery()));
         if (burialDto.getChapter() != null)
@@ -255,7 +254,7 @@ public class TranscritFamilyMember {
         transcritToPlace(trans, burialDto);
     }
 
-    public void transcritToPlace(AbstractTranscriter trans, PlaceDto placeDto) {
+    public void transcritToPlace(AbstractTranscripter trans, PlaceDto placeDto) {
         if (placeDto.getCountry() != null)
             placeDto.setCountry(trans.transcritWordToLocalisation(placeDto.getCountry()));
         if (placeDto.getRegion() != null)
