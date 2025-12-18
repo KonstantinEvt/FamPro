@@ -1,7 +1,6 @@
 package com.example.repository;
 
 import com.example.entity.Family;
-import com.example.entity.ShortFamilyMember;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import lombok.AllArgsConstructor;
@@ -30,6 +29,13 @@ public class FamilyRepository {
             entityManager.remove(family);
         } catch (RuntimeException e) {
             log.warn("family is not removed");
+        }
+    }
+    public void detachFamily(Family family) {
+        try {
+            entityManager.detach(family);
+        } catch (RuntimeException e) {
+            log.warn("family is detached");
         }
     }
     @Transactional
@@ -61,6 +67,29 @@ public class FamilyRepository {
             family = Optional.empty();
         } catch (RuntimeException e) {
             log.warn("Error in finding family with children");
+            family = Optional.empty();
+        }
+        return family;
+    }
+    public void refreshFamily(Family family) {
+        try {
+            entityManager.refresh(family);
+        } catch (RuntimeException e) {
+            log.warn("family is not refresh {}", e.getMessage());
+        }
+    }
+    @Transactional(readOnly = true)
+    public Optional<Family> findFamilyByUUID(UUID uuid) {
+        Optional<Family> family;
+        try {
+            family = Optional.of(entityManager.createQuery("from Family a where a.uuid=:uuid", Family.class)
+                    .setParameter("uuid", uuid)
+                    .getSingleResult());
+        }catch (NoResultException e){
+            log.info("family  not found");
+            family = Optional.empty();
+        } catch (RuntimeException e) {
+            log.warn("Error in finding family ");
             family = Optional.empty();
         }
         return family;

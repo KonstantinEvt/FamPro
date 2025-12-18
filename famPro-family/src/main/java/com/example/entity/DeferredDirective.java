@@ -24,41 +24,25 @@ public class DeferredDirective {
     @Column(name = "created")
     private Timestamp created;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "directive_family")
-//    private Family directiveFamily;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "directive_member")
     private ShortFamilyMember directiveMember;
 
-    @OneToMany(mappedBy = "directive",cascade = {CascadeType.REMOVE})
+    @OneToMany(mappedBy = "directive", cascade = {CascadeType.REMOVE})
     private Set<DirectiveMember> shortFamilyMemberLink;
 
     @Column(name = "info_link")
     private String info;
-
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "process_family")
-//    private Family processFamily;
 
     @Column(name = "tokenUser")
     private String tokenUser;
 
     @Enumerated(EnumType.STRING)
     private SwitchPosition switchPosition;
-    //    @Column(name="number_for")
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "directive_global")
-
-    private int globalFor;
-    //    @Column(name="number_to")
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "link_global_family")
-    private int globalTo;
 
     @Enumerated(EnumType.STRING)
     private Localisation localisation;
 
-
+    @Column(name = "directiveKeeper")
+    private UUID directiveKeeper;
 }

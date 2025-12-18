@@ -1,6 +1,5 @@
 package com.example.service;
 
-import com.example.checks.CheckFamilyMember;
 import com.example.dtos.DirectiveGuards;
 import com.example.dtos.FioDto;
 import com.example.enums.Subject;
@@ -11,14 +10,11 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.util.Set;
 
 @Service
 @AllArgsConstructor
 public class TransctiptGuardDirective {
-    private final CheckFamilyMember checkFamilyMember;
     private final TranscritFamilyMember transcritFamilyMember;
-    private final TokenService tokenService;
     private final TranscriptHolder transcriptHolder;
 
     public DirectiveGuards transcriptVoting(DirectiveGuards directiveGuards) throws ParseException {
@@ -59,10 +55,14 @@ public class TransctiptGuardDirective {
 
     public DirectiveGuards transcriptAttention(DirectiveGuards directiveGuards) throws ParseException {
         AbstractTranscripter transcripter = transcriptHolder.getTranscript(directiveGuards.getLocalisation());
-        if (directiveGuards.getPerson() != null)
-            directiveGuards.setInfo1(transcritFamilyMember.parseFullName(transcripter, directiveGuards.getPerson(), new FioDto(), true));
+        if (directiveGuards.getPerson() != null) {
+            String temp = directiveGuards.getInfo1();
+            directiveGuards.setInfo1(transcritFamilyMember.parseFullName(transcripter, directiveGuards.getPerson(), new FioDto(), directiveGuards.getSubject() != Subject.LINK_POSITIVE));
+            directiveGuards.setPerson(temp);
+        }
         directiveGuards.setInfo3(transcripter.getTextSubject(directiveGuards.getSubject()));
         directiveGuards.setInfo2(transcripter.getMatrixOfTextGeneration().get(directiveGuards.getSubject().name()));
+
         return directiveGuards;
     }
 }

@@ -89,7 +89,8 @@ public class SendAndFormService {
                     directiveGuards.setPerson(personInfo);
                 } else {
                     directiveGuards.setSubject(Subject.LINK_POSITIVE);
-                    directiveGuards.setPerson(person.getUuid().toString());
+                    directiveGuards.setPerson(personInfo);
+                    directiveGuards.setInfo1(person.getUuid().toString());
                     directiveGuards.setPhotoExist(person.isPrimePhoto());
                 }
                 directiveGuards.setSwitchPosition(SwitchPosition.PRIME);
@@ -135,6 +136,6 @@ public class SendAndFormService {
                 .switchPosition(SwitchPosition.MAIN)
                 .guards(guards)
                 .build());
-        log.info("Directive to storage for remove parent-child link is send");
+        log.info("Directive for contact is send");
     }
 }

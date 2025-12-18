@@ -144,16 +144,16 @@ public class VotingService {
         if (lettersOfVoting == null || lettersOfVoting.isEmpty())
             throw new RuntimeException("linked letter with voting is absent");
         Recipient requester = null;
-        String extern = null;
         for (AloneNew forLinking :
                 lettersOfVoting) {
-            if (forLinking.getAttention()== Attention.VOTING) {
+            if (forLinking.getAttention()== Attention.VOTING_REQUESTER) {
                 requester = forLinking.getSendTo().stream().findFirst().orElseThrow();
+                requester.setLinkExternId("tyt externID");
 //                requester.setUrlPhoto(forLinking.getImageUrl().equals("1"));
             }
-            if (forLinking.getAttention()==Attention.VOTING_REQUESTER) extern = forLinking.getImageUrl();
+//            if (forLinking.getAttention()==Attention.VOTING_REQUESTER) extern = forLinking.getImageUrl();
         }
-        if (requester != null) requester.setLinkExternId(extern);
+//        if (requester != null) requester.setLinkExternId(extern);
         String[] parseText = lettersOfVoting.get(0).getTextInfo().split("<br>");
         voting.getRecipients().addAll(lettersOfVoting.get(0).getSendTo());
         voting.getRecipients().addAll(lettersOfVoting.get(1).getSendTo());

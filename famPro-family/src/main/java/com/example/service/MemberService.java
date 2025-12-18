@@ -2,16 +2,14 @@ package com.example.service;
 
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.FamilyMemberInfoDto;
-import com.example.entity.Family;
-import com.example.entity.Guard;
-import com.example.entity.ShortFamilyMember;
-import com.example.entity.ShortFamilyMemberInfo;
+import com.example.entity.*;
 import com.example.enums.CheckStatus;
 import com.example.enums.SecretLevel;
 import com.example.enums.Sex;
 import com.example.enums.SwitchPosition;
 import com.example.mappers.FamilyMemberInfoMapper;
 import com.example.mappers.FamilyMemberMapper;
+import com.example.repository.FamilyMemberLinkRepository;
 import com.example.repository.MemberRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,7 +29,7 @@ import java.util.stream.Collectors;
 public class MemberService implements SimpleFamilyService {
     FamilyMemberMapper familyMemberMapper;
     FamilyMemberInfoMapper familyMemberInfoMapper;
-
+FamilyMemberLinkRepository familyMemberLinkRepository;
     MemberRepository memberRepository;
 
     @Transactional
@@ -43,10 +41,10 @@ public class MemberService implements SimpleFamilyService {
             familyMember.setBirthExist(dto.getMemberInfo().getBirth() != null);
             familyMember.setBurialExist(dto.getMemberInfo().getBurial() != null);
         }
-        familyMember.setFamilies(new HashSet<>());
-        familyMember.setFamilyWhereChildInLow(new HashSet<>());
-        familyMember.setFamilyWhereHalfChildByFather(new HashSet<>());
-        familyMember.setFamilyWhereHalfChildByMother(new HashSet<>());
+//        familyMember.setFamilyLinks(new HashSet<>());
+//        familyMember.setFamilyWhereChildInLow(new HashSet<>());
+//        familyMember.setFamilyWhereHalfChildByFather(new HashSet<>());
+//        familyMember.setFamilyWhereHalfChildByMother(new HashSet<>());
         memberRepository.persistMember(familyMember);
         return familyMember;
     }
@@ -57,12 +55,19 @@ public class MemberService implements SimpleFamilyService {
         result.add(familyMemberInfoMapper.dtoToEntity(infoDto));
         return result;
     }
+    @Transactional
+    public Optional<ShortFamilyMember> findMemberWithPrimeFamily(UUID uuid) {
+        return memberRepository.findMemberWithPrimeFamily(uuid);
+    }
 
     @Transactional
     public void updateMember(ShortFamilyMember shortFamilyMember) {
         memberRepository.updateMember(shortFamilyMember);
     }
-
+    @Transactional
+    public void refreshMember(ShortFamilyMember shortFamilyMember) {
+        memberRepository.refreshMember(shortFamilyMember);
+    }
     @Transactional
     public void editFamilyMember(FamilyMemberDto dto, ShortFamilyMember familyMember) {
         Optional<ShortFamilyMemberInfo> info = memberRepository.getInfoByUuid(familyMember.getUuid());
@@ -160,10 +165,12 @@ public class MemberService implements SimpleFamilyService {
     public Optional<ShortFamilyMember> getMemberByUuid(UUID uuid) {
         return memberRepository.getMemberByUuid(uuid);
     }
-@Transactional
-public Family getPrimeFamily(ShortFamilyMember member){
-    return memberRepository.getPrimeFamily(member).orElse(null);
-}
+
+    @Transactional
+    public Family getPrimeFamily(ShortFamilyMember member) {
+        return memberRepository.getPrimeFamily(member).orElse(null);
+    }
+
     @Transactional
     public void mergeInfo(ShortFamilyMemberInfo oldInfo, FamilyMemberInfoDto newInfo) {
         if (newInfo.getSecretLevelAddress() != SecretLevel.CLOSE && newInfo.getSecretLevelAddress() != SecretLevel.UNDEFINED) {
@@ -198,7 +205,7 @@ public Family getPrimeFamily(ShortFamilyMember member){
         if (findUuidInInfo(member.getActiveGuard(), directiveGuard)) return SecretLevel.FAMILY;
         if (findUuidInInfo(member.getDescendantsGuard(), directiveGuard))
             return SecretLevel.STRAIGHT_BLOOD;
-        if (geneticTreeCheck&&treeGuards.contains(directiveGuard)) return SecretLevel.GENETIC_TREE;
+        if (geneticTreeCheck && treeGuards.contains(directiveGuard)) return SecretLevel.GENETIC_TREE;
         return SecretLevel.OPEN;
     }
 
@@ -207,7 +214,7 @@ public Family getPrimeFamily(ShortFamilyMember member){
         if (member.getAncestorsGuard() != null) return SecretLevel.ANCESTOR;
         if (member.getActiveGuard() != null) return SecretLevel.FAMILY;
         if (member.getDescendantsGuard() != null) return SecretLevel.STRAIGHT_BLOOD;
-        if (geneticTreeCheck&&treeGuards != null && !treeGuards.isEmpty()) return SecretLevel.GENETIC_TREE;
+        if (geneticTreeCheck && treeGuards != null && !treeGuards.isEmpty()) return SecretLevel.GENETIC_TREE;
         return SecretLevel.OPEN;
     }
 
@@ -297,16 +304,16 @@ public Family getPrimeFamily(ShortFamilyMember member){
 
     @Transactional(readOnly = true)
     public boolean checkThemeSecretForSecretLevel(SecretLevel secretLevel, ShortFamilyMember member, Optional<Guard> directiveGuard, Set<ShortFamilyMember> topAncestors) {
-        if (directiveGuard.isPresent()&&directiveGuard.get().getId()!=null) {
+        if (directiveGuard.isPresent() && directiveGuard.get().getId() != null) {
             UUID uuid = UUID.fromString(directiveGuard.get().getTokenUser());
             Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors);
-            SecretLevel directiveGuardStatus = getSecretStatus(member, uuid, geneticTreeGuard,true);
-            SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard,true);
+            SecretLevel directiveGuardStatus = getSecretStatus(member, uuid, geneticTreeGuard, true);
+            SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard, true);
             if (directiveGuardStatus == max) return true;
             else return secretLevel.ordinal() < directiveGuardStatus.ordinal();
         } else {
             Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors);
-            SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard,true);
+            SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard, true);
             return SecretLevel.OPEN == max;
         }
     }
@@ -323,9 +330,12 @@ public Family getPrimeFamily(ShortFamilyMember member){
         bloodKin.remove(member);
         for (ShortFamilyMember fm :
                 bloodKin) {
-            if (fm.getDescendants() != null) fm.setDescendants(changeUuidInInfo(fm.getDescendants(), oldUuid, member.getUuid()));
-            if (fm.getAncestors() != null) fm.setAncestors(changeUuidInInfo(fm.getAncestors(), oldUuid, member.getUuid()));
-            if (fm.getTopAncestors() != null) fm.setTopAncestors(changeUuidInInfo(fm.getTopAncestors(), oldUuid, member.getUuid()));
+            if (fm.getDescendants() != null)
+                fm.setDescendants(changeUuidInInfo(fm.getDescendants(), oldUuid, member.getUuid()));
+            if (fm.getAncestors() != null)
+                fm.setAncestors(changeUuidInInfo(fm.getAncestors(), oldUuid, member.getUuid()));
+            if (fm.getTopAncestors() != null)
+                fm.setTopAncestors(changeUuidInInfo(fm.getTopAncestors(), oldUuid, member.getUuid()));
         }
         log.warn("uuid in bloodKin is changed");
     }
@@ -437,8 +447,34 @@ public Family getPrimeFamily(ShortFamilyMember member){
             memberRepository.updateMember(des);
         }
     }
+
     @Transactional
     public void flush() {
         memberRepository.flush();
     }
+
+    @Transactional(readOnly = true)
+    public CheckStatus getCheckStatus(ShortFamilyMember processMember, boolean isMain) {
+        if (processMember.getLinkGuard() != null && !processMember.getLinkGuard().isBlank()) {
+            return CheckStatus.LINKED;
+        } else {
+            if ((processMember.getDescendantsGuard() != null && !processMember.getDescendantsGuard().isBlank()) ||
+                    (processMember.getAncestorsGuard() != null && !processMember.getAncestorsGuard().isBlank()) || (
+                    processMember.getActiveGuard() != null && !processMember.getActiveGuard().isBlank())) {
+                return CheckStatus.CHECKED;
+            } else {
+                if (isMain && getGeneticTreeGuards(getAllTopAncestors(processMember)).isEmpty()) {
+                    return CheckStatus.UNCHECKED;
+                } else {
+                    return CheckStatus.CHECKED;
+                }
+            }
+        }
+    }
+    @Transactional(readOnly = true)
+    public Set<FamilyMemberLink> getAllMemberLinksByUuid(UUID memberUuid){
+        return  familyMemberLinkRepository.getAllFamilyMemberLinks(memberUuid);
+    }
+
+
 }

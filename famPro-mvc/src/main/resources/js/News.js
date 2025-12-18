@@ -290,7 +290,7 @@ async function loadingIndividualNews(category, choice) {
 
                 if ((fetchData.attention === "VOTING_POSITIVE" || fetchData.attention === "POSITIVE" ||fetchData.subjectJS === "Contact added" || fetchData.subjectJS === "Accept change") && defaultPhotos.approved !== null) fetchData.imj = defaultPhotos.approved;
                 if ((fetchData.attention === "VOTING_NEGATIVE" || fetchData.attention === "NEGATIVE" || fetchData.subjectJS === "Reject change" || fetchData.subjectJS === "Contact reject") && defaultPhotos.rejected !== null) fetchData.imj = defaultPhotos.rejected;
-                if ((fetchData.attention === "VOTING") && defaultPhotos.election !== null) fetchData.imj = defaultPhotos.election;
+                if ((fetchData.attention === "VOTING"||fetchData.attention === "VOTING_REQUESTER") && defaultPhotos.election !== null) fetchData.imj = defaultPhotos.election;
                 if ((fetchData.subjectJS === "Request for contact" || fetchData.subjectJS === "Contact request") && defaultPhotos.contact !== null) fetchData.imj = defaultPhotos.contact;
                 if ((fetchData.attention === "LINK") && defaultPhotos.linking !== null) fetchData.imj = defaultPhotos.linking;
                 if (fetchData.imj === ``) fetchData.imj = contactImage;
@@ -386,7 +386,7 @@ function drawButtons(letter, choice) {
         if (letter.sendingFromJS === "Informer")
             switch (letter.attention) {
                 case "VOTING":
-
+                case "LINK":
                     temp = `<span class="col-2">
                             <a type="button" class="btn btn-outline-success"
                                 onClick="acceptMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">Accept</a></span>
@@ -397,7 +397,6 @@ function drawButtons(letter, choice) {
                     break;
                 case "RIGHTS":
                 case "MODERATE":
-                case "LINK":
                 case "NEGATIVE":
                 case "DATE":
                 case "POSITIVE":

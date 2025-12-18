@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +26,7 @@ public class TaskResource {
     }
 
     @Bean("storageDirective")
-    LinkedList<LinkedList<FamilyDirective>> storageDirective() {
+    LinkedList<FamilyDirective> storageDirective() {
         return new LinkedList<>();
     }
 

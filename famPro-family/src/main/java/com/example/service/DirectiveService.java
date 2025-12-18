@@ -7,6 +7,7 @@ import com.example.entity.*;
 import com.example.enums.*;
 import com.example.repository.DirectiveRepo;
 import com.example.repository.DirectiveRepository;
+import com.example.repository.FamilyRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +27,14 @@ public class DirectiveService {
     private final List<Directive> cloakDirective;
     private final SendAndFormService sendAndFormService;
     private final Map<UUID, Localisation> tempLocalisation;
+    private final FamilyRepository familyRepository;
 
     public DirectiveService(DirectiveRepository directiveRepository, GuardService guardService,
                             FamilyServiceImp familyService,
                             MemberService memberService,
                             DirectiveRepo directiveRepo,
                             List<Directive> cloakDirective,
-                            SendAndFormService sendAndFormService, Map<UUID, Localisation> tempLocalisation) {
+                            SendAndFormService sendAndFormService, Map<UUID, Localisation> tempLocalisation, FamilyRepository familyRepository) {
         this.directiveRepository = directiveRepository;
         this.guardService = guardService;
         this.familyService = familyService;
@@ -41,6 +43,7 @@ public class DirectiveService {
         this.cloakDirective = cloakDirective;
         this.sendAndFormService = sendAndFormService;
         this.tempLocalisation = tempLocalisation;
+        this.familyRepository = familyRepository;
     }
 
     @Transactional
@@ -68,10 +71,10 @@ public class DirectiveService {
                     .directive(dd)
                     .directiveMember(dd.getDirectiveMember())
                     .build();
-            if (dd.getSwitchPosition() != SwitchPosition.MAIN) {
+            if (dd.getSwitchPosition() == SwitchPosition.BIRTH) dd.getShortFamilyMemberLink().add(mainMember);
+            else if (dd.getSwitchPosition() != SwitchPosition.MAIN) {
                 DirectiveMember directiveLinkPerson = dd.getShortFamilyMemberLink().stream().findFirst().orElseThrow(() -> new RuntimeException("corrupt directive"));
                 directiveLinkPerson.setDirective(dd);
-                if (dd.getSwitchPosition() == SwitchPosition.BIRTH) dd.getShortFamilyMemberLink().add(mainMember);
                 list.add(directiveLinkPerson);
             }
             if (dd.getSwitchPosition() == SwitchPosition.MAIN ||
@@ -110,87 +113,121 @@ public class DirectiveService {
     @Transactional
     public void setChangesFromVotingDirective(String directiveUuid) {
         DeferredDirective deferredDirective = directiveRepository.findDirectiveWithPrimeMember(UUID.fromString(directiveUuid)).orElseThrow(() -> new RuntimeException("Deferred directive is missing or corrupt"));
-
+        Set<Family> familyToRemove = new HashSet<>();
         ShortFamilyMember mainMember = deferredDirective.getDirectiveMember();
         Set<DirectiveMember> directiveMembers = directiveRepository.getListMembersOfDirective(deferredDirective);
         Set<ShortFamilyMember> processMembers = directiveMembers.stream().map(DirectiveMember::getDirectiveMember).collect(Collectors.toSet());
         SwitchPosition switchPosition = deferredDirective.getSwitchPosition();
+        UUID directiveKeeper = deferredDirective.getDirectiveKeeper();
+
         directiveRepo.delete(deferredDirective);
 
         Set<String> setLinkedStatus = new HashSet<>();
         Set<String> setCheckedStatus = new HashSet<>();
+        Set<String> setUncheckedStatus = new HashSet<>();
+        ShortFamilyMember processMemberKeeper = processMembers.stream().filter(x -> Objects.equals(x.getUuid(), directiveKeeper)).findFirst().orElseThrow();
 
+        boolean tempMainStatus = ((processMemberKeeper.getLinkGuard() != null && !processMemberKeeper.getLinkGuard().isBlank())
+                || (processMemberKeeper.getDescendantsGuard() != null && !processMemberKeeper.getDescendantsGuard().isBlank()));
         for (ShortFamilyMember processMember :
                 processMembers) {
             List<DirectiveMember> existOtherDirective = directiveRepository.checkForExistDirectiveMember(processMember);
             if (existOtherDirective.isEmpty()) {
-                if (processMember.getLinkGuard() != null && !processMember.getLinkGuard().isBlank()) {
-                    processMember.setCheckStatus(CheckStatus.LINKED);
-                    setLinkedStatus.add(processMember.getUuid().toString());
-                } else {
-                    processMember.setCheckStatus(CheckStatus.CHECKED);
-                    processMember.setCreator(null);
-                    setCheckedStatus.add(processMember.getUuid().toString());
+                CheckStatus checkStatus = memberService.getCheckStatus(processMember, switchPosition == SwitchPosition.MAIN || !tempMainStatus);
+                processMember.setCheckStatus(checkStatus);
+                switch (checkStatus) {
+                    case LINKED -> setLinkedStatus.add(processMember.getUuid().toString());
+                    case CHECKED -> {
+                        setCheckedStatus.add(processMember.getUuid().toString());
+                        processMember.setCreator(null);
+                    }
+                    case UNCHECKED -> setUncheckedStatus.add(processMember.getUuid().toString());
+                    default -> log.warn("something wrong with CheckStatus");
                 }
             }
         }
         processMembers.remove(mainMember);
         Family mainFamily = memberService.getPrimeFamily(mainMember);
         if (switchPosition == SwitchPosition.MAIN) {
-            ShortFamilyMember processMember = processMembers.stream().findFirst().orElseThrow();
-            Family processFamily = memberService.getPrimeFamily(processMember);
+            Family processFamily = memberService.getPrimeFamily(processMemberKeeper);
+            processFamily.getChildren().add(mainMember);
             familyService.mergeFamilies(mainFamily, processFamily);
             mainMember.setFamilyWhereChild(processFamily);
+
+            familyService.changeFamilyForPerson(mainFamily, processFamily, mainMember);
             log.info("merge family is done");
+            familyToRemove.add(mainFamily);
         } else {
             Set<String> repair = new HashSet<>();
-            Set<Family> childFamilies = new HashSet<>();
-            for (ShortFamilyMember processMember :
-                    processMembers) {
+            Family childFamily;
+            Optional<UUID> mayMerge = Optional.empty();
+            ShortFamilyMember child;
+            switch (switchPosition) {
+                case FATHER -> {
+                    mayMerge = familyService.addChangesFromFather(mainFamily,
+                            mainMember,
+                            processMemberKeeper);
+                    childFamily = mainFamily;
+                    child = mainMember;
+                    log.info("father is setup");
+                    repair.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(processMemberKeeper)));
+                }
+                case MOTHER -> {
+                    mayMerge = familyService.addChangesFromMother(mainFamily,
+                            mainMember,
+                            processMemberKeeper);
+                    childFamily = mainFamily;
+                    child = mainMember;
+                    log.info("mother is setup");
+                    repair.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(processMemberKeeper)));
+                }
+                case CHILD -> {
+                    childFamily = processMemberKeeper.getFamilyWhereChild();
+                    if (mainMember.getSex() == Sex.MALE)
+                        mayMerge = familyService.addChangesFromFather(
+                                childFamily,
+                                processMemberKeeper,
+                                mainMember);
+                    else
+                        mayMerge = familyService.addChangesFromMother(
+                                childFamily,
+                                processMemberKeeper,
+                                mainMember);
 
-                switch (switchPosition) {
-                    case FATHER -> {
-                        familyService.addChangesFromFather(mainFamily,
-                                mainMember,
-                                processMember);
-                        childFamilies.add(mainFamily);
-                        log.info("father is setup");
-                        repair.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(processMember)));
-                    }
-                    case MOTHER -> {
-                        familyService.addChangesFromMother(mainFamily,
-                                mainMember,
-                                processMember);
-                        childFamilies.add(mainFamily);
-                        log.info("mother is setup");
-                        repair.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(processMember)));
-                    }
-                    case CHILD -> {
-                        Family processFamily = processMember.getFamilyWhereChild();
-                        if (mainMember.getSex() == Sex.MALE)
-                            familyService.addChangesFromFather(
-                                    processFamily,
-                                    processMember,
-                                    mainMember);
-                        else
-                            familyService.addChangesFromMother(
-                                    processFamily,
-                                    processMember,
-                                    mainMember);
-                        childFamilies.add(processFamily);
-                        log.info("child is setup");
+                    child = processMemberKeeper;
+                    log.info("child is setup");
+                    if (mainMember.getCheckStatus() != CheckStatus.UNCHECKED && mainMember.getCheckStatus() != CheckStatus.MODERATE) {
                         Set<ShortFamilyMember> newTopAc = memberService.getAllTopAncestors(mainMember);
+//                    familyService.addPersonToFamily(childFamily, mainMember, (mainMember.getSex() == Sex.MALE) ? RoleInFamily.FATHER : RoleInFamily.MOTHER, processMemberKeeper.getUuid(), null);
                         repair.addAll(memberService.repairGeneticTreeCheckStatus(newTopAc));
                     }
-                    default -> log.warn("Обнаружена неизвестная директива");
                 }
-                processMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
-                checkForUnique(childFamilies);
+                default -> {
+                    childFamily = new Family();
+                    child = new ShortFamilyMember();
+                    log.warn("Обнаружена неизвестная директива");
+                }
+            }
+            processMemberKeeper.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+            if (mayMerge.isPresent()) {
+                Optional<Family> family = familyRepository.findFamilyByUUID(mayMerge.get());
+                if (family.isPresent() && !Objects.equals(family.get().getUuid(), childFamily.getUuid())) {
+                    familyService.mergeFamilies(childFamily, family.get());
+                    child.setFamilyWhereChild(family.get());
+                    family.get().getChildren().add(child);
+                    memberService.updateMember(child);
+                    familyToRemove.add(childFamily);
+                } else childFamily.setUuid(mayMerge.get());
             }
             setCheckedStatus.addAll(repair);
         }
-        mainMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+        memberService.flush();
+        if (!familyToRemove.isEmpty()) for (Family f :
+                familyToRemove) {
+            familyService.removeFamily(f);
+        }
 
+        mainMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         memberService.flush();
 
 
@@ -198,20 +235,25 @@ public class DirectiveService {
             sendAndFormService.formDirectiveToStorageForChangeStatus(deferredDirective.getTokenUser(), null, null, KafkaOperation.RENAME, setCheckedStatus, CheckStatus.CHECKED);
         if (!setLinkedStatus.isEmpty())
             sendAndFormService.formDirectiveToStorageForChangeStatus(deferredDirective.getTokenUser(), null, null, KafkaOperation.RENAME, setLinkedStatus, CheckStatus.LINKED);
+        if (!setUncheckedStatus.isEmpty())
+            sendAndFormService.formDirectiveToStorageForChangeStatus(deferredDirective.getTokenUser(), null, null, KafkaOperation.RENAME, setUncheckedStatus, CheckStatus.UNCHECKED);
+
 
         sendAndFormService.sendAddingNewContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(mainMember)).stream().map(UUID::toString).collect(Collectors.toSet()));
 
     }
 
-    private void checkForUnique(Set<Family> childrenFamilies) {
-        Family family = childrenFamilies.stream().findFirst().orElseThrow(() -> new RuntimeException("nonsense!"));
-        for (Family fam : childrenFamilies) {
-            if (Objects.equals(fam.getUuid(), family.getUuid()) && fam != family) {
-                familyService.mergeFamilies(fam, family);
-//                тут проверить на concurrentModi
-            }
-        }
-    }
+//    @Transactional
+//    private void checkForUnique(Set<Family> childrenFamilies, Set<Family> familiesToRemove) {
+//        Family family = childrenFamilies.stream().findFirst().orElseThrow(() -> new RuntimeException("nonsense!"));
+//        for (Family fam : childrenFamilies) {
+//            if (Objects.equals(fam.getUuid(), family.getUuid()) && !Objects.equals(fam.getId(), family.getId())) {
+//                familyService.mergeFamilies(fam, family);
+//                familiesToRemove.add(fam);
+////                тут проверить на concurrentModi
+//            }
+//        }
+//    }
 
     @Transactional
     public void negativeVoting(String directiveUuid) {
@@ -231,25 +273,15 @@ public class DirectiveService {
 
             List<DirectiveMember> existOtherDirective = directiveRepository.checkForExistDirectiveMember(processMember);
             if (existOtherDirective.isEmpty()) {
-                if (processMember.getLinkGuard() != null && !processMember.getLinkGuard().isBlank()) {
-                    processMember.setCheckStatus(CheckStatus.LINKED);
-                    setLinkedStatus.add(processMember.getUuid().toString());
-                } else {
-                    if ((processMember.getDescendantsGuard() != null && !processMember.getDescendantsGuard().isBlank()) ||
-                            (processMember.getAncestorsGuard() != null && !processMember.getAncestorsGuard().isBlank()) || (
-                            processMember.getActiveGuard() != null && !processMember.getActiveGuard().isBlank())) {
-                        processMember.setCheckStatus(CheckStatus.CHECKED);
-                        setCheckedStatus.add(processMember.getUuid().toString());
-                    } else {
-                        if (memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(processMember)).isEmpty()) {
-                            processMember.setCheckStatus(CheckStatus.UNCHECKED);
-                            setUnCheckedStatus.add(processMember.getUuid().toString());
-                        } else {
-                            processMember.setCheckStatus(CheckStatus.CHECKED);
-                            setCheckedStatus.add(processMember.getUuid().toString());
-                        }
-                    }
+                CheckStatus checkStatus = memberService.getCheckStatus(processMember, switchPosition == SwitchPosition.MAIN || switchPosition == SwitchPosition.CHILD);
+                processMember.setCheckStatus(checkStatus);
+                switch (checkStatus) {
+                    case LINKED -> setLinkedStatus.add(processMember.getUuid().toString());
+                    case CHECKED -> setCheckedStatus.add(processMember.getUuid().toString());
+                    case UNCHECKED -> setUnCheckedStatus.add(processMember.getUuid().toString());
+                    default -> log.warn("something wrong with CheckStatus");
                 }
+
             }
         }
         processMembers.remove(mainMember);
@@ -285,17 +317,17 @@ public class DirectiveService {
                         } else {
                             child.setMotherInfo(null);
                         }
-                        Family newFamily = familyService.creatFreeFamily(child.getFatherInfo(), child.getMotherInfo(), child.getUuid());
+                        Family newFamily = familyService.creatFreeFamily(child.getFatherInfo(), child.getMotherInfo(), child.getUuid(), child.getBirthday());
                         family.getChildren().remove(mainMember);
                         newFamily.getChildren().add(mainMember);
-                        if (child.getMotherUuid() != null) {
-                            family.getHalfChildrenByMother().add(mainMember);
-                            newFamily.getHalfChildrenByMother().addAll(family.getChildren());
-                        }
-                        if (child.getFatherUuid() != null) {
-                            family.getHalfChildrenByFather().add(mainMember);
-                            newFamily.getHalfChildrenByFather().addAll(family.getChildren());
-                        }
+//                        if (child.getMotherUuid() != null) {
+//                            family.getHalfChildrenByMother().add(mainMember);
+//                            newFamily.getHalfChildrenByMother().addAll(family.getChildren());
+//                        }
+//                        if (child.getFatherUuid() != null) {
+//                            family.getHalfChildrenByFather().add(mainMember);
+//                            newFamily.getHalfChildrenByFather().addAll(family.getChildren());
+//                        }
                     }
                     sendAndFormService.sendChangeInStorageByNegative(deferredDirective, child.getUuid().toString());
                 }

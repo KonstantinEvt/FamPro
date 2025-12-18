@@ -64,6 +64,7 @@ public class OldFioService extends FioServiceImp<OldFio> {
             } else {
                 notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_OTHER).build());
             }
+            log.info("oldFio is prepare to setup: {}", oldFio.getFullName());
         }
         if (!enteringFio.isEmpty()) {
             Set<OldFio> checked = new HashSet<>();
@@ -98,6 +99,7 @@ public class OldFioService extends FioServiceImp<OldFio> {
                 enteringFio.removeAll(checkedHide);
             }
         }
+        log.info("first oldFio is: {}", enteringFio.stream().map(OldFio::getFullName).findFirst().orElse("empty"));
         return enteringFio;
     }
 //    public  Set<OldFio> getNewNames(Set<OldFio> otherNames,FamilyMember fm){

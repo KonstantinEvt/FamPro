@@ -54,6 +54,15 @@ public class MemberRepository {
             log.warn("Info not update:", e);
         }
     }
+
+    @Transactional
+    public void refreshMember(ShortFamilyMember member) {
+        try {
+            entityManager.refresh(member);
+        } catch (RuntimeException e) {
+            log.warn("familyMember not update:", e);
+        }
+    }
     @Transactional
     public void flush() {
         try {
@@ -132,7 +141,7 @@ public class MemberRepository {
     public Set<ShortFamilyMember> findFamilyChildren(Family family) {
         Set<ShortFamilyMember> members;
         try {
-            members = new HashSet<>(entityManager.createQuery("from ShortFamilyMember a where a.familyWhereChild=:family", ShortFamilyMember.class)
+            members = new HashSet<>(entityManager.createQuery("from ShortFamilyMember a left join fetch a.familyWhereChild where a.familyWhereChild=:family", ShortFamilyMember.class)
                     .setParameter("family", family)
                     .getResultList());
 

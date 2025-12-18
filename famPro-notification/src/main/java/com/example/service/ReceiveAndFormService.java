@@ -44,8 +44,8 @@ public class ReceiveAndFormService {
 
     @Transactional
     public void receiveAttentionLetter(DirectiveGuards directiveGuards) {
-        Recipient recipient=recipientService.findRecipient(directiveGuards.getTokenUser());
-        AloneNew aloneNew = formAnswerByInformer(directiveGuards, NewsCategory.PRIVATE,recipient);
+        Recipient recipient = recipientService.findRecipient(directiveGuards.getTokenUser());
+        AloneNew aloneNew = formAnswerByInformer(directiveGuards, NewsCategory.PRIVATE, recipient);
         putLetterToHolder(aloneNew, directiveGuards.getTokenUser());
     }
 
@@ -53,7 +53,7 @@ public class ReceiveAndFormService {
     public void receiveVotingLetter(DirectiveGuards directiveGuards) {
         if (directiveGuards.getGuards() == null || directiveGuards.getGuards().isEmpty())
             throw new RuntimeException("wrong directive");
-        Recipient recipient=recipientService.findRecipient(directiveGuards.getTokenUser());
+        Recipient recipient = recipientService.findRecipient(directiveGuards.getTokenUser());
         directiveGuards.setInfo2(directiveGuards.getInfo2().concat(recipient.getNickName()));
         AloneNew aloneNewGuards = formMessageToGuards(directiveGuards);
         AloneNewDto letterForGuards = aloneNewMapper.entityToDto(aloneNewGuards);
@@ -64,7 +64,7 @@ public class ReceiveAndFormService {
         }
         directiveGuards.setSwitchPosition(SwitchPosition.BURIAL);
         directiveGuards.setInfo1(null);
-        AloneNew aloneNewRequester = formAnswerByInformer(directiveGuards, NewsCategory.FAMILY,recipient);
+        AloneNew aloneNewRequester = formAnswerByInformer(directiveGuards, NewsCategory.FAMILY, recipient);
         putLetterToHolder(aloneNewRequester, directiveGuards.getTokenUser());
     }
 
@@ -77,13 +77,13 @@ public class ReceiveAndFormService {
                 .externId(directiveGuards.getId())
                 .subject(directiveGuards.getInfo1())
                 .textInfo(directiveGuards.getInfo2())
-                .attention(Attention.VOTING)
                 .creationDate(directiveGuards.getCreated())
                 .sendTo(guards)
                 .sendFrom(recipientService.findRecipient(3L).orElseThrow(() -> new RuntimeException("Informer recipient not found")))
                 .localisation(directiveGuards.getLocalisation())
                 .build();
-
+        if (directiveGuards.getSwitchPosition() == SwitchPosition.BIRTH) aloneNew.setAttention(Attention.LINK);
+        else aloneNew.setAttention(Attention.VOTING);
         aloneNewRepo.save(aloneNew);
 
         votingRepo.save(Voting.builder()
@@ -96,12 +96,14 @@ public class ReceiveAndFormService {
         return aloneNew;
     }
 
-     @Transactional
+    @Transactional
     public AloneNew formAnswerByInformer(DirectiveGuards directiveGuards, NewsCategory category, Recipient recipient) {
         String info = directiveGuards.getInfo2();
         if (directiveGuards.getInfo1() != null && !directiveGuards.getInfo1().isBlank()) {
-            info = info.concat("<br>").concat(directiveGuards.getInfo1());}
-        if (directiveGuards.getNumber1()!=0L) info=info.concat("<br>").concat(String.valueOf(directiveGuards.getNumber1()));
+            info = info.concat("<br>").concat(directiveGuards.getInfo1());
+        }
+        if (directiveGuards.getNumber1() != 0L)
+            info = info.concat("<br>").concat(String.valueOf(directiveGuards.getNumber1()));
 
         AloneNew aloneNew = AloneNew.builder()
                 .externId(directiveGuards.getId())
@@ -132,7 +134,8 @@ public class ReceiveAndFormService {
                 if (directiveGuards.getPerson() != null) {
                     aloneNew.setAttention(Attention.POSITIVE);
                     recipientService.changeRecipient(directiveGuards);
-                } else {aloneNew.setAttention(Attention.NEGATIVE);
+                } else {
+                    aloneNew.setAttention(Attention.NEGATIVE);
                 }
             }
             case BIRTH -> {
@@ -153,5 +156,5 @@ public class ReceiveAndFormService {
             }
         }
         return aloneNewRepo.save(aloneNew);
- }
+    }
 }

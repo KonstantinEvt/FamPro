@@ -4,9 +4,11 @@ import com.example.enums.ChangingStatus;
 import com.example.enums.KafkaOperation;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Setter
 @Getter
+@ToString
 public class Changing {
     private boolean changeIsPresent;
     private boolean changingMain;

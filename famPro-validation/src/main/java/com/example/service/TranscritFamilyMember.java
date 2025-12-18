@@ -5,11 +5,17 @@ import com.example.dtos.*;
 import com.example.enums.SecretLevel;
 import com.example.transcriters.AbstractTranscripter;
 import com.ibm.icu.text.SimpleDateFormat;
+import com.thoughtworks.xstream.converters.time.LocalDateConverter;
 import lombok.AllArgsConstructor;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Component;
 
 import java.sql.Date;
 import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.Objects;
 
 @Component
@@ -82,6 +88,7 @@ public class TranscritFamilyMember {
 
     public String parseFullName(AbstractTranscripter trans, String str, FioDto fioDto, boolean secret) throws ParseException {
         String result;
+        System.out.println(str);
         SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd");
         if (str == null || str.isEmpty()) return trans.getOut();
         if (str.charAt(0) == '(') {
@@ -91,12 +98,16 @@ public class TranscritFamilyMember {
                 fioDto.setFirstName(trans.transcritWordToLocalisation(strings[0]));
                 fioDto.setMiddleName(trans.transcritWordToLocalisation(strings[1]));
                 fioDto.setLastName(trans.transcritWordToLocalisation(strings[2]));
-                if (!secret) fioDto.setBirthday(new Date(format.parse(strings[6]).getTime()));
+                if (!secret) fioDto.setBirthday(parseDate(strings[6]));
                 else strings[6] = trans.getClose();
+//                if (!secret) fioDto.setBirthday(new Date(format.parse(strings[6]).getTime()));
+//                else strings[6] = trans.getClose();
                 result = String.join(" ", trans.getAbsent(), fioDto.getFirstName(),
                         fioDto.getMiddleName(),
                         fioDto.getLastName(),
                         trans.getBirthdayString(), strings[6]);
+                System.out.println(strings[6]);
+                System.out.println(fioDto.getBirthday());
             } else if (str.charAt(1) == 'I') {
                 String str1 = str.substring(17);
                 String[] strings = str1.split(" ");
@@ -104,7 +115,7 @@ public class TranscritFamilyMember {
                 if (!strings[1].equals("null")) fioDto.setFirstName(trans.transcritWordToLocalisation(strings[1]));
                 if (!strings[2].equals("null")) fioDto.setFirstName(trans.transcritWordToLocalisation(strings[2]));
                 if (!strings[6].equals("null"))
-                    if (!secret) fioDto.setBirthday(new Date(format.parse(strings[6]).getTime()));
+                    if (!secret) fioDto.setBirthday(parseDate(strings[6]));
                     else strings[6] = trans.getClose();
                 result = String.join(" ", trans.getInfoNotFully(), strings[0].equals("null") ? trans.empty() : fioDto.getFirstName(),
                         strings[1].equals("null") ? trans.empty() : fioDto.getMiddleName(),
@@ -117,16 +128,23 @@ public class TranscritFamilyMember {
             fioDto.setFirstName(trans.transcritWordToLocalisation(strings[0]));
             fioDto.setMiddleName(trans.transcritWordToLocalisation(strings[1]));
             fioDto.setLastName(trans.transcritWordToLocalisation(strings[2]));
-            if (!secret) fioDto.setBirthday(new Date(format.parse(strings[6]).getTime()));
+            if (!secret) fioDto.setBirthday(parseDate(strings[6]));
             else strings[6] = trans.getClose();
             result = String.join(" ", trans.transcritWordToLocalisation(strings[0]),
                     trans.transcritWordToLocalisation(strings[1]),
                     trans.transcritWordToLocalisation(strings[2]),
                     trans.getBirthdayString(), strings[6]);
+            System.out.println(strings[6]);
+            System.out.println(fioDto.getBirthday());
         }
+
         return result;
     }
-
+public Date parseDate(String string){
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    LocalDate localDate = LocalDate.parse(string, formatter);
+        return Date.valueOf(localDate);
+}
     public void transcritToFio(AbstractTranscripter transcripter, FioDto fioDto) {
         if (fioDto.getFirstName() != null) {
             fioDto.setFirstName(commonWordChecks.setUpperFirst(transcripter.transcritWordToLocalisation(fioDto.getFirstName())));

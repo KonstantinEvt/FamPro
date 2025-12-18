@@ -70,6 +70,8 @@ public class RusTranscripter implements AbstractTranscripter {
             new AbstractMap.SimpleEntry<>(Subject.VOTING.name(), "Начато голосование на наличие взаимосвязи: "),
             new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_OTHER.name(), "Введенное альтернативное имя не корректно."),
             new AbstractMap.SimpleEntry<>(Subject.LINK.name(), "Линкование пользователя с: "),
+            new AbstractMap.SimpleEntry<>(Subject.LINK_POSITIVE.name(), "Вы успешно связались с персоной: "),
+            new AbstractMap.SimpleEntry<>(Subject.LINK_NEGATIVE.name(), "Не удалась связь с персоной: "),
             new AbstractMap.SimpleEntry<>("USER_NICK", "запрос пользователя с НИКОМ: "),
             new AbstractMap.SimpleEntry<>(Subject.NOT_FULLY.name(), "Введенная информация не полна.")
     );

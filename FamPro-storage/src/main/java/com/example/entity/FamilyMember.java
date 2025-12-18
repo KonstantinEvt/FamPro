@@ -60,11 +60,11 @@ public class FamilyMember extends Fio {
     @JoinColumn(name = "father_id")
     private FamilyMember father;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     @JoinColumn(name = "member_id")
     private List<FamilyMemberInfo> familyMemberInfo;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "member", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private Set<OldFio> otherNames;
 
     @Column(name = "other_names")
