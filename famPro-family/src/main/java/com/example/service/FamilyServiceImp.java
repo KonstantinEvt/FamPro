@@ -1,18 +1,12 @@
 package com.example.service;
 
 import com.example.dtos.FamilyMemberDto;
-import com.example.entity.Changing;
-import com.example.entity.Family;
-import com.example.entity.FamilyMemberLink;
-import com.example.entity.ShortFamilyMember;
+import com.example.entity.*;
 import com.example.enums.ChangingStatus;
 import com.example.enums.RoleInFamily;
 import com.example.enums.SecretLevel;
 import com.example.enums.Sex;
-import com.example.repository.FamilyMemberLinkRepository;
-import com.example.repository.FamilyRepo;
-import com.example.repository.FamilyRepository;
-import com.example.repository.ShortMemberRepo;
+import com.example.repository.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +22,7 @@ import java.util.*;
 @Getter
 @Setter
 @Log4j2
-public class FamilyServiceImp {
+public class FamilyServiceImp implements SimpleFamilyService {
     private FamilyRepo familyRepo;
     private ShortMemberRepo memberRepo;
     private GuardService guardService;
@@ -40,7 +34,6 @@ public class FamilyServiceImp {
     @Transactional
     public Family creatFreeFamily(String fatherInfo, String motherInfo, UUID externId, Date date) {
         Family primeFamily = new Family();
-        primeFamily.setGuard(new HashSet<>());
         primeFamily.setFamilyMemberLinks(new HashSet<>());
         primeFamily.setUuid(externId);
         primeFamily.setBirthday(date);
@@ -56,13 +49,30 @@ public class FamilyServiceImp {
     }
 
     @Transactional
-    public void changeMainFamilyIdentification(Family family, UUID newUuid, ShortFamilyMember member, Optional<ShortFamilyMember> father, Optional<ShortFamilyMember> mother) {
+    public void changeMainFamilyIdentification(Family family, UUID newUuid, ShortFamilyMember member) {
         family.setUuid(newUuid);
         family.setHusbandInfo(member.getFatherInfo());
         family.setWifeInfo(member.getMotherInfo());
-        father.ifPresent(family::setHusband);
-        mother.ifPresent(family::setWife);
+        if (member.getFatherUuid() != null && member.getMotherUuid() != null) {
+            Set<ShortFamilyMember> parents = memberService.getAllMembersByUuids(Set.of(member.getFatherUuid(), member.getMotherUuid()));
+            for (ShortFamilyMember parent :
+                    parents) {
+                if (parent.getSex() == Sex.MALE) family.setHusband(parent);
+                else family.setWife(parent);
+            }
+        } else {
+            if (member.getFatherUuid() != null) {
+                Optional<ShortFamilyMember> father = memberService.getMemberByUuid(member.getFatherUuid());
+                father.ifPresent(family::setHusband);
+            }
+            if (member.getMotherUuid() != null) {
+                Optional<ShortFamilyMember> mother = memberService.getMemberByUuid(member.getMotherUuid());
+                mother.ifPresent(family::setWife);
+            }
+        }
         setFamilySecretLevels(family, member);
+        if (!Objects.equals(family.getBirthday().toLocalDate(), member.getBirthday().toLocalDate()))
+            setAutoFamilyBirthday(family);
         familyRepository.updateFamily(family);
     }
 
@@ -122,7 +132,7 @@ public class FamilyServiceImp {
     public Family ejectChildInNewFamily(Family family,
                                         ShortFamilyMember mainMember,
                                         FamilyMemberDto mainDto) {
-        Family newFamily = creatFreeFamily(mainDto.getFatherInfo(), mainDto.getMotherInfo(), mainMember.getUuid(),mainDto.getBirthday());
+        Family newFamily = creatFreeFamily(mainDto.getFatherInfo(), mainDto.getMotherInfo(), mainMember.getUuid(), mainDto.getBirthday());
         family.getChildren().remove(mainMember);
         changeFamilyForPerson(family, newFamily, mainMember);
         newFamily.getChildren().add(mainMember);
@@ -147,8 +157,19 @@ public class FamilyServiceImp {
 
     @Transactional
     public void changeFamilyForPerson(Family oldFamily, Family newFamily, ShortFamilyMember member) {
-        Set<FamilyMemberLink> familyMemberLinks = familyMemberLinkRepository.getFamilyMemberLinks(oldFamily, member, member.getUuid());
+        Set<FamilyMemberLink> familyMemberLinks = familyMemberLinkRepository.getFamilyMemberLinksByFamilyAndCausePerson(oldFamily, member.getUuid());
         if (!familyMemberLinks.isEmpty()) {
+            if ((member.getLinkGuard() != null && !member.getLinkGuard().isBlank())
+                    || (member.getActiveGuard() != null && !member.getActiveGuard().isBlank())) {
+                Set<UUID> guards = getAllUuidFromInfo(member.getActiveGuard());
+                if (member.getLinkGuard() != null && !member.getLinkGuard().isBlank())
+                    guards.add(UUID.fromString(member.getLinkGuard()));
+                for (UUID guardUuid :
+                        guards) {
+                    removeUuidFromInfo(oldFamily.getActiveGuard(), guardUuid);
+                    addUuidToInfo(newFamily.getActiveGuard(), guardUuid);
+                }
+            }
             for (FamilyMemberLink link :
                     familyMemberLinks) {
                 link.setFamily(newFamily);
@@ -161,7 +182,17 @@ public class FamilyServiceImp {
     }
 
     @Transactional
-    public Optional<FamilyMemberLink> addPersonToFamily(Family family, ShortFamilyMember member, RoleInFamily roleInFamily, UUID linkPerson, String description) {
+    public void addPersonToFamily(Family family, ShortFamilyMember member, RoleInFamily roleInFamily, UUID linkPerson, String description) {
+        if ((member.getLinkGuard() != null && !member.getLinkGuard().isBlank())
+                || (member.getActiveGuard() != null && !member.getActiveGuard().isBlank())) {
+            Set<UUID> guards = getAllUuidFromInfo(member.getActiveGuard());
+            if (member.getLinkGuard() != null && !member.getLinkGuard().isBlank())
+                guards.add(UUID.fromString(member.getLinkGuard()));
+            for (UUID guardUuid :
+                    guards) {
+                addUuidToInfo(family.getActiveGuard(), guardUuid);
+            }
+        }
         FamilyMemberLink newMember = FamilyMemberLink.builder()
                 .member(member)
                 .family(family)
@@ -169,24 +200,27 @@ public class FamilyServiceImp {
                 .causePerson(linkPerson)
                 .description(description)
                 .build();
-        familyMemberLinkRepository.addFamilyMember(newMember);
+        if (member.getLinkGuard() != null && !member.getLinkGuard().isBlank())
+            newMember.setLinkGuard(UUID.fromString(member.getLinkGuard()));
+        familyMemberLinkRepository.addFamilyMemberLink(newMember);
         setFamilySecretLevels(family, member);
-        if (roleInFamily==RoleInFamily.CHILD) setAutoFamilyBirthday(family);
-        return Optional.of(newMember);
+        if (roleInFamily == RoleInFamily.CHILD) setAutoFamilyBirthday(family);
     }
 
-    public void setAutoFamilyBirthday(Family family){
-        Optional<Date> date=family.getChildren().stream().map(ShortFamilyMember::getBirthday).reduce((x, y)->((x.toLocalDate().isAfter(y.toLocalDate()))?y:x));
-    if (date.isPresent()&&!Objects.equals(family.getBirthday(),date.get())) family.setBirthday(date.get());
+    public void setAutoFamilyBirthday(Family family) {
+        Optional<Date> date = family.getChildren().stream().map(ShortFamilyMember::getBirthday).reduce((x, y) -> ((x.toLocalDate().isAfter(y.toLocalDate())) ? y : x));
+        if (date.isPresent() && !Objects.equals(family.getBirthday(), date.get())) family.setBirthday(date.get());
     }
+
     @Transactional
     public void mergeFamilies(Family donor, Family merged) {
-        Set<FamilyMemberLink> donorMembers = familyMemberLinkRepository.getAllFamilyMemberLinks(donor);
+        Set<FamilyMemberLink> donorMembers = familyMemberLinkRepository.getAllFamilyMemberLinksByFamily(donor);
         for (FamilyMemberLink fmDonor :
                 donorMembers) {
             fmDonor.setFamily(merged);
         }
         merged.getChildren().addAll(donor.getChildren());
+        setAutoFamilyBirthday(merged);
     }
 
     @Transactional
@@ -202,26 +236,7 @@ public class FamilyServiceImp {
 
 
         } else externId = Optional.empty();
-//        Set<Family> familiesOfBrothersByFather = familyRepo.findAllByHusband(member);
-//        if (!familiesOfBrothersByFather.isEmpty()) {
-//            if (primeFamily.getHalfChildrenByFather() == null)
-//                primeFamily.setHalfChildrenByFather(new HashSet<>());
-//            for (Family fam :
-//                    familiesOfBrothersByFather) {
-//                if (!Objects.equals(fam.getUuid(), primeFamily.getUuid())) {
-//                    primeFamily.getHalfChildrenByFather().addAll(fam.getChildren());
-//                    Set<FamilyMemberLink> familyMemberLinks = fam.getChildren().stream().map(x -> FamilyMemberLink.builder().member(x).family(primeFamily).build()).collect(Collectors.toSet());
-//
-//                    if (fam.getHalfChildrenByFather() == null)
-//                        fam.setHalfChildrenByFather(new HashSet<>());
-//                    fam.getHalfChildrenByFather().add(mainMember);
-//                    familyMemberLinks.add(FamilyMemberLink.builder().member(mainMember).family(primeFamily).build());
-//                    familyMemberLinkRepository.addAllFamilyMember(familyMemberLinks);
-//                } else mergeFamilies(primeFamily, fam);
-//            }
-//        }
         memberService.addChildToFamilyMember(mainMember, member, Sex.MALE);
-//        familyRepo.saveAll(familiesOfBrothersByFather);
         return externId;
     }
 
@@ -257,96 +272,7 @@ public class FamilyServiceImp {
 
 
         } else externId = Optional.empty();
-//        Set<Family> familiesOfBrothersByMother = familyRepo.findAllByWife(member);
-//
-//        if (!familiesOfBrothersByMother.isEmpty()) {
-//            if (primeFamily.getHalfChildrenByMother() == null)
-//                primeFamily.setHalfChildrenByMother(new HashSet<>());
-//            for (Family fam :
-//                    familiesOfBrothersByMother) {
-//                if (!Objects.equals(fam.getUuid(), primeFamily.getUuid())) {
-//                    Set<FamilyMemberLink> familyMemberLinks = fam.getChildren().stream().map(x -> FamilyMemberLink.builder().member(x).family(primeFamily).build()).collect(Collectors.toSet());
-//                    if (fam.getHalfChildrenByMother() == null)
-//                        fam.setHalfChildrenByMother(new HashSet<>());
-//                    primeFamily.getHalfChildrenByMother().addAll(fam.getChildren());
-//                    fam.getHalfChildrenByMother().add(mainMember);
-//                    familyMemberLinks.add(FamilyMemberLink.builder().member(mainMember).family(primeFamily).build());
-//                    familyMemberLinkRepository.addAllFamilyMember(familyMemberLinks);
-//                } else mergeFamilies(primeFamily, fam);
-//            }
-//        }
         memberService.addChildToFamilyMember(mainMember, member, Sex.FEMALE);
-//        familyRepo.saveAll(familiesOfBrothersByMother);
         return externId;
-    }
-
-//    @Transactional
-//    public void addPersonParentsToFamilyParents(Family family, ShortFamilyMember member) {
-//        if (member.getFather() != null) {
-//            if (family.getParents() == null) family.setParents(new HashSet<>());
-//            family.getParents().add(member.getFather());
-//            family.getFamilyMembers().add(member.getFather());
-//            if (member.getFather().getLinkedGuard() != null && !member.getFather().getLinkedGuard().isEmpty())
-//                guardService.addGuardToFamily(member.getFather().getLinkedGuard().get(0), family);
-//        }
-//        if (member.getMother() != null) {
-//            if (family.getParents() == null) family.setParents(new HashSet<>());
-//            family.getParents().add(member.getMother());
-//            family.getFamilyMembers().add(member.getMother());
-//            if (member.getMother().getLinkedGuard() != null && !member.getMother().getLinkedGuard().isEmpty())
-//                guardService.addGuardToFamily(member.getMother().getLinkedGuard().get(0), family);
-//        }
-//
-//    }
-
-//    @Transactional
-//    public Set<Family> addGrandLinks(Set<ShortFamilyMember> grandChilds, ShortFamilyMember primeMember) {
-//        Set<Family> grandChildFamilies = new HashSet<>();
-//        if (grandChilds != null && !grandChilds.isEmpty()) {
-//            for (ShortFamilyMember grandChild : grandChilds) {
-//                Family grand = grandChild.getFamilyWhereChild();
-//                if (grand.getParents() == null) grand.setParents(new HashSet<>());
-//                grand.getParents().add(primeMember);
-//                grand.getFamilyMembers().add(primeMember);
-//                primeMember.getFamilies().add(grand);
-//                if (primeMember.getLinkedGuard() != null && !primeMember.getLinkedGuard().isEmpty())
-//                    guardService.addGuardToFamily(primeMember.getLinkedGuard().get(0), grand);
-//                grandChildFamilies.add(grand);
-//            }
-//        }
-//        return grandChildFamilies;
-//    }
-
-//    @Transactional
-//    public void ejectionPersonFromFamily(ShortFamilyMember familyMember, Family family) {
-//        Family newFamily = creatFreeFamily(familyMember.getFatherInfo(), familyMember.getMotherInfo(), familyMember.getUuid().toString());
-//        family.getChildren().remove(familyMember);
-//        newFamily.getChildren().add(familyMember);
-//        if (familyMember.getLinkedGuard() != null && !familyMember.getLinkedGuard().isEmpty()) {
-//            family.getGuard().remove(familyMember.getLinkedGuard().get(0));
-//            newFamily.getGuard().add(familyMember.getLinkedGuard().get(0));
-//        }
-//        addPersonParentsToFamilyParents(newFamily, familyMember);
-//        if (familyMember.getMother() != null) {
-//            addChangesFromMother(newFamily, familyMember.getMother().getFamilyWhereChild(), familyMember, familyMember.getMother());
-//            newFamily.setGlobalFamily(family.getGlobalFamily());
-//        }
-//        if (familyMember.getFather() != null) {
-//            addChangesFromFather(newFamily, familyMember.getFather().getFamilyWhereChild(), familyMember, familyMember.getFather());
-//            newFamily.setGlobalFamily(family.getGlobalFamily());
-//        }
-//        if (familyMember.getMother() == null && familyMember.getFather() == null && familyMember.getMotherInfo() == null && familyMember.getFatherInfo() == null) {
-//            globalFamilyService.creatNewGlobalFamily(newFamily);
-//            fullEjectionPersonWithKin(familyMember);
-//        }
-//        familyRepo.save(newFamily);
-//        memberRepo.save(familyMember);
-//
-//
-//    }
-
-    @Transactional
-    public void fullEjectionPersonWithKin(ShortFamilyMember familyMember) {
-        // Реализаия полного удаления члена семьи из рода, включая разделение на 2 глобальных семьи и полный разрыв связи по роду
     }
 }

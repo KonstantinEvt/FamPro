@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class MemberService implements SimpleFamilyService {
     FamilyMemberMapper familyMemberMapper;
     FamilyMemberInfoMapper familyMemberInfoMapper;
-FamilyMemberLinkRepository familyMemberLinkRepository;
+    FamilyMemberLinkRepository familyMemberLinkRepository;
     MemberRepository memberRepository;
 
     @Transactional
@@ -41,10 +41,6 @@ FamilyMemberLinkRepository familyMemberLinkRepository;
             familyMember.setBirthExist(dto.getMemberInfo().getBirth() != null);
             familyMember.setBurialExist(dto.getMemberInfo().getBurial() != null);
         }
-//        familyMember.setFamilyLinks(new HashSet<>());
-//        familyMember.setFamilyWhereChildInLow(new HashSet<>());
-//        familyMember.setFamilyWhereHalfChildByFather(new HashSet<>());
-//        familyMember.setFamilyWhereHalfChildByMother(new HashSet<>());
         memberRepository.persistMember(familyMember);
         return familyMember;
     }
@@ -55,6 +51,7 @@ FamilyMemberLinkRepository familyMemberLinkRepository;
         result.add(familyMemberInfoMapper.dtoToEntity(infoDto));
         return result;
     }
+
     @Transactional
     public Optional<ShortFamilyMember> findMemberWithPrimeFamily(UUID uuid) {
         return memberRepository.findMemberWithPrimeFamily(uuid);
@@ -64,10 +61,8 @@ FamilyMemberLinkRepository familyMemberLinkRepository;
     public void updateMember(ShortFamilyMember shortFamilyMember) {
         memberRepository.updateMember(shortFamilyMember);
     }
-    @Transactional
-    public void refreshMember(ShortFamilyMember shortFamilyMember) {
-        memberRepository.refreshMember(shortFamilyMember);
-    }
+
+
     @Transactional
     public void editFamilyMember(FamilyMemberDto dto, ShortFamilyMember familyMember) {
         Optional<ShortFamilyMemberInfo> info = memberRepository.getInfoByUuid(familyMember.getUuid());
@@ -113,42 +108,6 @@ FamilyMemberLinkRepository familyMemberLinkRepository;
                 familyMember.setBurialExist(dto.getMemberInfo().isPhotoBurialExist());
         }
     }
-
-    @Transactional
-    public void uncheckedMergeInfo(UUID uuid, FamilyMemberInfoDto infoDto) {
-        ShortFamilyMemberInfo oldInfo = memberRepository.getInfoByUuid(uuid).orElseThrow(() -> new RuntimeException("info not found"));
-
-        if (infoDto.getMainAddress() != null) {
-            oldInfo.setMainAddress(infoDto.getMainAddress());
-            oldInfo.setSecretLevelAddress(infoDto.getSecretLevelAddress());
-        }
-
-        if (infoDto.getMainEmail() != null) {
-            oldInfo.setMainEmail(infoDto.getMainEmail());
-            oldInfo.setSecretLevelEmail(infoDto.getSecretLevelEmail());
-        }
-
-        if (infoDto.getMainPhone() != null) {
-            oldInfo.setMainPhone(infoDto.getMainPhone());
-            oldInfo.setSecretLevelPhone(infoDto.getSecretLevelPhone());
-        }
-
-        oldInfo.setSecretLevelBiometric(infoDto.getSecretLevelBiometric());
-
-        if (infoDto.isPhotoBirthExist()) {
-            oldInfo.setPhotoBirthExist(true);
-            oldInfo.setSecretLevelBirth(infoDto.getSecretLevelBirth());
-        }
-
-        if (infoDto.isPhotoBurialExist()) {
-            oldInfo.setPhotoBurialExist(true);
-            oldInfo.setSecretLevelBurial(infoDto.getSecretLevelBurial());
-        }
-
-        memberRepository.updateInfo(oldInfo);
-
-    }
-
     @Transactional
     public void clearParentInfo(ShortFamilyMember member, SwitchPosition position) {
         if (position == SwitchPosition.FATHER) {
@@ -210,10 +169,10 @@ FamilyMemberLinkRepository familyMemberLinkRepository;
     }
 
     public SecretLevel getMaxSecretLevelForMember(ShortFamilyMember member, Set<UUID> treeGuards, boolean geneticTreeCheck) {
-        if (member.getLinkGuard() != null) return SecretLevel.CONFIDENTIAL;
-        if (member.getAncestorsGuard() != null) return SecretLevel.ANCESTOR;
-        if (member.getActiveGuard() != null) return SecretLevel.FAMILY;
-        if (member.getDescendantsGuard() != null) return SecretLevel.STRAIGHT_BLOOD;
+        if (member.getLinkGuard() != null && !member.getLinkGuard().isBlank()) return SecretLevel.CONFIDENTIAL;
+        if (member.getAncestorsGuard() != null && !member.getAncestorsGuard().isBlank()) return SecretLevel.ANCESTOR;
+        if (member.getActiveGuard() != null&&!member.getActiveGuard().isBlank()) return SecretLevel.FAMILY;
+        if (member.getDescendantsGuard() != null&&!member.getDescendantsGuard().isBlank()) return SecretLevel.STRAIGHT_BLOOD;
         if (geneticTreeCheck && treeGuards != null && !treeGuards.isEmpty()) return SecretLevel.GENETIC_TREE;
         return SecretLevel.OPEN;
     }
@@ -341,7 +300,7 @@ FamilyMemberLinkRepository familyMemberLinkRepository;
     }
 
     @Transactional
-    public void addChildToFamilyMember(ShortFamilyMember child, ShortFamilyMember parent, Sex parentSex) {
+    public void changeParentInformation(ShortFamilyMember child, ShortFamilyMember parent, Sex parentSex) {
         if (parentSex == Sex.MALE) {
             child.setFatherUuid(parent.getUuid());
             child.setFatherInfo(parent.getFullName());
@@ -349,6 +308,10 @@ FamilyMemberLinkRepository familyMemberLinkRepository;
             child.setMotherUuid(parent.getUuid());
             child.setMotherInfo(parent.getFullName());
         }
+    }
+    @Transactional
+    public void addChildToFamilyMember(ShortFamilyMember child, ShortFamilyMember parent, Sex parentSex) {
+        changeParentInformation(child, parent, parentSex);
         Set<ShortFamilyMember> childDescendants;
         Set<UUID> childDescendantsUuids;
         Set<UUID> childDescendantsGuard;
@@ -378,6 +341,7 @@ FamilyMemberLinkRepository familyMemberLinkRepository;
             Set<UUID> desTopAnc = getAllUuidFromInfo(des.getTopAncestors());
             desAnc.addAll(parentAncestorsUuids);
             desTopAnc.remove(child.getUuid());
+            desTopAnc.remove(parent.getUuid());
             desTopAnc.addAll(parentTopAncestorsUuids);
             des.setAncestors(desAnc.stream().map(UUID::toString).filter(Objects::nonNull).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
             des.setTopAncestors(desTopAnc.stream().map(UUID::toString).filter(Objects::nonNull).reduce((x, y) -> x.concat(" ".concat(y))).orElse(null));
@@ -471,9 +435,10 @@ FamilyMemberLinkRepository familyMemberLinkRepository;
             }
         }
     }
+
     @Transactional(readOnly = true)
-    public Set<FamilyMemberLink> getAllMemberLinksByUuid(UUID memberUuid){
-        return  familyMemberLinkRepository.getAllFamilyMemberLinks(memberUuid);
+    public Set<FamilyMemberLink> getAllMemberLinksByMemberUuid(UUID memberUuid) {
+        return familyMemberLinkRepository.getAllFamilyMemberLinksByCausePerson(memberUuid);
     }
 
 

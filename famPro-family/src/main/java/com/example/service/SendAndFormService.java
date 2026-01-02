@@ -1,7 +1,6 @@
 package com.example.service;
 
 import com.example.dtos.DirectiveGuards;
-import com.example.dtos.FamilyDirective;
 import com.example.entity.DeferredDirective;
 import com.example.entity.ShortFamilyMember;
 import com.example.enums.*;
@@ -17,19 +16,16 @@ import java.util.*;
 public class SendAndFormService {
     private final LinkedList<DirectiveGuards> checkLevelDirective;
     private final LinkedList<DirectiveGuards> guardsLetters;
-    private final LinkedList<FamilyDirective> storageDirective;
     private final List<DirectiveGuards> contactDirective;
     private final Map<UUID, Localisation> tempLocalisation;
 
 
     SendAndFormService(@Qualifier("checkLevelDirective") LinkedList<DirectiveGuards> checkLevelDirective,
                        @Qualifier("directiveGuards") LinkedList<DirectiveGuards> guardsLetters,
-                       @Qualifier("storageDirective") LinkedList<FamilyDirective> storageDirective,
                        @Qualifier("contactDirective") List<DirectiveGuards> contactDirective,
                        @Qualifier("tempLocalisation") Map<UUID, Localisation> tempLocalisation) {
         this.checkLevelDirective = checkLevelDirective;
         this.guardsLetters = guardsLetters;
-        this.storageDirective = storageDirective;
         this.contactDirective = contactDirective;
         this.tempLocalisation = tempLocalisation;
     }
@@ -76,7 +72,6 @@ public class SendAndFormService {
         switch (attention) {
             case MODERATE -> {
                 directiveGuards.setSubject(Subject.MODERATION_WARNING);
-                ;
                 directiveGuards.setSwitchPosition(SwitchPosition.MAIN);
             }
             case RIGHTS -> {

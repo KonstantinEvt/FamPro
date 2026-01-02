@@ -75,7 +75,7 @@ public class DirectiveRepository {
     public Optional<DeferredDirective> getLinkingDirective(UUID uuid) {
         Optional<DeferredDirective> directive;
         try {
-            directive = Optional.of(entityManager.createQuery("from DeferredDirective a join fetch a.directiveMember b left join fetch b.linkedGuard where a.id=:uuid", DeferredDirective.class)
+            directive = Optional.of(entityManager.createQuery("from DeferredDirective a join fetch a.directiveMember where a.id=:uuid", DeferredDirective.class)
                     .setParameter("uuid", uuid)
                     .getSingleResult());
         } catch (RuntimeException e) {

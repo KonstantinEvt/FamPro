@@ -67,9 +67,12 @@ public class FacadeService implements SimpleFamilyService {
         UUID possibleId;
         Optional<Family> possiblePrime;
         Changing changing = new Changing();
-        Optional<Guard> guardFromDirective = guardService.findGuardWithLinkingPerson(mainDirective.getTokenUser());
+        Optional<Guard> guardFromDirective = guardService.findGuard(mainDirective.getTokenUser());
         log.info("finding guard is exist: {}", guardFromDirective.isPresent() ? guardFromDirective.get().getTokenUser() : "not linking user");
-        if (guardFromDirective.isEmpty() && Objects.equals(mainMember.getCreator(), mainDirective.getTokenUser()))
+        if (guardFromDirective.isEmpty()
+                && mainMember.getCreator() != null
+                && !mainMember.getCreator().isBlank()
+                && Objects.equals(mainMember.getCreator(), mainDirective.getTokenUser()))
             guardFromDirective = Optional.of(new Guard(null, mainMember.getCreator(), mainMember));
         Set<Family> familyToRemove = new HashSet<>();
         Set<ShortFamilyMember> ancestors;
@@ -101,7 +104,8 @@ public class FacadeService implements SimpleFamilyService {
                 ancestors = memberService.getAllAncestors(mainMember);
                 topAncestors = ancestors.stream().filter(x -> x.getAncestors() == null || x.getAncestors().isBlank()).collect(Collectors.toSet());
             }
-            if (mainDirective.getTokenUser().equals("moderator") || memberService.checkThemeSecretForSecretLevel(mainMember.getSecretLevelEdit(), mainMember, guardFromDirective, topAncestors)) {
+            if (mainDirective.getTokenUser().equals("moderator")
+                    || memberService.checkThemeSecretForSecretLevel(mainMember.getSecretLevelEdit(), mainMember, guardFromDirective, topAncestors)) {
                 changing.setChangeIsPresent(true);
                 changing.setChangingMain(!Objects.equals(mainMember.getUuid(), mainDto.getUuid()));
                 changing.setChangingFather(getChangingStatus(mainDto.getFatherInfo(), primeFamily.getHusbandInfo()));
@@ -110,12 +114,13 @@ public class FacadeService implements SimpleFamilyService {
                 log.info("CHANGING_STATUS_1: {}", changing);
                 if (changing.isChangingMain()) {
                     memberService.changeUuidInBloodTree(UUID.fromString(mainDirective.getPerson()), mainMember);
-                familyMemberLinkService.changeFamilyMemberLinksByMemberUuid(memberService.getAllMemberLinksByUuid(UUID.fromString(mainDirective.getPerson())),mainMember);
-                }
+                    familyMemberLinkService.changeFamilyMemberLinksByChangeMemberUuid(memberService.getAllMemberLinksByMemberUuid(UUID.fromString(mainDirective.getPerson())), mainMember);
+               }
                 if (primeFamily.getChildren().size() == 1) changing.setOneChildInFamily(true);
                 log.info(primeFamily.getChildren().size());
                 if (changing.getChangingFather().ordinal() > 4 || changing.getChangingMother().ordinal() > 4) {
-                    if (mainDirective.getTokenUser().equals("moderator") || memberService.checkThemeSecretForSecretLevel(mainMember.getSecretLevelRemove(), mainMember, guardFromDirective, topAncestors)) {
+                    if (mainDirective.getTokenUser().equals("moderator")
+                            || memberService.checkThemeSecretForSecretLevel(mainMember.getSecretLevelRemove(), mainMember, guardFromDirective, topAncestors)) {
                         primeFamily = familyService.changeFamilyByRemoveParentLink(changing, primeFamily, mainMember, mainDto);
                     } else throw new RuntimeException("Haven't rights to change/remove parents");
 //                        тут нужен откат в модуль Storage
@@ -135,18 +140,16 @@ public class FacadeService implements SimpleFamilyService {
                         log.info("new prime family is found");
                         potentialBloodBrothers = possiblePrime.get().getChildren();
                         if (mainDirective.getTokenUser().equals("moderator") || checkFamilyForGuard(changing, possiblePrime.get(), guardFromDirective, potentialBloodBrothers)) {
-                            log.info("check successful happened");
                             log.info("ID donor: {}", primeFamily.getId());
                             log.info("ID found: {}", possiblePrime.get().getId());
                             familyService.mergeFamilies(primeFamily, possiblePrime.get());
                             log.info("family merged");
                             mainMember.setFamilyWhereChild(possiblePrime.get());
+                            if (Objects.equals(mainMember.getActiveFamily().getId(),primeFamily.getId())) mainMember.setActiveFamily(possiblePrime.get());
                             possiblePrime.get().getChildren().add(mainMember);
                             memberService.updateMember(mainMember);
                             familyToRemove.add(primeFamily);
-//                            familyRepository.flush();
                             changing.setOneChildInFamily(false);
-                            log.info("end of edit");
                         } else {
                             for (ShortFamilyMember brother :
                                     potentialBloodBrothers)
@@ -172,9 +175,11 @@ public class FacadeService implements SimpleFamilyService {
                         }
                     } else {
                         log.info("family for merging is not found");
-                        familyService.changeMainFamilyIdentification(primeFamily, possibleId, mainMember, Optional.empty(), Optional.empty());
-//familyRepository.flush();
+                        familyService.changeMainFamilyIdentification(primeFamily, possibleId, mainMember);
                     }
+                } else {
+                    if (!Objects.equals(primeFamily.getBirthday().toLocalDate(), mainMember.getBirthday().toLocalDate()))
+                        familyService.setAutoFamilyBirthday(primeFamily);
                 }
             } else {
                 log.warn("Попытка изменения человека под защитой");
@@ -183,7 +188,6 @@ public class FacadeService implements SimpleFamilyService {
                 return;
             }
         }
-        log.info("tyt1000");
         if (mainDirective.getOperation() == KafkaOperation.ADD) {
             if (!changing.isChangeIsPresent()) {
                 changing.setChangeIsPresent(true);
@@ -194,14 +198,13 @@ public class FacadeService implements SimpleFamilyService {
                 mainMember.setCheckStatus(CheckStatus.MODERATE);
                 tempChecked = CheckStatus.UNCHECKED;
                 if (changing.getChangingFather().ordinal() < 2 || changing.getChangingMother().ordinal() < 2) {
-                    primeFamily = familyService.creatFreeFamily(mainDto.getFatherInfo(), mainDto.getMotherInfo(), mainDto.getUuid(),mainDto.getBirthday());
+                    primeFamily = familyService.creatFreeFamily(mainDto.getFatherInfo(), mainDto.getMotherInfo(), mainDto.getUuid(), mainDto.getBirthday());
                     mainMember.setFamilyWhereChild(primeFamily);
                     primeFamily.getChildren().add(mainMember);
                     familyService.addPersonToFamily(primeFamily, mainMember, RoleInFamily.CHILD, mainMember.getUuid(), null);
                     memberService.updateMember(mainMember);
                 } else {
                     possibleId = UUID.nameUUIDFromBytes(mainDto.getFatherInfo().concat(mainDto.getMotherInfo()).getBytes());
-
                     possiblePrime = familyRepository.findFamilyWithChildrenByUUID(possibleId);
                     if (possiblePrime.isPresent()) {
                         log.info("prime family is found");
@@ -224,7 +227,7 @@ public class FacadeService implements SimpleFamilyService {
                                 memberService.clearParentInfo(mainMember, SwitchPosition.MOTHER);
                             if (changing.getChangingFather().ordinal() > 2)
                                 memberService.clearParentInfo(mainMember, SwitchPosition.FATHER);
-                            primeFamily = familyService.creatFreeFamily(mainMember.getFatherInfo(), mainMember.getMotherInfo(), mainDto.getUuid(),mainDto.getBirthday());
+                            primeFamily = familyService.creatFreeFamily(mainMember.getFatherInfo(), mainMember.getMotherInfo(), mainDto.getUuid(), mainDto.getBirthday());
                             mainMember.setFamilyWhereChild(primeFamily);
                             primeFamily.getChildren().add(mainMember);
                             memberService.updateMember(mainMember);
@@ -242,11 +245,10 @@ public class FacadeService implements SimpleFamilyService {
                         }
                     } else {
                         log.info("family for merging is not found");
-                        primeFamily = familyService.creatFreeFamily(mainDto.getFatherInfo(), mainDto.getMotherInfo(), possibleId,mainDto.getBirthday());
+                        primeFamily = familyService.creatFreeFamily(mainDto.getFatherInfo(), mainDto.getMotherInfo(), possibleId, mainDto.getBirthday());
                         mainMember.setFamilyWhereChild(primeFamily);
                         primeFamily.getChildren().add(mainMember);
                         familyService.addPersonToFamily(primeFamily, mainMember, RoleInFamily.CHILD, mainMember.getUuid(), null);
-//                        memberService.updateMember(mainMember);
                     }
                 }
                 mainMember.setActiveFamily(primeFamily);
@@ -261,8 +263,10 @@ public class FacadeService implements SimpleFamilyService {
         memberService.updateMember(mainMember);
         primeFamily = mainMember.getFamilyWhereChild();
         if (primeFamily == null) throw new RuntimeException("prime family is absent, but can be");
+        ShortFamilyMember mother = null;
+        ShortFamilyMember father = null;
         while (!directiveLinkedList.isEmpty()) {
-            FamilyDirective processDirective = directiveLinkedList.pollFirst();
+            FamilyDirective processDirective = directiveLinkedList.pollLast();
             if (processDirective == null) throw new RuntimeException("corrupt directive");
             else log.info("process {} directive", processDirective.getSwitchPosition().getCommit());
 
@@ -281,7 +285,6 @@ public class FacadeService implements SimpleFamilyService {
                 log.info("check successful happened");
                 switch (processDirective.getSwitchPosition()) {
                     case CHILD -> {
-//                        acceptedChild.add(member);
                         if (!existBloodBrother) {
                             childFamilies.add(family);
                             if (mainMember.getSex() == Sex.MALE) {
@@ -297,24 +300,33 @@ public class FacadeService implements SimpleFamilyService {
                             for (Family fam :
                                     childFamilies) {
                                 if (fam.getUuid().equals(family.getUuid()) && !Objects.equals(fam.getId(), family.getId())) {
-                                    familyService.mergeFamilies(family, fam);
+                                    familyService.mergeFamilies(fam, family);
+                                    member.setFamilyWhereChild(family);
+                                    if (Objects.equals(member.getActiveFamily().getId(),fam.getId())) member.setActiveFamily(family);
+                                    familyToRemove.add(fam);
                                 }
                             }
-                            log.info("child");
                         }
-                        familyService.addPersonToFamily(family, mainMember, (mainMember.getSex() == Sex.MALE) ? RoleInFamily.FATHER : RoleInFamily.MOTHER, member.getUuid(), null);
-                        memberService.addChildToFamilyMember(member, mainMember, mainMember.getSex());
+                        if ((mainMember.getSex() == Sex.MALE && !Objects.equals(member.getFatherUuid(), UUID.fromString(mainDirective.getPerson())))
+                                || (mainMember.getSex() == Sex.FEMALE && !Objects.equals(member.getMotherUuid(), UUID.fromString(mainDirective.getPerson())))) {
+                            familyService.addPersonToFamily(family, mainMember, (mainMember.getSex() == Sex.MALE) ? RoleInFamily.FATHER : RoleInFamily.MOTHER, member.getUuid(), null);
+                            memberService.addChildToFamilyMember(member, mainMember, mainMember.getSex());
+
+                        } else memberService.changeParentInformation(member, mainMember, mainMember.getSex());
                         log.info("child is setup");
                     }
                     case FATHER -> {
                         memberService.addChildToFamilyMember(mainMember, member, Sex.MALE);
                         familyService.addPersonToFamily(primeFamily, member, RoleInFamily.FATHER, mainMember.getUuid(), null);
+                        primeFamily.setHusband(member);
+                        father = member;
                         log.info("father is setup");
                     }
                     case MOTHER -> {
                         memberService.addChildToFamilyMember(mainMember, member, Sex.FEMALE);
-
                         familyService.addPersonToFamily(primeFamily, member, RoleInFamily.MOTHER, mainMember.getUuid(), null);
+                        primeFamily.setWife(member);
+                        mother = member;
                         log.info("mother is setup");
                     }
                     default -> log.warn("Обнаружена нераспознанная директива");
@@ -322,23 +334,30 @@ public class FacadeService implements SimpleFamilyService {
                 memberService.updateMember(member);
 
             } else {
-                if (member.getCheckStatus() != CheckStatus.MODERATE) {
-                    member.setCheckStatus(CheckStatus.MODERATE);
-                    member.setLastUpdate(new Timestamp(System.currentTimeMillis()));
-                    memberService.updateMember(member);
-                    tempModerate.add(member.getUuid().toString());
+                if (processDirective.getSwitchPosition() == SwitchPosition.CHILD
+                        && ((mainMember.getSex() == Sex.MALE && Objects.equals(member.getFatherUuid(), UUID.fromString(mainDirective.getPerson())))
+                        || (mainMember.getSex() == Sex.FEMALE && Objects.equals(member.getMotherUuid(), UUID.fromString(mainDirective.getPerson()))))) {
+                    memberService.changeParentInformation(member, mainMember, mainMember.getSex());
+                    log.info("parent info is changes for child");
+                } else {
+                    if (member.getCheckStatus() != CheckStatus.MODERATE) {
+                        member.setCheckStatus(CheckStatus.MODERATE);
+                        member.setLastUpdate(new Timestamp(System.currentTimeMillis()));
+                        memberService.updateMember(member);
+                        tempModerate.add(member.getUuid().toString());
+                    }
+                    directiveList.add(DeferredDirective
+                            .builder()
+                            .directiveMember(mainMember)
+                            .created(new Timestamp(System.currentTimeMillis()))
+                            .info(member.getFullName())
+                            .directiveKeeper(member.getUuid())
+                            .localisation(tempLocalisation.get(UUID.fromString(mainDirective.getTokenUser())))
+                            .shortFamilyMemberLink(Set.of(DirectiveMember.builder().directiveMember(member).build()))
+                            .tokenUser(mainDirective.getTokenUser())
+                            .switchPosition(processDirective.getSwitchPosition())
+                            .build());
                 }
-                directiveList.add(DeferredDirective
-                        .builder()
-                        .directiveMember(mainMember)
-                        .created(new Timestamp(System.currentTimeMillis()))
-                        .info(member.getFullName())
-                        .directiveKeeper(member.getUuid())
-                        .localisation(tempLocalisation.get(UUID.fromString(mainDirective.getTokenUser())))
-                        .shortFamilyMemberLink(Set.of(DirectiveMember.builder().directiveMember(member).build()))
-                        .tokenUser(mainDirective.getTokenUser())
-                        .switchPosition(processDirective.getSwitchPosition())
-                        .build());
             }
         }
         log.info("All free links is setup");
@@ -348,9 +367,9 @@ public class FacadeService implements SimpleFamilyService {
         else if (directiveList.isEmpty()) mainMember.setCheckStatus(tempChecked);
 
 
-        Set<ShortFamilyMember> newTopAc = memberService.getAllTopAncestors(mainMember);
-        Set<UUID> geneticTreeGuards = memberService.getGeneticTreeGuards(newTopAc);
-        if (!geneticTreeGuards.isEmpty()) {
+        if (mainMember.getLinkGuard() != null && !mainMember.getLinkGuard().isBlank()
+                || (mainMember.getDescendantsGuard() != null && !mainMember.getDescendantsGuard().isBlank())) {
+            Set<ShortFamilyMember> newTopAc = memberService.getAllTopAncestors(mainMember);
             Set<String> toCheckStatus = memberService.repairGeneticTreeCheckStatus(newTopAc);
             if (!toCheckStatus.isEmpty()) {
                 if (mainMember.getCheckStatus() == CheckStatus.LINKED)
@@ -361,27 +380,24 @@ public class FacadeService implements SimpleFamilyService {
                     sendAndFormService.formDirectiveToStorageForChangeStatus(null, mainMember.getUuid().toString(), null, KafkaOperation.RENAME, toCheckStatus, CheckStatus.CHECKED);
             } else if (tempModerate.isEmpty())
                 sendAndFormService.formDirectiveToStorageForChangeStatus(null, mainMember.getUuid().toString(), null, KafkaOperation.RENAME, null, tempChecked);
+        } else if ((mother != null && (mother.getCheckStatus() == CheckStatus.CHECKED || mother.getCheckStatus() == CheckStatus.LINKED))
+                || (father != null && (father.getCheckStatus() == CheckStatus.CHECKED || father.getCheckStatus() == CheckStatus.LINKED))) {
+            Set<String> toCheckStatus = memberService.repairGeneticTreeCheckStatus(Set.of(mainMember));
+            sendAndFormService.formDirectiveToStorageForChangeStatus(null, mainMember.getUuid().toString(), SwitchPosition.MOTHER, KafkaOperation.RENAME, toCheckStatus, CheckStatus.CHECKED);
         } else if (tempModerate.isEmpty())
             sendAndFormService.formDirectiveToStorageForChangeStatus(null, mainMember.getUuid().toString(), null, KafkaOperation.RENAME, null, tempChecked);
 
-
-        log.info("directives are accepted");
         if (!childFamilies.isEmpty()) familyRepo.saveAll(childFamilies);
 
         if (!directiveList.isEmpty()) {
             log.info("Acceptable changes is done. Directives will be send");
             directiveService.checkSaveAndSendVotingDirective(directiveList);
-
         }
+        familyRepository.flush();
         if (!familyToRemove.isEmpty()) for (Family f :
                 familyToRemove) {
-
             familyRepository.removeFamily(f);
         }
-        memberRepository.flush();
-//need???
-        familyRepository.flush();
-
     }
 
     @Transactional
@@ -449,7 +465,7 @@ public class FacadeService implements SimpleFamilyService {
 
     @Transactional
     public SecretLevel getGuardStatus(UUID uuid, String tokenUser) {
-        ShortFamilyMember member = memberRepository.findMemberWithPrimeFamily(uuid).orElseThrow(() -> new RuntimeException("person not found"));
+        ShortFamilyMember member = memberRepository.getMemberByUuid(uuid).orElseThrow(() -> new RuntimeException("person not found"));
         Optional<Guard> guardFromToken = guardService.findGuard(tokenUser);
         if (member == null || guardFromToken.isEmpty()) throw new RuntimeException("Status check is failed");
         SecretLevel max = memberService.getMaxSecretLevelForMember(member, null, false);
@@ -494,8 +510,8 @@ public class FacadeService implements SimpleFamilyService {
         if ((firstOld == '(' && secondOld != 'A') && firstNew == '(' && secondNew != 'A')
             return ChangingStatus.NOT_IMPORTANT;
         if (Objects.equals(oldInfo, newInfo)) return ChangingStatus.ABSENT;
-        if (oldInfo == null && secondNew == 'A') return ChangingStatus.FREE;
-        if (oldInfo == null) return ChangingStatus.SET;
+        if ((oldInfo == null || (firstOld == '(' && secondOld != 'A')) && secondNew == 'A') return ChangingStatus.FREE;
+        if (oldInfo == null || (firstOld == '(' && secondOld != 'A')) return ChangingStatus.SET;
         if (firstOld != '(' && newInfo == null) return ChangingStatus.REMOVE;
         if (firstOld != '(' && secondNew == 'A') return ChangingStatus.MINOR_CHANGE;
         if (secondOld == 'A' && newInfo == null) return ChangingStatus.LIGHT_FREE;

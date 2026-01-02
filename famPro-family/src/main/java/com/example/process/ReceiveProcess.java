@@ -23,7 +23,7 @@ public class ReceiveProcess implements Consumer<Message<LinkedList<FamilyDirecti
     public void accept(Message<LinkedList<FamilyDirective>> directiveMessage) {
         LinkedList<FamilyDirective> directive = directiveMessage.getPayload();
         log.info("Receiving directive from storage: {}", directive);
-        if (!directive.isEmpty()) directiveService.setLangvuish(directive.peek());
+        if (!directive.isEmpty()) directiveService.setLanguish(directive.peek());
         facadeService.checkFamilyDirectives(directive);
 
 

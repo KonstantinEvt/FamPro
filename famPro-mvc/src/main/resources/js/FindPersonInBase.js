@@ -171,7 +171,7 @@ async function findPerson(choice, cause) {
             let pictureUrl = URL.createObjectURL(contacts[isContact].imj);
             let textPhoto;
             if (!contacts[isContact].primePhoto && !contacts[isContact].contactPhoto) {
-                textPhoto = "Фото отсутствует";
+                textPhoto = "Фото контакта отсутствует";
             } else textPhoto = ``;
             document.getElementById("resultPrimePhoto").innerHTML = `
                     <div class="card text-bg-dark" style="width: 250px">

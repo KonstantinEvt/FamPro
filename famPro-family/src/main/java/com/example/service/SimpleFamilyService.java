@@ -11,17 +11,16 @@ public interface SimpleFamilyService {
     }
 
     default boolean findUuidInInfo(String string, UUID uuid) {
-        if (string!=null&&!string.isBlank())
-        return findUuidInInfo(string, uuid.toString()); else return false;
+        if (string != null && !string.isBlank())
+            return findUuidInInfo(string, uuid.toString());
+        else return false;
     }
 
     default String addUuidToInfo(String string, UUID uuid) {
-
         return addUuidToInfo(string, uuid.toString());
     }
 
     default Optional<String> removeUuidFromInfo(String string, UUID uuid) {
-
         return removeUuidFromInfo(string, uuid.toString());
     }
 
@@ -31,12 +30,17 @@ public interface SimpleFamilyService {
 
     default String changeUuidInInfo(String string, String oldUuid, String newUuid) {
         if (string == null || string.equals("")) return "";
-        Optional<String> str = Arrays.stream(string.split(" ")).filter(x -> !Objects.equals(x, oldUuid)).reduce((x, y) -> x.concat(" ").concat(y));
-        return str.map(s -> s.concat(" ").concat(newUuid)).orElseGet(() -> newUuid);
+        List<String> uuids = new ArrayList<>(Arrays.stream(string.split(" ")).toList());
+        if (uuids.contains(oldUuid)) {
+            uuids.remove(oldUuid);
+            uuids.add(newUuid);
+            return uuids.stream().reduce((x, y) -> x.concat(" ").concat(y)).orElseThrow(()->new RuntimeException("newUuid of member is absent"));
+        }
+        return string;
     }
 
     default boolean findUuidInInfo(String string, String uuid) {
-        if (string == null || string.equals("")||string.isBlank()) return false;
+        if (string == null || string.equals("") || string.isBlank()) return false;
         return Arrays.asList(string.split(" ")).contains(uuid);
     }
 

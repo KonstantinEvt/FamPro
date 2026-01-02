@@ -100,8 +100,6 @@ public class DirectiveService {
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("object under guarding not found in directive"))));
             } else {
-//                Set<ShortFamilyMember> members = dd.getShortFamilyMemberLink().stream().map(DirectiveMember::getDirectiveMember).collect(Collectors.toSet());
-//                Set<String> guards = members.stream().flatMap(x -> guardService.getMaxLevelGuards(x).stream()).collect(Collectors.toSet());
                 sendAndFormService.sendVotingDirective(dd, dd.getShortFamilyMemberLink().stream()
                         .map(DirectiveMember::getDirectiveMember)
                         .flatMap(x -> guardService.getMaxLevelGuards(x).stream())
@@ -153,7 +151,8 @@ public class DirectiveService {
             processFamily.getChildren().add(mainMember);
             familyService.mergeFamilies(mainFamily, processFamily);
             mainMember.setFamilyWhereChild(processFamily);
-
+            if (Objects.equals(mainMember.getActiveFamily().getId(), mainFamily.getId()))
+                mainMember.setActiveFamily(processFamily);
             familyService.changeFamilyForPerson(mainFamily, processFamily, mainMember);
             log.info("merge family is done");
             familyToRemove.add(mainFamily);
@@ -214,6 +213,8 @@ public class DirectiveService {
                 if (family.isPresent() && !Objects.equals(family.get().getUuid(), childFamily.getUuid())) {
                     familyService.mergeFamilies(childFamily, family.get());
                     child.setFamilyWhereChild(family.get());
+                    if (Objects.equals(child.getActiveFamily().getId(), childFamily.getId()))
+                        mainMember.setActiveFamily(family.get());
                     family.get().getChildren().add(child);
                     memberService.updateMember(child);
                     familyToRemove.add(childFamily);
@@ -242,18 +243,6 @@ public class DirectiveService {
         sendAndFormService.sendAddingNewContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(mainMember)).stream().map(UUID::toString).collect(Collectors.toSet()));
 
     }
-
-//    @Transactional
-//    private void checkForUnique(Set<Family> childrenFamilies, Set<Family> familiesToRemove) {
-//        Family family = childrenFamilies.stream().findFirst().orElseThrow(() -> new RuntimeException("nonsense!"));
-//        for (Family fam : childrenFamilies) {
-//            if (Objects.equals(fam.getUuid(), family.getUuid()) && !Objects.equals(fam.getId(), family.getId())) {
-//                familyService.mergeFamilies(fam, family);
-//                familiesToRemove.add(fam);
-////                тут проверить на concurrentModi
-//            }
-//        }
-//    }
 
     @Transactional
     public void negativeVoting(String directiveUuid) {
@@ -320,14 +309,6 @@ public class DirectiveService {
                         Family newFamily = familyService.creatFreeFamily(child.getFatherInfo(), child.getMotherInfo(), child.getUuid(), child.getBirthday());
                         family.getChildren().remove(mainMember);
                         newFamily.getChildren().add(mainMember);
-//                        if (child.getMotherUuid() != null) {
-//                            family.getHalfChildrenByMother().add(mainMember);
-//                            newFamily.getHalfChildrenByMother().addAll(family.getChildren());
-//                        }
-//                        if (child.getFatherUuid() != null) {
-//                            family.getHalfChildrenByFather().add(mainMember);
-//                            newFamily.getHalfChildrenByFather().addAll(family.getChildren());
-//                        }
                     }
                     sendAndFormService.sendChangeInStorageByNegative(deferredDirective, child.getUuid().toString());
                 }
@@ -346,10 +327,7 @@ public class DirectiveService {
     @Transactional
     public void setLinkGuardFromVotingDirective(String directiveUuid) {
         DeferredDirective directive = directiveRepository.getLinkingDirective(UUID.fromString(directiveUuid)).orElseThrow(() -> new RuntimeException("directive is missing"));
-        if (directive.getDirectiveMember() == null || !directive.getDirectiveMember().getLinkedGuard().isEmpty())
-            throw new RuntimeException("directive is corrupt");
         guardService.creatLinkingGuard(directive.getDirectiveMember(), directive.getTokenUser());
-
         log.info("New guard is created");
         cloakDirective.add(Directive.builder()
                 .operation(KafkaOperation.EDIT)
@@ -374,11 +352,11 @@ public class DirectiveService {
         directiveRepo.delete(directive);
     }
 
-    public void setLangvuish(DirectiveGuards directive) {
+    public void setLanguish(DirectiveGuards directive) {
         tempLocalisation.put(UUID.fromString(directive.getTokenUser()), directive.getLocalisation());
     }
 
-    public void setLangvuish(FamilyDirective directive) {
+    public void setLanguish(FamilyDirective directive) {
         tempLocalisation.put(UUID.fromString(directive.getTokenUser()), directive.getLocalisation());
     }
 }

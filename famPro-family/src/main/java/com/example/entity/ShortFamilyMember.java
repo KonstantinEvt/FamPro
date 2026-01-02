@@ -69,9 +69,6 @@ public class ShortFamilyMember extends Fio {
     @Column(name = "activeGuard",length = 4095)
     private String activeGuard;
 
-//    @Column(name = "lowChildren")
-//    private String lowChildren;
-
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinColumn(name = "active_family")
     private Family activeFamily;
@@ -93,15 +90,6 @@ public class ShortFamilyMember extends Fio {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prime_family")
     private Family familyWhereChild;
-
-//    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "halfChildrenByFather")
-//    private Set<Family> familyWhereHalfChildByFather;
-//
-//    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "halfChildrenByMother")
-//    private Set<Family> familyWhereHalfChildByMother;
-//
-//    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "childrenInLow")
-//    private Set<Family> familyWhereChildInLow;
 
     @Column(name = "death_day")
     private Date deathday;
@@ -138,9 +126,6 @@ public class ShortFamilyMember extends Fio {
     @Column(name = "security_birthday")
     private SecretLevel secretLevelBirthday;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "linkedPerson")
-    private List<Guard> linkedGuard;
-
     @Column(name = "burial_exist")
     private boolean burialExist;
     @Column(name = "birth_exist")
@@ -151,7 +136,7 @@ public class ShortFamilyMember extends Fio {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ShortFamilyMember that = (ShortFamilyMember) o;
-        return primePhoto == that.primePhoto && burialExist == that.burialExist && birthExist == that.birthExist && Objects.equals(id, that.id) && Objects.equals(motherInfo, that.motherInfo) && Objects.equals(motherUuid, that.motherUuid) && Objects.equals(fatherInfo, that.fatherInfo) && Objects.equals(fatherUuid, that.fatherUuid) && Objects.equals(ancestors, that.ancestors) && Objects.equals(ancestorsGuard, that.ancestorsGuard) && Objects.equals(linkGuard, that.linkGuard) && Objects.equals(topAncestors, that.topAncestors) && Objects.equals(descendants, that.descendants) && Objects.equals(descendantsGuard, that.descendantsGuard) && Objects.equals(activeMember, that.activeMember) && Objects.equals(activeGuard, that.activeGuard) && checkStatus == that.checkStatus && Objects.equals(deathday, that.deathday) && Objects.equals(creator, that.creator) && Objects.equals(createTime, that.createTime) && Objects.equals(lastUpdate, that.lastUpdate) && secretLevelPhoto == that.secretLevelPhoto && secretLevelEdit == that.secretLevelEdit && secretLevelRemove == that.secretLevelRemove && secretLevelMainInfo == that.secretLevelMainInfo && secretLevelBirthday == that.secretLevelBirthday && Objects.equals(linkedGuard, that.linkedGuard);
+        return primePhoto == that.primePhoto && burialExist == that.burialExist && birthExist == that.birthExist && Objects.equals(id, that.id) && Objects.equals(motherInfo, that.motherInfo) && Objects.equals(motherUuid, that.motherUuid) && Objects.equals(fatherInfo, that.fatherInfo) && Objects.equals(fatherUuid, that.fatherUuid) && Objects.equals(ancestors, that.ancestors) && Objects.equals(ancestorsGuard, that.ancestorsGuard) && Objects.equals(linkGuard, that.linkGuard) && Objects.equals(topAncestors, that.topAncestors) && Objects.equals(descendants, that.descendants) && Objects.equals(descendantsGuard, that.descendantsGuard) && Objects.equals(activeMember, that.activeMember) && Objects.equals(activeGuard, that.activeGuard) && checkStatus == that.checkStatus && Objects.equals(deathday, that.deathday) && Objects.equals(creator, that.creator) && Objects.equals(createTime, that.createTime) && Objects.equals(lastUpdate, that.lastUpdate) && secretLevelPhoto == that.secretLevelPhoto && secretLevelEdit == that.secretLevelEdit && secretLevelRemove == that.secretLevelRemove && secretLevelMainInfo == that.secretLevelMainInfo && secretLevelBirthday == that.secretLevelBirthday;
     }
 
     @Override

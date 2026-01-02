@@ -24,8 +24,8 @@ public class GuardController {
         return facadeService.addGuardByLink(familyMemberDto, tokenService.getTokenUser());
     }
     @GetMapping("/getLinkGuard")
-    public String getGuardByLink(){
-        return guardService.getLinkGuard((String) tokenService.getTokenUser().getClaims().get("sub"));
+    public String getLinkingPersonOfGuard(){
+        return guardService.getLinkingPersonOfGuard((String) tokenService.getTokenUser().getClaims().get("sub"));
     }
     @GetMapping("/checkGuards/{uuid}")
     public SecretLevel getGuardsStatus(@PathVariable UUID uuid){

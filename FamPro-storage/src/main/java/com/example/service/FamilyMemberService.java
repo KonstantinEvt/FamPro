@@ -256,7 +256,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
     @Transactional(readOnly = true)
     public FamilyMemberDto getYourself() {
-        UUID uuid = UUID.fromString(familyConnectionClient.getGuardByLink());
+        UUID uuid = UUID.fromString(familyConnectionClient.getLinkingPersonOfGuard());
         FamilyMember familyMember = mainStorageRepository.findMemberWithInfoByUUID(uuid)
                 .orElseThrow(() -> new FamilyMemberNotFound("Странно... линк есть в фэмили, а человека в базе нет"));
         FamilyMemberDto dto = familyMemberMapper.entityToDto(familyMember);

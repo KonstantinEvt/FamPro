@@ -112,8 +112,8 @@ public class TranscritFamilyMember {
                 String str1 = str.substring(17);
                 String[] strings = str1.split(" ");
                 if (!strings[0].equals("null")) fioDto.setFirstName(trans.transcritWordToLocalisation(strings[0]));
-                if (!strings[1].equals("null")) fioDto.setFirstName(trans.transcritWordToLocalisation(strings[1]));
-                if (!strings[2].equals("null")) fioDto.setFirstName(trans.transcritWordToLocalisation(strings[2]));
+                if (!strings[1].equals("null")) fioDto.setMiddleName(trans.transcritWordToLocalisation(strings[1]));
+                if (!strings[2].equals("null")) fioDto.setLastName(trans.transcritWordToLocalisation(strings[2]));
                 if (!strings[6].equals("null"))
                     if (!secret) fioDto.setBirthday(parseDate(strings[6]));
                     else strings[6] = trans.getClose();

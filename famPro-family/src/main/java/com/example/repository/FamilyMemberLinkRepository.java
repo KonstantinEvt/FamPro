@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Repository
 @AllArgsConstructor
@@ -23,17 +22,27 @@ public class FamilyMemberLinkRepository {
     private EntityManager entityManager;
 
     @Transactional
-    public void addFamilyMember(FamilyMemberLink familyMemberLink) {
+    public void addFamilyMemberLink(FamilyMemberLink familyMemberLink) {
         try {
             entityManager.persist(familyMemberLink);
         } catch (RuntimeException e) {
             log.warn("family member not added:", e);
         }
     }
+
     @Transactional
-    public void update(FamilyMemberLink familyMemberLink) {
+    public void updateFamilyMemberLink(FamilyMemberLink familyMemberLink) {
         try {
             entityManager.merge(familyMemberLink);
+        } catch (RuntimeException e) {
+            log.warn("family member not added:", e);
+        }
+    }
+
+    @Transactional
+    public void refresh(FamilyMemberLink familyMemberLink) {
+        try {
+            entityManager.refresh(familyMemberLink);
         } catch (RuntimeException e) {
             log.warn("family member not added:", e);
         }
@@ -87,13 +96,13 @@ public class FamilyMemberLinkRepository {
         }
         return familyMemberLink;
     }
+
     @Transactional(readOnly = true)
-    public Set<FamilyMemberLink> getFamilyMemberLinks(Family family, ShortFamilyMember member, UUID causePerson) {
+    public Set<FamilyMemberLink> getFamilyMemberLinksByFamilyAndCausePerson(Family family, UUID causePerson) {
         Set<FamilyMemberLink> familyMemberLink;
         try {
-            familyMemberLink = new HashSet<>(entityManager.createQuery("from FamilyMemberLink a left join fetch a.member left join fetch a.family where a.member=: member and a.family=:family and a.roleInFamily=:roleInFamily and a.causePerson=:causePerson", FamilyMemberLink.class)
+            familyMemberLink = new HashSet<>(entityManager.createQuery("from FamilyMemberLink a where a.family=:family and a.causePerson=:causePerson", FamilyMemberLink.class)
                     .setParameter("family", family)
-                    .setParameter("member", member)
                     .setParameter("causePerson", causePerson)
                     .getResultList());
         } catch (RuntimeException e) {
@@ -102,11 +111,12 @@ public class FamilyMemberLinkRepository {
         }
         return familyMemberLink;
     }
+
     @Transactional(readOnly = true)
-    public Set<FamilyMemberLink> getAllFamilyMemberLinks(Family family) {
+    public Set<FamilyMemberLink> getAllFamilyMemberLinksByFamily(Family family) {
         Set<FamilyMemberLink> familyMemberLinks;
         try {
-            familyMemberLinks = new HashSet<>(entityManager.createQuery("from FamilyMemberLink a left join fetch a.member left join fetch a.family where a.family=: family", FamilyMemberLink.class)
+            familyMemberLinks = new HashSet<>(entityManager.createQuery("from FamilyMemberLink a  where a.family=: family", FamilyMemberLink.class)
 
                     .setParameter("family", family)
                     .getResultList());
@@ -116,8 +126,9 @@ public class FamilyMemberLinkRepository {
         }
         return familyMemberLinks;
     }
+
     @Transactional(readOnly = true)
-    public Set<FamilyMemberLink> getAllFamilyMemberLinks(ShortFamilyMember member) {
+    public Set<FamilyMemberLink> getAllFamilyMemberLinksByFamily(ShortFamilyMember member) {
         Set<FamilyMemberLink> familyMemberLinks;
         try {
             familyMemberLinks = new HashSet<>(entityManager.createQuery("from FamilyMemberLink a left join fetch a.member left join fetch a.family where a.member=: member", FamilyMemberLink.class)
@@ -130,12 +141,12 @@ public class FamilyMemberLinkRepository {
         }
         return familyMemberLinks;
     }
+
     @Transactional(readOnly = true)
-    public Set<FamilyMemberLink> getAllFamilyMemberLinks(UUID memberUuid) {
+    public Set<FamilyMemberLink> getAllFamilyMemberLinksByCausePerson(UUID memberUuid) {
         Set<FamilyMemberLink> familyMemberLinks;
         try {
-            familyMemberLinks = new HashSet<>(entityManager.createQuery("from FamilyMemberLink a left join fetch a.member left join fetch a.family where a.causePerson=: memberUuid", FamilyMemberLink.class)
-
+            familyMemberLinks = new HashSet<>(entityManager.createQuery("from FamilyMemberLink a where a.causePerson=: memberUuid", FamilyMemberLink.class)
                     .setParameter("memberUuid", memberUuid)
                     .getResultList());
         } catch (RuntimeException e) {

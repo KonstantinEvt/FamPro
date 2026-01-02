@@ -1,13 +1,7 @@
 package com.example.service;
 
-import com.example.entity.Family;
-import com.example.entity.Guard;
-import com.example.entity.ShortFamilyMember;
-import com.example.enums.Attention;
-import com.example.enums.CheckStatus;
-import com.example.enums.KafkaOperation;
-import com.example.enums.SwitchPosition;
-import com.example.repository.FamilyRepository;
+import com.example.entity.*;
+import com.example.enums.*;
 import com.example.repository.GuardRepository;
 import com.example.repository.MemberRepository;
 import lombok.AllArgsConstructor;
@@ -24,7 +18,6 @@ import java.util.stream.Collectors;
 @Log4j2
 public class GuardService implements SimpleFamilyService {
     private GuardRepository guardRepository;
-    private FamilyRepository familyRepository;
     private MemberService memberService;
     private SendAndFormService sendAndFormService;
     private MemberRepository memberRepository;
@@ -35,19 +28,8 @@ public class GuardService implements SimpleFamilyService {
     }
 
     @Transactional
-    public Optional<Guard> findGuardWithLinkingPerson(String uuid) {
-        return guardRepository.findGuardWithLinkingPerson(uuid);
-    }
-
-    @Transactional
-    public void addGuardToFamily(Guard guard, Family family) {
-        if (family.getGuard() == null) family.setGuard(new HashSet<>());
-        family.getGuard().add(guard);
-    }
-
-    @Transactional
-    public String getLinkGuard(String uuid) {
-        return guardRepository.findGuardWithLinkingPerson(uuid).orElseThrow(()->new RuntimeException("user not Linking")).getLinkedPerson().getUuid().toString();
+    public String getLinkingPersonOfGuard(String uuid) {
+        return guardRepository.findGuardWithLinkingPerson(uuid).orElseThrow(() -> new RuntimeException("user not Linking")).getLinkedPerson().getUuid().toString();
     }
 
     @Transactional
@@ -69,19 +51,60 @@ public class GuardService implements SimpleFamilyService {
         shortFamilyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         memberService.updateMember(shortFamilyMember);
         memberRepository.flush();
-        log.info("New guard is created");
+        log.info("New linking guard is created");
         sendAndFormService.formDirectiveToStorageForChangeStatus(token, shortFamilyMember.getUuid().toString(), SwitchPosition.FATHER, KafkaOperation.RENAME, changingStatus, CheckStatus.CHECKED);
         sendAndFormService.sendAttentionToUser(token, shortFamilyMember.getFullName(), shortFamilyMember, Attention.LINK);
     }
+//
+//    @Transactional
+//    public void addGuardsToFamily(Family family, List<GuardLink> guardLinks) {
+//        family.getGuardLinks().addAll(guardLinks);
+//        Set<ShortFamilyMember> familyMembers = family.getFamilyMemberLinks().stream()
+//                .filter(x -> x.getRoleInFamily() == RoleInFamily.CHILD
+//                        || x.getRoleInFamily() == RoleInFamily.MOTHER
+//                        || x.getRoleInFamily() == RoleInFamily.FATHER)
+//                .map(FamilyMemberLink::getMember)
+//                .collect(Collectors.toSet());
+//        for (ShortFamilyMember familyMember :
+//                familyMembers) {
+//            for (GuardLink guardLink :
+//                    guardLinks) {
+//                addUuidToInfo(familyMember.getActiveGuard(), guardLink.getGuard().getTokenUser());
+//            }
+//        }
+//    }
+//
+//    @Transactional
+//    public void removeGuardsFromFamily(Family family, List<GuardLink> guards) {
+//        Set<ShortFamilyMember> familyMembers = family.getFamilyMemberLinks().stream()
+//                .filter(x -> x.getRoleInFamily() == RoleInFamily.CHILD
+//                        || x.getRoleInFamily() == RoleInFamily.MOTHER
+//                        || x.getRoleInFamily() == RoleInFamily.FATHER)
+//                .map(FamilyMemberLink::getMember)
+//                .collect(Collectors.toSet());
+//        for (ShortFamilyMember familyMember :
+//                familyMembers) {
+//            for (GuardLink guardLink :
+//                    guards) {
+//                removeUuidFromInfo(familyMember.getActiveGuard(), guardLink.getGuard().getTokenUser());
+//            }
+//        }
+//        guards.forEach(family.getGuardLinks()::remove);
+//    }
+//
+//    @Transactional
+//    public Optional<Guard> getGuardWithLinkingPersonByUuid(String uuid) {
+//        return guardRepository.findGuardWithLinkingPerson(uuid);
+//    }
 
-    @Transactional
-    public void addGuardToFamilies(Set<Family> families, Guard guard) {
-        for (Family family :
-                families) {
-            addGuardToFamily(guard, family);
-            familyRepository.updateFamily(family);
-        }
-    }
+//    @Transactional
+//    public void addGuardToFamilies(Set<Family> families, Guard guard) {
+//        for (Family family :
+//                families) {
+//            addGuardsToFamily(guard, family);
+//            familyRepository.updateFamily(family);
+//        }
+//    }
 
     public Set<String> getMaxLevelGuards(ShortFamilyMember member) {
         if (member.getLinkGuard() != null && !member.getLinkGuard().isBlank()) return Set.of(member.getLinkGuard());

@@ -3,7 +3,8 @@ package com.example.entity;
 import com.example.enums.RoleInFamily;
 import jakarta.persistence.*;
 import lombok.*;
-
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Cache;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 @Builder
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "family_member_links")
 public class FamilyMemberLink {
     @Id
@@ -36,6 +38,9 @@ public class FamilyMemberLink {
 
     @Column(name = "cause_person")
     private UUID causePerson;
+
+    @Column(name = "linking_guard")
+    private UUID linkGuard;
 
     @Override
     public boolean equals(Object o) {
