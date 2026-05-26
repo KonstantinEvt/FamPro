@@ -37,7 +37,7 @@ public class FamilyMemberDto extends FioDto implements Serializable {
     private Set<FioDto> fioDtos;
     @Schema(description = "Дата смерти")
     private Date deathday;
-
+    private String firstCreator;
     private String creator;
     private Timestamp createTime;
     private Timestamp lastUpdate;

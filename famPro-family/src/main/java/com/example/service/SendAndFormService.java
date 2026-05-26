@@ -66,7 +66,7 @@ public class SendAndFormService {
                 .created(new Timestamp(System.currentTimeMillis()))
                 .tokenUser(userUuid)
                 .operation(KafkaOperation.ADD)
-                .localisation(Objects.requireNonNullElse(tempLocalisation.get(UUID.fromString(userUuid)),Localisation.EN))
+                .localisation(Objects.requireNonNullElse(tempLocalisation.get(UUID.fromString(userUuid)),Localisation.RU))
                 .info2(personInfo)
                 .build();
         switch (attention) {

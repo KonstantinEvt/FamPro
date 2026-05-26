@@ -113,8 +113,10 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         else {
             if (!Objects.equals(familyMemberDto.getCreator(), token) && token != null) {
                 familyMemberDto.setSecretLevelRemove(SecretLevel.CLOSE);
-                familyMemberDto.setSecretLevelMainInfo(SecretLevel.CLOSE);
-                familyMemberDto.setSecretLevelBirthday(SecretLevel.CLOSE);
+                if (familyMemberDto.getSecretLevelMainInfo() != SecretLevel.OPEN)
+                    familyMemberDto.setSecretLevelMainInfo(SecretLevel.CLOSE);
+                if (familyMemberDto.getSecretLevelBirthday() != SecretLevel.OPEN)
+                    familyMemberDto.setSecretLevelBirthday(SecretLevel.CLOSE);
                 if (familyMemberDto.getSecretLevelPhoto() != SecretLevel.OPEN)
                     familyMemberDto.setSecretLevelPhoto(SecretLevel.CLOSE);
             }
@@ -309,6 +311,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         }
         List<Notification> notifications = new ArrayList<>();
         familyMember.setCreator(token);
+        familyMember.setFirstCreator(token);
         familyMember.setCreateTime(new Timestamp(System.currentTimeMillis()));
         familyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         familyMember.setCheckStatus(CheckStatus.MODERATE);
@@ -340,7 +343,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         familyMember.setChilds(children);
 
 
-        setUpParents(familyMemberDto, familyMember, "add", changing, notifications, listToFamily);
+        setUpParents(familyMemberDto, familyMember, changing, notifications, listToFamily, null);
 
         FamilyMemberInfo familyMemberInfo = new FamilyMemberInfo();
         familyMember.setFamilyMemberInfo(List.of(familyMemberInfo));
@@ -436,7 +439,12 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             formAndSendService.sendNotification(token, Attention.NEGATIVE, fm.getFullName(), dtoId, Subject.LAST_UPDATE, localisation);
             throw new ModeratingContent("Version change");
         }
-
+        if (fromTemp.getSecretLevelRemove() == SecretLevel.CLOSE
+                && ((fromTemp.getMotherInfo() != null && fromTemp.getMotherInfo().charAt(0) != '(' && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio())), fromTemp.getMotherInfo()))
+                || (fromTemp.getFatherInfo() != null && fromTemp.getFatherInfo().charAt(0) != '(' && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getFatherFio())), fromTemp.getFatherInfo())))) {
+            formAndSendService.sendNotification(token, Attention.RIGHTS, null, dtoId, Subject.RIGHTS, localisation);
+            throw new RightsIsAbsent("У Вас нет прав для удаления");
+        }
         if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE && fromTemp.getSecretLevelBirthday() != SecretLevel.CLOSE &&
                 (!Objects.equals(fm.getFirstName(), familyMemberDto.getFirstName()) ||
                         !Objects.equals(fm.getMiddleName(), familyMemberDto.getMiddleName()) ||
@@ -494,7 +502,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             throw new UncorrectedInformationSex("Linking children have another sex of parent");
         }
         if (!otherNames.isEmpty()) {
-            if (fm.getOtherNames() == null||fm.getOtherNames().isEmpty()) {
+            if (fm.getOtherNames() == null || fm.getOtherNames().isEmpty()) {
                 fm.setOtherNamesExist(true);
                 fm.setOtherNames(otherNames);
             } else fm.getOtherNames().addAll(otherNames);
@@ -506,7 +514,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         }
 
         List<FamilyDirective> listToFamily = new ArrayList<>();
-        setUpParents(familyMemberDto, fm, token, changing, notifications, listToFamily);
+        setUpParents(familyMemberDto, fm, changing, notifications, listToFamily, fromTemp);
 
         familyMemberDto.setUuid(fm.getUuid());
         if (familyMemberDto.isPrimePhoto()) {
@@ -635,10 +643,11 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     @Transactional
     public void setUpParents(FamilyMemberDto familyMemberDto,
                              FamilyMember fm,
-                             String token,
                              Changing changing,
                              List<Notification> notifications,
-                             List<FamilyDirective> listToFamily) {
+                             List<FamilyDirective> listToFamily,
+                             FamilyMemberDto fromTemp
+    ) {
 
         if (familyMemberDto.getFatherFio() != null && familyMemberDto.getMotherFio() != null
                 && Objects.equals(familyMemberDto.getFatherFio().getFirstName(), familyMemberDto.getMotherFio().getFirstName())
@@ -648,26 +657,48 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_PARENTS).build());
             familyMemberDto.setMotherFio(null);
             familyMemberDto.setFatherFio(null);
-            throw new UncorrectedInformation("It's not funny. Mother and Father must be different people");
+            log.info("It's not funny. Mother and Father must be different people");
+            return;
         }
-
-        if (familyMemberDto.getFatherFio() != null && (Objects.equals(token, "add") ||
-                familyMemberDto.getFatherFio().getFirstName() == null ||
-                familyMemberDto.getFatherFio().getMiddleName() == null ||
-                familyMemberDto.getFatherFio().getLastName() == null ||
-                familyMemberDto.getFatherFio().getBirthday() == null || fm.getFatherInfo() == null ||
-                (tempGuardStatus.get(token) != null && fm.getFatherInfo().charAt(0) == '(' &&
-                        !CheckStatus.ABSENT.getComment().concat(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getFatherFio()))).equals(tempGuardStatus.get(token).getFatherInfo())))) {
+        if (familyMemberDto.getFatherFio() == null && fromTemp != null && fromTemp.getFatherInfo() != null)
+            removeLinkWithParent(fm, Sex.MALE);
+        else if (familyMemberDto.getFatherFio() != null
+                && fromTemp != null
+                && fromTemp.getFatherInfo() != null
+                && fromTemp.getFatherInfo().charAt(0) != '('
+                && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getFatherFio())), fromTemp.getFatherInfo())) {
+            removeLinkWithParent(fm, Sex.MALE);
+            losingParentsService.setUpFather(familyMemberDto.getFatherFio(), fm, notifications, listToFamily);
+            changing.setChangingFather(true);
+        } else if (familyMemberDto.getFatherFio() != null
+                && (fromTemp == null
+                || fm.getFatherInfo() == null
+                || familyMemberDto.getFatherFio().getFirstName() == null
+                || familyMemberDto.getFatherFio().getMiddleName() == null
+                || familyMemberDto.getFatherFio().getLastName() == null
+                || familyMemberDto.getFatherFio().getBirthday() == null
+                || (fm.getFatherInfo().charAt(0) == '('
+                && !CheckStatus.ABSENT.getComment().concat(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getFatherFio()))).equals(fromTemp.getFatherInfo())))) {
             losingParentsService.setUpFather(familyMemberDto.getFatherFio(), fm, notifications, listToFamily);
             changing.setChangingFather(true);
         }
-        if (familyMemberDto.getMotherFio() != null && (Objects.equals(token, "add") ||
+        if (familyMemberDto.getMotherFio() == null && fromTemp != null && fromTemp.getMotherInfo() != null)
+            removeLinkWithParent(fm, Sex.FEMALE);
+        else if (familyMemberDto.getMotherFio() != null
+                && fromTemp != null
+                && fromTemp.getMotherInfo() != null
+                && fromTemp.getMotherInfo().charAt(0) != '('
+                && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio())), fromTemp.getMotherInfo())) {
+            removeLinkWithParent(fm, Sex.FEMALE);
+            losingParentsService.setUpMother(familyMemberDto.getFatherFio(), fm, notifications, listToFamily);
+            changing.setChangingMother(true);
+        } else if (familyMemberDto.getMotherFio() != null && (fromTemp == null ||
                 familyMemberDto.getMotherFio().getFirstName() == null ||
                 familyMemberDto.getMotherFio().getMiddleName() == null ||
                 familyMemberDto.getMotherFio().getLastName() == null ||
                 familyMemberDto.getMotherFio().getBirthday() == null || fm.getMotherInfo() == null ||
-                (tempGuardStatus.get(token) != null && fm.getMotherInfo().charAt(0) == '(' &&
-                        !CheckStatus.ABSENT.getComment().concat(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio()))).equals(tempGuardStatus.get(token).getMotherInfo())))) {
+                (fm.getMotherInfo().charAt(0) == '(' &&
+                        !CheckStatus.ABSENT.getComment().concat(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio()))).equals(fromTemp.getMotherInfo())))) {
             losingParentsService.setUpMother(familyMemberDto.getMotherFio(), fm, notifications, listToFamily);
             changing.setChangingMother(true);
         }
@@ -675,6 +706,33 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         log.info("Родители установлены");
     }
 
+    public void removeLinkWithParent(FamilyMember fm, Sex sex) {
+        if (sex == Sex.MALE) {
+            if (fm.getFatherInfo() == null || fm.getFatherInfo().isBlank()) return;
+            if (fm.getFatherInfo().charAt(0) == '(' && fm.getFatherInfo().charAt(1) == 'A') {
+                losingParentsService.removeParentByLosingUuid(generateUUIDFromFullName(fm.getFatherInfo()), fm);
+                fm.setFatherInfo(null);
+            } else if (fm.getFatherInfo().charAt(0) == '(') {
+                fm.setFatherInfo(null);
+            } else {
+                fm.getFather().getChilds().remove(fm);
+                fm.setFather(null);
+                fm.setFatherInfo(null);
+            }
+        } else {
+            if (fm.getMotherInfo() == null || fm.getMotherInfo().isBlank()) return;
+            if (fm.getMotherInfo().charAt(0) == '(' && fm.getMotherInfo().charAt(1) == 'A') {
+                losingParentsService.removeParentByLosingUuid(generateUUIDFromFullName(fm.getMotherInfo()), fm);
+                fm.setMotherInfo(null);
+            } else if (fm.getMotherInfo().charAt(0) == '(') {
+                fm.setMotherInfo(null);
+            } else {
+                fm.getMother().getChilds().remove(fm);
+                fm.setMother(null);
+                fm.setMotherInfo(null);
+            }
+        }
+    }
 
     //remove must be change
     public String removeFamilyMember(Long id) {

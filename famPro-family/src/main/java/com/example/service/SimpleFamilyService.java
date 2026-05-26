@@ -10,6 +10,22 @@ public interface SimpleFamilyService {
         return new HashSet<>();
     }
 
+    default Set<String> getAllStringUuidFromInfo(String string) {
+        if (string != null && !string.isBlank())
+            return Arrays.stream(string.split(" ")).collect(Collectors.toSet());
+        return new HashSet<>();
+    }
+
+    default String getInfoStringFromStringUuids(Set<String> strings) {
+        if (strings == null || strings.isEmpty()) return null;
+        return strings.stream().reduce((x, y) -> x.concat(" ").concat(y)).orElseThrow(() -> new RuntimeException("collect Info error"));
+    }
+
+    default String getInfoStringFromUuids(Set<UUID> strings) {
+        if (strings == null || strings.isEmpty()) return null;
+        return strings.stream().map(UUID::toString).reduce((x, y) -> x.concat(" ").concat(y)).orElseThrow(() -> new RuntimeException("collect Info error"));
+    }
+
     default boolean findUuidInInfo(String string, UUID uuid) {
         if (string != null && !string.isBlank())
             return findUuidInInfo(string, uuid.toString());
@@ -34,23 +50,59 @@ public interface SimpleFamilyService {
         if (uuids.contains(oldUuid)) {
             uuids.remove(oldUuid);
             uuids.add(newUuid);
-            return uuids.stream().reduce((x, y) -> x.concat(" ").concat(y)).orElseThrow(()->new RuntimeException("newUuid of member is absent"));
+            return uuids.stream().reduce((x, y) -> x.concat(" ").concat(y)).orElseThrow(() -> new RuntimeException("newUuid of member is absent"));
         }
         return string;
     }
 
+    default String mergeInfo(String donor, String merged) {
+        if ((donor == null || donor.isBlank()) && (merged == null || merged.isBlank())) return null;
+        if (donor == null || donor.isBlank()) return merged;
+        if (merged == null || merged.isBlank()) return donor;
+        else {
+            Set<String> result = Arrays.stream(merged.split(" ")).collect(Collectors.toSet());
+            result.addAll(Arrays.stream(donor.split(" ")).collect(Collectors.toSet()));
+            return result.stream().reduce((x, y) -> x.concat(" ").concat(y)).orElseThrow(() -> new RuntimeException("merge Info error"));
+        }
+    }
+    default String mergeInfo(Set<String> donor, String merged) {
+        if ((donor == null || donor.isEmpty()) && (merged == null || merged.isBlank())) return null;
+        if (donor == null || donor.isEmpty()) return merged;
+        if (merged == null || merged.isEmpty()) return getInfoStringFromStringUuids(donor);
+        else {
+            Set<String> result = Arrays.stream(merged.split(" ")).collect(Collectors.toSet());
+            result.addAll(donor);
+            return result.stream().reduce((x, y) -> x.concat(" ").concat(y)).orElseThrow(() -> new RuntimeException("merge Info error"));
+        }
+    }
     default boolean findUuidInInfo(String string, String uuid) {
         if (string == null || string.equals("") || string.isBlank()) return false;
         return Arrays.asList(string.split(" ")).contains(uuid);
     }
 
     default String addUuidToInfo(String string, String uuid) {
-        if (string == null) return uuid;
+        if (string == null || string.isBlank()) return uuid;
+        if (uuid == null || uuid.isBlank()) return string;
         else return string.concat(" ").concat(uuid);
     }
 
     default Optional<String> removeUuidFromInfo(String string, String uuid) {
+        if (string == null || string.isBlank()) return Optional.empty();
+        if (uuid == null || uuid.isBlank()) return Optional.of(string);
         return Arrays.stream(string.split(" ")).filter(x -> !Objects.equals(x, uuid)).reduce((x, y) -> x.concat(" ").concat(y));
+    }
+
+    default Optional<String> removeAllUuidSFromInfo(String string, Set<String> uuids) {
+        if (string == null || string.isBlank()) return Optional.empty();
+        if (uuids == null || uuids.isEmpty()) return Optional.of(string);
+        String[] strings = string.split(" ");
+        StringBuilder rezult = new StringBuilder();
+        for (String str :
+                strings) {
+            if (!uuids.contains(str)) if (rezult.isEmpty()) rezult.append(str);
+            else rezult.append(" ").append(str);
+        }
+        return (rezult.isEmpty()) ? Optional.empty() : Optional.of(rezult.toString());
     }
 
     /**

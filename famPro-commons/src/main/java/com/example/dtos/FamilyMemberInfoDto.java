@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -31,7 +32,7 @@ public class FamilyMemberInfoDto {
     private SecretLevel secretLevelAddress;
     private Set<AddressDto> addresses;
 
-    private BiometricDto biometric;
+    private List<BiometricDto> biometric;
     private SecretLevel secretLevelBiometric;
 
     private BurialDto burial;

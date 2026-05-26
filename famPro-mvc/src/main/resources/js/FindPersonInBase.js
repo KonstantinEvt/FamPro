@@ -344,6 +344,9 @@ function checkAndSendStorageRequest() {
                     tempPerson.memberInfo.phones = person.memberInfo.phones;
                     tempPerson.memberInfo.addresses = person.memberInfo.addresses;
                     tempPerson.fioDtos = person.fioDtos;
+                    inputBio=tempPerson.memberInfo.biometric;
+                    countBio=inputBio.length-1;
+
                 }).then(() => editPersonInBase());
                 break;
             }
@@ -477,18 +480,22 @@ function paintExtendedPerson() {
 
 function paintBiometric() {
     let tempBio = ``;
-    if (tempPerson.memberInfo.biometric.height !== null && tempPerson.memberInfo.biometric.height !== undefined) tempBio += `<div> Рост: ${tempPerson.memberInfo.biometric.height}</div>`;
+    if (tempPerson.memberInfo.biometric[0].age !== null && tempPerson.memberInfo.biometric[0].age !== undefined) tempBio += `<div> Возраст: ${tempPerson.memberInfo.biometric[0].age}</div>`;
+    else tempBio += `<div> Возраст неизвестен</div>`;
+    if (tempPerson.memberInfo.biometric[0].height !== null && tempPerson.memberInfo.biometric[0].height !== undefined) tempBio += `<div> Рост: ${tempPerson.memberInfo.biometric[0].height}</div>`;
     else tempBio += `<div> Рост неизвестен</div>`;
-    if (tempPerson.memberInfo.biometric.weight !== null && tempPerson.memberInfo.biometric.weight !== undefined) tempBio += `<div> Вес: ${tempPerson.memberInfo.biometric.weight}</div>`;
+    if (tempPerson.memberInfo.biometric[0].weight !== null && tempPerson.memberInfo.biometric[0].weight !== undefined) tempBio += `<div> Вес: ${tempPerson.memberInfo.biometric[0].weight}</div>`;
     else tempBio += `<div> Вес неизвестен</div>`;
-    if (tempPerson.memberInfo.biometric.shirtSize !== null && tempPerson.memberInfo.biometric.shirtSize !== undefined) tempBio += `<div> Размер одежды: ${tempPerson.memberInfo.biometric.shirtSize}</div>`;
+    if (tempPerson.memberInfo.biometric[0].shirtSize !== null && tempPerson.memberInfo.biometric[0].shirtSize !== undefined) tempBio += `<div> Размер одежды: ${tempPerson.memberInfo.biometric[0].shirtSize}</div>`;
     else tempBio += `<div> Размер одежды неизвестен</div>`;
-    if (tempPerson.memberInfo.biometric.footSize !== null && tempPerson.memberInfo.biometric.footSize !== undefined) tempBio += `<div> Размер обуви: ${tempPerson.memberInfo.biometric.footSize}</div>`;
+    if (tempPerson.memberInfo.biometric[0].footSize !== null && tempPerson.memberInfo.biometric[0].footSize !== undefined) tempBio += `<div> Размер обуви: ${tempPerson.memberInfo.biometric[0].footSize}</div>`;
     else tempBio += `<div> Размер обуви неизвестен</div>`;
-    if (tempPerson.memberInfo.biometric.eyesColor !== null && tempPerson.memberInfo.biometric.eyesColor !== undefined) tempBio += `<div> Цвет глаз: ${tempPerson.memberInfo.biometric.eyesColor}</div>`;
+    if (tempPerson.memberInfo.biometric[0].eyesColor !== null && tempPerson.memberInfo.biometric[0].eyesColor !== undefined) tempBio += `<div> Цвет глаз: ${tempPerson.memberInfo.biometric[0].eyesColor}</div>`;
     else tempBio += `<div> Цвет глаз неизвестен</div>`;
-    if (tempPerson.memberInfo.biometric.hairColor !== null && tempPerson.memberInfo.biometric.hairColor !== undefined) tempBio += `<div> Цвет волос: ${tempPerson.memberInfo.biometric.hairColor}</div>`;
+    if (tempPerson.memberInfo.biometric[0].hairColor !== null && tempPerson.memberInfo.biometric[0].hairColor !== undefined) tempBio += `<div> Цвет волос: ${tempPerson.memberInfo.biometric[0].hairColor}</div>`;
     else tempBio += `<div> Цвет волос неизвестен</div>`;
+    if (tempPerson.memberInfo.biometric[0].description !== null && tempPerson.memberInfo.biometric[0].description !== undefined) tempBio += `<div> Описание: ${tempPerson.memberInfo.biometric[0].description}</div>`;
+    else tempBio += `<div> Описание отсутствует</div>`;
     document.getElementById("biometricExt").innerHTML = tempBio;
 }
 

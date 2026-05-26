@@ -127,14 +127,16 @@ public class MemberRepository {
     @Transactional(readOnly = true)
     public Set<ShortFamilyMember> getAllMembersByUuids(Set<UUID> uuids) {
         Set<ShortFamilyMember> members;
+        log.info("begin search");
         try {
             members = new HashSet<>(entityManager.createQuery("from ShortFamilyMember a where a.uuid in: uuids", ShortFamilyMember.class)
                     .setParameter("uuids", uuids)
                     .getResultList());
         } catch (RuntimeException e) {
-            log.info("Letters not found");
+            log.info("Members not found");
             members = new HashSet<>();
         }
+        log.info("end search");
         return members;
     }
     @Transactional(readOnly = true)

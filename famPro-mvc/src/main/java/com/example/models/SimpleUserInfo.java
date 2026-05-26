@@ -17,7 +17,7 @@ import java.util.Map;
 @ToString
 public class SimpleUserInfo {
     private String nickName = "Anonymous";
-    private Localisation localisation = Localisation.EN;
+    private Localisation localisation = Localisation.RU;
     private String email;
     private String firstName = "Unknown";
     private String middleName = "Unknown";

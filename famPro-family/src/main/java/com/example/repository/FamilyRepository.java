@@ -94,4 +94,36 @@ public class FamilyRepository {
         }
         return family;
     }
+    @Transactional(readOnly = true)
+    public Optional<Family> findFamilyWithLinksByUUID(UUID uuid) {
+        Optional<Family> family;
+        try {
+            family = Optional.of(entityManager.createQuery("from Family a left join fetch a.familyMemberLinks where a.uuid=:uuid", Family.class)
+                    .setParameter("uuid", uuid)
+                    .getSingleResult());
+        }catch (NoResultException e){
+            log.info("family with links not found");
+            family = Optional.empty();
+        } catch (RuntimeException e) {
+            log.warn("Error in finding family with links");
+            family = Optional.empty();
+        }
+        return family;
+    }
+    @Transactional(readOnly = true)
+    public Optional<Family> findFamilyWithLinksByName(String name) {
+        Optional<Family> family;
+        try {
+            family = Optional.of(entityManager.createQuery("from Family a left join fetch a.familyMemberLinks where a.familyName=:name", Family.class)
+                    .setParameter("name", name)
+                    .getSingleResult());
+        }catch (NoResultException e){
+            log.info("family with links not found");
+            family = Optional.empty();
+        } catch (RuntimeException e) {
+            log.warn("Error in finding family with links");
+            family = Optional.empty();
+        }
+        return family;
+    }
 }

@@ -29,6 +29,9 @@ public class Biometric {
     @Column(name = "UUID")
     private UUID uuid;
 
+    @Column(name = "age")
+    private int age;
+
     @Column(name = "height")
     private int height;
 
@@ -49,6 +52,9 @@ public class Biometric {
     @Column(name = "shirt_size")
     private int shirtSize;
 
+    @Column(name = "description", length = 2047)
+    private String description;
+
     @ManyToMany(mappedBy = "biometricData")
     private Set<FamilyMemberInfo> familyMemberInfo;
 
@@ -57,7 +63,7 @@ public class Biometric {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Biometric biometric = (Biometric) o;
-        return height == biometric.height && weight == biometric.weight && footSize == biometric.footSize && shirtSize == biometric.shirtSize && Objects.equals(id, biometric.id) && Objects.equals(uuid, biometric.uuid) && hairColor == biometric.hairColor && eyesColor == biometric.eyesColor;
+        return age == biometric.age && height == biometric.height && weight == biometric.weight && footSize == biometric.footSize && shirtSize == biometric.shirtSize && Objects.equals(id, biometric.id) && Objects.equals(uuid, biometric.uuid) && hairColor == biometric.hairColor && eyesColor == biometric.eyesColor && Objects.equals(description, biometric.description);
     }
 
     @Override

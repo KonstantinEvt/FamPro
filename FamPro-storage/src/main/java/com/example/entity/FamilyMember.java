@@ -86,6 +86,9 @@ public class FamilyMember extends Fio {
     @Column(name = "creator")
     private String creator;
 
+    @Column(name = "first_creator")
+    private String firstCreator;
+
     @Column(name = "create_time")
     private Timestamp createTime;
 

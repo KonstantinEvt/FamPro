@@ -34,10 +34,10 @@ public class WorkCabinetController {
 //        model.addAttribute("roles", simpleUserInfo.getRole());
 //        model.addAttribute("name", simpleUserInfo.getFullName());
 //        if (simpleUserInfo.getLocalisation()== Localisation.RU)
-        if (Objects.equals(onlineUserHolder.getLocalisation(), Localisation.RU.name().toLowerCase()))
-            return "WelcomeRu";
-        else
+        if (Objects.equals(onlineUserHolder.getLocalisation(), Localisation.EN.name().toLowerCase()))
             return "WelcomeOld";
+        else
+            return "WelcomeRu";
     }
 
 //    @GetMapping("/rules")
@@ -105,6 +105,7 @@ public class WorkCabinetController {
 
         SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
         simpleUserInfo.setLocalisation(tokenService.chooseLocalisation(loc));
+        if (loc==null||loc.isBlank()) loc="RU";
         tokenService.setGlobalLocalisation((String) tokenService.getTokenUser().getClaims().get("sub"),loc);
         return new RedirectView(gateway + "/cabinet/page");
     }

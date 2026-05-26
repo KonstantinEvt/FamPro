@@ -61,17 +61,18 @@ function loadOnlineUser() {
         if (role !== "LinkedUser") document.getElementById("linking-knopa").innerHTML = `<a class="nav-link" style="color: red;" href="#mainPanel"
                            onclick="getPersonFromBase(0)">Связать</a>`;
         else {
-            fetch("/guard/getLinkGuard", {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json; charset=UTF-8"
-                    // "Access-Control-Allow-Origin": "*"
-                }
-            }).then(promise => promise.text()).then(x => {
-                ownLinkId = x;
-                console.log(ownLinkId)
-            })
-
+            if (ownLinkId===undefined||ownLinkId==null) {
+                fetch("/guard/getLinkGuard", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json; charset=UTF-8"
+                        // "Access-Control-Allow-Origin": "*"
+                    }
+                }).then(promise => promise.text()).then(x => {
+                    ownLinkId = x;
+                    console.log(ownLinkId)
+                })
+            }
             document.getElementById("linking-knopa").innerHTML = ``;
             document.getElementById("getLinkedPerson").innerHTML = `
                 <a class="dropdown-item" style="color: chocolate;" href="#mainPanel" onclick="getPersonalPage()">Ты в базе</a>`;

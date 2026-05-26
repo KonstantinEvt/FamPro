@@ -28,13 +28,14 @@ public class DirectiveService {
     private final SendAndFormService sendAndFormService;
     private final Map<UUID, Localisation> tempLocalisation;
     private final FamilyRepository familyRepository;
+    private final FamilyMemberLinkService familyMemberLinkService;
 
     public DirectiveService(DirectiveRepository directiveRepository, GuardService guardService,
                             FamilyServiceImp familyService,
                             MemberService memberService,
                             DirectiveRepo directiveRepo,
                             List<Directive> cloakDirective,
-                            SendAndFormService sendAndFormService, Map<UUID, Localisation> tempLocalisation, FamilyRepository familyRepository) {
+                            SendAndFormService sendAndFormService, Map<UUID, Localisation> tempLocalisation, FamilyRepository familyRepository, FamilyMemberLinkService familyMemberLinkService) {
         this.directiveRepository = directiveRepository;
         this.guardService = guardService;
         this.familyService = familyService;
@@ -44,6 +45,7 @@ public class DirectiveService {
         this.sendAndFormService = sendAndFormService;
         this.tempLocalisation = tempLocalisation;
         this.familyRepository = familyRepository;
+        this.familyMemberLinkService = familyMemberLinkService;
     }
 
     @Transactional
@@ -116,8 +118,10 @@ public class DirectiveService {
         Set<DirectiveMember> directiveMembers = directiveRepository.getListMembersOfDirective(deferredDirective);
         Set<ShortFamilyMember> processMembers = directiveMembers.stream().map(DirectiveMember::getDirectiveMember).collect(Collectors.toSet());
         SwitchPosition switchPosition = deferredDirective.getSwitchPosition();
-        UUID directiveKeeper = deferredDirective.getDirectiveKeeper();
-
+        UUID directiveKeeper;
+        if (deferredDirective.getDirectiveKeeper() == null) {
+            directiveKeeper = processMembers.stream().findFirst().orElseThrow(()->new RuntimeException("processMembers are empty")).getUuid();
+        } else directiveKeeper = deferredDirective.getDirectiveKeeper();
         directiveRepo.delete(deferredDirective);
 
         Set<String> setLinkedStatus = new HashSet<>();
@@ -148,12 +152,15 @@ public class DirectiveService {
         Family mainFamily = memberService.getPrimeFamily(mainMember);
         if (switchPosition == SwitchPosition.MAIN) {
             Family processFamily = memberService.getPrimeFamily(processMemberKeeper);
-            processFamily.getChildren().add(mainMember);
-            familyService.mergeFamilies(mainFamily, processFamily);
-            mainMember.setFamilyWhereChild(processFamily);
-            if (Objects.equals(mainMember.getActiveFamily().getId(), mainFamily.getId()))
+//            processFamily.getChildren().add(mainMember);
+            familyService.addPersonToFamily(processFamily,mainMember,RoleInFamily.CHILD, FamilyLevel.PRIMARY);
+//            mainMember.setFamilyWhereChild(processFamily);
+            familyMemberLinkService.changeFamilyLink(mainMember,mainFamily,processFamily);
+            if (mainMember.getActiveFamily()!=null&&Objects.equals(mainMember.getActiveFamily().getId(), mainFamily.getId()))
                 mainMember.setActiveFamily(processFamily);
-            familyService.changeFamilyForPerson(mainFamily, processFamily, mainMember);
+            if (mainMember.getLogicPrimary()!=null&&Objects.equals(mainMember.getLogicPrimary().getId(), mainFamily.getId()))
+                mainMember.setLogicPrimary(processFamily);
+//            familyService.changeFamilyForPerson(mainFamily, processFamily, mainMember,FamilyLevel.PRIMARY);
             log.info("merge family is done");
             familyToRemove.add(mainFamily);
         } else {
@@ -211,10 +218,12 @@ public class DirectiveService {
             if (mayMerge.isPresent()) {
                 Optional<Family> family = familyRepository.findFamilyByUUID(mayMerge.get());
                 if (family.isPresent() && !Objects.equals(family.get().getUuid(), childFamily.getUuid())) {
-                    familyService.mergeFamilies(childFamily, family.get());
+                    familyService.mergeFamilies(childFamily, family.get(),FamilyLevel.PRIMARY);
                     child.setFamilyWhereChild(family.get());
                     if (Objects.equals(child.getActiveFamily().getId(), childFamily.getId()))
                         mainMember.setActiveFamily(family.get());
+                    if (Objects.equals(child.getLogicPrimary().getId(), childFamily.getId()))
+                        mainMember.setLogicPrimary(family.get());
                     family.get().getChildren().add(child);
                     memberService.updateMember(child);
                     familyToRemove.add(childFamily);

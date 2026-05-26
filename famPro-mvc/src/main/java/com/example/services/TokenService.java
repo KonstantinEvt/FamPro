@@ -85,7 +85,7 @@ public class TokenService {
         return Localisation.EN;
     }
     public void setGlobalLocalisation(String inlineUuid, String localisationString){
-        Localisation localisation=Localisation.EN;
+        Localisation localisation=Localisation.RU;
         for (Localisation loc :
                 Localisation.values()) {
             if (localisationString.toUpperCase().equals(loc.name()))

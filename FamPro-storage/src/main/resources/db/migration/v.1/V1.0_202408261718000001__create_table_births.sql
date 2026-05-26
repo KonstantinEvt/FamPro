@@ -19,7 +19,9 @@ create table if not exists births
                    ((ARRAY [
                        'OPEN'::character varying,
                        'CONFIDENTIAL'::character varying,
-                       'FAMILY'::character varying,
+                       'ACTIVE_FAMILY'::character varying,
+                       'LOGIC_PRIMARY_FAMILY'::character varying,
+                       'PRIMARY_FAMILY'::character varying,
                        'GENETIC_TREE'::character varying,
                        'ANCESTOR'::character varying,
                        'STRAIGHT_BLOOD'::character varying,

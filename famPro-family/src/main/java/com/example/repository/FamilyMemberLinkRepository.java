@@ -128,11 +128,10 @@ public class FamilyMemberLinkRepository {
     }
 
     @Transactional(readOnly = true)
-    public Set<FamilyMemberLink> getAllFamilyMemberLinksByFamily(ShortFamilyMember member) {
+    public Set<FamilyMemberLink> getAllFamilyMemberLinksOfPerson(ShortFamilyMember member) {
         Set<FamilyMemberLink> familyMemberLinks;
         try {
-            familyMemberLinks = new HashSet<>(entityManager.createQuery("from FamilyMemberLink a left join fetch a.member left join fetch a.family where a.member=: member", FamilyMemberLink.class)
-
+            familyMemberLinks = new HashSet<>(entityManager.createQuery("from FamilyMemberLink a where a.member=: member", FamilyMemberLink.class)
                     .setParameter("member", member)
                     .getResultList());
         } catch (RuntimeException e) {

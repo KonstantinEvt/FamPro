@@ -15,11 +15,13 @@ import java.util.UUID;
 public class BiometricDto {
     private Long id;
     private UUID uuid;
+    private int age;
     private int height;
     private int weight;
     private int footSize;
     private Colors hairColor;
     private Colors eyesColor;
     private int shirtSize;
+    private String description;
     private Localisation localisation;
 }

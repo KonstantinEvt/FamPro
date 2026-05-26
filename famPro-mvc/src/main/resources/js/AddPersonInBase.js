@@ -4,14 +4,21 @@ let countOtherNames = 1;
 let insertOther = [];
 let insertEmail = [];
 let insertPhone = [];
+let countBio=0;
+let inputBio=[];
+let tempPagBio;
+let activeBio;
 
 function addFamilyMember() {
+    activeBio=0;
     countPhone = 0;
     countEmail = 0;
+    countBio=0;
     countOtherNames = 1;
     insertOther = [];
     insertPhone = [];
     insertEmail = [];
+    inputBio=[];
     document.getElementById("mainPanel").innerHTML = `
 <div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px">*** Adding Person ***</div>
 <form class="form-group" style="margin:5px; text-align: center;" id="baseFormAddFM">
@@ -221,105 +228,128 @@ function addFamilyMember() {
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePP" aria-label="chooseSecurePP">            
             <option value="OPEN" selected>Открыто</option>
             <option value="CONFIDENTIAL">Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY" >Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
             
         </select>
         <label for="chooseSecureEE" style="color: chocolate; padding-top: 5px">Secure edit:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureEE" aria-label="chooseSecureEE">            
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY"  >Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureMain" style="color: chocolate; padding-top: 5px">Secure edit main:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureMain" aria-label="chooseSecureMain">            
             <option value="CONFIDENTIAL" selected>Личное</option>            
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY"  >Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureBirthday" style="color: chocolate; padding-top: 5px">Secure Birthday:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureBirthday" aria-label="chooseSecureBirthday">            
             <option value="OPEN" >Открыто</option>
-            <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY" >Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" selected>Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureRM" style="color: chocolate; padding-top: 5px">Secure remove:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureRM" aria-label="chooseSecureRM">            
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY"  >Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureME" style="color: chocolate; padding-top: 5px">Secure main email:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureME" aria-label="chooseSecureME">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
                 <label for="chooseSecurePBur" style="color: chocolate; padding-top: 5px">Secure place of burial:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBur" aria-label="chooseSecurePBur">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecurePBirth" style="color: chocolate; padding-top: 5px">Secure place of birth:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBirth" aria-label="chooseSecurePBirth">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY" >Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureMP" style="color: chocolate; padding-top: 5px">Secure main phone:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px; text-align: center" id="chooseSecureMP" aria-label="chooseSecureMP">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureMA" style="color: chocolate; padding-top: 5px">Secure main address:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px; text-align: center" id="chooseSecureMA" aria-label="chooseSecureMA">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureBio" style="color: chocolate; padding-top: 5px">Secure biometric:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureBio" aria-label="chooseSecureBio">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureDes" style="color: chocolate; padding-top: 5px">Secure description:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureDes" aria-label="chooseSecureDes">            
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
                         </span>
@@ -341,7 +371,9 @@ function addFamilyMember() {
                 <div class="accordion-body">
                     <div class="container-fluid row mh-100 no-gutters">
                         <span class="col" style="width: 30%"></span>
-                        <span class="col-6" style="min-width: 300px">
+                        <span class="col-6" style="min-width: 300px">                               
+        <label for="ageFM" style="color: chocolate; padding-top: 5px">Возраст наблюдения</label>
+        <input class="form-control" style="text-align: center" type="number" id="ageFM" name="ageFM" placeholder="введите число">                
         <label for="heightFM" style="color: chocolate; padding-top: 5px">Рост (см)</label>
         <input class="form-control" style="text-align: center" type="number" id="heightFM" name="heightFM" placeholder="введите число">
         <label for="weightFM" style="color: chocolate; padding-top: 5px">Вес (кг)</label>
@@ -352,7 +384,7 @@ function addFamilyMember() {
         <input class="form-control" style="text-align: center" type="number" id="shirtSizeFM" name="shirtSizeFM" placeholder="введите число">
         <label for="eyesColorFM" style="color: chocolate; padding-top: 5px">Цвет глаз:</label>
         <select class="form-select" style="text-align: center" id="eyesColorFM" aria-label="eyesColorFM" >
-            <option value="UNKNOWN" selected>Неизветный</option>        
+            <option value="UNKNOWN" selected>Неизвеcтный</option>        
             <option value="RED">Красный</option>
             <option value="BROWN" >Коричневый</option>
             <option value="BLACK">Черный</option>
@@ -362,13 +394,22 @@ function addFamilyMember() {
         </select>
         <label for="hairColorFM" style="color: chocolate; padding-top: 5px">Цвет волос:</label>
         <select class="form-select" style="text-align: center" id="hairColorFM" aria-label="hairColorFM">
-            <option value="UNKNOWN" selected>Неизветный</option>               
+            <option value="UNKNOWN" selected>Неизвеcтный</option>               
             <option value="WHITE">Белый</option>
             <option value="BROWN" >Коричневый</option>
             <option value="BLACK">Черный</option>
             <option value="YELLOW">Желтый</option>
             <option value="RED">Рыжий</option>
         </select>
+        <label for="descriptionFM" style="color: chocolate; padding-top: 5px">Описание</label>
+        <input class="form-control" style="text-align: center" type="text" id="descriptionFM" name="descriptionFM" placeholder="введите текст">
+        <br>
+        <div id="addAndRemoveBio">        
+        <button class="btn btn-outline-success" type="button" style="margin-top: 5px" onclick="addBiometricField()">Дополнительный возраст</button>
+        <button class="btn btn-outline-success" type="button" style="margin-top: 5px" onclick="removeBiometricField()">Очистить возраст</button>
+         </div>        
+         <div id="pagan"> 
+         </div>  
                         </span>
                         <span class="col" style="width: 30%"></span>
                     </div>
@@ -461,7 +502,110 @@ function addFamilyMember() {
 </form>
  `
 }
-
+function addBiometricField(){
+    createAgeBio(activeBio);
+    countBio++;
+    activeBio=countBio;
+    clearCurrentEntries();
+    createCurrentPagination(countBio);
+}
+function clearCurrentEntries(){
+    const form=document.getElementById('baseFormAddFM');
+    form.elements.ageFM.value='';
+    form.elements.heightFM.value='';
+    form.elements.weightFM.value='';
+    form.elements.footSizeFM.value='';
+    form.elements.hairColorFM.value="UNKNOWN";
+    form.elements.eyesColorFM.value="UNKNOWN";
+    form.elements.shirtSizeFM.value='';
+    form.elements.descriptionFM.value='';
+}
+function removeBiometricField(){
+    if (countBio===0) clearCurrentEntries()
+    else {  countBio--;
+        inputBio.splice(activeBio,1);
+        if (activeBio!==0) activeBio--;
+        displayBio(activeBio,-1);
+        if (countBio!==0) createCurrentPagination(activeBio)
+        else document.getElementById("pagan").innerHTML=``;
+    }
+}
+function createCurrentPagination(pagActive){
+    console.log(pagActive);
+    console.log(activeBio);
+    console.log(inputBio);
+    tempPagBio=`<br>
+        <div>Введенные возрасты</div>
+        <nav aria-label="BioNavigation">
+            <ul class="pagination">`
+    if (pagActive!==0) tempPagBio+=`
+                        <li class="page-item" >
+                            <button class="btn btn-outline-warning" type="button" onclick="displayBio(${pagActive-1},${pagActive})">Предыдущий</button>
+                        </li>`
+    else tempPagBio+=`
+                        <li class="page-item " >
+                            <button class="btn btn-outline-secondary" type="button" disabled>Предыдущий</button>
+                        </li>`
+    for (let i = 0; i <= countBio; i++) {
+        if (i===pagActive && inputBio[i]!== undefined && inputBio[i].age!== undefined && inputBio[i].age!==``)
+        tempPagBio+=`<li class="page-item active">
+                        <button class="btn btn-warning" type="button" onclick="displayBio(${i},${pagActive})">${inputBio[i].age}</button>
+                     </li>`
+        else  if (inputBio[i]!== undefined && inputBio[i].age!== undefined && inputBio[i].age!==``) tempPagBio+=`<li class="page-item">
+                        <button class="btn btn-outline-warning" type="button" onclick="displayBio(${i},${pagActive})">${inputBio[i].age}</button>
+                     </li>`
+        else  if (i===pagActive && i===countBio && inputBio[i]=== undefined) tempPagBio+=`<li class="page-item">
+                        <button class="btn btn-warning" type="button" onclick="displayBio(${i},${pagActive})">новый</button>
+                     </li>`
+        else  if (i===countBio && inputBio[i]=== undefined) tempPagBio+=`<li class="page-item">
+                        <button class="btn btn-outline-warning" type="button" onclick="displayBio(${i},${pagActive})">новый</button>
+                     </li>`
+        else  if (i===pagActive && (inputBio[i]=== undefined||inputBio[i].age===``)) tempPagBio+=`<li class="page-item">
+                        <button class="btn btn-warning" type="button" onclick="displayBio(${i},${pagActive})">!</button>
+                     </li>`
+        else  if (inputBio[i]=== undefined||inputBio[i].age===``) tempPagBio+=`<li class="page-item">
+                        <button class="btn btn-outline-warning" type="button" onclick="displayBio(${i},${pagActive})">!</button>
+                     </li>`
+    }
+    if (pagActive!==countBio) tempPagBio+=`
+                        <li class="page-item" id="navBioPrev">
+                            <button class="btn btn-outline-warning" type="button" onclick="displayBio(${pagActive+1},${pagActive})">Следующий</button>
+                        </li>`
+    else tempPagBio+=`
+                        <li class="page-item" id="navBioPrev">
+                            <button class="btn btn-outline-secondary" type="button" disabled>Следующий</button>
+                        </li>`
+    tempPagBio+=`
+            </ul>
+        </nav>`
+    document.getElementById("pagan").innerHTML=tempPagBio;
+}
+function createAgeBio(pagActive){
+    const form=document.getElementById('baseFormAddFM');
+    inputBio[pagActive] = {
+        age:form.elements.ageFM.value,
+        height: form.elements.heightFM.value,
+        weight: form.elements.weightFM.value,
+        footSize: form.elements.footSizeFM.value,
+        hairColor: (form.elements.hairColorFM.value==="UNKNOWN")?null:form.elements.hairColorFM.value,
+        eyesColor: (form.elements.eyesColorFM.value==="UNKNOWN")?null:form.elements.eyesColorFM.value,
+        shirtSize: form.elements.shirtSizeFM.value,
+        description: form.elements.descriptionFM.value};
+}
+function displayBio(pagActive,oldActive){
+    const form=document.getElementById('baseFormAddFM');
+    if (oldActive!==-1) {createAgeBio(oldActive);
+    activeBio=pagActive;}
+    form.elements.ageFM.value=inputBio[pagActive].age;
+    form.elements.heightFM.value=inputBio[pagActive].height;
+    form.elements.weightFM.value=inputBio[pagActive].weight;
+    form.elements.footSizeFM.value=inputBio[pagActive].footSize;
+    form.elements.hairColorFM.value=(inputBio[pagActive].hairColor===null)?"UNKNOWN":inputBio[pagActive].hairColor;
+    form.elements.eyesColorFM.value=(inputBio[pagActive].eyesColor===null)?"UNKNOWN":inputBio[pagActive].eyesColor;
+    form.elements.shirtSizeFM.value=inputBio[pagActive].shirtSize;
+    form.elements.descriptionFM.value=inputBio[pagActive].description;
+createCurrentPagination(pagActive);
+}
 function addPhonesField() {
     if (countPhone < 4) {
         document.getElementById("deleteButtonsPhoneAddFM").innerHTML += `
@@ -636,8 +780,7 @@ function submitBaseFormAddFM() {
             );
         }
     }
-    let hairColor = (form.elements.hairColorFM.value==="UNKNOWN")?null:form.elements.hairColorFM.value;
-    let eyesColor = (form.elements.eyesColorFM.value==="UNKNOWN")?null:form.elements.eyesColorFM.value;
+    createAgeBio(activeBio);
     let formData = {
         primePhoto: primePhotoExist,
 
@@ -664,14 +807,7 @@ function submitBaseFormAddFM() {
             secretLevelPhone: form.elements.chooseSecureMP.value,
             secretLevelBiometric: form.elements.chooseSecureBio.value,
             secretLevelDescription: form.elements.chooseSecureDes.value,
-            biometric: {
-                height: form.elements.heightFM.value,
-                weight: form.elements.weightFM.value,
-                footSize: form.elements.footSizeFM.value,
-                hairColor: hairColor,
-                eyesColor: eyesColor,
-                shirtSize: form.elements.shirtSizeFM.value
-            },
+            biometric: inputBio,
             birth: {
                 country: form.elements.birthCountryAddFM.value,
                 region: form.elements.birthRegionAddFM.value,

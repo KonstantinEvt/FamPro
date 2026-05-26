@@ -97,7 +97,7 @@ public class FamilyMemberInfoService {
                 emailsDto.add(fmi.getMainEmail());
                 if (!Objects.equals(emailsExtended, emailsDto)) tempAcceptChange = true;
             }
-            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getEmails() == null && familyMemberDto.getMemberInfo().getEmails() != null)||
+            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getEmails() == null && familyMemberDto.getMemberInfo().getEmails() != null) ||
                     !Objects.equals(familyMemberDto.getMemberInfo().getMainEmail(), mainContact.getMainEmail()) || tempAcceptChange)) {
                 if (familyMemberDto.getMemberInfo().getEmails() == null) fmi.setEmailsSet(new HashSet<>());
                 else
@@ -118,7 +118,7 @@ public class FamilyMemberInfoService {
                 phonesDto.add(fmi.getMainPhone());
                 if (!Objects.equals(phonesExtended, phonesDto)) tempAcceptChange = true;
             }
-            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getPhones() == null && familyMemberDto.getMemberInfo().getPhones() != null)||
+            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getPhones() == null && familyMemberDto.getMemberInfo().getPhones() != null) ||
                     !Objects.equals(familyMemberDto.getMemberInfo().getMainPhone(), mainContact.getMainPhone()) || tempAcceptChange)) {
 
                 if (familyMemberDto.getMemberInfo().getPhones() == null) fmi.setPhonesSet(new HashSet<>());
@@ -141,7 +141,7 @@ public class FamilyMemberInfoService {
                 addressDto.removeAll(addressExtended);
                 if (!addressDto.isEmpty()) tempAcceptChange = true;
             }
-            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getAddresses() == null && familyMemberDto.getMemberInfo().getAddresses() != null)||
+            if (Objects.equals(token, "add") || (tempStatusEdit == null || tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getAddresses() == null && familyMemberDto.getMemberInfo().getAddresses() != null) ||
                     tempAcceptChange)) {
 
                 if (familyMemberDto.getMemberInfo().getAddresses() == null) fmi.setAddressesSet(new HashSet<>());
@@ -157,14 +157,19 @@ public class FamilyMemberInfoService {
             if (tempStatusEdit != null &&
                     tempStatusEdit.getMemberInfo() != null &&
                     tempStatusEdit.getMemberInfo().getBiometric() != null) {
-                tempStatusEdit.getMemberInfo().getBiometric().setId(null);
-                tempStatusEdit.getMemberInfo().getBiometric().setUuid(null);
-                tempAcceptChange = !Objects.equals(familyMemberDto.getMemberInfo().getBiometric(), tempStatusEdit.getMemberInfo().getBiometric());
+                Set<BiometricDto> biometricDtos = new HashSet<>();
+                for (BiometricDto biometricDto : tempStatusEdit.getMemberInfo().getBiometric()) {
+                    biometricDto.setUuid(null);
+                    biometricDto.setId(null);
+                    biometricDtos.add(biometricDto);
+                }
+                familyMemberDto.getMemberInfo().getBiometric().forEach(biometricDtos::remove);
+                if (!biometricDtos.isEmpty()) tempAcceptChange = true;
             }
             if (Objects.equals(token, "add") ||
                     tempStatusEdit == null ||
-                    tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getBiometric() == null && familyMemberDto.getMemberInfo().getBiometric() != null)|| tempAcceptChange) {
-                fmi.setBiometricData(List.of(biometricMapper.dtoToEntity(familyMemberDto.getMemberInfo().getBiometric())));
+                    tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getBiometric() == null && familyMemberDto.getMemberInfo().getBiometric() != null) || tempAcceptChange) {
+                fmi.setBiometricData(new ArrayList<>(biometricMapper.collectionDtoToCollectionEntity(familyMemberDto.getMemberInfo().getBiometric())));
                 biometricService.mergeBiometric(fmi, fmiFromBase);
             }
             tempAcceptChange = false;
@@ -178,7 +183,7 @@ public class FamilyMemberInfoService {
             }
             if (Objects.equals(token, "add") ||
                     tempStatusEdit == null ||
-                    tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getDescription() == null && familyMemberDto.getMemberInfo().getDescription() != null)|| tempAcceptChange) {
+                    tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getDescription() == null && familyMemberDto.getMemberInfo().getDescription() != null) || tempAcceptChange) {
                 fmi.setDescriptionData(List.of(descriptionMapper.dtoToEntity(familyMemberDto.getMemberInfo().getDescription())));
                 descriptionService.mergeDescription(fmi, fmiFromBase);
             }
@@ -286,9 +291,9 @@ public class FamilyMemberInfoService {
             dto.setPhones(null);
         if (familyMemberInfo.getSecretLevelBiometric() != SecretLevel.UNDEFINED && familyMemberInfo.getSecretLevelBiometric() != SecretLevel.CLOSE) {
             if (familyMemberInfo.getBiometricData() != null && !familyMemberInfo.getBiometricData().isEmpty())
-                dto.setBiometric(biometricMapper.entityToDto(familyMemberInfo.getBiometricData().get(0)));
+                dto.setBiometric(new ArrayList<>(biometricMapper.collectionEntityToCollectionDto(familyMemberInfo.getBiometricData())));
             else
-                dto.setBiometric(biometricMapper.entityToDto(biometricService.getBiometricByInfoId(familyMemberInfo.getId()).get(0)));
+                dto.setBiometric(new ArrayList<>(biometricMapper.collectionEntityToCollectionDto(biometricService.getBiometricByInfoId(familyMemberInfo.getId()))));
         } else dto.setBiometric(null);
         if (familyMemberInfo.getSecretLevelDescription() != SecretLevel.UNDEFINED && familyMemberInfo.getSecretLevelDescription() != SecretLevel.CLOSE) {
             if (familyMemberInfo.getDescriptionData() != null && !familyMemberInfo.getDescriptionData().isEmpty())

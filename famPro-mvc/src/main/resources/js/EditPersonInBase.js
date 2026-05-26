@@ -6,6 +6,7 @@ let insertEmailEdit = [];
 let insertPhoneEdit = [];
 
 function editPersonInBase() {
+    activeBio=0;
     countPhoneEdit = 0;
     countEmailEdit = 0;
     countOtherNamesEdit = 1;
@@ -229,116 +230,140 @@ function editPersonInBase() {
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePP" aria-label="chooseSecurePP">            
             <option value="OPEN" selected>Открыто</option>            
             <option value="CONFIDENTIAL">Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureEE" style="color: chocolate; padding-top: 5px" id="labelSecureEE">Secure edit:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureEE" aria-label="chooseSecureEE">            
             <option value="OPEN" >Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureMain" style="color: chocolate; padding-top: 5px" id="labelSecureMain">Secure edit main:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureMain" aria-label="chooseSecureMain">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureBirthday" style="color: chocolate; padding-top: 5px" id="labelSecureBirthday">Secure Birthday:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureBirthday" aria-label="chooseSecureBirthday">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureRM" style="color: chocolate; padding-top: 5px" id="labelSecureRM">Secure remove:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureRM" aria-label="chooseSecureRM">          
             
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureME" style="color: chocolate; padding-top: 5px" id="labelSecureME">Secure main email:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureME" aria-label="chooseSecureME">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
                 <label for="chooseSecurePBur" style="color: chocolate; padding-top: 5px" id="labelSecurePBur">Secure place of burial:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBur" aria-label="chooseSecurePBur">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecurePBirth" style="color: chocolate; padding-top: 5px" id="labelSecurePBirth">Secure place of birth:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecurePBirth" aria-label="chooseSecurePBirth">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureMP" style="color: chocolate; padding-top: 5px" id="labelSecureMP">Secure main phone:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px; text-align: center" id="chooseSecureMP" aria-label="chooseSecureMP">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureMA" style="color: chocolate; padding-top: 5px" id="labelSecureMA">Secure main address:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px; text-align: center" id="chooseSecureMA" aria-label="chooseSecureMA">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureBio" style="color: chocolate; padding-top: 5px" id="labelSecureBio">Secure biometric:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureBio" aria-label="chooseSecureBio">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
         <label for="chooseSecureDes" style="color: chocolate; padding-top: 5px" id="labelSecureDes">Secure description:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureDes" aria-label="chooseSecureDes">            
             <option value="OPEN">Открыто</option>
             <option value="CONFIDENTIAL" selected>Личное</option>
-            <option value="ANCESTOR" >Предки</option>
-            <option value="FAMILY">Семейное</option>
+            <option value="ACTIVE_FAMILY" >Активная семья</option>
+            <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
+            <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
         </select>
                         </span>
                         <span class="col" style="width: 30%"></span>
                     </div>
-                    <div style="margin-top: 15px">Внимание! Уровни конфиденциальности будут работать</div> 
-        <div>только при условии связанности или наличия у данной персоны </div>
-        <div>родственников-пользователей портала !</div>                    
+                    <div style="margin-top: 15px">Внимание! Уровни конфиденциальности корректно</div> 
+        <div>будут работать только при условии связанности или наличия  </div>
+        <div>у данной персоны родственников-пользователей портала !</div>                    
                 </div>
             </div>
         </div>
@@ -353,6 +378,8 @@ function editPersonInBase() {
                     <div class="container-fluid row mh-100 no-gutters">
                         <span class="col" style="width: 30%"></span>
                         <span class="col-6" style="min-width: 300px">
+        <label for="ageFM" style="color: chocolate; padding-top: 5px">Возраст наблюдения</label>
+        <input class="form-control" style="text-align: center" type="number" id="ageFM" name="ageFM" placeholder="введите число">                
         <label for="heightFM" style="color: chocolate; padding-top: 5px">Рост (см)</label>
         <input class="form-control" style="text-align: center" type="number" id="heightFM" name="heightFM" placeholder="введите число">
         <label for="weightFM" style="color: chocolate; padding-top: 5px">Вес (кг)</label>
@@ -380,6 +407,15 @@ function editPersonInBase() {
             <option value="YELLOW">Желтый</option>
             <option value="RED">Рыжий</option>
         </select>
+        <label for="descriptionFM" style="color: chocolate; padding-top: 5px">Возраст наблюдения</label>
+        <input class="form-control" style="text-align: center" type="text" id="descriptionFM" name="descriptionFM" placeholder="введите описание">  
+        <br>
+        <div id="addAndRemoveBio">        
+        <button class="btn btn-outline-success" type="button" style="margin-top: 5px" onclick="addBiometricField()">Дополнительный возраст</button>
+        <button class="btn btn-outline-success" type="button" style="margin-top: 5px" onclick="removeBiometricField()">Очистить возраст</button>
+         </div>        
+         <div id="pagan"> 
+         </div>  
                         </span>
                         <span class="col" style="width: 30%"></span>
                     </div>
@@ -588,19 +624,31 @@ function editPersonInBase() {
             document.getElementById("chooseSecureDes").hidden = true;
             document.getElementById("labelSecureDes").hidden = true;
         }
-
-
-        if (tempPerson.motherInfo !== infoAbsent && tempPerson.motherInfo.charAt(0) !== '(' && tempPerson.motherInfo !== infoUncorrected) {
+        let linkingMother =tempPerson.motherInfo !== infoAbsent && tempPerson.motherInfo.charAt(0) !== '(' && tempPerson.motherInfo !== infoUncorrected;
+        let linkingFather=tempPerson.fatherInfo !== infoAbsent && tempPerson.fatherInfo.charAt(0) !== '(' && tempPerson.fatherInfo !== infoUncorrected;
+        if (linkingMother&&tempPerson.secretLevelRemove==="CLOSE") {
             lockMother();
             document.getElementById("lockParentsInfo").innerHTML = `
-            Связанного родителя <strong>нельзя</strong> отсюда изменить (его поля затенены): <br> Если хотите изменить данные родителя используйте редактирование его записи. <br> Если хотите разорвать связь - используйте Remove`
+            Связанного родителя Вам<strong>нельзя</strong> отсюда изменить (его поля затенены): <br> Если хотите изменить данные родителя используйте редактирование его записи. <br> Если хотите разорвать связь - используйте Remove`
+        }else if (linkingMother&&!linkingFather&&tempPerson.secretLevelRemove!=="CLOSE"){
+            document.getElementById("lockParentsInfo").innerHTML = `
+            Мать связана. Ее данные <strong>нельзя</strong> отсюда изменить: <br> Если хотите изменить данные этого родителя используйте редактирование его записи. <br> Изменение данных здесь приведет к разрыву связи и попытке установления новой.`
+
         }
-        if (tempPerson.fatherInfo !== infoAbsent && tempPerson.fatherInfo.charAt(0) !== '(' && tempPerson.fatherInfo !== infoUncorrected) {
+        if (linkingFather&&tempPerson.secretLevelRemove==="CLOSE") {
             lockFather();
             document.getElementById("lockParentsInfo").innerHTML = `
-            Связанного родителя <strong>нельзя</strong> отсюда изменить (его поля затенены): <br> Если хотите изменить данные родителя используйте редактирование его записи. <br> Если хотите разорвать связь - используйте Remove`
+            Связанного родителя Вам<strong>нельзя</strong> отсюда изменить (его поля затенены): <br> Если хотите изменить данные родителя используйте редактирование его записи. <br> Если хотите разорвать связь - используйте Remove`
+        }else if (linkingFather&&!linkingMother&&tempPerson.secretLevelRemove!=="CLOSE") {
+            document.getElementById("lockParentsInfo").innerHTML = `
+            Отец связан. Его данные <strong>нельзя</strong> отсюда изменить: <br> Если хотите изменить данные этого родителя используйте редактирование его записи. <br> Изменение данных здесь приведет к разрыву связи и попытке установления новой.`
         }
-        if (tempPerson.fioDtos !== null) {
+        if (linkingFather&&linkingMother&&tempPerson.secretLevelRemove!=="CLOSE"){
+            document.getElementById("lockParentsInfo").innerHTML = `
+            Оба родителя связаны. Их данные <strong>нельзя</strong> отсюда изменить: <br> Если хотите изменить данные родителей используйте редактирование их записи. <br> Изменение данных здесь приведет к разрыву связей и попытке установления новых.`
+        }
+
+            if (tempPerson.fioDtos !== null) {
             document.getElementById(`firstNameOtherAddFM0`).value = tempPerson.fioDtos[0].firstName;
             document.getElementById(`middleNameOtherAddFM0`).value = tempPerson.fioDtos[0].middleName;
             document.getElementById(`lastNameOtherAddFM0`).value = tempPerson.fioDtos[0].lastName;
@@ -677,12 +725,17 @@ function editPersonInBase() {
     }
     if (tempPerson.memberInfo.secretLevelBiometric !== "CLOSE") {
         document.getElementById("biometricEdit").hidden = false;
-        document.getElementById("heightFM").value = tempPerson.memberInfo.biometric.height;
-        document.getElementById("weightFM").value = tempPerson.memberInfo.biometric.weight;
-        document.getElementById("footSizeFM").value = tempPerson.memberInfo.biometric.footSize;
-        document.getElementById("shirtSizeFM").value = tempPerson.memberInfo.biometric.shirtSize;
-        document.getElementById("eyesColorFM").value = (tempPerson.memberInfo.biometric.eyesColor === null) ? "UNKNOWN" : tempPerson.memberInfo.biometric.eyesColor;
-        document.getElementById("hairColorFM").value = (tempPerson.memberInfo.biometric.hairColor === null) ? "UNKNOWN" : tempPerson.memberInfo.biometric.hairColor;
+        if (tempPerson.memberInfo.biometric !== null) {
+            document.getElementById("ageFM").value = tempPerson.memberInfo.biometric[0].age;
+            document.getElementById("heightFM").value = tempPerson.memberInfo.biometric[0].height;
+            document.getElementById("weightFM").value = tempPerson.memberInfo.biometric[0].weight;
+            document.getElementById("footSizeFM").value = tempPerson.memberInfo.biometric[0].footSize;
+            document.getElementById("shirtSizeFM").value = tempPerson.memberInfo.biometric[0].shirtSize;
+            document.getElementById("eyesColorFM").value = (tempPerson.memberInfo.biometric[0].eyesColor === null) ? "UNKNOWN" : tempPerson.memberInfo.biometric[0].eyesColor;
+            document.getElementById("hairColorFM").value = (tempPerson.memberInfo.biometric[0].hairColor === null) ? "UNKNOWN" : tempPerson.memberInfo.biometric[0].hairColor;
+            document.getElementById("descriptionFM").value = tempPerson.memberInfo.biometric[0].description;
+        }
+        if (countBio>0) createCurrentPagination(0);
     }
     if (tempPerson.memberInfo.secretLevelBurial !== "CLOSE") {
         document.getElementById("burialEdit").hidden = false;
@@ -901,8 +954,7 @@ function submitBaseFormEditFM() {
             );
         }
     }
-    let hairColor = (form.elements.hairColorFM.value === "UNKNOWN") ? null : form.elements.hairColorFM.value;
-    let eyesColor = (form.elements.eyesColorFM.value === "UNKNOWN") ? null : form.elements.eyesColorFM.value;
+    createAgeBio(activeBio);
     let formData = {
         primePhoto: primePhotoExist,
         id: tempPerson.id,
@@ -929,14 +981,7 @@ function submitBaseFormEditFM() {
             secretLevelPhone: form.elements.chooseSecureMP.value,
             secretLevelBiometric: form.elements.chooseSecureBio.value,
             secretLevelDescription: form.elements.chooseSecureDes.value,
-            biometric: {
-                height: form.elements.heightFM.value,
-                weight: form.elements.weightFM.value,
-                footSize: form.elements.footSizeFM.value,
-                hairColor: hairColor,
-                eyesColor: eyesColor,
-                shirtSize: form.elements.shirtSizeFM.value
-            },
+            biometric: inputBio,
             birth: {
                 country: form.elements.birthCountryAddFM.value,
                 region: form.elements.birthRegionAddFM.value,

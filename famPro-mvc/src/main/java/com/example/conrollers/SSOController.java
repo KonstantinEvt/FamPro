@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/onlineUserAPI")
 @AllArgsConstructor
-public class CabinetController {
+public class SSOController {
     private TokenService tokenService;
     private OnlineUserHolder onlineUserHolder;
     private final BaseService baseService;

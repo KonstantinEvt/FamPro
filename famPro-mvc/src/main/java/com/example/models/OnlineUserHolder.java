@@ -48,7 +48,8 @@ public class OnlineUserHolder {
             addUser(simpleUserInfo);
             log.info("add OnlineUser: ".concat(tokenUser.getUsername()).concat(" to OnlineHolder"));
             String loc = (String) tokenUser.getClaims().get("localisation");
-            tokenService.setGlobalLocalisation(inlineUuid, Objects.requireNonNullElse(loc, "RU"));
+            if (loc==null||loc.isBlank()) loc="RU";
+            tokenService.setGlobalLocalisation(inlineUuid, loc);
         } else simpleUserInfo = onlineUsers.get(inlineUuid);
         inline.add(DirectiveGuards.builder()
                 .tokenUser(inlineUuid)

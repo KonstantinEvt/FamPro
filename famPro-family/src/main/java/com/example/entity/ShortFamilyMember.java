@@ -87,15 +87,31 @@ public class ShortFamilyMember extends Fio {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "member")
     private Set<FamilyMemberLink> familyLinks;
 
+    @Column(name = "primaryGuard",length = 4095)
+    private String primaryGuard;
+
+    @Column(name = "primaryMembers",length = 4095)
+    private String primaryMembers;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prime_family")
     private Family familyWhereChild;
+
+    @Column(name = "logicGuard",length = 4095)
+    private String logicGuard;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "logic_primary")
+    private Family logicPrimary;
 
     @Column(name = "death_day")
     private Date deathday;
 
     @Column(name = "creator")
     private String creator;
+
+    @Column(name = "first_creator")
+    private String firstCreator;
 
     @Column(name = "create_time")
     private Timestamp createTime;
