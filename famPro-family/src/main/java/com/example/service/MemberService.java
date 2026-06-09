@@ -3,13 +3,9 @@ package com.example.service;
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.FamilyMemberInfoDto;
 import com.example.entity.*;
-import com.example.enums.CheckStatus;
-import com.example.enums.SecretLevel;
-import com.example.enums.Sex;
-import com.example.enums.SwitchPosition;
+import com.example.enums.*;
 import com.example.mappers.FamilyMemberInfoMapper;
 import com.example.mappers.FamilyMemberMapper;
-import com.example.repository.FamilyMemberLinkRepository;
 import com.example.repository.MemberRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,10 +23,11 @@ import java.util.stream.Collectors;
 @Setter
 @Log4j2
 public class MemberService implements SimpleFamilyService {
-    FamilyMemberMapper familyMemberMapper;
-    FamilyMemberInfoMapper familyMemberInfoMapper;
-    FamilyMemberLinkRepository familyMemberLinkRepository;
-    MemberRepository memberRepository;
+    private final FamilyMemberMapper familyMemberMapper;
+    private final FamilyMemberInfoMapper familyMemberInfoMapper;
+    private final FamilyMemberLinkService familyMemberLinkService;
+    private final MemberRepository memberRepository;
+    private final SendAndFormService sendAndFormService;
 
     @Transactional
     public ShortFamilyMember addFamilyMember(FamilyMemberDto dto) {
@@ -92,7 +89,7 @@ public class MemberService implements SimpleFamilyService {
             familyMember.setFirstCreator(dto.getFirstCreator());
         if (familyMember.getCreator() != null && !familyMember.getCreator().equals(dto.getCreator()))
             familyMember.setCreator(dto.getCreator());
-        if (familyMember.getCheckStatus() != dto.getCheckStatus()) familyMember.setCheckStatus(dto.getCheckStatus());
+//        if (familyMember.getCheckStatus() != dto.getCheckStatus()) familyMember.setCheckStatus(dto.getCheckStatus());
         if (!Objects.equals(dto.getDeathday(), familyMember.getDeathday())) familyMember.setDeathday(dto.getDeathday());
         if (!Objects.equals(dto.getFatherInfo(), familyMember.getFatherInfo()))
             familyMember.setFatherInfo(dto.getFatherInfo());
@@ -209,16 +206,30 @@ public class MemberService implements SimpleFamilyService {
      adding Set of TopAncestors by they brothers/sisters
      ***/
     @Transactional(readOnly = true)
-    public void getExtendedTopAncestors(Set<ShortFamilyMember> topAncestors) {
-        Set<ShortFamilyMember> topPrimary = new HashSet<>();
+    public boolean getExtendedTopAncestors(Set<ShortFamilyMember> topAncestors) {
+        Set<String> topPrimary = new HashSet<>();
         for (ShortFamilyMember member :
                 topAncestors) {
             if (member.getPrimaryMembers() != null && !member.getPrimaryMembers().isBlank())
-                topPrimary.addAll(memberRepository.getAllMembersByUuids(getAllUuidFromInfo(member.getPrimaryMembers())));
+                topPrimary.addAll(getAllStringUuidFromInfo(member.getPrimaryMembers()));
         }
-        if (!topPrimary.isEmpty()) topAncestors.addAll(topPrimary);
+        if (!topPrimary.isEmpty()) {
+            topAncestors.addAll(memberRepository.getAllMembersByUuids(topPrimary.stream().map(UUID::fromString).collect(Collectors.toSet())));
+            return true;
+        } else return false;
     }
-
+    @Transactional(readOnly = true)
+    public Set<ShortFamilyMember> getBrothersOfTopAncestors(Set<ShortFamilyMember> topAncestors) {
+        Set<String> topPrimary = new HashSet<>();
+        for (ShortFamilyMember member :
+                topAncestors) {
+            if (member.getPrimaryMembers() != null && !member.getPrimaryMembers().isBlank())
+                topPrimary.addAll(getAllStringUuidFromInfo(member.getPrimaryMembers()));
+        }
+        if (!topPrimary.isEmpty()) {
+            return memberRepository.getAllMembersByUuids(topPrimary.stream().map(UUID::fromString).collect(Collectors.toSet()));
+        } else return new HashSet<>();
+    }
     /***
      return Set of Ancestors, Member is one of ancestor
      ***/
@@ -274,8 +285,8 @@ public class MemberService implements SimpleFamilyService {
     }
 
     @Transactional(readOnly = true)
-    public Set<ShortFamilyMember> getGeneticTreeMembers(Set<ShortFamilyMember> topAncestors) {
-        getExtendedTopAncestors(topAncestors);
+    public Set<ShortFamilyMember> getGeneticTreeMembers(Set<ShortFamilyMember> topAncestors, boolean includeTopBrothers) {
+        if (includeTopBrothers) getExtendedTopAncestors(topAncestors);
         Set<ShortFamilyMember> result = new HashSet<>(topAncestors);
         Set<UUID> treeMembersUuids = new HashSet<>();
         for (ShortFamilyMember fm :
@@ -288,8 +299,8 @@ public class MemberService implements SimpleFamilyService {
     }
 
     @Transactional(readOnly = true)
-    public Set<UUID> getGeneticTreeGuards(Set<ShortFamilyMember> topAncestors) {
-        getExtendedTopAncestors(topAncestors);
+    public Set<UUID> getGeneticTreeGuards(Set<ShortFamilyMember> topAncestors,boolean includeTopBrothers) {
+        if (includeTopBrothers) getExtendedTopAncestors(topAncestors);
         Set<UUID> result = new HashSet<>();
         for (ShortFamilyMember member :
                 topAncestors) {
@@ -304,13 +315,13 @@ public class MemberService implements SimpleFamilyService {
     public boolean checkThemeSecretForSecretLevel(SecretLevel secretLevel, ShortFamilyMember member, Optional<Guard> directiveGuard, Set<ShortFamilyMember> topAncestors) {
         if (directiveGuard.isPresent() && directiveGuard.get().getId() != null) {
             UUID uuid = UUID.fromString(directiveGuard.get().getTokenUser());
-            Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors);
+            Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors,true);
             SecretLevel directiveGuardStatus = getSecretStatus(member, uuid, geneticTreeGuard, true);
             SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard, true);
             if (directiveGuardStatus == max) return true;
-            else return secretLevel.ordinal() < directiveGuardStatus.ordinal();
+            else return secretLevel.ordinal() <= directiveGuardStatus.ordinal();
         } else {
-            Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors);
+            Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors,true);
             SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard, true);
             return SecretLevel.OPEN == max;
         }
@@ -320,42 +331,54 @@ public class MemberService implements SimpleFamilyService {
     public void removeLinkWithParent(ShortFamilyMember child, UUID parentUuid) {
         Set<ShortFamilyMember> bloodKin = getAllKinMembersInMemberProfile(child);
         ShortFamilyMember parent = bloodKin.stream().filter(x -> Objects.equals(x.getUuid(), parentUuid)).findFirst().orElseThrow(() -> new RuntimeException("ancestors corrupt"));
-
         Set<String> ancUuid = getAllStringUuidFromInfo(parent.getAncestors());
-        ancUuid.add(parent.getUuid().toString());
+        ancUuid.add(parentUuid.toString());
         Set<String> ancGuards = getAllStringUuidFromInfo(parent.getAncestorsGuard());
         if (parent.getLinkGuard() != null && !parent.getLinkGuard().isBlank()) ancGuards.add(parent.getLinkGuard());
 
         child.setPrimaryMembers(null);
+        child.setPrimaryGuard(null);
         child.setAncestors(removeAllUuidSFromInfo(child.getAncestors(), ancUuid).orElse(null));
         child.setAncestorsGuard(removeAllUuidSFromInfo(child.getAncestorsGuard(), ancGuards).orElse(null));
         child.setTopAncestors(removeAllUuidSFromInfo(child.getTopAncestors(), ancUuid).orElse(null));
         removeAncestorsDescendantsRelations(bloodKin, ancUuid, ancGuards, child);
         log.warn("Нужна проработка удаления удаления стражи и чекстатуса");
     }
+
     @Transactional
     public void mergePrimaryRelations(Set<ShortFamilyMember> set1, Set<ShortFamilyMember> set2) {
-        Set<String> primaryMembers1 = set1.stream().map(x->x.getUuid().toString()).collect(Collectors.toSet());
-        Set<String> primaryMembers2 = set2.stream().map(x->x.getUuid().toString()).collect(Collectors.toSet());
+        Set<String> primaryMembers1 = set1.stream().map(x -> x.getUuid().toString()).collect(Collectors.toSet());
+        Set<String> primaryMembers2 = set2.stream().map(x -> x.getUuid().toString()).collect(Collectors.toSet());
         for (ShortFamilyMember mem :
                 set1) {
-            mem.setPrimaryMembers(mergeInfo(primaryMembers2 , mem.getPrimaryMembers()));
+            mem.setPrimaryMembers(mergeInfo(primaryMembers2, mem.getPrimaryMembers()));
         }
         for (ShortFamilyMember mem :
                 set2) {
-            mem.setPrimaryMembers(mergeInfo(primaryMembers1 , mem.getPrimaryMembers()));
+            mem.setPrimaryMembers(mergeInfo(primaryMembers1, mem.getPrimaryMembers()));
         }
     }
+
     @Transactional
     public void removePrimeMembersRelation(ShortFamilyMember member, Set<ShortFamilyMember> primeMembers) {
+        Set<ShortFamilyMember> topPrime = new HashSet<>();
+        boolean absentAnc = false;
         for (ShortFamilyMember primeMem :
                 primeMembers) {
             primeMem.setPrimaryMembers(removeUuidFromInfo(primeMem.getPrimaryMembers(), member.getUuid().toString()).orElse(null));
             if (member.getLinkGuard() != null && !member.getLinkGuard().isBlank())
                 primeMem.setPrimaryGuard(removeUuidFromInfo(primeMem.getPrimaryGuard(), member.getLinkGuard()).orElse(null));
+            if ((primeMem.getAncestors() == null || primeMem.getAncestors().isBlank()) && !Objects.equals(primeMem.getUuid(), member.getUuid())) {
+                topPrime.add(primeMem);
+                absentAnc = true;
+            }
         }
         member.setPrimaryMembers(null);
         member.setPrimaryGuard(null);
+        boolean repair = false;
+        if (member.getDescendants() != null && !member.getDescendants().isBlank() && !topPrime.isEmpty())
+            repair = repairGeneticTreeRelations(topPrime, getAllDescendants(member), member);
+        if (absentAnc) repairCheckStatus(member, primeMembers, topPrime, repair);
         log.warn("Нужна проработка удаления удаления стражи и чекстатуса");
     }
 
@@ -364,34 +387,192 @@ public class MemberService implements SimpleFamilyService {
                                                     Set<String> ancUuid,
                                                     Set<String> ancGuards,
                                                     ShortFamilyMember child) {
+
         Set<String> desUuid = getAllStringUuidFromInfo(child.getDescendants());
         desUuid.add(child.getUuid().toString());
         Set<String> desGuards = getAllStringUuidFromInfo(child.getDescendantsGuard());
         if (child.getLinkGuard() != null && !child.getLinkGuard().isBlank()) desGuards.add(child.getLinkGuard());
         Set<ShortFamilyMember> anc = new HashSet<>();
         Set<ShortFamilyMember> des = new HashSet<>();
+        Set<ShortFamilyMember> topAnc = new HashSet<>();
+        Set<ShortFamilyMember> topRemoveAnc = new HashSet<>();
         for (ShortFamilyMember member :
                 bloodKin) {
+            if (member.getAncestors() == null || member.getAncestors().isBlank()) topAnc.add(member);
             if (member.getPrimaryMembers() != null && member.getPrimaryMembers().contains(child.getUuid().toString())) {
                 member.setPrimaryMembers(removeUuidFromInfo(member.getPrimaryMembers(), child.getUuid()).orElse(null));
                 if (child.getLinkGuard() != null && !child.getLinkGuard().isBlank())
                     member.setPrimaryGuard(removeUuidFromInfo(member.getPrimaryGuard(), child.getLinkGuard()).orElse(null));
             } else if (ancUuid.contains(member.getUuid().toString())) {
                 anc.add(member);
+                if (member.getAncestors() == null || member.getAncestors().isBlank()) topRemoveAnc.add(member);
                 member.setDescendants(removeAllUuidSFromInfo(member.getDescendants(), desUuid).orElse(null));
                 if (!desGuards.isEmpty()) {
                     member.setDescendantsGuard(removeAllUuidSFromInfo(member.getDescendantsGuard(), desGuards).orElse(null));
                 }
+                if (Objects.equals(child.getMotherUuid(), member.getUuid()) || Objects.equals(child.getFatherUuid(), member.getUuid()))
+                    familyMemberLinkService.removeAllFamilyLinksBetweenMembers(member, child);
             } else {
                 des.add(member);
-                member.setAncestors(addUuidToInfo(removeAllUuidSFromInfo(member.getAncestors(), ancUuid).orElse(null), child.getUuid().toString()));
-                member.setTopAncestors(addUuidToInfo(removeAllUuidSFromInfo(member.getTopAncestors(), ancUuid).orElse(null), child.getUuid().toString()));
+                member.setAncestors(removeAllUuidSFromInfo(member.getAncestors(), ancUuid).orElse(child.getUuid().toString()));
+                member.setTopAncestors(removeAllUuidSFromInfo(member.getTopAncestors(), ancUuid).orElse(child.getUuid().toString()));
                 if (!ancGuards.isEmpty())
                     member.setAncestorsGuard(removeAllUuidSFromInfo(member.getAncestorsGuard(), ancGuards).orElse(null));
 
             }
         }
-        repairGeneticTreeRelations(anc, des, child);
+        boolean repair = false;
+        if (child.getDescendants() != null && !child.getDescendants().isBlank() && !anc.isEmpty() && !des.isEmpty())
+            repair = repairGeneticTreeRelations(anc, des, child);
+        if (child.getAncestors() == null || !child.getAncestors().isBlank()) topAnc.add(child);
+        repairCheckStatus(child, topAnc, topRemoveAnc, repair);
+    }
+
+    public void repairCheckStatus(ShortFamilyMember child, Set<ShortFamilyMember> topAnc, Set<ShortFamilyMember> topRemoveAnc, boolean repair) {
+        System.out.println(topAnc.stream().map(x -> x.getUuid().toString()).collect(Collectors.toSet()));
+        System.out.println(topRemoveAnc.stream().map(x -> x.getUuid().toString()).collect(Collectors.toSet()));
+        switch (child.getCheckStatus()) {
+            case UNCHECKED -> log.info("repair CheckStatus is not doing");
+            case LINKED -> {
+                log.info("repair CheckStatus will be do for remove parent(s) and his(their) kins");
+                Set<ShortFamilyMember> topWithoutGuard = new HashSet<>();
+                Set<String> desRepair = findMembersToCheckCheckStatus(topRemoveAnc, topWithoutGuard);
+                if (!desRepair.isEmpty()) {
+                    if (repair) desRepair.removeAll(getAllStringUuidFromInfo(child.getDescendants()));
+                    if (!desRepair.isEmpty() || !topWithoutGuard.isEmpty()) {
+                        Set<ShortFamilyMember> result = checkMembersForCheckStatus(desRepair, topWithoutGuard);
+                        if (!result.isEmpty()) {
+                            sendAndFormService.formDirectiveToStorageForChangeStatus(null, null, null, KafkaOperation.RENAME, result.stream().map(x -> x.getUuid().toString()).collect(Collectors.toSet()), CheckStatus.UNCHECKED);
+                        }
+                    }
+                }
+            }
+            case CHECKED -> {
+                log.info("repair CheckStatus for all");
+                Set<ShortFamilyMember> topWithoutGuard = new HashSet<>();
+                Set<String> desRepair = findMembersToCheckCheckStatus(topAnc, topWithoutGuard);
+                System.out.println(desRepair);
+                if (!desRepair.isEmpty() || !topWithoutGuard.isEmpty()) {
+                    Set<ShortFamilyMember> result = checkMembersForCheckStatus(desRepair, topWithoutGuard);
+                    if (!result.isEmpty()) {
+                        result.remove(child);
+                        if (!result.isEmpty())
+                            sendAndFormService.formDirectiveToStorageForChangeStatus(null, null, null, KafkaOperation.RENAME, result.stream().map(x -> x.getUuid().toString()).collect(Collectors.toSet()), CheckStatus.UNCHECKED);
+
+                    }
+                }
+            }
+            default -> log.warn("wrong CheckStatus");
+        }
+    }
+
+    public Set<ShortFamilyMember> checkMembersForCheckStatus(Set<String> membersUuid, Set<ShortFamilyMember> topWithoutGuard) {
+        Set<String> alreadyCheckTop = topWithoutGuard.stream().map(x -> x.getUuid().toString()).collect(Collectors.toSet());
+        if (!membersUuid.isEmpty()) {
+            Set<ShortFamilyMember> membersToCheck = memberRepository.getAllMembersByUuids(membersUuid.stream().map(UUID::fromString).collect(Collectors.toSet()));
+            membersToCheck.removeAll(membersToCheck.stream().filter(x -> x.getCheckStatus() != CheckStatus.CHECKED).collect(Collectors.toSet()));
+            if (!membersToCheck.isEmpty()) {
+                Set<String> alterTopAncestorsUuids = membersToCheck.stream().flatMap(x -> getAllStringUuidFromInfo(x.getTopAncestors()).stream()).collect(Collectors.toSet());
+                if (!alterTopAncestorsUuids.isEmpty()) {
+                    alterTopAncestorsUuids.removeAll(alreadyCheckTop);
+                    if (!alterTopAncestorsUuids.isEmpty()) {
+                        Set<ShortFamilyMember> alterTopAncestors = memberRepository.getAllMembersByUuids(alterTopAncestorsUuids.stream().map(UUID::fromString).collect(Collectors.toSet()));
+                        Set<ShortFamilyMember> checks = new HashSet<>();
+                        for (ShortFamilyMember top :
+                                alterTopAncestors) {
+                            if (checkTopForStraightGuard(top))
+                                for (ShortFamilyMember member :
+                                        membersToCheck) {
+                                    if (top.getDescendants().contains(member.getUuid().toString())) checks.add(member);
+                                }
+                            membersToCheck.removeAll(checks);
+                            checks.clear();
+                            if (membersToCheck.isEmpty()) break;
+                        }
+                        if (!membersToCheck.isEmpty()) {
+                            Set<UUID> brotherTopsUuid = alterTopAncestors.stream().flatMap(x -> getAllStringUuidFromInfo(x.getPrimaryMembers()).stream()).map(UUID::fromString).collect(Collectors.toSet());
+                            if (!brotherTopsUuid.isEmpty()) {
+                                Set<ShortFamilyMember> brotherTops = memberRepository.getAllMembersByUuids(brotherTopsUuid);
+                                for (ShortFamilyMember topBrother :
+                                        brotherTops) {
+                                    if (topBrother.getDescendantsGuard() != null && !topBrother.getDescendantsGuard().isBlank()) {
+                                        ShortFamilyMember top = alterTopAncestors.stream()
+                                                .filter(x -> x.getPrimaryMembers().contains(topBrother.getUuid().toString()))
+                                                .findFirst()
+                                                .orElseThrow(() -> new RuntimeException("broken note"));
+                                        for (ShortFamilyMember member :
+                                                membersToCheck) {
+                                            if (top.getDescendants().contains(member.getUuid().toString()))
+                                                checks.add(member);
+                                            membersToCheck.removeAll(checks);
+                                            checks.clear();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            membersToCheck.addAll(topWithoutGuard);
+            for (ShortFamilyMember change :
+                    membersToCheck) {
+                change.setCheckStatus(CheckStatus.UNCHECKED);
+                change.setCreator(change.getFirstCreator());
+
+            }
+            memberRepository.flush();
+            log.warn("неприкаенные члены найдены. Счас отдирективим");
+            return membersToCheck;
+        } else for (ShortFamilyMember change :
+                topWithoutGuard) {
+            change.setCheckStatus(CheckStatus.UNCHECKED);
+            change.setCreator(change.getFirstCreator());
+
+        }
+        memberRepository.flush();
+        log.warn("неприкаенные топы ушли в uncheck.");
+        return topWithoutGuard;
+    }
+
+
+    public boolean checkTopForStraightGuard(ShortFamilyMember top) {
+        return (top.getLinkGuard() != null && !top.getLinkGuard().isBlank())
+                || (top.getDescendantsGuard() != null && !top.getDescendantsGuard().isBlank())
+                || (top.getPrimaryGuard() != null && !top.getPrimaryGuard().isBlank());
+    }
+
+
+    public Set<String> findMembersToCheckCheckStatus(Set<ShortFamilyMember> topAnc, Set<ShortFamilyMember> topWithoutGuard) {
+
+        Set<String> membersUnderGuarding = new HashSet<>();
+        Set<String> topBrothersUuids = new HashSet<>();
+        for (ShortFamilyMember topMember :
+                topAnc) {
+            if (checkTopForStraightGuard(topMember))
+                membersUnderGuarding.addAll(getAllStringUuidFromInfo(topMember.getDescendants()));
+
+            else topWithoutGuard.add(topMember);
+        }
+        if (topWithoutGuard.isEmpty()) return new HashSet<>();
+        for (ShortFamilyMember topMember :
+                topWithoutGuard) {
+            if (topMember.getPrimaryMembers() != null && !topMember.getPrimaryMembers().isBlank()) {
+                topBrothersUuids.addAll(getAllStringUuidFromInfo(topMember.getPrimaryMembers()));
+            }
+        }
+        if (!topBrothersUuids.isEmpty()) {
+            Set<ShortFamilyMember> topBrothers = memberRepository.getAllMembersByUuids(topBrothersUuids.stream().map(UUID::fromString).collect(Collectors.toSet()));
+            for (ShortFamilyMember brother :
+                    topBrothers) {
+                if (brother.getDescendantsGuard() != null && !brother.getDescendantsGuard().isBlank()) {
+                    topWithoutGuard.remove(topWithoutGuard.stream().filter(x -> x.getPrimaryMembers().contains(brother.getUuid().toString())).findFirst().orElseThrow(() -> new RuntimeException("broken note")));
+                } else topWithoutGuard.add(brother);
+            }
+        }
+        Set<String> desRepair = topWithoutGuard.stream().flatMap(x -> getAllStringUuidFromInfo(x.getDescendants()).stream()).collect(Collectors.toSet());
+        if (!desRepair.isEmpty()) desRepair.removeAll(membersUnderGuarding);
+        return desRepair;
     }
 
     @Transactional
@@ -400,6 +581,7 @@ public class MemberService implements SimpleFamilyService {
         Set<String> ancUuid = getAllStringUuidFromInfo(child.getAncestors());
         Set<String> ancGuards = getAllStringUuidFromInfo(child.getAncestorsGuard());
         child.setPrimaryMembers(null);
+        child.setPrimaryGuard(null);
         child.setAncestors(null);
         child.setAncestorsGuard(null);
         child.setTopAncestors(null);
@@ -409,38 +591,48 @@ public class MemberService implements SimpleFamilyService {
     }
 
     @Transactional
-    public void repairGeneticTreeRelations(Set<ShortFamilyMember> oldAnc, Set<ShortFamilyMember> descendants, ShortFamilyMember mainMember) {
+    public boolean repairGeneticTreeRelations(Set<ShortFamilyMember> oldAnc, Set<ShortFamilyMember> descendants, ShortFamilyMember mainMember) {
+        boolean repair = false;
+        System.out.println("MASSIVE OF REPAIR ANCESTORS:");
+        System.out.println(oldAnc.stream().map(x -> x.getUuid().toString()).collect(Collectors.toSet()));
+        System.out.println("MASSIVE OF REPAIR DESCENDANTS:");
+        System.out.println(descendants.stream().map(x -> x.getUuid().toString()).collect(Collectors.toSet()));
         for (ShortFamilyMember des : descendants) {
             String uuidCheck;
-            if (des.getMotherUuid() != null && !mainMember.getDescendants().contains(des.getMotherUuid().toString()))
+            if (des.getMotherUuid() != null && !Objects.equals(des.getMotherUuid(), mainMember.getUuid()) && !mainMember.getDescendants().contains(des.getMotherUuid().toString()))
                 uuidCheck = des.getMotherUuid().toString();
-            else if (des.getFatherUuid() != null && !mainMember.getDescendants().contains(des.getFatherUuid().toString()))
+            else if (des.getFatherUuid() != null && !Objects.equals(des.getFatherUuid(), mainMember.getUuid()) && !mainMember.getDescendants().contains(des.getFatherUuid().toString()))
                 uuidCheck = des.getFatherUuid().toString();
             else uuidCheck = null;
+            System.out.println(uuidCheck);
             if (uuidCheck != null) for (ShortFamilyMember anc :
                     oldAnc) {
-                if (anc.getDescendants().contains(uuidCheck) && !anc.getDescendants().contains(des.getUuid().toString())) {
+                if (anc.getDescendants() != null && !anc.getDescendants().isBlank()
+                        && anc.getDescendants().contains(uuidCheck) && !anc.getDescendants().contains(des.getUuid().toString())) {
                     Set<ShortFamilyMember> repairAnc = oldAnc.stream().filter(x -> x.getDescendants() != null).filter(x -> x.getDescendants().contains(anc.getUuid().toString())).collect(Collectors.toSet());
                     repairAnc.add(anc);
                     Set<ShortFamilyMember> repairDes = descendants.stream().filter(x -> x.getAncestors().contains(uuidCheck)).collect(Collectors.toSet());
                     repairDes.add(des);
                     for (ShortFamilyMember reAnc :
                             repairAnc) {
-                        reAnc.setDescendants(addUuidToInfo(mergeInfo(des.getDescendants(), reAnc.getDescendants()), des.getUuid().toString()));
-                        reAnc.setDescendantsGuard(addUuidToInfo(mergeInfo(des.getDescendantsGuard(), reAnc.getDescendantsGuard()), des.getLinkGuard()));
+                        reAnc.setDescendants(mergeInfo(addUuidToInfo(des.getDescendants(), des.getUuid().toString()), reAnc.getDescendants()));
+                        reAnc.setDescendantsGuard(mergeInfo(addUuidToInfo(des.getDescendantsGuard(), des.getLinkGuard()), reAnc.getDescendantsGuard()));
                     }
 
                     for (ShortFamilyMember reDes :
                             repairDes) {
-                        reDes.setAncestors(addUuidToInfo(mergeInfo(anc.getAncestors(), reDes.getAncestors()), anc.getUuid().toString()));
-                        reDes.setAncestorsGuard(addUuidToInfo(mergeInfo(anc.getAncestorsGuard(), reDes.getAncestorsGuard()), anc.getLinkGuard()));
+                        reDes.setAncestors(mergeInfo(addUuidToInfo(anc.getAncestors(), anc.getUuid().toString()), reDes.getAncestors()));
+                        reDes.setAncestorsGuard(mergeInfo(addUuidToInfo(anc.getAncestorsGuard(), anc.getLinkGuard()), reDes.getAncestorsGuard()));
                         if (anc.getTopAncestors() != null && !anc.getTopAncestors().isBlank())
                             reDes.setTopAncestors(mergeInfo(anc.getTopAncestors(), reDes.getTopAncestors()));
-                        else reDes.setTopAncestors(addUuidToInfo(reDes.getTopAncestors(), anc.getUuid().toString()));
+                        else reDes.setTopAncestors(mergeInfo(reDes.getTopAncestors(), anc.getUuid().toString()));
                     }
+                    repair = true;
                 }
             }
         }
+        log.info((repair ? "починка после удаления произведена" : "починка послеудаления не нужна"));
+        return repair;
     }
 
     @Transactional
@@ -541,9 +733,9 @@ public class MemberService implements SimpleFamilyService {
     }
 
     @Transactional
-    public Set<String> repairGeneticTreeCheckStatus(Set<ShortFamilyMember> newTopAc) {
+    public Set<String> repairGeneticTreeCheckStatus(Set<ShortFamilyMember> newTopAc, boolean includeTopBrothers) {
         Set<String> result = new HashSet<>();
-        Set<ShortFamilyMember> members = getGeneticTreeMembers(newTopAc);
+        Set<ShortFamilyMember> members = getGeneticTreeMembers(newTopAc, includeTopBrothers);
         for (ShortFamilyMember member :
                 members) {
             if (member.getCheckStatus() == CheckStatus.UNCHECKED) {
@@ -625,7 +817,7 @@ public class MemberService implements SimpleFamilyService {
     }
 
     @Transactional(readOnly = true)
-    public CheckStatus getCheckStatus(ShortFamilyMember processMember, boolean isMain) {
+    public CheckStatus getCheckStatus(ShortFamilyMember processMember, boolean fastCheck) {
         if (processMember.getLinkGuard() != null && !processMember.getLinkGuard().isBlank()) {
             return CheckStatus.LINKED;
         } else {
@@ -634,19 +826,12 @@ public class MemberService implements SimpleFamilyService {
                     processMember.getPrimaryGuard() != null && !processMember.getPrimaryGuard().isBlank())) {
                 return CheckStatus.CHECKED;
             } else {
-                if (isMain && getGeneticTreeGuards(getAllTopAncestors(processMember)).isEmpty()) {
-                    return CheckStatus.UNCHECKED;
-                } else {
+                if (!fastCheck && !getGeneticTreeGuards(getAllTopAncestors(processMember),true).isEmpty()) {
                     return CheckStatus.CHECKED;
+                } else {
+                    return CheckStatus.UNCHECKED;
                 }
             }
         }
     }
-
-    @Transactional(readOnly = true)
-    public Set<FamilyMemberLink> getAllMemberLinksByMemberUuid(UUID memberUuid) {
-        return familyMemberLinkRepository.getAllFamilyMemberLinksByCausePerson(memberUuid);
-    }
-
-
 }

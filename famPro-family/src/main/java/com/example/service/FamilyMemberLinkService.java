@@ -32,8 +32,14 @@ public class FamilyMemberLinkService {
             familyMemberLinkRepository.updateFamilyMemberLink(link);
         }
     }
+
+    @Transactional(readOnly = true)
+    public Set<FamilyMemberLink> getAllMemberLinksByMemberUuid(UUID memberUuid) {
+        return familyMemberLinkRepository.getAllFamilyMemberLinksByCausePerson(memberUuid);
+    }
+
     public void changeFamilyMemberLinksBySetGuard(Set<FamilyMemberLink> familyMemberLinks, ShortFamilyMember member) {
-        Guard guard=new Guard();
+        Guard guard = new Guard();
 
         for (FamilyMemberLink link :
                 familyMemberLinks) {
@@ -43,7 +49,7 @@ public class FamilyMemberLinkService {
     }
 
     @Transactional
-    public void createFamilyLink(ShortFamilyMember member, Family family, RoleInFamily roleInFamily, UUID causePerson, String description){
+    public void createFamilyLink(ShortFamilyMember member, Family family, RoleInFamily roleInFamily, UUID causePerson, String description) {
         FamilyMemberLink newMember = FamilyMemberLink.builder()
                 .member(member)
                 .family(family)
@@ -55,8 +61,9 @@ public class FamilyMemberLinkService {
             newMember.setLinkGuard(UUID.fromString(member.getLinkGuard()));
         familyMemberLinkRepository.addFamilyMemberLink(newMember);
     }
+
     @Transactional
-    public void changeFamilyLink(ShortFamilyMember member, Family oldFamily, Family newFamily){
+    public void changeFamilyLink(ShortFamilyMember member, Family oldFamily, Family newFamily) {
         Set<FamilyMemberLink> familyMemberLinks = familyMemberLinkRepository.getFamilyMemberLinksByFamilyAndCausePerson(oldFamily, member.getUuid());
         for (FamilyMemberLink link :
                 familyMemberLinks) {
@@ -65,4 +72,10 @@ public class FamilyMemberLinkService {
         }
     }
 
+    @Transactional
+    public void removeAllFamilyLinksBetweenMembers(ShortFamilyMember member, ShortFamilyMember causePerson) {
+        System.out.println("delete");
+        System.out.println(causePerson.getUuid().toString());
+        familyMemberLinkRepository.removeFamilyMemberLinkByMemberAndCausePerson(member, causePerson.getUuid());
+    }
 }

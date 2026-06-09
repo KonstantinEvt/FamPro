@@ -61,31 +61,37 @@ public class DirectiveService {
                 }
             }
         if (directiveList.get(0).getSwitchPosition() == SwitchPosition.MAIN)
-            directiveMembersFromMain = directiveList.get(0).getShortFamilyMemberLink();
+            directiveMembersFromMain = directiveList.get(0).getDirectiveMembers();
         if (remove) directiveList.remove(0);
         directiveRepo.saveAll(directiveList);
 
         List<DirectiveMember> list = new ArrayList<>();
-
+        boolean both = false;
         for (DeferredDirective dd :
                 directiveList) {
             DirectiveMember mainMember = DirectiveMember.builder()
                     .directive(dd)
                     .directiveMember(dd.getDirectiveMember())
                     .build();
-            if (dd.getSwitchPosition() == SwitchPosition.BIRTH) dd.getShortFamilyMemberLink().add(mainMember);
+            if (dd.getSwitchPosition() == SwitchPosition.BIRTH) dd.getDirectiveMembers().add(mainMember);
             else if (dd.getSwitchPosition() != SwitchPosition.MAIN) {
-                DirectiveMember directiveLinkPerson = dd.getShortFamilyMemberLink().stream().findFirst().orElseThrow(() -> new RuntimeException("corrupt directive"));
+                DirectiveMember directiveLinkPerson = dd.getDirectiveMembers().stream().findFirst().orElseThrow(() -> new RuntimeException("corrupt directive"));
                 directiveLinkPerson.setDirective(dd);
                 list.add(directiveLinkPerson);
             }
             if (dd.getSwitchPosition() == SwitchPosition.MAIN ||
                     (remove && (dd.getSwitchPosition() == SwitchPosition.MOTHER || dd.getSwitchPosition() == SwitchPosition.FATHER))) {
-                for (DirectiveMember dm :
-                        directiveMembersFromMain) {
-                    dm.setDirective(dd);
-                }
+                if (both) {
+                    directiveMembersFromMain = directiveMembersFromMain.stream()
+                            .map(DirectiveMember::getDirectiveMember)
+                            .map(x -> DirectiveMember.builder()
+                                    .directiveMember(x)
+                                    .directive(dd)
+                                    .build())
+                            .collect(Collectors.toSet());
+                } else directiveMembersFromMain.forEach(x -> x.setDirective(dd));
                 list.addAll(directiveMembersFromMain);
+                both = true;
             }
             list.add(mainMember);
 
@@ -97,12 +103,12 @@ public class DirectiveService {
                 directiveList) {
 
             if (dd.getSwitchPosition() != SwitchPosition.MAIN) {
-                sendAndFormService.sendVotingDirective(dd, guardService.getMaxLevelGuards(dd.getShortFamilyMemberLink().stream()
+                sendAndFormService.sendVotingDirective(dd, guardService.getMaxLevelGuards(dd.getDirectiveMembers().stream()
                         .map(DirectiveMember::getDirectiveMember)
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("object under guarding not found in directive"))));
             } else {
-                sendAndFormService.sendVotingDirective(dd, dd.getShortFamilyMemberLink().stream()
+                sendAndFormService.sendVotingDirective(dd, dd.getDirectiveMembers().stream()
                         .map(DirectiveMember::getDirectiveMember)
                         .flatMap(x -> guardService.getMaxLevelGuards(x).stream())
                         .collect(Collectors.toSet()));
@@ -118,53 +124,53 @@ public class DirectiveService {
         Set<DirectiveMember> directiveMembers = directiveRepository.getListMembersOfDirective(deferredDirective);
         Set<ShortFamilyMember> processMembers = directiveMembers.stream().map(DirectiveMember::getDirectiveMember).collect(Collectors.toSet());
         SwitchPosition switchPosition = deferredDirective.getSwitchPosition();
-        UUID directiveKeeper;
+
+        //Отпимизация на основе Создания директивы и времени изменения членов директивы возможна
+//        Timestamp directiveTime = deferredDirective.getCreated();
+
+        ShortFamilyMember processMemberKeeper;
         if (deferredDirective.getDirectiveKeeper() == null) {
-            directiveKeeper = processMembers.stream().findFirst().orElseThrow(()->new RuntimeException("processMembers are empty")).getUuid();
-        } else directiveKeeper = deferredDirective.getDirectiveKeeper();
+            processMemberKeeper = processMembers.stream().filter(x -> !Objects.equals(x.getUuid(), mainMember.getUuid())).findFirst().orElseThrow(() -> new RuntimeException("processMembers are empty"));
+
+        } else {
+            processMemberKeeper = processMembers.stream().filter(x -> Objects.equals(x.getUuid(), deferredDirective.getDirectiveKeeper())).findFirst().orElseThrow();
+        }
         directiveRepo.delete(deferredDirective);
 
         Set<String> setLinkedStatus = new HashSet<>();
         Set<String> setCheckedStatus = new HashSet<>();
         Set<String> setUncheckedStatus = new HashSet<>();
-        ShortFamilyMember processMemberKeeper = processMembers.stream().filter(x -> Objects.equals(x.getUuid(), directiveKeeper)).findFirst().orElseThrow();
 
-        boolean tempMainStatus = ((processMemberKeeper.getLinkGuard() != null && !processMemberKeeper.getLinkGuard().isBlank())
-                || (processMemberKeeper.getDescendantsGuard() != null && !processMemberKeeper.getDescendantsGuard().isBlank()));
+        Map<UUID, CheckStatus> beforeFastStatus = new HashMap<>();
+        boolean repair = false;
         for (ShortFamilyMember processMember :
-                processMembers) {
+                processMembers
+        ) {
+            CheckStatus fastCheck = memberService.getCheckStatus(processMember, true);
+            beforeFastStatus.put(processMember.getUuid(), fastCheck);
             List<DirectiveMember> existOtherDirective = directiveRepository.checkForExistDirectiveMember(processMember);
             if (existOtherDirective.isEmpty()) {
-                CheckStatus checkStatus = memberService.getCheckStatus(processMember, switchPosition == SwitchPosition.MAIN || !tempMainStatus);
-                processMember.setCheckStatus(checkStatus);
-                switch (checkStatus) {
-                    case LINKED -> setLinkedStatus.add(processMember.getUuid().toString());
-                    case CHECKED -> {
-                        setCheckedStatus.add(processMember.getUuid().toString());
-                        processMember.setCreator(null);
-                    }
-                    case UNCHECKED -> setUncheckedStatus.add(processMember.getUuid().toString());
-                    default -> log.warn("something wrong with CheckStatus");
-                }
+                processMember.setCheckStatus(fastCheck);
+                if (fastCheck == CheckStatus.LINKED) setLinkedStatus.add(processMember.getUuid().toString());
+                else if (fastCheck == CheckStatus.CHECKED) setCheckedStatus.add(processMember.getUuid().toString());
             }
+            if (fastCheck == CheckStatus.UNCHECKED) repair = true;
         }
+
         processMembers.remove(mainMember);
         Family mainFamily = memberService.getPrimeFamily(mainMember);
         if (switchPosition == SwitchPosition.MAIN) {
             Family processFamily = memberService.getPrimeFamily(processMemberKeeper);
-//            processFamily.getChildren().add(mainMember);
-            familyService.addPersonToFamily(processFamily,mainMember,RoleInFamily.CHILD, FamilyLevel.PRIMARY);
-//            mainMember.setFamilyWhereChild(processFamily);
-            familyMemberLinkService.changeFamilyLink(mainMember,mainFamily,processFamily);
-            if (mainMember.getActiveFamily()!=null&&Objects.equals(mainMember.getActiveFamily().getId(), mainFamily.getId()))
+            familyService.addPersonToFamily(processFamily, mainMember, RoleInFamily.CHILD, FamilyLevel.PRIMARY);
+            familyMemberLinkService.changeFamilyLink(mainMember, mainFamily, processFamily);
+            if (mainMember.getActiveFamily() != null && Objects.equals(mainMember.getActiveFamily().getId(), mainFamily.getId()))
                 mainMember.setActiveFamily(processFamily);
-            if (mainMember.getLogicPrimary()!=null&&Objects.equals(mainMember.getLogicPrimary().getId(), mainFamily.getId()))
+            if (mainMember.getLogicPrimary() != null && Objects.equals(mainMember.getLogicPrimary().getId(), mainFamily.getId()))
                 mainMember.setLogicPrimary(processFamily);
 //            familyService.changeFamilyForPerson(mainFamily, processFamily, mainMember,FamilyLevel.PRIMARY);
             log.info("merge family is done");
             familyToRemove.add(mainFamily);
         } else {
-            Set<String> repair = new HashSet<>();
             Family childFamily;
             Optional<UUID> mayMerge = Optional.empty();
             ShortFamilyMember child;
@@ -176,7 +182,7 @@ public class DirectiveService {
                     childFamily = mainFamily;
                     child = mainMember;
                     log.info("father is setup");
-                    repair.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(processMemberKeeper)));
+
                 }
                 case MOTHER -> {
                     mayMerge = familyService.addChangesFromMother(mainFamily,
@@ -185,7 +191,7 @@ public class DirectiveService {
                     childFamily = mainFamily;
                     child = mainMember;
                     log.info("mother is setup");
-                    repair.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(processMemberKeeper)));
+
                 }
                 case CHILD -> {
                     childFamily = processMemberKeeper.getFamilyWhereChild();
@@ -201,12 +207,7 @@ public class DirectiveService {
                                 mainMember);
 
                     child = processMemberKeeper;
-                    log.info("child is setup");
-                    if (mainMember.getCheckStatus() != CheckStatus.UNCHECKED && mainMember.getCheckStatus() != CheckStatus.MODERATE) {
-                        Set<ShortFamilyMember> newTopAc = memberService.getAllTopAncestors(mainMember);
-//                    familyService.addPersonToFamily(childFamily, mainMember, (mainMember.getSex() == Sex.MALE) ? RoleInFamily.FATHER : RoleInFamily.MOTHER, processMemberKeeper.getUuid(), null);
-                        repair.addAll(memberService.repairGeneticTreeCheckStatus(newTopAc));
-                    }
+
                 }
                 default -> {
                     childFamily = new Family();
@@ -218,22 +219,160 @@ public class DirectiveService {
             if (mayMerge.isPresent()) {
                 Optional<Family> family = familyRepository.findFamilyByUUID(mayMerge.get());
                 if (family.isPresent() && !Objects.equals(family.get().getUuid(), childFamily.getUuid())) {
-                    familyService.mergeFamilies(childFamily, family.get(),FamilyLevel.PRIMARY);
+                    familyService.mergeFamilies(childFamily, family.get(), FamilyLevel.PRIMARY);
                     child.setFamilyWhereChild(family.get());
-                    if (Objects.equals(child.getActiveFamily().getId(), childFamily.getId()))
+                    if (child.getActiveFamily() != null && Objects.equals(child.getActiveFamily().getId(), childFamily.getId()))
                         mainMember.setActiveFamily(family.get());
-                    if (Objects.equals(child.getLogicPrimary().getId(), childFamily.getId()))
+                    if (child.getLogicPrimary() != null && Objects.equals(child.getLogicPrimary().getId(), childFamily.getId()))
                         mainMember.setLogicPrimary(family.get());
                     family.get().getChildren().add(child);
                     memberService.updateMember(child);
                     familyToRemove.add(childFamily);
                 } else childFamily.setUuid(mayMerge.get());
             }
-            setCheckedStatus.addAll(repair);
         }
+        /// Block of checking checkStatus
+
+
+        switch (switchPosition) {
+            case MAIN -> {
+                CheckStatus keeperStatus = beforeFastStatus.get(mainMember.getUuid());
+                if (keeperStatus == CheckStatus.LINKED || keeperStatus == CheckStatus.CHECKED) {
+                    if (repair)
+                        setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(processMembers, false));
+
+                } else {
+                    if (!setLinkedStatus.isEmpty() || !setCheckedStatus.isEmpty())
+                        setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(mainMember), false));
+                    else {
+                        if (guardService.findAnyKinGuard(mainMember)) {
+                            if (mainMember.getCheckStatus() == CheckStatus.UNCHECKED)
+                                setCheckedStatus.add(mainMember.getUuid().toString());
+                            setCheckedStatus.addAll(processMembers.stream()
+                                    .filter(x -> x.getCheckStatus() != CheckStatus.MODERATE)
+                                    .map(x -> x.getUuid().toString())
+                                    .collect(Collectors.toSet()));
+                        } else {
+                            if (mainMember.getCheckStatus() == CheckStatus.UNCHECKED)
+                                setUncheckedStatus.add(mainMember.getUuid().toString());
+                            setUncheckedStatus.addAll(processMembers.stream()
+                                    .filter(x -> x.getCheckStatus() != CheckStatus.MODERATE)
+                                    .map(x -> x.getUuid().toString())
+                                    .collect(Collectors.toSet()));
+                        }
+                    }
+                }
+            }
+            case FATHER -> {
+                CheckStatus keeperStatus = beforeFastStatus.get(processMemberKeeper.getUuid());
+                if (keeperStatus == CheckStatus.LINKED || keeperStatus == CheckStatus.CHECKED) {
+                    if (repair)
+                        setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(mainMember), false));
+                } else {
+                    if ((mainMember.getLinkGuard() != null && !mainMember.getLinkGuard().isBlank())
+                            || mainMember.getDescendantsGuard() != null && !mainMember.getDescendantsGuard().isBlank()) {
+                        Set<ShortFamilyMember> newTops = memberService.getAllTopAncestors(processMemberKeeper);
+                        setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(newTops, true));
+                    } else {
+                        if (guardService.findAnyKinGuard(processMemberKeeper)) {
+                            setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(mainMember), false));
+                            setCheckedStatus.addAll(processMembers.stream()
+                                    .filter(x -> x.getCheckStatus() != CheckStatus.MODERATE)
+                                    .map(x -> x.getUuid().toString())
+                                    .collect(Collectors.toSet()));
+                        } else {
+                            setUncheckedStatus.add(processMemberKeeper.getUuid().toString());
+                            processMembers.remove(processMemberKeeper);
+                            if (mainMember.getMotherUuid() != null && guardService.findAnyKinGuard(mainMember)) {
+                                if (mainMember.getCheckStatus() == CheckStatus.UNCHECKED)
+                                    setCheckedStatus.add(mainMember.getUuid().toString());
+                                setCheckedStatus.addAll(processMembers.stream()
+                                        .filter(x -> x.getCheckStatus() != CheckStatus.MODERATE)
+                                        .map(x -> x.getUuid().toString())
+                                        .collect(Collectors.toSet()));
+                            } else {
+                                if (mainMember.getCheckStatus() == CheckStatus.UNCHECKED)
+                                    setUncheckedStatus.add(mainMember.getUuid().toString());
+                                setUncheckedStatus.addAll(processMembers.stream()
+                                        .filter(x -> x.getCheckStatus() != CheckStatus.MODERATE)
+                                        .map(x -> x.getUuid().toString())
+                                        .collect(Collectors.toSet()));
+                            }
+                        }
+                    }
+                }
+            }
+            case MOTHER -> {
+                CheckStatus keeperStatus = beforeFastStatus.get(processMemberKeeper.getUuid());
+                if (keeperStatus == CheckStatus.LINKED || keeperStatus == CheckStatus.CHECKED) {
+                    if (repair)
+                        setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(mainMember), false));
+                } else {
+                    if ((mainMember.getLinkGuard() != null && !mainMember.getLinkGuard().isBlank())
+                            || mainMember.getDescendantsGuard() != null && !mainMember.getDescendantsGuard().isBlank()) {
+                        Set<ShortFamilyMember> newTops = memberService.getAllTopAncestors(processMemberKeeper);
+                        setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(newTops, true));
+                    } else {
+                        if (guardService.findAnyKinGuard(processMemberKeeper)) {
+                            setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(mainMember), false));
+                            setCheckedStatus.addAll(processMembers.stream()
+                                    .filter(x -> x.getCheckStatus() != CheckStatus.MODERATE)
+                                    .map(x -> x.getUuid().toString())
+                                    .collect(Collectors.toSet()));
+                        } else {
+                            setUncheckedStatus.add(processMemberKeeper.getUuid().toString());
+                            processMembers.remove(processMemberKeeper);
+                            if (mainMember.getFatherUuid() != null && guardService.findAnyKinGuard(mainMember)) {
+                                if (mainMember.getCheckStatus() == CheckStatus.UNCHECKED)
+                                    setCheckedStatus.add(mainMember.getUuid().toString());
+                                setCheckedStatus.addAll(processMembers.stream()
+                                        .filter(x -> x.getCheckStatus() != CheckStatus.MODERATE)
+                                        .map(x -> x.getUuid().toString())
+                                        .collect(Collectors.toSet()));
+                            } else {
+                                if (mainMember.getCheckStatus() == CheckStatus.UNCHECKED)
+                                    setUncheckedStatus.add(mainMember.getUuid().toString());
+                                setUncheckedStatus.addAll(processMembers.stream()
+                                        .filter(x -> x.getCheckStatus() != CheckStatus.MODERATE)
+                                        .map(x -> x.getUuid().toString())
+                                        .collect(Collectors.toSet()));
+                            }
+                        }
+                    }
+                }
+            }
+            case CHILD -> {
+                CheckStatus keeperStatus = beforeFastStatus.get(mainMember.getUuid());
+                if (keeperStatus == CheckStatus.LINKED || keeperStatus == CheckStatus.CHECKED) {
+                    if (repair)
+                        setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(processMemberKeeper), false));
+                } else {
+                    if ((processMemberKeeper.getLinkGuard() != null && !processMemberKeeper.getLinkGuard().isBlank())
+                            || processMemberKeeper.getDescendantsGuard() != null && !processMemberKeeper.getDescendantsGuard().isBlank()) {
+                        Set<ShortFamilyMember> newTops = memberService.getAllTopAncestors(mainMember);
+                        setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(newTops, true));
+                    } else {
+                        if (guardService.findAnyKinGuard(mainMember)) {
+                            setCheckedStatus.addAll(memberService.repairGeneticTreeCheckStatus(Set.of(processMemberKeeper), false));
+                        } else {
+                            setUncheckedStatus.add(mainMember.getUuid().toString());
+                            if (((mainMember.getSex() == Sex.FEMALE) ? processMemberKeeper.getFatherUuid() != null : processMemberKeeper.getMotherUuid() != null)
+                                    && guardService.findAnyKinGuard(processMemberKeeper)) {
+                                if (processMemberKeeper.getCheckStatus() == CheckStatus.UNCHECKED)
+                                    setCheckedStatus.add(processMemberKeeper.getUuid().toString());
+                            } else {
+                                if (processMemberKeeper.getCheckStatus() == CheckStatus.UNCHECKED)
+                                    setUncheckedStatus.add(mainMember.getUuid().toString());
+                            }
+                        }
+                    }
+                }
+            }
+            default -> log.warn("неизвестная директива  - CheckStatus not changed");
+        }
+
         memberService.flush();
-        if (!familyToRemove.isEmpty()) for (Family f :
-                familyToRemove) {
+        if (!familyToRemove.isEmpty()) for (Family f : familyToRemove) {
             familyService.removeFamily(f);
         }
 
@@ -249,8 +388,7 @@ public class DirectiveService {
             sendAndFormService.formDirectiveToStorageForChangeStatus(deferredDirective.getTokenUser(), null, null, KafkaOperation.RENAME, setUncheckedStatus, CheckStatus.UNCHECKED);
 
 
-        sendAndFormService.sendAddingNewContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(mainMember)).stream().map(UUID::toString).collect(Collectors.toSet()));
-
+        sendAndFormService.sendAddingNewContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(mainMember),true).stream().map(UUID::toString).collect(Collectors.toSet()));
     }
 
     @Transactional
@@ -271,7 +409,7 @@ public class DirectiveService {
 
             List<DirectiveMember> existOtherDirective = directiveRepository.checkForExistDirectiveMember(processMember);
             if (existOtherDirective.isEmpty()) {
-                CheckStatus checkStatus = memberService.getCheckStatus(processMember, switchPosition == SwitchPosition.MAIN || switchPosition == SwitchPosition.CHILD);
+                CheckStatus checkStatus = memberService.getCheckStatus(processMember, false);
                 processMember.setCheckStatus(checkStatus);
                 switch (checkStatus) {
                     case LINKED -> setLinkedStatus.add(processMember.getUuid().toString());
@@ -316,8 +454,9 @@ public class DirectiveService {
                             child.setMotherInfo(null);
                         }
                         Family newFamily = familyService.creatFreeFamily(child.getFatherInfo(), child.getMotherInfo(), child.getUuid(), child.getBirthday());
-                        family.getChildren().remove(mainMember);
-                        newFamily.getChildren().add(mainMember);
+                        familyService.addPersonToFamily(newFamily, child, RoleInFamily.CHILD, FamilyLevel.PRIMARY);
+                        familyMemberLinkService.changeFamilyLink(child, family, newFamily);
+                        family.getChildren().remove(child);
                     }
                     sendAndFormService.sendChangeInStorageByNegative(deferredDirective, child.getUuid().toString());
                 }
@@ -343,7 +482,7 @@ public class DirectiveService {
                 .tokenUser(directive.getInfo())
                 .person(directive.getTokenUser())
                 .build());
-        sendAndFormService.sendAddingNewContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(directive.getDirectiveMember())).stream().map(UUID::toString).collect(Collectors.toSet()));
+        sendAndFormService.sendAddingNewContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(directive.getDirectiveMember()),true).stream().map(UUID::toString).collect(Collectors.toSet()));
         directiveRepo.delete(directive);
 
     }

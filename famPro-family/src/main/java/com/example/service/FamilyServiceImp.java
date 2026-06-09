@@ -92,7 +92,7 @@ public class FamilyServiceImp implements SimpleFamilyService {
     public Family changeFamilyByRemoveParentLink(Changing changing,
                                                  Family primeFamily,
                                                  ShortFamilyMember mainMember,
-                                                 FamilyMemberDto mainDto) {
+                                                 FamilyMemberDto mainDto                                                ) {
         if ((changing.getChangingFather().ordinal() > 4) && (changing.getChangingMother().ordinal() > 4)) {
             if (mainMember.getFatherUuid() != null || mainMember.getMotherUuid() != null)
                 memberService.removeBothParentLinks(mainMember);
@@ -127,19 +127,17 @@ public class FamilyServiceImp implements SimpleFamilyService {
         if (!changing.isOneChildInFamily()) {
             Family newFamily = creatFreeFamily(mainDto.getFatherInfo(), mainDto.getMotherInfo(), mainMember.getUuid(), mainDto.getBirthday());
             addPersonToFamily(newFamily, mainMember, RoleInFamily.CHILD, FamilyLevel.PRIMARY);
-            familyMemberLinkService.changeFamilyLink(mainMember,primeFamily,newFamily);
-            primeFamily.getChildren().remove(mainMember);
-//            guardService.changeFamilyForGuard(primeFamily,newFamily,mainMember,FamilyLevel.PRIMARY);
+            familyMemberLinkService.changeFamilyLink(mainMember, primeFamily, newFamily);
+            removeChildFromFamily(primeFamily, mainMember);
             changing.setOneChildInFamily(true);
-            if (Objects.equals(primeFamily.getBirthday(), mainDto.getBirthday())) setAutoFamilyBirthday(primeFamily);
             return newFamily;
         } else {
-            if (mainDto.getMotherInfo() == null || mainDto.getMotherInfo().isBlank()) {
-                primeFamily.setWifeInfo(null);
+            if (changing.getChangingMother().ordinal()<4&&changing.getChangingMother().ordinal()!=2) {
+                primeFamily.setWifeInfo(mainDto.getMotherInfo());
                 primeFamily.setWife(null);
             }
-            if (mainDto.getFatherInfo() == null || mainDto.getFatherInfo().isBlank()) {
-                primeFamily.setHusbandInfo(null);
+            if (changing.getChangingFather().ordinal()<4&&changing.getChangingFather().ordinal()!=2) {
+                primeFamily.setHusbandInfo(mainDto.getFatherInfo());
                 primeFamily.setHusband(null);
             }
             primeFamily.setUuid(mainMember.getUuid());
@@ -148,18 +146,13 @@ public class FamilyServiceImp implements SimpleFamilyService {
         return primeFamily;
     }
 
-//    @Transactional
-//    public Family ejectChildInNewFamily(Family family,
-//                                        ShortFamilyMember mainMember,
-//                                        FamilyMemberDto mainDto) {
-//        Family newFamily = creatFreeFamily(mainDto.getFatherInfo(), mainDto.getMotherInfo(), mainMember.getUuid(), mainDto.getBirthday());
-//        family.getChildren().remove(mainMember);
-//        newFamily.getChildren().add(mainMember);
-//        changeFamilyForPerson(family, newFamily, mainMember, FamilyLevel.PRIMARY);
-//        if (Objects.equals(family.getBirthday(), mainDto.getBirthday())) setAutoFamilyBirthday(family);
-//        mainMember.setFamilyWhereChild(newFamily);
-//        return newFamily;
-//    }
+    @Transactional
+    public void removeChildFromFamily(Family family, ShortFamilyMember member) {
+        family.getChildren().remove(member);
+        if (member.getLinkGuard() != null && !member.getLinkGuard().isBlank())
+            family.setActiveGuard(removeUuidFromInfo(family.getActiveGuard(), member.getLinkGuard()).orElse(null));
+        if (Objects.equals(family.getBirthday(), member.getBirthday())) setAutoFamilyBirthday(family);
+    }
 
     private ChangingStatus changeChangingStatusAfterRemove(ChangingStatus changingStatus) {
         switch (changingStatus) {

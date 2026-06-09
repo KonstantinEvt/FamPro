@@ -29,7 +29,7 @@ public class DeferredDirective {
     private ShortFamilyMember directiveMember;
 
     @OneToMany(mappedBy = "directive", cascade = {CascadeType.REMOVE})
-    private Set<DirectiveMember> shortFamilyMemberLink;
+    private Set<DirectiveMember> directiveMembers;
 
     @Column(name = "info_link")
     private String info;

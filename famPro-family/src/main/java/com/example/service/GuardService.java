@@ -48,7 +48,7 @@ public class GuardService implements SimpleFamilyService {
         Guard guard = creatGuard(shortFamilyMember, token);
         memberService.addGuardToMemberByLinking(shortFamilyMember, guard);
         memberService.addGuardToMemberKin(shortFamilyMember, guard);
-        Set<String> changingStatus = memberService.repairGeneticTreeCheckStatus(memberService.getAllTopAncestors(shortFamilyMember));
+        Set<String> changingStatus = memberService.repairGeneticTreeCheckStatus(memberService.getAllTopAncestors(shortFamilyMember),true);
         Set<FamilyMemberLink> links = familyMemberLinkRepository.getAllFamilyMemberLinksOfPerson(shortFamilyMember);
         UUID uuid = UUID.fromString(token);
         links.forEach(x -> x.setLinkGuard(uuid));
@@ -116,10 +116,14 @@ public class GuardService implements SimpleFamilyService {
 
     @Transactional
     public void mergePrimaryGuards(Set<ShortFamilyMember> donor, Set<ShortFamilyMember> merged) {
-        String d = donor.stream().findFirst().orElseThrow(() -> new RuntimeException("Set of Children Empty")).getPrimaryGuard();
-        String m = merged.stream().findFirst().orElseThrow(() -> new RuntimeException("Set of Children Empty")).getPrimaryGuard();
-        if ((d == null || d.isBlank()) && (m == null || m.isBlank())) return;
-        if (d != null && !d.isBlank() && (m != null && !m.isBlank())) {
+        ShortFamilyMember firstDonor = donor.stream().findFirst().orElseThrow(() -> new RuntimeException("Set of Children Empty"));
+        ShortFamilyMember firstMerged = merged.stream().findFirst().orElseThrow(() -> new RuntimeException("Set of Children Empty"));
+
+        String d = mergeInfo(firstDonor.getPrimaryGuard(), firstDonor.getLinkGuard());
+        String m = mergeInfo(firstMerged.getPrimaryGuard(), firstMerged.getLinkGuard());
+
+        if (d == null && m == null) return;
+        if (d != null && m != null) {
             String result = mergeInfo(d, m);
             for (ShortFamilyMember mer :
                     merged) {
@@ -133,7 +137,7 @@ public class GuardService implements SimpleFamilyService {
                     don.setPrimaryGuard(removeUuidFromInfo(result, don.getLinkGuard()).orElse(null));
                 else don.setPrimaryGuard(result);
             }
-        } else if (m == null || m.isBlank()) for (ShortFamilyMember mer :
+        } else if (m == null) for (ShortFamilyMember mer :
                 merged) {
             mer.setPrimaryGuard(d);
         }
@@ -156,7 +160,7 @@ public class GuardService implements SimpleFamilyService {
         if (member.getPrimaryGuard() != null && !member.getPrimaryGuard().isBlank())
             return getAllUuidFromInfo(member.getPrimaryGuard()).stream().filter(Objects::nonNull).map(UUID::toString).collect(Collectors.toSet());
         Set<ShortFamilyMember> topAncestors = memberService.getAllTopAncestors(member);
-        return memberService.getGeneticTreeGuards(topAncestors).stream().filter(Objects::nonNull).map(UUID::toString).collect(Collectors.toSet());
+        return memberService.getGeneticTreeGuards(topAncestors,true).stream().filter(Objects::nonNull).map(UUID::toString).collect(Collectors.toSet());
     }
 
     @Transactional
@@ -167,6 +171,10 @@ public class GuardService implements SimpleFamilyService {
                     || (familyMember.getDescendantsGuard() != null && !familyMember.getDescendantsGuard().isBlank())
                     || (familyMember.getPrimaryGuard() != null && !familyMember.getPrimaryGuard().isBlank()))
                 return true;
+        if (memberService.getExtendedTopAncestors(ancTop))
+            for (ShortFamilyMember familyMember : ancTop)
+                if (familyMember.getDescendantsGuard() != null && !familyMember.getDescendantsGuard().isBlank())
+                    return true;
         return false;
     }
 

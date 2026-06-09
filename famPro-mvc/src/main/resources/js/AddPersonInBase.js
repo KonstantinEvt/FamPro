@@ -780,7 +780,7 @@ function submitBaseFormAddFM() {
             );
         }
     }
-    createAgeBio(activeBio);
+    if (tempPerson.memberInfo.secretLevelBiometric !== "CLOSE") createAgeBio(activeBio);
     let formData = {
         primePhoto: primePhotoExist,
 

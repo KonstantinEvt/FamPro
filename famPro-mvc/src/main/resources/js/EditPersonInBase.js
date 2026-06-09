@@ -954,7 +954,7 @@ function submitBaseFormEditFM() {
             );
         }
     }
-    createAgeBio(activeBio);
+    if (inputBio!==null&&tempPerson.memberInfo.secretLevelBiometric !== "CLOSE") createAgeBio(activeBio);
     let formData = {
         primePhoto: primePhotoExist,
         id: tempPerson.id,

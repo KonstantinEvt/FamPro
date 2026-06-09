@@ -345,7 +345,7 @@ function checkAndSendStorageRequest() {
                     tempPerson.memberInfo.addresses = person.memberInfo.addresses;
                     tempPerson.fioDtos = person.fioDtos;
                     inputBio=tempPerson.memberInfo.biometric;
-                    countBio=inputBio.length-1;
+                    if (inputBio!==null&&tempPerson.memberInfo.secretLevelBiometric !== "CLOSE") countBio=inputBio.length-1;
 
                 }).then(() => editPersonInBase());
                 break;

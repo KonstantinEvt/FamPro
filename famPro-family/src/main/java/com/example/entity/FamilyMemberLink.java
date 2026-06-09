@@ -14,7 +14,7 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 @Builder
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Table(name = "family_member_links")
 public class FamilyMemberLink {
     @Id

@@ -439,7 +439,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             formAndSendService.sendNotification(token, Attention.NEGATIVE, fm.getFullName(), dtoId, Subject.LAST_UPDATE, localisation);
             throw new ModeratingContent("Version change");
         }
-        if (fromTemp.getSecretLevelRemove() == SecretLevel.CLOSE
+        if (fromTemp.getSecretLevelRemove() == SecretLevel.CLOSE&&fromTemp.getSecretLevelBirthday() != SecretLevel.CLOSE
                 && ((fromTemp.getMotherInfo() != null && fromTemp.getMotherInfo().charAt(0) != '(' && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio())), fromTemp.getMotherInfo()))
                 || (fromTemp.getFatherInfo() != null && fromTemp.getFatherInfo().charAt(0) != '(' && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getFatherFio())), fromTemp.getFatherInfo())))) {
             formAndSendService.sendNotification(token, Attention.RIGHTS, null, dtoId, Subject.RIGHTS, localisation);
@@ -488,36 +488,40 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             fm.setFullName(generateFioStringInfo(fm));
         }
         List<Notification> notifications = new ArrayList<>();
-        Set<OldFio> otherNames = oldFioService.checkOtherNamesUniquer(fm, familyMemberDto.getFioDtos(), notifications);
-
-        Set<FamilyMember> children = new HashSet<>();
-        try {
-            if (!otherNames.isEmpty() || changing.isChangingMain())
-                children.addAll(losingParentsService.findAdditionalChildren(changing, fm, otherNames));
-        } catch (ModeratingContent e) {
-            formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.MODERATION_CHILD, localisation);
-            throw new ModeratingContent("Linking person child is under moderation");
-        } catch (UncorrectedInformationSex e) {
-            formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.WRONG_INFO_SEX, localisation);
-            throw new UncorrectedInformationSex("Linking children have another sex of parent");
-        }
-        if (!otherNames.isEmpty()) {
-            if (fm.getOtherNames() == null || fm.getOtherNames().isEmpty()) {
-                fm.setOtherNamesExist(true);
-                fm.setOtherNames(otherNames);
-            } else fm.getOtherNames().addAll(otherNames);
-        }
-        if (!children.isEmpty()) {
-            if (fm.getChilds() == null) {
-                fm.setChilds(children);
-            } else fm.getChilds().addAll(children);
-        }
-
         List<FamilyDirective> listToFamily = new ArrayList<>();
-        setUpParents(familyMemberDto, fm, changing, notifications, listToFamily, fromTemp);
+        Set<FamilyMember> children = new HashSet<>();
+        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE ) {
+            Set<OldFio> otherNames = oldFioService.checkOtherNamesUniquer(fm, familyMemberDto.getFioDtos(), notifications);
 
-        familyMemberDto.setUuid(fm.getUuid());
-        if (familyMemberDto.isPrimePhoto()) {
+
+            try {
+                if (!otherNames.isEmpty() || changing.isChangingMain())
+                    children.addAll(losingParentsService.findAdditionalChildren(changing, fm, otherNames));
+            } catch (ModeratingContent e) {
+                formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.MODERATION_CHILD, localisation);
+                throw new ModeratingContent("Linking person child is under moderation");
+            } catch (UncorrectedInformationSex e) {
+                formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.WRONG_INFO_SEX, localisation);
+                throw new UncorrectedInformationSex("Linking children have another sex of parent");
+            }
+            if (!otherNames.isEmpty()) {
+                if (fm.getOtherNames() == null || fm.getOtherNames().isEmpty()) {
+                    fm.setOtherNamesExist(true);
+                    fm.setOtherNames(otherNames);
+                } else fm.getOtherNames().addAll(otherNames);
+            }
+            if (!children.isEmpty()) {
+                if (fm.getChilds() == null) {
+                    fm.setChilds(children);
+                } else fm.getChilds().addAll(children);
+            }
+
+
+            setUpParents(familyMemberDto, fm, changing, notifications, listToFamily, fromTemp);
+
+            familyMemberDto.setUuid(fm.getUuid());
+        }
+        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE  && familyMemberDto.isPrimePhoto()) {
             directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.ADD));
             fm.setPrimePhoto(true);
         }
@@ -531,10 +535,11 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         log.info("Первичная информация установлена");
         familyMemberDto.getMemberInfo().setId(fm.getId());
 
-        if (familyMemberDto.getSecretLevelMainInfo() != SecretLevel.CLOSE) {
+        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE) {
             setMainSecurityOption(familyMemberDto, fm);
             familyMemberInfoService.secretMerge(familyMemberDto.getMemberInfo(), fm.getFamilyMemberInfo().get(0));
-        }
+        } else familyMemberInfoService.secretPredict(familyMemberDto.getMemberInfo(), fm.getFamilyMemberInfo().get(0));
+
         addChangingToBase(familyMemberDto, fm, changing);
         if (changing.isChangingMain()) addChangesInParensInfo(fm.getChilds(), fm, listToFamily);
         else if (!children.isEmpty()) addChangesInParensInfo(children, fm, listToFamily);
@@ -690,7 +695,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 && fromTemp.getMotherInfo().charAt(0) != '('
                 && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio())), fromTemp.getMotherInfo())) {
             removeLinkWithParent(fm, Sex.FEMALE);
-            losingParentsService.setUpMother(familyMemberDto.getFatherFio(), fm, notifications, listToFamily);
+            losingParentsService.setUpMother(familyMemberDto.getMotherFio(), fm, notifications, listToFamily);
             changing.setChangingMother(true);
         } else if (familyMemberDto.getMotherFio() != null && (fromTemp == null ||
                 familyMemberDto.getMotherFio().getFirstName() == null ||
@@ -840,6 +845,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                     members) {
                 fm.setCheckStatus(directive.getCheckStatus());
                 if (directive.getCheckStatus() == CheckStatus.CHECKED) fm.setCreator(null);
+                if (directive.getCheckStatus() == CheckStatus.UNCHECKED) fm.setCreator(fm.getFirstCreator());
                 fm.setLastUpdate(new Timestamp(System.currentTimeMillis()));
 
             }
@@ -863,7 +869,10 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                         if (directive.getTokenUser() != null) clearTempGuardMaps(directive.getTokenUser());
 
                     }
-                    case UNCHECKED -> familyMember.setCheckStatus(CheckStatus.UNCHECKED);
+                    case UNCHECKED -> {
+                        familyMember.setCheckStatus(CheckStatus.UNCHECKED);
+                        familyMember.setCreator(familyMember.getFirstCreator());
+                    }
                     default -> log.warn("found unknown directive");
                 }
             } else switch (directive.getSwitchPosition()) {

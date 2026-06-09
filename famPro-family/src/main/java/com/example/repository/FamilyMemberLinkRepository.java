@@ -49,9 +49,13 @@ public class FamilyMemberLinkRepository {
     }
 
     @Transactional
-    public void removeFamilyMember(FamilyMemberLink familyMemberLink) {
+    public void removeFamilyMemberLinkByMemberAndCausePerson(ShortFamilyMember member, UUID causePerson) {
         try {
-            entityManager.remove(familyMemberLink);
+            entityManager.createQuery("DELETE from FamilyMemberLink a where a.member=:member and a.causePerson=:causePerson")
+                    .setParameter("member",member)
+                    .setParameter("causePerson",causePerson)
+                    .executeUpdate();
+            log.info("delete link. cause person is: {}",causePerson.toString());
         } catch (RuntimeException e) {
             log.warn("family member not removed:", e);
         }
