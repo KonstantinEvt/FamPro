@@ -21,35 +21,23 @@ public class BiometricService {
     @Transactional
     public void mergeBiometric(FamilyMemberInfo fmiData, FamilyMemberInfo fmiMergeResult) {
         int ages = fmiData.getBiometricData().size();
-        if (fmiMergeResult.getBiometricData() == null || fmiMergeResult.getBiometricData().isEmpty())
-            fmiMergeResult.setBiometricData(new ArrayList<>());
+        List<Biometric> outBase = new ArrayList<>();
+        if (fmiMergeResult.getBiometricData() == null) fmiMergeResult.setBiometricData(new ArrayList<>());
         for (int i = 0; i < ages; i++) {
-            if (fmiMergeResult.getBiometricData().size() < i + 1)
-                fmiMergeResult.getBiometricData().add(new Biometric());
-
-            fmiMergeResult.getBiometricData().get(i).setUuid(fmiData.getUuid());
-            if (fmiData.getBiometricData().get(i).getAge() != 0)
-                fmiMergeResult.getBiometricData().get(i).setAge(fmiData.getBiometricData().get(i).getAge());
-            if (fmiData.getBiometricData().get(i).getHeight() != 0)
-                fmiMergeResult.getBiometricData().get(i).setHeight(fmiData.getBiometricData().get(i).getHeight());
-
-            if (fmiData.getBiometricData().get(i).getWeight() != 0)
-                fmiMergeResult.getBiometricData().get(i).setWeight(fmiData.getBiometricData().get(i).getWeight());
-
-            if (fmiData.getBiometricData().get(i).getHairColor() != null)
-                fmiMergeResult.getBiometricData().get(i).setHairColor(fmiData.getBiometricData().get(i).getHairColor());
-
-            if (fmiData.getBiometricData().get(i).getShirtSize() != 0)
-                fmiMergeResult.getBiometricData().get(i).setShirtSize(fmiData.getBiometricData().get(i).getShirtSize());
-
-            if (fmiData.getBiometricData().get(i).getEyesColor() != null)
-                fmiMergeResult.getBiometricData().get(i).setEyesColor(fmiData.getBiometricData().get(i).getEyesColor());
-
-            if (fmiData.getBiometricData().get(i).getFootSize() != 0)
-                fmiMergeResult.getBiometricData().get(i).setFootSize(fmiData.getBiometricData().get(i).getFootSize());
-            if (fmiData.getBiometricData().get(i).getDescription() != null && !fmiData.getBiometricData().get(i).getDescription().isBlank())
-                fmiMergeResult.getBiometricData().get(i).setDescription(fmiData.getBiometricData().get(i).getDescription());
+            int age = fmiData.getBiometricData().get(i).getAge();
+            Biometric bio = fmiMergeResult.getBiometricData().stream().filter(x -> x.getAge() == age).findFirst().orElse(null);
+            if (bio == null) {fmiData.getBiometricData().get(i).setUuid(fmiMergeResult.getUuid());outBase.add(fmiData.getBiometricData().get(i));}
+            else {
+                bio.setHeight(fmiData.getBiometricData().get(i).getHeight());
+                bio.setWeight(fmiData.getBiometricData().get(i).getWeight());
+                bio.setHairColor(fmiData.getBiometricData().get(i).getHairColor());
+                bio.setShirtSize(fmiData.getBiometricData().get(i).getShirtSize());
+                bio.setEyesColor(fmiData.getBiometricData().get(i).getEyesColor());
+                bio.setFootSize(fmiData.getBiometricData().get(i).getFootSize());
+                bio.setDescription(fmiData.getBiometricData().get(i).getDescription());
+            }
         }
+        if (!outBase.isEmpty()) fmiMergeResult.getBiometricData().addAll(outBase);
     }
 
     @Transactional

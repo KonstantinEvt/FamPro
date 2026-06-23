@@ -25,7 +25,7 @@ public class OldFio extends Fio {
             sequenceName = "old_fio_seq", initialValue = 1, allocationSize = 5)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private FamilyMember member;
 

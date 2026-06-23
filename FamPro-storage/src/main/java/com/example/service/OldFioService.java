@@ -6,6 +6,8 @@ import com.example.entity.Notification;
 import com.example.entity.OldFio;
 import com.example.enums.Attention;
 import com.example.enums.Subject;
+import com.example.exceptions.Dublicate;
+import com.example.exceptions.UncorrectedInformation;
 import com.example.mappers.FioMapper;
 import com.example.mappers.OldNamesMapper;
 import com.example.repository.*;
@@ -44,28 +46,38 @@ public class OldFioService extends FioServiceImp<OldFio> {
     }
 
     @Transactional
-    public Set<OldFio> checkOtherNamesUniquer(FamilyMember familyMember, Set<FioDto> oldFios, List<Notification> notifications) {
-        if (oldFios==null||oldFios.isEmpty()) return new HashSet<>();
+    public Set<OldFio> checkOtherNamesUniquer(FamilyMember familyMember, Set<FioDto> oldFios, List<Notification> notifications, boolean changeBirthday) {
+        if ((oldFios == null || oldFios.isEmpty()) && !changeBirthday) return new HashSet<>();
         Set<OldFio> enteringFio = new HashSet<>();
-        for (FioDto oldName :
-                oldFios) {
-            OldFio oldFio = oldNamesMapper.fioDtoToOldFio(oldName);
-            oldFio.setBirthday(familyMember.getBirthday());
-            if (oldFio.getFirstName() != null && oldFio.getMiddleName() != null && oldFio.getLastName() != null) {
-                oldFio.setUuid(generateUUIDFromFio(oldFio));
-                oldFio.setSex(familyMember.getSex());
-                oldFio.setFullName(generateFioStringInfo(oldFio));
-                if (oldFio.getUuid() != familyMember.getUuid()) {
-                    oldFio.setMember(familyMember);
-                    enteringFio.add(oldFio);
+        Set<OldFio> alreadyExist = new HashSet<>();
+        if (oldFios != null && !oldFios.isEmpty())
+            for (FioDto oldName :
+                    oldFios) {
+                OldFio oldFio = oldNamesMapper.fioDtoToOldFio(oldName);
+                oldFio.setBirthday(familyMember.getBirthday());
+                if (oldFio.getFirstName() != null && oldFio.getMiddleName() != null && oldFio.getLastName() != null) {
+                    oldFio.setUuid(generateUUIDFromFio(oldFio));
+                    oldFio.setSex(familyMember.getSex());
+                    oldFio.setFullName(generateFioStringInfo(oldFio));
+                    if (oldFio.getUuid() != familyMember.getUuid()) {
+                        if (familyMember.getOtherNames() != null && !familyMember.getOtherNames().isEmpty())
+                            for (OldFio existFio :
+                                    familyMember.getOtherNames()) {
+                                if (Objects.equals(existFio.getUuid(), oldFio.getUuid())) alreadyExist.add(oldFio);
+                            }
+                        oldFio.setMember(familyMember);
+                        enteringFio.add(oldFio);
+
+                    } else {
+                        notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_OTHER).build());
+                    }
                 } else {
                     notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_OTHER).build());
                 }
-            } else {
-                notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_OTHER).build());
+                log.info("oldFio is prepare to setup: {}", oldFio.getFullName());
             }
-            log.info("oldFio is prepare to setup: {}", oldFio.getFullName());
-        }
+        if (!changeBirthday && !enteringFio.isEmpty()) enteringFio.removeAll(alreadyExist);
+        else if (familyMember.getOtherNames() != null) enteringFio.addAll(familyMember.getOtherNames());
         if (!enteringFio.isEmpty()) {
             Set<OldFio> checked = new HashSet<>();
             Set<OldFio> existingInBaseOther = oldFioRepository.findAllOldFiosWithFamilyMembers(enteringFio.stream().map(OldFio::getUuid).collect(Collectors.toSet()));
@@ -75,9 +87,10 @@ public class OldFioService extends FioServiceImp<OldFio> {
                     for (OldFio oldFio1 :
                             existingInBaseOther) {
                         if (Objects.equals(oldFio.getUuid(), oldFio1.getUuid())) {
+                            if (changeBirthday) throw new Dublicate(oldFio1.getMember().getId().toString());
                             checked.add(oldFio);
                             if (!Objects.equals(oldFio1.getMember().getUuid(), familyMember.getUuid()))
-                                notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.DUPLICATE_OTHER).id(oldFio.getMember().getId()).build());
+                                notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.DUPLICATE_OTHER).id(oldFio1.getMember().getId()).build());
                         }
                     }
                 }
@@ -91,6 +104,7 @@ public class OldFioService extends FioServiceImp<OldFio> {
                         for (FamilyMember fm :
                                 hideOther) {
                             if (Objects.equals(oldFio.getUuid(), fm.getUuid())) {
+                                if (changeBirthday) throw new UncorrectedInformation(fm.getId().toString());
                                 checkedHide.add(oldFio);
                                 notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.DUPLICATE_OTHER_HIDE).id(fm.getId()).build());
                             }

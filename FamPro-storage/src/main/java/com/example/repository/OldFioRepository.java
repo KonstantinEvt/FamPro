@@ -45,5 +45,16 @@ public class OldFioRepository {
         }
         return result;
     }
+    @Transactional
+    public void removeOldFio(UUID uuid){
+        try {
+            entityManager.createQuery("delete from OldFio a where a.uuid=:uuid")
+                    .setParameter("uuid",uuid)
+                    .executeUpdate();
+        }catch (RuntimeException e){
+            log.info(e.getMessage());
+            log.info("delete not complete");
+        }
+    }
 
 }

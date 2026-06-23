@@ -178,4 +178,9 @@ public class MainInfoReposirory {
         }
         return null;
     }
+
+    @Transactional
+    public void update(FamilyMemberInfo familyMemberInfo){
+        entityManager.merge(familyMemberInfo);
+    }
 }
