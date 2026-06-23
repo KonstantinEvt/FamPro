@@ -2,6 +2,7 @@ package com.example.conrollers;
 
 import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.SecurityDto;
+import com.example.enums.SecretLevel;
 import com.example.models.OnlineUserHolder;
 import com.example.models.SimpleUserInfo;
 import com.example.services.BaseService;
@@ -9,6 +10,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.UUID;
 
 @RestController
@@ -54,6 +56,16 @@ public class BaseController {
 
     @PostMapping("/family_member/get/extended")
     public FamilyMemberDto getFullFamilyMember(@RequestBody SecurityDto securityDto) {
-        return baseService.getExtendedInfoFamilyMember(securityDto, onlineUserHolder.getSimpleUser().getLocalisation());
+        SimpleUserInfo simpleUserInfo=onlineUserHolder.getSimpleUser();
+        securityDto.setLocalisation(simpleUserInfo.getLocalisation());
+        return baseService.getExtendedInfoFamilyMember(securityDto);
+    }
+    @PostMapping("/family_member/getFirstCreator")
+    public Collection<FamilyMemberDto> getMembersByFirstCreator() {
+        return baseService.getMembersByFirstCreator(onlineUserHolder.getSimpleUser().getLocalisation());
+    }
+    @PostMapping("/family_member/getFamilyTree/{uuid}/{choice}")
+    public Collection<FamilyMemberDto> getFamilyTreeOfMember(@PathVariable("uuid") UUID uuid, @PathVariable("choice") SecretLevel choice) {
+        return baseService.getFamilyTreeOfMember(uuid, choice, onlineUserHolder.getSimpleUser().getLocalisation());
     }
 }

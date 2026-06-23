@@ -5,12 +5,14 @@ import com.example.dtos.FamilyMemberDto;
 import com.example.dtos.SecurityDto;
 import com.example.enums.CheckStatus;
 import com.example.enums.Localisation;
+import com.example.enums.SecretLevel;
 import com.example.feign.BaseClient;
 import com.example.feign.BaseOverClient;
 import com.example.feign.FamilyClient;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.UUID;
 
@@ -29,15 +31,18 @@ public class BaseService {
         return baseClient.getFamilyMemberById(id, localisation);
 
     }
+
     public FamilyMemberDto getYourself(Localisation localisation) {
         return baseClient.getYourself(localisation);
     }
-    public FamilyMemberDto getExtendedInfoFamilyMember(SecurityDto securityDto, Localisation localisation){
-        return baseClient.getExtendedInfoFamilyMember(securityDto, localisation);
+
+    public FamilyMemberDto getExtendedInfoFamilyMember(SecurityDto securityDto) {
+        return baseClient.getExtendedInfoFamilyMember(securityDto);
     }
+
     public long addFamilyMember(FamilyMemberDto familyMemberDto) {
         return baseClient.addFamilyMember(familyMemberDto).getId();
-     }
+    }
 
     public void editFamilyMember(FamilyMemberDto familyMemberDto) {
         baseClient.editFamilyMember(familyMemberDto);
@@ -46,4 +51,12 @@ public class BaseService {
     public CheckStatus linkFamilyMember(FamilyMemberDto familyMemberDto) {
         return familyClient.addGuard(familyMemberDto);
     }
+
+    public Collection<FamilyMemberDto> getMembersByFirstCreator(Localisation localisation) {
+        return baseClient.getMembersByFirstCreator(localisation);
+    }
+    public Collection<FamilyMemberDto> getFamilyTreeOfMember(UUID uuid, SecretLevel choice, Localisation localisation) {
+        return baseClient.getFamilyTreeOfMember(uuid, choice, localisation);
+    }
+
 }

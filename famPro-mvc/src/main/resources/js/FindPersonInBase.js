@@ -74,7 +74,7 @@ function getPersonFromBaseById(cause) {
             <label for="idFindFM" style="color: chocolate; padding-top: 5px">Id:</label>
             <input class="form-control" type="text" id="idFindFM" name="idFindFM" autocomplete="on" required> 
             <br>
-            <button class="btn btn-outline-warning" style="color: darkred" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" onclick="findPerson(0,${cause})">Найти человека</button>
+            <button class="btn btn-outline-warning" style="color: darkred" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" onclick="findPerson(0,${cause},null)">Найти человека</button>
         </form> 
 `
 }
@@ -96,13 +96,182 @@ function getPersonFromBaseByFio(cause) {
             <input class="form-control" type="date" id="birthdayFindFM" name="birthdayFindFM" required>               
 
             <br>
-            <button class="btn btn-outline-warning" style="color: darkred" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" onclick="findPerson(1,${cause})">Найти человека</button>
+            <button class="btn btn-outline-warning" style="color: darkred" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" onclick="findPerson(1,${cause},null)">Найти человека</button>
         </form>
  `;
 }
 
+async function simplePaintingOfPerson(choice, cause, uuidIn) {
+    loadStandardMainPanel();
+    document.getElementById("taskPart").innerHTML = `
+        <div id="link-block"></div>
+`
+    document.getElementById("resultPart").innerHTML = `
+                    <div id="resultFindingPerson">
+                        <div class="container-fluid row mh-100 no-gutters">
+                            <span style="text-align: center; font-size: 18px; color: darkred; font-family: 'Times New Roman',serif" >Ожидание данных</span> 
+                        </div> 
+                    </div> `
+    findPerson(choice, cause, uuidIn).then(x => console.log(x));
+}
 
-async function findPerson(choice, cause) {
+async function getMembersCreated() {
+
+    let members = await findCreatedMembers();
+    if (members.length !== 0) {
+        let temp=drawFindingMembers(members,"create");
+        document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Список созданных Вами персон</div>`
+        document.getElementById("mainPanel").innerHTML += `
+        <div class="container-fluid row mh-100 no-gutters" style="margin-top: 10px" >
+            <span class="navbar-brand col-8"
+                style="color: black;font-family: 'Times New Roman',serif; font-size: 16px; width: 70%;margin: 0;padding: 0">Имя &nbsp;            
+                Отчество&nbsp;Фамилия</span>
+            <span class="navbar-brand col-1"
+                style="padding:0; color: darkred;font-family: 'Times New Roman',serif; font-size: 16px; overflow-x: auto" >ДР</span>
+            <span class="navbar-brand col-1" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 16px">Статус</span> 
+            <span class="navbar-brand col"></span>
+        </div><div style="height: 84vh; max-width:100%; overflow-x: auto">` + temp+`</div>`
+    } else {document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Вы пока не вводили никаких персон</div>`;
+    }
+}
+function drawFindingMembers(members,choice){
+    let rows ;
+    let temp;
+    let status;
+    let birthday;
+    let rowAnc=``;
+    let rowRel=``;
+    let rowBro=``;
+    let rowGrandCh=``;
+    let rowGrand=``;
+    let rowChild=``;
+    let rowParent=``;
+    let rowOther=``;
+    let rowDes=``;
+    let rowPer=``;
+        for (let tempMember of members) {
+            let memberInfoTemp = tempMember.firstName + ' ' + tempMember.middleName + ' ' + tempMember.lastName;
+            if (choice==="create") tempMember.relationString="Персона";
+                switch (tempMember.checkStatus) {
+                case "LINKED":
+                    status = "Связан";
+                    break;
+                case "CHECKED":
+                    status = "Защита";
+                    break;
+                case "MODERATE":
+                    status = "Модерация";
+                    break;
+                default :
+                    status = "Общий";
+            }
+            if (tempMember.birthday===null) birthday= "скрыто"
+            else birthday=tempMember.birthday;
+            temp= `<div class="container-fluid row mh-100 no-gutters" style="margin-top: 15px; background-color: #EFF0ED">
+        <span class="navbar-brand col-9 "
+              style="color: darkred;font-family: 'Times New Roman',serif; font-size: 16px; width: margin-top: 15px;70%;margin: 0;padding: 0"><em>${tempMember.firstName}&nbsp;
+                            ${tempMember.middleName}&nbsp;
+                            ${tempMember.lastName}</em></span>
+                            <span class="col"></span>
+                            </div>
+        <div class="container-fluid row mh-100 no-gutters" style="margin-bottom: 5px;background-color: #EFF0ED"> 
+                 <span class="navbar-brand col" style="color: black;font-family: 'Times New Roman',serif; font-size: 14px"><em>${tempMember.relationString}</em></span>         
+        <span class="navbar-brand col-2"
+              style="padding:0; color: black;font-family: 'Times New Roman',serif; font-size: 14px; margin-right: 10px">${birthday}</span>
+        <span class="navbar-brand col-1" style="color: black;font-family: 'Times New Roman',serif; font-size: 14px">${status}</span>
+        <span class="navbar-brand col-1"></span>
+        </div>
+                <div class="container-fluid row mh-100 no-gutters" >
+               
+                    <span class="btn-group-horizontal" role="group"  style="width:100%; margin: 0; padding:0">
+                     <span style="color: green;margin-top: 0; margin-bottom: 10px;font-size: 14px">Операции:</span>
+                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px " type="button" onclick="simplePaintingOfPerson(2,1,'${tempMember.uuid}')">Найти</button>
+                    
+                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px" type="button" onclick="getGeneticTree('${tempMember.uuid}', 'GENETIC_TREE', '${memberInfoTemp}')">Древо</button>
+                    
+                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px" type="button" onclick="getGeneticTree('${tempMember.uuid}', 'ANCESTOR','${memberInfoTemp}')">Предки</button>
+                    
+                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px" type="button" onclick="getGeneticTree('${tempMember.uuid}', 'STRAIGHT_BLOOD', '${memberInfoTemp}')">Потомки</button></span>
+ 
+                            </div>`
+        switch (tempMember.relationString){
+            case "Предок": rowAnc+= temp; break;
+            case "Дедушка": case "Бабушка" : rowGrand+= temp; break;
+            case "Мать": case "Отец"   : rowParent+= temp; break;
+            case "Брат": case "Сестра": rowBro+= temp; break;
+            case "Сын": case "Дочь"  : rowChild+= temp; break;
+            case "Внук": case "Внучка": rowGrandCh+= temp; break;
+            case "Потомок":  rowDes+= temp; break;
+            case "Родственник"  : rowRel+= temp; break;
+            case "Персона": rowPer+=temp; break;
+            default: rowOther+= temp;
+            }
+        }
+        rows = rowAnc+rowGrand+rowParent+rowBro+rowPer+rowChild+rowGrandCh+rowDes+rowOther+rowRel;
+     return rows;
+}
+async function getGeneticTree(member, choice, memberInfo) {
+    let members = await findGeneticTree(member, choice);
+    if (members.length !== 0) {
+    let temp=drawFindingMembers(members,"tree");
+
+        if (choice === 'GENETIC_TREE') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Генеалогическое древо</div>
+            <div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>`;
+        if (choice === 'ANCESTOR') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Предки персоны</div><div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>`;
+        if (choice === 'STRAIGHT_BLOOD') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Потомки персоны</div><div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>`;
+
+        document.getElementById("mainPanel").innerHTML += `
+        <div class="container-fluid row mh-100 no-gutters" style="margin-top: 10px" >
+            <span class="navbar-brand col-8"
+                style="color: black;font-family: 'Times New Roman',serif; font-size: 16px; width: 70%;margin: 0;padding: 0">Имя &nbsp;            
+                Отчество&nbsp;Фамилия</span>
+            <span class="navbar-brand col-1"
+                style="padding:0; color: darkred;font-family: 'Times New Roman',serif; font-size: 16px; overflow-x: auto" >ДР</span>
+            <span class="navbar-brand col-1" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 16px">Статус</span> 
+            <span class="navbar-brand col"></span>
+        </div><div style="height: 84vh; max-width:100%; overflow-x: auto">` + temp+`</div>`
+        console.log(members);
+    } else {
+        if (choice === 'GENETIC_TREE') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Генеалогическое древо для персоны</div>  
+            <div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>
+            <div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">скрыто настройками конфидениальности</div>`;
+        if (choice === 'ANCESTOR') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Предки персоны </div>
+            <div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>
+            <div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">не обнаружены или скрыты настройками конфидениальности</div>`;
+        if (choice === 'STRAIGHT_BLOOD') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Потомки персоны</div>
+            <div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>
+            <div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">не обнаружены или скрыты настройками конфидениальности</div>`;
+    }
+}
+async function findCreatedMembers() {
+    let members = [];
+    let url = `/base/family_member/getFirstCreator`;
+    await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+    }).then(setUsers => setUsers.json()).then(familyMembers => {
+        members = familyMembers;
+    })
+    return members;
+}
+
+async function findGeneticTree(member, choice) {
+    let members = [];
+    let url = `/base/family_member/getFamilyTree/${member}/${choice}`;
+    await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+    }).then(setUsers => setUsers.json()).then(familyMembers => {
+        members = familyMembers;
+    })
+    return members;
+}
+
+async function findPerson(choice, cause, uuidIn) {
     const form = document.getElementById('findPersonById');
     let isContact = -1;
     let formData;
@@ -122,6 +291,11 @@ async function findPerson(choice, cause) {
         }
 
     }
+    if (choice === 2) {
+        formData = {
+            uuid: uuidIn
+        }
+    }
     const jsonData = JSON.stringify(formData);
 
     await fetch(urlId, {
@@ -134,6 +308,7 @@ async function findPerson(choice, cause) {
         paintingFindPerson();
         externId = familyMember.uuid.toString();
         tempPerson = familyMember;
+        console.log(tempPerson);
         tempPerson.primePhotoImj = defaultPhotos.person;
         tempSecurity = ``;
         tempTextPhoto = ``
@@ -202,8 +377,8 @@ async function findPerson(choice, cause) {
             case "LINKED": {
                 document.getElementById("status-finding-person").innerHTML = "связан";
                 if (isContact === -1 && (document.getElementById("nav2").innerHTML === "LinkedUser" || document.getElementById("nav2").innerHTML === "VIP"))
-                    document.getElementById("agree-finding-person").innerHTML = `<button class="btn btn-outline-warning" style="color: darkred" type="button" onclick="addContactBySearch('${externId}')">Контакт</button>`;
-                else if (isContact === -2) document.getElementById("agree-finding-person").innerHTML = `<div style="color: green;margin-right:-12px; font-size: 18px">It's you!</div>`
+                    document.getElementById("agree-finding-person").innerHTML += `<div><button class="btn btn-outline-warning" style="color: darkred" type="button" onclick="addContactBySearch('${externId}')">Контакт</button></div>`;
+                else if (isContact === -2) document.getElementById("agree-finding-person").innerHTML += `<div style="color: green;margin-right:-12px; font-size: 18px">It's you!</div>`
                 break;
             }
             case "MODERATE": {
@@ -259,7 +434,8 @@ async function findPerson(choice, cause) {
                 secretLevelMainInfo: familyMember.secretLevelMainInfo,
             }
             let tempPanel = `<form id="changePersonForm" class="form-group">
-            <div style="text-align: center; font-size: 12px; color: chocolate; padding-right: 0; padding-left: 0; margin-top:50px">Операции:</div>
+            <div style="text-align: center; font-size: 12px; color: chocolate; padding-right: 0; padding-left: 5px; padding-bottom:0; margin-top:20px">Выберите</div>
+            <div style="text-align: center; font-size: 12px; color: chocolate; padding-right: 0; padding-left: 5px;">операцию:</div>
             <div class="btn-group-vertical" role="group" aria-label="Choose group" style="width:100%; margin-left: 5px; margin-right: -5px; margin-bottom: 5px;  text-align: center;">
                 <input type="radio" class="btn-check" name="person-operation" id="person-get" value="extended" autocomplete="off" checked>
                 <label class="btn btn-outline-warning" style="padding-right: 6px; padding-left: 6px; font-size: 14px; color: darkred" for="person-get">Info</label>`;
@@ -277,11 +453,23 @@ async function findPerson(choice, cause) {
             tempPanel += `</div>
              <div class="btn-group-vertical" role="group" aria-label="Confirm group" style="width:100%; margin-left: 5px; margin-right: -5px;  text-align: center;">            
                 <input type="radio" class="btn-check" name="person-operation" id="person-info" value="none" disabled autocomplete="off"> 
-                <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; font-size: 10px; color: gray" for="person-info">для подтверждения введите Id человека в базе</label>       
-                <input class="form-control" type="number" style="font-size:12px; text-align:center; padding-left:0; padding-right: 0; border-radius:0;" id="idChoose" name="idChoose" placeholder="введите id" required>                
+                          <label for="idChoose" style="font-size:10px; text-align:center; padding-left:8px; padding-right: 3px; border-radius:0; background-color: #F2F1EE">Для подтверждения введите Id человека в базе</label>            
+                <input class="form-control" type="number" style="font-size:10px; text-align:center; padding-left:0; padding-right: 0; border-radius:0" id="idChoose" name="idChoose" placeholder="id" required>                
                 <button class="btn btn-outline-warning" style="padding-right: 6px; padding-left: 6px; color: darkred" type="button" onclick="checkAndSendStorageRequest()">OK</button>
             </div>
             </form>`
+            if (familyMember.secretLevelBirthday !== "UNDEFINED" && familyMember.secretLevelBirthday !== "CLOSE") {
+                let tempMemberInfo = familyMember.firstName + ' ' + familyMember.middleName + ' ' + familyMember.lastName
+                tempPanel += `<div class="btn-group-vertical" role="group"  style="width:100%; margin-left: 5px; margin-right: -5px; margin-top: 20px; text-align: center;">
+                    <button class="btn btn-outline-warning" style="color: darkred" type="button"
+                    onclick="getGeneticTree('${familyMember.uuid}', 'GENETIC_TREE', '${tempMemberInfo}')">Древо</button>
+                    <button class="btn btn-outline-warning" style="color: darkred" type="button"
+                    onclick="getGeneticTree('${familyMember.uuid}', 'ANCESTOR', '${tempMemberInfo}')">Предки</button>
+                    <button class="btn btn-outline-warning" style="color: darkred" type="button"
+                    onclick="getGeneticTree('${familyMember.uuid}', 'STRAIGHT_BLOOD', '${tempMemberInfo}')">Потомки</button></div>
+`
+
+            }
             document.getElementById("link-block").innerHTML = tempPanel;
         } else if (cause !== 0) document.getElementById("link-block").innerHTML = ``;
     }).catch(() => {
@@ -310,17 +498,7 @@ function checkAndSendStorageRequest() {
                     },
                     body: jsonData,
                 }).then(response => response.json()).then(async person => {
-                    console.log(person);
-                    if (tempPerson.memberInfo.photoBirthExist && tempPerson.memberInfo.secretLevelBirth !== "CLOSE") tempPerson.memberInfo.birthImj = await loadPicture("/file/get/birth/" + tempPerson.uuid);
-                    if (tempPerson.memberInfo.photoBurialExist && tempPerson.memberInfo.secretLevelBurial !== "CLOSE") tempPerson.memberInfo.burialImj = await loadPicture("/file/get/burial/" + tempPerson.uuid);
-                    tempPerson.memberInfo.emails = person.memberInfo.emails;
-                    tempPerson.memberInfo.biometric = person.memberInfo.biometric;
-                    tempPerson.memberInfo.description = person.memberInfo.description;
-                    tempPerson.memberInfo.burial = person.memberInfo.burial;
-                    tempPerson.memberInfo.birth = person.memberInfo.birth;
-                    tempPerson.memberInfo.phones = person.memberInfo.phones;
-                    tempPerson.memberInfo.addresses = person.memberInfo.addresses;
-                    tempPerson.fioDtos = person.fioDtos;
+                    await assignPersonInfoToPerson(person);
                 }).then(() => paintExtendedPerson());
                 break;
             }
@@ -333,20 +511,7 @@ function checkAndSendStorageRequest() {
                     },
                     body: jsonData,
                 }).then(response => response.json()).then(async person => {
-                    console.log(person);
-                    if (tempPerson.memberInfo.photoBirthExist && tempPerson.memberInfo.secretLevelBirth !== "CLOSE") tempPerson.memberInfo.birthImj = await loadPicture("/file/get/birth/" + tempPerson.uuid);
-                    if (tempPerson.memberInfo.photoBurialExist && tempPerson.memberInfo.secretLevelBurial !== "CLOSE") tempPerson.memberInfo.burialImj = await loadPicture("/file/get/burial/" + tempPerson.uuid);
-                    tempPerson.memberInfo.emails = person.memberInfo.emails;
-                    tempPerson.memberInfo.biometric = person.memberInfo.biometric;
-                    tempPerson.memberInfo.description = person.memberInfo.description;
-                    tempPerson.memberInfo.burial = person.memberInfo.burial;
-                    tempPerson.memberInfo.birth = person.memberInfo.birth;
-                    tempPerson.memberInfo.phones = person.memberInfo.phones;
-                    tempPerson.memberInfo.addresses = person.memberInfo.addresses;
-                    tempPerson.fioDtos = person.fioDtos;
-                    inputBio=tempPerson.memberInfo.biometric;
-                    if (inputBio!==null&&tempPerson.memberInfo.secretLevelBiometric !== "CLOSE") countBio=inputBio.length-1;
-
+                    await assignPersonInfoToPerson(person);
                 }).then(() => editPersonInBase());
                 break;
             }
@@ -375,15 +540,6 @@ function paintExtendedPerson() {
 
     let deathday;
     let personDescription = ``;
-    // let tempBirth = ``;
-    // let tempBirthInfo = ``;
-    // let tempBurial = ``;
-    // let tempBurialInfo = ``;
-    // let tempBiometric = ``;
-    // let tempOldFio = ``;
-    // let tempAddress = ``;
-    // let tempEmail = ``;
-    // let tempPhone = ``;
 
     if (tempPerson.deathday === null && tempPerson.memberInfo.burial === null && tempPerson.memberInfo.secretLevelBurial !== "CLOSE") deathday = "";
     else if (tempPerson.deathday !== null) deathday = new Date(tempPerson.deathday); else deathday = infoAbsent;
@@ -554,8 +710,9 @@ function paintBurial() {
         URL.revokeObjectURL(tempPerson.memberInfo.burialImj);
     }
     if (tempPerson.memberInfo.burial !== null && tempPerson.memberInfo.burial.internName !== null) {
-        tempBurial += `<div>${tempPerson.memberInfo.burial.internName}</div>`;}
-        document.getElementById("burialExt").innerHTML = tempBurial;
+        tempBurial += `<div>${tempPerson.memberInfo.burial.internName}</div>`;
+    }
+    document.getElementById("burialExt").innerHTML = tempBurial;
 
 }
 
@@ -574,8 +731,9 @@ function paintBirth() {
         URL.revokeObjectURL(tempPerson.memberInfo.birthImj);
     }
     if (tempPerson.memberInfo.birth !== null && tempPerson.memberInfo.birth.internName !== null) {
-        tempBirth += `<div>${tempPerson.memberInfo.birth.internName}</div>`;}
-        document.getElementById("birthExt").innerHTML = tempBirth;
+        tempBirth += `<div>${tempPerson.memberInfo.birth.internName}</div>`;
+    }
+    document.getElementById("birthExt").innerHTML = tempBirth;
 
 }
 
@@ -627,9 +785,3 @@ function paintingFindPerson() {
         </div>
     `
 }
-
-// function getPrimePhoto(uuid) {
-//     document.getElementById("resultPrimePhoto").innerHTML = `
-//     <img src="/file/get/${uuid}" width="200px" alt="Prime photo of Person" />
-//         `
-// }

@@ -46,8 +46,7 @@ public class FamilyMemberController {
 
     @PostMapping("/database/get")
     public FamilyMemberDto getFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
-        FamilyMemberDto dto = familyMemberService.getFamilyMember(familyMemberDto);
-        return dto;
+        return familyMemberService.getFamilyMember(familyMemberDto);
     }
 
     @DeleteMapping("/database/{id}")

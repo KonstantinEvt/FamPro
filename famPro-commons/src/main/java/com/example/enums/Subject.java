@@ -11,6 +11,9 @@ public enum Subject {
     DUPLICATE_HIDE("Duplicate information", "Дубликат информации"),
     DUPLICATE_OTHER("Duplicate information", "Дубликат информации"),
     DUPLICATE_OTHER_HIDE("Duplicate information", "Дубликат информации"),
+    DUPLICATE_OTHER_HARD("Duplicate information", "Дубликат информации"),
+    DUPLICATE_OTHER_HIDE_HARD("Duplicate information", "Дубликат информации"),
+
     WRONG_INFO_PARENTS("Wrong information","Неверная информация"),
     WRONG_INFO_SEX("Wrong information","Неверная информация"),
     WRONG_INFO_DATE("Wrong information","Неверная информация"),

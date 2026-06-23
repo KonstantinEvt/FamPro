@@ -15,6 +15,7 @@
     <packaging>pom</packaging>
     <url/>
     <modules>
+        <module>famPro-free</module>
         <module>famPro-discovery</module>
         <module>famPro-storage</module>
         <module>famPro-commons</module>

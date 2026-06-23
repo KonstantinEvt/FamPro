@@ -1,6 +1,7 @@
 package com.example.transcriters;
 
 import com.example.enums.Attention;
+import com.example.enums.Relation;
 import com.example.enums.Subject;
 import com.example.enums.SwitchPosition;
 
@@ -21,4 +22,5 @@ String getTextSubject(Subject subject);
 Map<String,String> getMatrixOfTextGeneration();
 String getTextSwitchPosition(SwitchPosition switchPosition);
 String getAnd();
+String getRelation(Relation relation);
 }

@@ -1,5 +1,6 @@
 package com.example.dtos;
 
+import com.example.enums.Localisation;
 import com.example.enums.SecretLevel;
 import lombok.*;
 
@@ -26,4 +27,5 @@ public class SecurityDto {
     private SecretLevel secretLevelAddress;
     private SecretLevel secretLevelBurial;
     private SecretLevel secretLevelBirth;
+    private Localisation localisation;
 }

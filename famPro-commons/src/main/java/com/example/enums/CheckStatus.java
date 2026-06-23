@@ -3,6 +3,7 @@ package com.example.enums;
 public enum CheckStatus {
     OTHER("Generate by other user"),
     LINKED("Linked with SSO"),
+    MANAGE("Person under manage"),
     MODERATE("Generate by moderator"),
     ABSENT("(Absent in base) "),
     NOT_FULLY("(Info not fully) "),

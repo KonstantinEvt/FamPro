@@ -106,7 +106,7 @@ public class FamilyServiceImp implements SimpleFamilyService {
             if (changing.getChangingFather().ordinal() > 4) {
                 if (mainMember.getFatherUuid() != null)
                     if (mainMember.getMotherUuid() != null)
-                        memberService.removeLinkWithParent(mainMember, mainMember.getFatherUuid());
+                        memberService.removeLinkWithParent(mainMember, mainMember.getFatherUuid(),mainMember.getMotherUuid());
                     else memberService.removeBothParentLinks(mainMember);
                 else if (!changing.isOneChildInFamily())
                     memberService.removePrimeMembersRelation(mainMember, primeFamily.getChildren());
@@ -116,7 +116,7 @@ public class FamilyServiceImp implements SimpleFamilyService {
             if (changing.getChangingMother().ordinal() > 4) {
                 if (mainMember.getMotherUuid() != null)
                     if (mainMember.getFatherUuid() != null)
-                        memberService.removeLinkWithParent(mainMember, mainMember.getMotherUuid());
+                        memberService.removeLinkWithParent(mainMember, mainMember.getMotherUuid(),mainMember.getFatherUuid());
                     else memberService.removeBothParentLinks(mainMember);
                 else if (!changing.isOneChildInFamily())
                     memberService.removePrimeMembersRelation(mainMember, primeFamily.getChildren());
@@ -257,7 +257,7 @@ public class FamilyServiceImp implements SimpleFamilyService {
             setAutoFamilyBirthday(merged);
         }
         guardService.mergeActiveGuards(donor, merged);
-
+        familyRepository.flush();
     }
 
     @Transactional

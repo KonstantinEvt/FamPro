@@ -112,11 +112,9 @@ public class FacadeService implements SimpleFamilyService {
                 changing.setChangingFather(getChangingStatus(mainDto.getFatherInfo(), mainMember.getFatherInfo()));
                 changing.setChangingMother(getChangingStatus(mainDto.getMotherInfo(), mainMember.getMotherInfo()));
                 memberService.editFamilyMember(mainDto, mainMember);
-                System.out.println(mainMember.getCheckStatus());
+               if (primeFamily.getChildren().size() == 1) changing.setOneChildInFamily(true);
                 log.info("CHANGING_STATUS_1: {}", changing);
 
-                if (primeFamily.getChildren().size() == 1) changing.setOneChildInFamily(true);
-                log.info(primeFamily.getChildren().size());
                 if (changing.getChangingFather().ordinal() > 4 || changing.getChangingMother().ordinal() > 4) {
                     if (mainDirective.getTokenUser().equals("moderator")
                             || memberService.checkThemeSecretForSecretLevel(mainMember.getSecretLevelRemove(), mainMember, guardFromDirective, topAncestors)) {
@@ -266,7 +264,7 @@ public class FacadeService implements SimpleFamilyService {
                         familyMemberLinkService.createFamilyLink(mainMember, primeFamily, RoleInFamily.CHILD, mainMember.getUuid(), null);
                     }
                 }
-                mainMember.setActiveFamily(primeFamily);
+//                mainMember.setActiveFamily(primeFamily);
             }
         }
         log.info("tyt1001");

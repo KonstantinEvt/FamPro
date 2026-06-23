@@ -16,6 +16,7 @@ import java.util.*;
 @Log4j2
 public class MemberRepository {
     private EntityManager entityManager;
+
     @Transactional
     public void persistMember(ShortFamilyMember member) {
         try {
@@ -24,6 +25,7 @@ public class MemberRepository {
             log.warn("familyMember not persist:", e);
         }
     }
+
     @Transactional
     public void updateMember(ShortFamilyMember member) {
         try {
@@ -32,8 +34,9 @@ public class MemberRepository {
             log.warn("familyMember not update:", e);
         }
     }
+
     @Transactional(readOnly = true)
-    public Optional  <Family> getPrimeFamily(ShortFamilyMember member) {
+    public Optional<Family> getPrimeFamily(ShortFamilyMember member) {
         Optional<Family> family;
         try {
             family = Optional.of(entityManager.createQuery("from ShortFamilyMember a left join fetch a.familyWhereChild where a=:member", ShortFamilyMember.class)
@@ -42,10 +45,11 @@ public class MemberRepository {
 
         } catch (RuntimeException e) {
             log.warn("Error in finding prime family : {}", e.getMessage());
-            family=Optional.empty();
+            family = Optional.empty();
         }
         return family;
     }
+
     @Transactional
     public void updateInfo(ShortFamilyMemberInfo memberInfo) {
         try {
@@ -56,6 +60,20 @@ public class MemberRepository {
     }
 
     @Transactional
+    public List<ShortFamilyMember> getAllMembersByFirstCreator(String uuid) {
+        List<ShortFamilyMember> members;
+        try {
+            members = entityManager.createQuery("from ShortFamilyMember a where a.firstCreator=: uuid", ShortFamilyMember.class)
+                    .setParameter("uuid", uuid)
+                    .getResultList();
+        } catch (RuntimeException e) {
+            log.warn("This user not create anything");
+            members = new ArrayList<>();
+        }
+        return members;
+    }
+
+    @Transactional
     public void refreshMember(ShortFamilyMember member) {
         try {
             entityManager.refresh(member);
@@ -63,6 +81,7 @@ public class MemberRepository {
             log.warn("familyMember not update:", e);
         }
     }
+
     @Transactional
     public void flush() {
         try {
@@ -71,6 +90,7 @@ public class MemberRepository {
             log.warn("flush is fail", e);
         }
     }
+
     @Transactional(readOnly = true)
     public Optional<ShortFamilyMember> findMemberWithPrimeFamily(UUID uuid) {
         Optional<ShortFamilyMember> member;
@@ -84,6 +104,7 @@ public class MemberRepository {
         }
         return member;
     }
+
     @Transactional
     public Optional<ShortFamilyMember> getMemberByUuid(UUID uuid) {
         Optional<ShortFamilyMember> member;
@@ -111,7 +132,8 @@ public class MemberRepository {
         }
         return info;
     }
-//    @Transactional(readOnly = true)
+
+    //    @Transactional(readOnly = true)
 //    public Optional<ShortFamilyMember> getPersonForLinking(UUID uuid) {
 //        Optional<ShortFamilyMember> member;
 //        try {
@@ -139,6 +161,7 @@ public class MemberRepository {
         log.info("end search");
         return members;
     }
+
     @Transactional(readOnly = true)
     public Set<ShortFamilyMember> findFamilyChildren(Family family) {
         Set<ShortFamilyMember> members;

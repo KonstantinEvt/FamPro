@@ -1,10 +1,7 @@
 package com.example.transcriters;
 
 
-import com.example.enums.Attention;
-import com.example.enums.CheckStatus;
-import com.example.enums.Subject;
-import com.example.enums.SwitchPosition;
+import com.example.enums.*;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -17,6 +14,8 @@ public class EnglishTranscripter implements AbstractTranscripter {
             new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_HIDE.name(), "(En) Введенная основная информация соответствует альтернативному имени другой персоны в базе. Его ID: "),
             new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER.name(), "(En) Введенное альтернативное имя идентично альтернативному имени другой персоны в базе. Данное имя игнорировано. ID персоны: "),
             new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HIDE.name(), "(En) Введенное альтернативное имя соответствует другой персоне в базе. Данное имя игнорировано. ID персоны: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HARD.name(), "(En) Введенное или бывшее альтернативное имя в совокупности с изменением даты рождения идентично альтернативному имени другой персоны в базе. Ввод данных отменен. ID персоны: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HIDE_HARD.name(), "(En) Введенное или бывшее альтернативное имя в совокупности с изменением даты рождения соответствует другой персоне в базе. Ввод данных отменен. ID персоны: "),
             new AbstractMap.SimpleEntry<>(Subject.RIGHTS.name(), "(En) Вы не имеете прав на действия с данной персоной"),
             new AbstractMap.SimpleEntry<>(Subject.MODERATION_CHILD.name(), "(En) Обнаруженый ребенок находится под модерацией/голосованием. Повторите Вашу попытку позже. Найденный ребенок: "),
             new AbstractMap.SimpleEntry<>(Subject.MODERATION_FATHER.name(), "(En) Обнаруженый отец находится под модерацией/голосованием. Введенные данные отца игнорированы. Введите эти данные позже. Найденный отец: "),
@@ -102,6 +101,11 @@ public class EnglishTranscripter implements AbstractTranscripter {
     @Override
     public String getAnd() {
         return " and ";
+    }
+
+    @Override
+    public String getRelation(Relation relation) {
+        return relation.getCommit();
     }
 }
 

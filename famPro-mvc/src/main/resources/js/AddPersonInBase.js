@@ -1,24 +1,9 @@
-let countPhone = 0;
-let countEmail = 0;
-let countOtherNames = 1;
-let insertOther = [];
-let insertEmail = [];
-let insertPhone = [];
-let countBio=0;
-let inputBio=[];
-let tempPagBio;
-let activeBio;
-
 function addFamilyMember() {
-    activeBio=0;
-    countPhone = 0;
-    countEmail = 0;
+    clearMainVariable();
+    tempPerson=``;
+    tempSecurity=``;
+    loadBio=0;
     countBio=0;
-    countOtherNames = 1;
-    insertOther = [];
-    insertPhone = [];
-    insertEmail = [];
-    inputBio=[];
     document.getElementById("mainPanel").innerHTML = `
 <div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px">*** Adding Person ***</div>
 <form class="form-group" style="margin:5px; text-align: center;" id="baseFormAddFM">
@@ -49,9 +34,10 @@ function addFamilyMember() {
             <option value="MALE" selected>MALE</option>
             <option value="FEMALE">FEMALE</option>
         </select>
-        <label for="primePhoto" style="padding-top:12px; color: chocolate;">Файл фото</label>
-        <input class="form-control" style="padding-top: 2px;padding-bottom: 12px" type="file" id="primePhoto" name="primePhoto" value="DDD">
-        <div style="margin-top: 15px">  Внимание: без заполненных полей "Имя", "Отчество", "Фамилия", "День рождения"</div> 
+                     <label id="labelPrimePhoto" for="PrimePhoto" style="padding-top:12px; color: chocolate;" >Файл фото</label>
+        <input class="form-control" style="padding-top: 2px;padding-bottom: 12px" type="file" id="PrimePhoto" name="PrimePhoto" value="DDD" accept="image/*" onchange="resizeImagePlus('PrimePhoto')" >
+        <div id="canvasBlockPrimePhoto"  style=" align-content: center; align-items: center; text-align: center" hidden="hidden"> <div style="padding-top:12px; color: chocolate;">Предварительный просмотр фото</div><canvas style="width: 250px ;" id="canvasPrimePhoto"></canvas></div>
+       <div style="margin-top: 15px">  Внимание: без заполненных полей "Имя", "Отчество", "Фамилия", "День рождения"</div> 
         <div>НИКАКАЯ информация в базу внесена не будет!</div>
                         </span>
                         <span class="col" style="width: 20%"></span>
@@ -238,10 +224,10 @@ function addFamilyMember() {
         </select>
         <label for="chooseSecureEE" style="color: chocolate; padding-top: 5px">Secure edit:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureEE" aria-label="chooseSecureEE">            
-            <option value="CONFIDENTIAL" selected>Личное</option>
+            <option value="CONFIDENTIAL" >Личное</option>
             <option value="ACTIVE_FAMILY" >Активная семья</option>
             <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
-            <option value="ANCESTOR" >Предки</option>   
+            <option value="ANCESTOR" selected>Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
             <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
             <option value="GENETIC_TREE">Семейное древо</option>
@@ -263,8 +249,8 @@ function addFamilyMember() {
             <option value="LOGIC_PRIMARY_FAMILY" >Логическая по рождению</option>
             <option value="ANCESTOR" >Предки</option>   
             <option value="STRAIGHT_BLOOD">Прямое родство</option>
-            <option value="PRIMARY_FAMILY" selected>Биологическая по рождению</option> 
-            <option value="GENETIC_TREE">Семейное древо</option>
+            <option value="PRIMARY_FAMILY" >Биологическая по рождению</option> 
+            <option value="GENETIC_TREE" selected>Семейное древо</option>
         </select>
         <label for="chooseSecureRM" style="color: chocolate; padding-top: 5px">Secure remove:</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecureRM" aria-label="chooseSecureRM">            
@@ -439,9 +425,12 @@ function addFamilyMember() {
         <input class="form-control" type="text" id="birthHouseAddFM" name="birthHouseAddFM" >
         <label for="birthRegisterAddFM" style="color: chocolate; padding-top: 5px">Регистрационный орган:</label>
         <input class="form-control" type="text" id="birthRegisterAddFM" name="birthRegisterAddFM" >
-        <label for="birthPhoto" style="padding-top:12px; color: chocolate;">Файл фото</label>
-        <input class="form-control" style="padding-top: 2px;padding-bottom: 2px" type="file" id="birthPhoto" name="birthPhoto" value="DDD">
-                        </span>
+        <label id="labelBirthPhoto" for="BirthPhoto" style="padding-top:12px; color: chocolate;" >Файл фото</label>
+        <input class="form-control" style="padding-top: 2px;padding-bottom: 12px" type="file" id="BirthPhoto" name="BirthPhoto" accept="image/*" onchange="resizeImagePlus('BirthPhoto')"> 
+        <div id="canvasBlockBirthPhoto"  style=" align-content: center; align-items: center; text-align: center" hidden="hidden"> 
+            <div style="padding-top:12px; color: chocolate;">Предварительный просмотр фото</div>
+            <canvas style="width: 250px ;" id="canvasBirthPhoto"></canvas></div>
+                       </span>
                         <span class="col" style="width: 20%"></span>
                     </div>
                 </div>
@@ -474,8 +463,9 @@ function addFamilyMember() {
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialBuildingAddFM" name="burialBuildingAddFM" >
         <label for="burialFlatAddFM" style="color: chocolate; padding-top: 2px">Номер могилы:</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialFlatAddFM" name="burialFlatAddFM" >
-        <label for="burialPhoto" style="padding-top:12px; color: chocolate;">Файл фото</label>
-        <input class="form-control" style="padding-top: 2px;padding-bottom: 2px" type="file" id="burialPhoto" name="burialPhoto" value="DDD">  
+        <label id="labelBurialPhoto" for="BurialPhoto" style="padding-top:12px; color: chocolate;" >Файл фото</label>
+        <input class="form-control" style="padding-top: 2px;padding-bottom: 12px" type="file" id="BurialPhoto" name="BurialPhoto" accept="image/*" onchange="resizeImagePlus('BurialPhoto')">   
+        <div id="canvasBlockBurialPhoto"  style=" align-content: center; align-items: center; text-align: center" hidden="hidden"> <div style="padding-top:12px; color: chocolate;">Предварительный просмотр фото</div><canvas style="width: 250px ;" id="canvasBurialPhoto"></canvas></div>
                         </span>
                         <span class="col" style="width: 20%"></span>
                     </div>
@@ -502,110 +492,10 @@ function addFamilyMember() {
 </form>
  `
 }
-function addBiometricField(){
-    createAgeBio(activeBio);
-    countBio++;
-    activeBio=countBio;
-    clearCurrentEntries();
-    createCurrentPagination(countBio);
-}
-function clearCurrentEntries(){
-    const form=document.getElementById('baseFormAddFM');
-    form.elements.ageFM.value='';
-    form.elements.heightFM.value='';
-    form.elements.weightFM.value='';
-    form.elements.footSizeFM.value='';
-    form.elements.hairColorFM.value="UNKNOWN";
-    form.elements.eyesColorFM.value="UNKNOWN";
-    form.elements.shirtSizeFM.value='';
-    form.elements.descriptionFM.value='';
-}
-function removeBiometricField(){
-    if (countBio===0) clearCurrentEntries()
-    else {  countBio--;
-        inputBio.splice(activeBio,1);
-        if (activeBio!==0) activeBio--;
-        displayBio(activeBio,-1);
-        if (countBio!==0) createCurrentPagination(activeBio)
-        else document.getElementById("pagan").innerHTML=``;
-    }
-}
-function createCurrentPagination(pagActive){
-    console.log(pagActive);
-    console.log(activeBio);
-    console.log(inputBio);
-    tempPagBio=`<br>
-        <div>Введенные возрасты</div>
-        <nav aria-label="BioNavigation">
-            <ul class="pagination">`
-    if (pagActive!==0) tempPagBio+=`
-                        <li class="page-item" >
-                            <button class="btn btn-outline-warning" type="button" onclick="displayBio(${pagActive-1},${pagActive})">Предыдущий</button>
-                        </li>`
-    else tempPagBio+=`
-                        <li class="page-item " >
-                            <button class="btn btn-outline-secondary" type="button" disabled>Предыдущий</button>
-                        </li>`
-    for (let i = 0; i <= countBio; i++) {
-        if (i===pagActive && inputBio[i]!== undefined && inputBio[i].age!== undefined && inputBio[i].age!==``)
-        tempPagBio+=`<li class="page-item active">
-                        <button class="btn btn-warning" type="button" onclick="displayBio(${i},${pagActive})">${inputBio[i].age}</button>
-                     </li>`
-        else  if (inputBio[i]!== undefined && inputBio[i].age!== undefined && inputBio[i].age!==``) tempPagBio+=`<li class="page-item">
-                        <button class="btn btn-outline-warning" type="button" onclick="displayBio(${i},${pagActive})">${inputBio[i].age}</button>
-                     </li>`
-        else  if (i===pagActive && i===countBio && inputBio[i]=== undefined) tempPagBio+=`<li class="page-item">
-                        <button class="btn btn-warning" type="button" onclick="displayBio(${i},${pagActive})">новый</button>
-                     </li>`
-        else  if (i===countBio && inputBio[i]=== undefined) tempPagBio+=`<li class="page-item">
-                        <button class="btn btn-outline-warning" type="button" onclick="displayBio(${i},${pagActive})">новый</button>
-                     </li>`
-        else  if (i===pagActive && (inputBio[i]=== undefined||inputBio[i].age===``)) tempPagBio+=`<li class="page-item">
-                        <button class="btn btn-warning" type="button" onclick="displayBio(${i},${pagActive})">!</button>
-                     </li>`
-        else  if (inputBio[i]=== undefined||inputBio[i].age===``) tempPagBio+=`<li class="page-item">
-                        <button class="btn btn-outline-warning" type="button" onclick="displayBio(${i},${pagActive})">!</button>
-                     </li>`
-    }
-    if (pagActive!==countBio) tempPagBio+=`
-                        <li class="page-item" id="navBioPrev">
-                            <button class="btn btn-outline-warning" type="button" onclick="displayBio(${pagActive+1},${pagActive})">Следующий</button>
-                        </li>`
-    else tempPagBio+=`
-                        <li class="page-item" id="navBioPrev">
-                            <button class="btn btn-outline-secondary" type="button" disabled>Следующий</button>
-                        </li>`
-    tempPagBio+=`
-            </ul>
-        </nav>`
-    document.getElementById("pagan").innerHTML=tempPagBio;
-}
-function createAgeBio(pagActive){
-    const form=document.getElementById('baseFormAddFM');
-    inputBio[pagActive] = {
-        age:form.elements.ageFM.value,
-        height: form.elements.heightFM.value,
-        weight: form.elements.weightFM.value,
-        footSize: form.elements.footSizeFM.value,
-        hairColor: (form.elements.hairColorFM.value==="UNKNOWN")?null:form.elements.hairColorFM.value,
-        eyesColor: (form.elements.eyesColorFM.value==="UNKNOWN")?null:form.elements.eyesColorFM.value,
-        shirtSize: form.elements.shirtSizeFM.value,
-        description: form.elements.descriptionFM.value};
-}
-function displayBio(pagActive,oldActive){
-    const form=document.getElementById('baseFormAddFM');
-    if (oldActive!==-1) {createAgeBio(oldActive);
-    activeBio=pagActive;}
-    form.elements.ageFM.value=inputBio[pagActive].age;
-    form.elements.heightFM.value=inputBio[pagActive].height;
-    form.elements.weightFM.value=inputBio[pagActive].weight;
-    form.elements.footSizeFM.value=inputBio[pagActive].footSize;
-    form.elements.hairColorFM.value=(inputBio[pagActive].hairColor===null)?"UNKNOWN":inputBio[pagActive].hairColor;
-    form.elements.eyesColorFM.value=(inputBio[pagActive].eyesColor===null)?"UNKNOWN":inputBio[pagActive].eyesColor;
-    form.elements.shirtSizeFM.value=inputBio[pagActive].shirtSize;
-    form.elements.descriptionFM.value=inputBio[pagActive].description;
-createCurrentPagination(pagActive);
-}
+
+
+
+
 function addPhonesField() {
     if (countPhone < 4) {
         document.getElementById("deleteButtonsPhoneAddFM").innerHTML += `
@@ -702,162 +592,14 @@ function deleteOtherField(otherNamesString) {
 }
 
 function submitBaseFormAddFM() {
-    const form = document.getElementById('baseFormAddFM');
-    let other = [];
-    let firstOther1 = "firstNameOtherAddFM";
-    let secondOther1 = "middleNameOtherAddFM";
-    let thirdOther1 = "lastNameOtherAddFM";
-    let otherPhones = [];
-    let otherEmails = [];
-    let primePhotoExist=false;
-    let birthPhotoExist=false;
-    let burialPhotoExist=false;
+    dropPhotosToServer();
+    let other= markOtherToDrop();
+    let otherPhones= markPhoneToDrop();
+    let otherEmails = markEmailToDrop();
 
-    if (document.getElementById("primePhoto").files[0] != null) {
-        primePhotoExist=true;
-        let primePhoto = document.getElementById("primePhoto").files[0];
-        let file = new FormData()
-        file.append("primePhoto", primePhoto);
-        fetch("/file/savePrimePhoto", {
-            method: 'POST',
-            headers: {
-            },
-            body: file,
-        }).then(async status => {
-            document.getElementById("resultSavePrimePhoto").innerHTML = await status.text();
-        });
-    } else document.getElementById("resultSavePrimePhoto").innerHTML = 'Prime photo not selected!';
+    if (inputBio!==null) createAgeBio(activeBio);
 
-    if (document.getElementById("birthPhoto").files[0] != null) {
-        birthPhotoExist=true;
-        let birthPhoto = document.getElementById("birthPhoto").files[0];
-        let file = new FormData()
-        file.append("birthPhoto", birthPhoto);
-        fetch("/file/saveBirthPhoto", {
-            method: 'POST',
-            headers: {
-            },
-            body: file,
-        }).then(async status => {
-            document.getElementById("resultSaveBirthPhoto").innerHTML = await status.text();
-        });
-    } else document.getElementById("resultSaveBirthPhoto").innerHTML = 'BirthPhoto photo not selected!';
-
-    if (document.getElementById("burialPhoto").files[0] != null) {
-        burialPhotoExist=true;
-        let burialPhoto = document.getElementById("burialPhoto").files[0];
-        let file = new FormData()
-        file.append("burialPhoto", burialPhoto);
-        fetch("/file/saveBurialPhoto", {
-            method: 'POST',
-            headers: {
-            },
-            body: file,
-        }).then(async status => {
-            document.getElementById("resultSaveBurialPhoto").innerHTML = await status.text();
-        });
-    } else document.getElementById("resultSaveBurialPhoto").innerHTML = 'BurialPhoto photo not selected!';
-
-    insertOther[0] = 'yes';
-    for (let i = 0; i < 5; i++) {
-        if (insertOther[i] === 'yes') {
-            other.push({
-                firstName: document.getElementById(firstOther1 + i).value,
-                middleName: document.getElementById(secondOther1 + i).value,
-                lastName: document.getElementById(thirdOther1 + i).value
-            });
-        }
-    }
-    for (let i = 0; i < 5; i++) {
-        if (insertPhone[i] === 'yes') {
-            otherPhones.push({internName: document.getElementById("phoneAddFM" + i).value}
-            );
-        }
-    }
-    for (let i = 0; i < 5; i++) {
-        if (insertEmail[i] === 'yes') {
-            otherEmails.push({internName: document.getElementById("emailAddFM" + i).value}
-            );
-        }
-    }
-    if (tempPerson.memberInfo.secretLevelBiometric !== "CLOSE") createAgeBio(activeBio);
-    let formData = {
-        primePhoto: primePhotoExist,
-
-        secretLevelPhoto: form.elements.chooseSecurePP.value,
-        secretLevelEdit: form.elements.chooseSecureEE.value,
-        secretLevelMainInfo: form.elements.chooseSecureMain.value,
-        secretLevelBirthday: form.elements.chooseSecureBirthday.value,
-        secretLevelRemove: form.elements.chooseSecureRM.value,
-        firstName: form.elements.firstNameAddFM.value,
-        middleName: form.elements.middleNameAddFM.value,
-        lastName: form.elements.lastNameAddFM.value,
-        birthday: form.elements.birthdayAddFM.value,
-        deathday: form.elements.deathdayAddFM.value,
-        sex: form.elements.chooseSexAddFM.value,
-        memberInfo: {
-            mainPhone: form.elements.mainPhoneAddFM.value,
-            mainEmail: form.elements.mainEmailAddFM.value,
-            photoBurialExist: burialPhotoExist,
-            photoBirthExist: birthPhotoExist,
-            secretLevelBirth: form.elements.chooseSecurePBur.value,
-            secretLevelBurial: form.elements.chooseSecurePBirth.value,
-            secretLevelEmail: form.elements.chooseSecureME.value,
-            secretLevelAddress: form.elements.chooseSecureMA.value,
-            secretLevelPhone: form.elements.chooseSecureMP.value,
-            secretLevelBiometric: form.elements.chooseSecureBio.value,
-            secretLevelDescription: form.elements.chooseSecureDes.value,
-            biometric: inputBio,
-            birth: {
-                country: form.elements.birthCountryAddFM.value,
-                region: form.elements.birthRegionAddFM.value,
-                city: form.elements.birthCityAddFM.value,
-                street: form.elements.birthStreetAddFM.value,
-                birthHouse: form.elements.birthHouseAddFM.value,
-                registration: form.elements.birthRegisterAddFM.value,
-                photoExist: birthPhotoExist
-            },
-            burial: {
-                country: form.elements.burialCountryAddFM.value,
-                region: form.elements.burialRegionAddFM.value,
-                city: form.elements.burialCityAddFM.value,
-                cemetery: form.elements.burialCemeteryAddFM.value,
-                street: form.elements.burialStreetAddFM.value,
-                chapter: form.elements.burialHouseAddFM.value,
-                square: form.elements.burialBuildingAddFM.value,
-                grave: form.elements.burialFlatAddFM.value,
-                photoExist: burialPhotoExist
-            },
-            phones: otherPhones,
-            emails: otherEmails,
-            addresses: [
-                {
-                    country: form.elements.countryAddFM.value,
-                    region: form.elements.regionAddFM.value,
-                    city: form.elements.cityAddFM.value,
-                    index: form.elements.indexAddFM.value,
-                    street: form.elements.streetAddFM.value,
-                    house: form.elements.houseAddFM.value,
-                    building: form.elements.buildingAddFM.value,
-                    flatNumber: form.elements.flatAddFM.value
-                }
-            ]
-        },
-        motherFio: {
-            firstName: form.elements.firstNameMotherAddFM.value,
-            middleName: form.elements.middleNameMotherAddFM.value,
-            lastName: form.elements.lastNameMotherAddFM.value,
-            birthday: form.elements.birthdayMotherAddFM.value
-        },
-        fatherFio: {
-            firstName: form.elements.firstNameFatherAddFM.value,
-            middleName: form.elements.middleNameFatherAddFM.value,
-            lastName: form.elements.lastNameFatherAddFM.value,
-            birthday: form.elements.birthdayFatherAddFM.value
-        },
-        fioDtos: other
-    };
-    const jsonData = JSON.stringify(formData);
+    const jsonData = getFormToDrop(other,otherPhones,otherEmails);
     fetch("/base/family_member/add", {
         method: 'POST',
         headers: {
@@ -867,9 +609,4 @@ function submitBaseFormAddFM() {
     }).then(async status => {
         document.getElementById("resultListCreateFM").innerHTML = await status.text();
     });
-    // var input = document.querySelector('input[type="file"]')
-    // let file = new FormData()
-    // file.append('primePhoto', input.files[0])
-    // file.append('user', 'id')
-
 }

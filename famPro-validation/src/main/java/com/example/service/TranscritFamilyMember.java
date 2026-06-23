@@ -21,7 +21,7 @@ import java.util.Objects;
 @Component
 @AllArgsConstructor
 public class TranscritFamilyMember {
-    CommonWordChecks commonWordChecks;
+    private final CommonWordChecks commonWordChecks;
 
     public void to(AbstractTranscripter transcripter, FamilyMemberDto familyMemberDto) {
         transcritToFio(transcripter, familyMemberDto);
@@ -49,6 +49,7 @@ public class TranscritFamilyMember {
         FioDto motherFio = new FioDto();
         familyMemberDto.setMotherInfo(parseFullName(transcripter, familyMemberDto.getMotherInfo(), motherFio, secret));
         familyMemberDto.setFatherInfo(parseFullName(transcripter, familyMemberDto.getFatherInfo(), fatherFio, secret));
+        if (familyMemberDto.getRelation()!=null) familyMemberDto.setRelationString(transcripter.getRelation(familyMemberDto.getRelation()));
         if (!Objects.equals(familyMemberDto.getMotherInfo(), transcripter.getOut()) || !Objects.equals(familyMemberDto.getMotherInfo(), transcripter.getIncorrectInfo()))
             familyMemberDto.setMotherFio(motherFio);
         if (!Objects.equals(familyMemberDto.getFatherInfo(), transcripter.getOut()) || !Objects.equals(familyMemberDto.getFatherInfo(), transcripter.getIncorrectInfo()))

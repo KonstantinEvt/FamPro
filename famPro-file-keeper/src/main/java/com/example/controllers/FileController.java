@@ -58,17 +58,17 @@ public class FileController {
     }
 
     @PostMapping("/savePrimePhoto")
-    public ResponseEntity<String> savePrimePhoto(@RequestPart("primePhoto") MultipartFile file) {
+    public ResponseEntity<String> savePrimePhoto(@RequestPart("PrimePhoto") MultipartFile file) {
         photoHolder.addFrontPicture(file, firstPhoto);
         return ResponseEntity.ok("Prime photo is saving");
     }
     @PostMapping("/saveBurialPhoto")
-    public ResponseEntity<String> saveBurialPhoto(@RequestPart("burialPhoto") MultipartFile file) {
+    public ResponseEntity<String> saveBurialPhoto(@RequestPart("BurialPhoto") MultipartFile file) {
         photoHolder.addFrontPicture(file, burial);
         return ResponseEntity.ok("Burial photo is saving");
     }
     @PostMapping("/saveBirthPhoto")
-    public ResponseEntity<String> saveBirthPhoto(@RequestPart("birthPhoto") MultipartFile file) {
+    public ResponseEntity<String> saveBirthPhoto(@RequestPart("BirthPhoto") MultipartFile file) {
         photoHolder.addFrontPicture(file, birth);
         return ResponseEntity.ok("Birth photo is saving");
     }

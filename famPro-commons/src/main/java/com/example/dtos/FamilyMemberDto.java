@@ -1,6 +1,7 @@
 package com.example.dtos;
 
 import com.example.enums.CheckStatus;
+import com.example.enums.Relation;
 import com.example.enums.SecretLevel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -31,7 +32,7 @@ public class FamilyMemberDto extends FioDto implements Serializable {
     private FioDto fatherFio;
     @Schema(description = "Расширенная информация")
     private FamilyMemberInfoDto memberInfo;
-
+    private String relationString;
     private boolean otherNamesExist;
     @Schema(description = "Старые имена")
     private Set<FioDto> fioDtos;
@@ -41,6 +42,7 @@ public class FamilyMemberDto extends FioDto implements Serializable {
     private String creator;
     private Timestamp createTime;
     private Timestamp lastUpdate;
+    private Relation relation;
 //    @Schema(description = "Выбранная локализцаия")
 //    private String localisation;
     private boolean primePhoto;

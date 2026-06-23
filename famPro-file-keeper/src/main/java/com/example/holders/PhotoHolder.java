@@ -55,6 +55,7 @@ public class PhotoHolder {
         };
         try (InputStream file = frontPicture.getInputStream()) {
             placeHolder.put(frontUser, file.readAllBytes());
+            log.info("Size of front picture:{}", placeHolder.get(frontUser).length);
         } catch (IOException e) {
             log.error("cannot get file from front");
             throw new RuntimeException(e);

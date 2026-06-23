@@ -77,10 +77,8 @@ public class FamilyMemberInfoService {
         boolean tempAcceptChange = false;
         FamilyMemberDto tempStatusEdit = tempExtendedDto.get(token);
         MainContact mainContact = tempMainContact.get(token);
-//        if (fmiFromBase.getId() != null)
-//            fmiFromBase = mainInfoReposirory.getFullFamilyMemberInfo(familyMemberDto.getMemberInfo(), fmiFromBase.getId()).orElseThrow(() -> new RuntimeException("MemberInfo is corrupt"));
 
-        if (familyMemberDto.getMemberInfo().getBurial() != null && !familyMemberDto.getMemberInfo().isPhotoBurialExist() && fmiFromBase.isPhotoBurialExist()) {
+       if (familyMemberDto.getMemberInfo().getBurial() != null && !familyMemberDto.getMemberInfo().isPhotoBurialExist() && fmiFromBase.isPhotoBurialExist()) {
             familyMemberDto.getMemberInfo().getBurial().setPhotoExist(true);
         }
         if (familyMemberDto.getMemberInfo().getBirth() != null && !familyMemberDto.getMemberInfo().isPhotoBirthExist() && fmiFromBase.isPhotoBirthExist()) {
@@ -163,12 +161,12 @@ public class FamilyMemberInfoService {
                     biometricDto.setId(null);
                     biometricDtos.add(biometricDto);
                 }
-                familyMemberDto.getMemberInfo().getBiometric().forEach(biometricDtos::remove);
-                if (!biometricDtos.isEmpty()) tempAcceptChange = true;
+                biometricDtos.forEach(x->familyMemberDto.getMemberInfo().getBiometric().remove(x));
+                if (!familyMemberDto.getMemberInfo().getBiometric().isEmpty()) tempAcceptChange = true;
             }
             if (Objects.equals(token, "add") ||
                     tempStatusEdit == null ||
-                    tempStatusEdit.getMemberInfo() == null || (tempStatusEdit.getMemberInfo().getBiometric() == null && familyMemberDto.getMemberInfo().getBiometric() != null) || tempAcceptChange) {
+                    tempStatusEdit.getMemberInfo() == null || tempStatusEdit.getMemberInfo().getBiometric() == null || tempAcceptChange) {
                 fmi.setBiometricData(new ArrayList<>(biometricMapper.collectionDtoToCollectionEntity(familyMemberDto.getMemberInfo().getBiometric())));
                 biometricService.mergeBiometric(fmi, fmiFromBase);
             }
@@ -221,9 +219,9 @@ public class FamilyMemberInfoService {
                 birthService.checkMergeAndSetUp(fmi, fmiFromBase);
             }
         }
-        if (familyMemberDto.getMemberInfo().getBurial() == null && familyMemberDto.getMemberInfo().isPhotoBurialExist())
+        if (fmi.getSecretLevelBurial() != SecretLevel.CLOSE &&familyMemberDto.getMemberInfo().isPhotoBurialExist())
             fmiFromBase.setPhotoBurialExist(true);
-        if (familyMemberDto.getMemberInfo().getBirth() == null && familyMemberDto.getMemberInfo().isPhotoBirthExist())
+        if (fmi.getSecretLevelBirth() != SecretLevel.CLOSE &&familyMemberDto.getMemberInfo().isPhotoBirthExist())
             fmiFromBase.setPhotoBirthExist(true);
         if (changingMain) {
             fmiFromBase.setUuid(fmi.getUuid());
@@ -394,5 +392,27 @@ public class FamilyMemberInfoService {
         else if (((newInfo.getAddresses() != null || newInfo.getMainAddress() != null) && oldInfo.getSecretLevelAddress() == SecretLevel.UNDEFINED)
                 || (oldInfo.getSecretLevelAddress() != SecretLevel.UNDEFINED && newInfo.getSecretLevelAddress() != oldInfo.getSecretLevelAddress()))
             oldInfo.setSecretLevelAddress(newInfo.getSecretLevelAddress());
+    }
+
+    public void secretPredict(FamilyMemberInfoDto newInfo, FamilyMemberInfo oldInfo) {
+        if ((newInfo.getBurial() != null && oldInfo.getSecretLevelBurial() == SecretLevel.UNDEFINED))
+            oldInfo.setSecretLevelBurial(SecretLevel.OPEN);
+
+        if ((newInfo.getBirth() != null && oldInfo.getSecretLevelBirth() == SecretLevel.UNDEFINED))
+            oldInfo.setSecretLevelBirth(SecretLevel.OPEN);
+        if ((newInfo.getBiometric() != null && oldInfo.getSecretLevelBiometric() == SecretLevel.UNDEFINED))
+            oldInfo.setSecretLevelBiometric(SecretLevel.OPEN);
+
+        if ((newInfo.getDescription() != null && oldInfo.getSecretLevelDescription() == SecretLevel.UNDEFINED))
+            oldInfo.setSecretLevelDescription(SecretLevel.OPEN);
+
+        if (((newInfo.getEmails() != null || newInfo.getMainEmail() != null) && oldInfo.getSecretLevelEmail() == SecretLevel.UNDEFINED))
+            oldInfo.setSecretLevelEmail(SecretLevel.OPEN);
+
+        if (((newInfo.getPhones() != null || newInfo.getMainPhone() != null) && oldInfo.getSecretLevelPhone() == SecretLevel.UNDEFINED))
+            oldInfo.setSecretLevelPhone(SecretLevel.OPEN);
+
+        if (((newInfo.getAddresses() != null || newInfo.getMainAddress() != null) && oldInfo.getSecretLevelAddress() == SecretLevel.UNDEFINED))
+            oldInfo.setSecretLevelAddress(SecretLevel.OPEN);
     }
 }

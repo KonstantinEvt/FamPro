@@ -89,6 +89,9 @@ public class MemberService implements SimpleFamilyService {
             familyMember.setFirstCreator(dto.getFirstCreator());
         if (familyMember.getCreator() != null && !familyMember.getCreator().equals(dto.getCreator()))
             familyMember.setCreator(dto.getCreator());
+        if (dto.getSecretLevelPhoto() != SecretLevel.CLOSE
+                && dto.getSecretLevelPhoto() != SecretLevel.UNDEFINED
+                && familyMember.isPrimePhoto() != dto.isPrimePhoto()) familyMember.setPrimePhoto(dto.isPrimePhoto());
 //        if (familyMember.getCheckStatus() != dto.getCheckStatus()) familyMember.setCheckStatus(dto.getCheckStatus());
         if (!Objects.equals(dto.getDeathday(), familyMember.getDeathday())) familyMember.setDeathday(dto.getDeathday());
         if (!Objects.equals(dto.getFatherInfo(), familyMember.getFatherInfo()))
@@ -218,6 +221,7 @@ public class MemberService implements SimpleFamilyService {
             return true;
         } else return false;
     }
+
     @Transactional(readOnly = true)
     public Set<ShortFamilyMember> getBrothersOfTopAncestors(Set<ShortFamilyMember> topAncestors) {
         Set<String> topPrimary = new HashSet<>();
@@ -230,6 +234,7 @@ public class MemberService implements SimpleFamilyService {
             return memberRepository.getAllMembersByUuids(topPrimary.stream().map(UUID::fromString).collect(Collectors.toSet()));
         } else return new HashSet<>();
     }
+
     /***
      return Set of Ancestors, Member is one of ancestor
      ***/
@@ -299,7 +304,7 @@ public class MemberService implements SimpleFamilyService {
     }
 
     @Transactional(readOnly = true)
-    public Set<UUID> getGeneticTreeGuards(Set<ShortFamilyMember> topAncestors,boolean includeTopBrothers) {
+    public Set<UUID> getGeneticTreeGuards(Set<ShortFamilyMember> topAncestors, boolean includeTopBrothers) {
         if (includeTopBrothers) getExtendedTopAncestors(topAncestors);
         Set<UUID> result = new HashSet<>();
         for (ShortFamilyMember member :
@@ -315,27 +320,34 @@ public class MemberService implements SimpleFamilyService {
     public boolean checkThemeSecretForSecretLevel(SecretLevel secretLevel, ShortFamilyMember member, Optional<Guard> directiveGuard, Set<ShortFamilyMember> topAncestors) {
         if (directiveGuard.isPresent() && directiveGuard.get().getId() != null) {
             UUID uuid = UUID.fromString(directiveGuard.get().getTokenUser());
-            Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors,true);
+            Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors, true);
             SecretLevel directiveGuardStatus = getSecretStatus(member, uuid, geneticTreeGuard, true);
             SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard, true);
             if (directiveGuardStatus == max) return true;
             else return secretLevel.ordinal() <= directiveGuardStatus.ordinal();
         } else {
-            Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors,true);
+            Set<UUID> geneticTreeGuard = getGeneticTreeGuards(topAncestors, true);
             SecretLevel max = getMaxSecretLevelForMember(member, geneticTreeGuard, true);
             return SecretLevel.OPEN == max;
         }
     }
 
     @Transactional
-    public void removeLinkWithParent(ShortFamilyMember child, UUID parentUuid) {
+    public void removeLinkWithParent(ShortFamilyMember child, UUID parent1Uuid, UUID parent2Uuid) {
         Set<ShortFamilyMember> bloodKin = getAllKinMembersInMemberProfile(child);
-        ShortFamilyMember parent = bloodKin.stream().filter(x -> Objects.equals(x.getUuid(), parentUuid)).findFirst().orElseThrow(() -> new RuntimeException("ancestors corrupt"));
+        ShortFamilyMember parent = bloodKin.stream().filter(x -> Objects.equals(x.getUuid(), parent1Uuid)).findFirst().orElseThrow(() -> new RuntimeException("ancestors corrupt"));
+        ShortFamilyMember parent2 = bloodKin.stream().filter(x -> Objects.equals(x.getUuid(), parent2Uuid)).findFirst().orElseThrow(() -> new RuntimeException("ancestors corrupt"));
         Set<String> ancUuid = getAllStringUuidFromInfo(parent.getAncestors());
-        ancUuid.add(parentUuid.toString());
+        if (parent2.getAncestors() != null && !parent2.getAncestors().isBlank())
+            ancUuid.removeAll(getAllStringUuidFromInfo(parent2.getAncestors()));
+        ancUuid.add(parent1Uuid.toString());
+        ancUuid.remove(parent2.getUuid().toString());
         Set<String> ancGuards = getAllStringUuidFromInfo(parent.getAncestorsGuard());
         if (parent.getLinkGuard() != null && !parent.getLinkGuard().isBlank()) ancGuards.add(parent.getLinkGuard());
-
+        if (parent2.getAncestorsGuard() != null && !parent2.getAncestorsGuard().isBlank())
+            ancGuards.removeAll(getAllStringUuidFromInfo(parent2.getAncestorsGuard()));
+        if (parent2.getLinkGuard() != null && !parent2.getLinkGuard().isBlank())
+            ancGuards.remove(parent2.getLinkGuard());
         child.setPrimaryMembers(null);
         child.setPrimaryGuard(null);
         child.setAncestors(removeAllUuidSFromInfo(child.getAncestors(), ancUuid).orElse(null));
@@ -412,8 +424,12 @@ public class MemberService implements SimpleFamilyService {
                 }
                 if (Objects.equals(child.getMotherUuid(), member.getUuid()) || Objects.equals(child.getFatherUuid(), member.getUuid()))
                     familyMemberLinkService.removeAllFamilyLinksBetweenMembers(member, child);
-            } else {
+            } else if (child.getDescendants() != null
+                    && !child.getDescendants().isBlank()
+                    && child.getDescendants().contains(member.getUuid().toString())) {
                 des.add(member);
+                if (child.getAncestors() == null || child.getAncestors().isBlank())
+                    member.setTopAncestors(addUuidToInfo(member.getTopAncestors(), child.getUuid().toString()));
                 member.setAncestors(removeAllUuidSFromInfo(member.getAncestors(), ancUuid).orElse(child.getUuid().toString()));
                 member.setTopAncestors(removeAllUuidSFromInfo(member.getTopAncestors(), ancUuid).orElse(child.getUuid().toString()));
                 if (!ancGuards.isEmpty())
@@ -422,8 +438,11 @@ public class MemberService implements SimpleFamilyService {
             }
         }
         boolean repair = false;
-        if (child.getDescendants() != null && !child.getDescendants().isBlank() && !anc.isEmpty() && !des.isEmpty())
+        if (!anc.isEmpty() && !des.isEmpty())
+//        {
+//            if (child.getAncestors()!=null && !child.getAncestors().isBlank()) des.add(child);
             repair = repairGeneticTreeRelations(anc, des, child);
+//        }
         if (child.getAncestors() == null || !child.getAncestors().isBlank()) topAnc.add(child);
         repairCheckStatus(child, topAnc, topRemoveAnc, repair);
     }
@@ -826,7 +845,7 @@ public class MemberService implements SimpleFamilyService {
                     processMember.getPrimaryGuard() != null && !processMember.getPrimaryGuard().isBlank())) {
                 return CheckStatus.CHECKED;
             } else {
-                if (!fastCheck && !getGeneticTreeGuards(getAllTopAncestors(processMember),true).isEmpty()) {
+                if (!fastCheck && !getGeneticTreeGuards(getAllTopAncestors(processMember), true).isEmpty()) {
                     return CheckStatus.CHECKED;
                 } else {
                     return CheckStatus.UNCHECKED;
@@ -834,4 +853,12 @@ public class MemberService implements SimpleFamilyService {
             }
         }
     }
+
+    @Transactional
+    public Collection<FamilyMemberDto> getMembersByFirstCreator(String guardUuid) {
+        Collection<ShortFamilyMember> members = memberRepository.getAllMembersByFirstCreator(guardUuid);
+
+        return familyMemberMapper.collectionEntityToCollectionDto(members);
+    }
+
 }

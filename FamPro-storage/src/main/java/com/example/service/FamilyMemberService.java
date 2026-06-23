@@ -224,6 +224,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             throw new RuntimeException("Secret status is forged");
         }
         FamilyMemberDto familyMemberDto = new FamilyMemberDto();
+        familyMemberDto.setLocalisation(securityDto.getLocalisation());
         if (securityDto.isOtherNamesExist()) {
             familyMemberDto.setFioDtos(oldNamesMapper.oldFiosSetToFioDtoSet(oldFioService.getOtherNamesByInfoId(securityDto.getPersonId())));
             tempGuard.setFioDtos(familyMemberDto.getFioDtos());
@@ -238,11 +239,14 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
     @Transactional(readOnly = true)
     public FamilyMemberDto getFamilyMember(FamilyMemberDto familyMemberDto) {
-        if ((familyMemberDto.getFirstName() != null) &&
+        if (familyMemberDto.getUuid() != null || ((familyMemberDto.getFirstName() != null) &&
                 (familyMemberDto.getMiddleName() != null) &&
                 (familyMemberDto.getLastName() != null) &&
-                familyMemberDto.getBirthday() != null) {
-            UUID uuid = generateUUIDFromFio(familyMemberMapper.dtoToEntity(familyMemberDto));
+                familyMemberDto.getBirthday() != null)) {
+            UUID uuid;
+            if (familyMemberDto.getUuid() != null) uuid = familyMemberDto.getUuid();
+            else uuid = generateUUIDFromFio(familyMemberMapper.dtoToEntity(familyMemberDto));
+
             Optional<FamilyMember> fm = mainStorageRepository.findMemberWithInfoByUUID(uuid);
             if (fm.isEmpty()) fm = mainStorageRepository.findMemberWithInfoByOldNameUUID(uuid);
             FamilyMember familyMember = fm.orElseThrow(() -> new FamilyMemberNotFound("Такой человек не найден"));
@@ -318,7 +322,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         familyMember.setFullName(generateFioStringInfo(familyMember));
 
         familyMember.setOtherNamesExist(false);
-        Set<OldFio> otherNames = oldFioService.checkOtherNamesUniquer(familyMember, familyMemberDto.getFioDtos(), notifications);
+        Set<OldFio> otherNames = oldFioService.checkOtherNamesUniquer(familyMember, familyMemberDto.getFioDtos(), notifications, false);
         if (!otherNames.isEmpty()) {
             familyMember.setOtherNamesExist(true);
             familyMember.setOtherNames(otherNames);
@@ -439,63 +443,121 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             formAndSendService.sendNotification(token, Attention.NEGATIVE, fm.getFullName(), dtoId, Subject.LAST_UPDATE, localisation);
             throw new ModeratingContent("Version change");
         }
-        if (fromTemp.getSecretLevelRemove() == SecretLevel.CLOSE&&fromTemp.getSecretLevelBirthday() != SecretLevel.CLOSE
+        if (fromTemp.getSecretLevelRemove() == SecretLevel.CLOSE && fromTemp.getSecretLevelBirthday() != SecretLevel.CLOSE
                 && ((fromTemp.getMotherInfo() != null && fromTemp.getMotherInfo().charAt(0) != '(' && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio())), fromTemp.getMotherInfo()))
                 || (fromTemp.getFatherInfo() != null && fromTemp.getFatherInfo().charAt(0) != '(' && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getFatherFio())), fromTemp.getFatherInfo())))) {
             formAndSendService.sendNotification(token, Attention.RIGHTS, null, dtoId, Subject.RIGHTS, localisation);
             throw new RightsIsAbsent("У Вас нет прав для удаления");
         }
+        boolean changeOnPseudonym = false;
+        boolean changeBirthday = false;
+
+
         if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE && fromTemp.getSecretLevelBirthday() != SecretLevel.CLOSE &&
-                (!Objects.equals(fm.getFirstName(), familyMemberDto.getFirstName()) ||
+                (familyMemberDto.getFirstName() != null
+                        && familyMemberDto.getMiddleName() != null
+                        && familyMemberDto.getLastName() != null
+                        && familyMemberDto.getBirthday() != null
+                        && (!Objects.equals(fm.getFirstName(), familyMemberDto.getFirstName()) ||
                         !Objects.equals(fm.getMiddleName(), familyMemberDto.getMiddleName()) ||
                         !Objects.equals(fm.getLastName(), familyMemberDto.getLastName()) ||
                         fm.getSex() != familyMemberDto.getSex() ||
-                        !Objects.equals(fm.getBirthday().toLocalDate(), familyMemberDto.getBirthday().toLocalDate())
-                )) {
+                        !Objects.equals(fm.getBirthday().toLocalDate(), familyMemberDto.getBirthday().toLocalDate())))) {
             changing.setChangingMain(true);
+
             Set<FamilyMember> currentChildrenOfFamilyMember = fm.getChilds();
-            if (familyMemberDto.getFirstName() != null) fm.setFirstName(familyMemberDto.getFirstName());
-            if (familyMemberDto.getBirthday() != null && (currentChildrenOfFamilyMember == null || currentChildrenOfFamilyMember.isEmpty())) {
-                fm.setBirthday(familyMemberDto.getBirthday());
-                if (fm.getOtherNames() != null && !fm.getOtherNames().isEmpty())
-                    oldFioService.changeOldFiosBirthday(fm);
-            } else if (familyMemberDto.getBirthday() != null && !Objects.equals(familyMemberDto.getBirthday().toLocalDate(), fm.getBirthday().toLocalDate())) {
-                throw new UncorrectedInformation("Изменять день рождения человека, у которого в базе имеются подтвержденные дети, невозможно");
-            }
-            if (familyMemberDto.getLastName() != null) fm.setLastName(familyMemberDto.getLastName());
-            if (familyMemberDto.getMiddleName() != null) fm.setMiddleName(familyMemberDto.getMiddleName());
             if (familyMemberDto.getSex() != null && (currentChildrenOfFamilyMember == null || currentChildrenOfFamilyMember.isEmpty()))
                 fm.setSex(familyMemberDto.getSex());
             else if (familyMemberDto.getSex() != null && familyMemberDto.getSex() != fm.getSex()) {
                 throw new UncorrectedInformation("Изменять пол человека, у которого в базе имеются подтвержденные дети, невозможно");
             }
 
-            UUID freshUuid = generateUUIDFromFio(fm);
-            Optional<FamilyMember> existFM = familyMemberRepo.findFioByUuid(freshUuid);
-            if (existFM.isPresent() && !existFM.get().getId().equals(fm.getId())) {
-                formAndSendService.sendNotification(token, Attention.NEGATIVE, null, existFM.get().getId(), Subject.DUPLICATE, localisation);
-                throw new Dublicate("Информация в результате изменения совпадает с существующим человеком в базе. Его ID " + existFM.get().getId());
-            } else {
-                Optional<OldFio> existOldName = oldFioRepository.findOldFioWithFamilyMember(freshUuid);
-                if (existOldName.isPresent() && !existOldName.get().getId().equals(fm.getId())) {
-                    formAndSendService.sendNotification(token, Attention.NEGATIVE, null, existOldName.get().getId(), Subject.DUPLICATE_HIDE, localisation);
+            if (!Objects.equals(familyMemberDto.getBirthday().toLocalDate(), fm.getBirthday().toLocalDate())) {
+                if (((currentChildrenOfFamilyMember == null || currentChildrenOfFamilyMember.isEmpty())
+                        && ((fm.getFatherInfo() == null || fm.getFatherInfo().isBlank()) && (familyMemberDto.getFatherFio() == null || familyMemberDto.getFatherFio().getBirthday() == null))
+                        && ((fm.getMotherInfo() == null || fm.getMotherInfo().isBlank()) && (familyMemberDto.getMotherFio() == null || familyMemberDto.getMotherFio().getBirthday() == null)))
+                        || checkBirthdayToSet(familyMemberDto, fm.getChilds(), fm.getFatherInfo(), fm.getMotherInfo())) {
+                    fm.setBirthday(familyMemberDto.getBirthday());
+                    changeBirthday = true;
+                    if (fm.getOtherNames() != null && !fm.getOtherNames().isEmpty())
+                        oldFioService.changeOldFiosBirthday(fm);
+                } else
+                    throw new UncorrectedInformation("Изменение дня рождения человека(людей) произведено некорректно");
+            }
 
-                    throw new Dublicate("Информация в результате изменения совпадает с альтернативным именем человека в базе. Его ID " + existOldName.get().getMember().getId());
+            if (!changeBirthday && familyMemberDto.getFioDtos()!=null&&!familyMemberDto.getFioDtos().isEmpty()) {
+                Optional<FioDto> oldMain = familyMemberDto.getFioDtos().stream()
+                        .filter(x -> (x.getFirstName() != null
+                                && x.getMiddleName() != null
+                                && x.getLastName() != null
+                                && Objects.equals(x.getFirstName(), fm.getFirstName())
+                                && Objects.equals(x.getMiddleName(), fm.getMiddleName())
+                                && Objects.equals(x.getLastName(), fm.getLastName())))
+                        .findFirst();
+                if (oldMain.isPresent()) {
+                    familyMemberDto.getFioDtos().remove(oldMain.get());
+                    oldMain.get().setBirthday(fm.getBirthday());
+                    OldFio oldFio = oldNamesMapper.fioDtoToOldFio(oldMain.get());
+                    oldFio.setUuid(generateUUIDFromFio(oldFio));
+                    oldFio.setFullName(generateFioStringInfo(oldFio));
+                    oldFio.setMember(fm);
+                    oldFio.setSex(fm.getSex());
+                    if (fm.getOtherNames() == null) fm.setOtherNames(new HashSet<>());
+                    fm.getOtherNames().add(oldFio);
                 }
             }
-//            familyMemberDto.setUuid(freshUuid);
+            fm.setFirstName(familyMemberDto.getFirstName());
+            fm.setLastName(familyMemberDto.getLastName());
+            fm.setMiddleName(familyMemberDto.getMiddleName());
+
+
+            UUID freshUuid = generateUUIDFromFio(fm);
+            if (fm.getOtherNames() != null && !fm.getOtherNames().isEmpty()) {
+                if (changeBirthday) fm.getOtherNames().forEach(x -> {
+                    x.setBirthday(fm.getBirthday());
+                    x.setUuid(generateUUIDFromFio(x));
+                });
+                Optional<OldFio> change = fm.getOtherNames().stream().filter(x -> Objects.equals(x.getUuid(), freshUuid)).findFirst();
+                if (change.isPresent()) {
+                    changeOnPseudonym = true;
+                    fm.getOtherNames().remove(change.get());
+                    oldFioRepository.removeOldFio(freshUuid);
+                }
+            }
+
+            if (changeBirthday || !changeOnPseudonym) {
+                Optional<FamilyMember> existFM = familyMemberRepo.findFioByUuid(freshUuid);
+                if (existFM.isPresent() && !existFM.get().getId().equals(fm.getId())) {
+                    formAndSendService.sendNotification(token, Attention.NEGATIVE, null, existFM.get().getId(), Subject.DUPLICATE, localisation);
+                    throw new Dublicate("Информация в результате изменения совпадает с существующим человеком в базе. Его ID " + existFM.get().getId());
+                } else {
+                    Optional<OldFio> existOldName = oldFioRepository.findOldFioWithFamilyMember(freshUuid);
+                    if (existOldName.isPresent() && !existOldName.get().getId().equals(fm.getId())) {
+                        formAndSendService.sendNotification(token, Attention.NEGATIVE, null, existOldName.get().getId(), Subject.DUPLICATE_HIDE, localisation);
+                        throw new Dublicate("Информация в результате изменения совпадает с альтернативным именем человека в базе. Его ID " + existOldName.get().getMember().getId());
+                    }
+                }
+            }
             fm.setUuid(freshUuid);
             fm.setFullName(generateFioStringInfo(fm));
         }
         List<Notification> notifications = new ArrayList<>();
         List<FamilyDirective> listToFamily = new ArrayList<>();
         Set<FamilyMember> children = new HashSet<>();
-        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE ) {
-            Set<OldFio> otherNames = oldFioService.checkOtherNamesUniquer(fm, familyMemberDto.getFioDtos(), notifications);
-
+        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE) {
+            Set<OldFio> otherNames;
+            try {
+                otherNames = oldFioService.checkOtherNamesUniquer(fm, familyMemberDto.getFioDtos(), notifications, changeBirthday);
+            } catch (Dublicate e) {
+                formAndSendService.sendNotification(token, Attention.NEGATIVE, null, Long.getLong(e.getMessage()), Subject.DUPLICATE_OTHER_HARD, localisation);
+                throw new Dublicate(e.getMessage());
+            } catch (UncorrectedInformation e) {
+                formAndSendService.sendNotification(token, Attention.NEGATIVE, null, Long.getLong(e.getMessage()), Subject.DUPLICATE_OTHER_HIDE_HARD, localisation);
+                throw new Dublicate(e.getMessage());
+            }
 
             try {
-                if (!otherNames.isEmpty() || changing.isChangingMain())
+                if (!otherNames.isEmpty() || (changing.isChangingMain() && !changeOnPseudonym))
                     children.addAll(losingParentsService.findAdditionalChildren(changing, fm, otherNames));
             } catch (ModeratingContent e) {
                 formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.MODERATION_CHILD, localisation);
@@ -521,7 +583,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
             familyMemberDto.setUuid(fm.getUuid());
         }
-        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE  && familyMemberDto.isPrimePhoto()) {
+        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE && familyMemberDto.isPrimePhoto()) {
             directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.ADD));
             fm.setPrimePhoto(true);
         }

@@ -39,6 +39,8 @@ public class SecurityConfig {
                         .pathMatchers("/image/**").permitAll()
                         .pathMatchers("/favicon/**").permitAll()
                         .pathMatchers("/resources/**").permitAll()
+                        .pathMatchers("/free/**").permitAll()
+
                         .anyExchange().authenticated())
                 .oauth2Login(withDefaults())
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()));

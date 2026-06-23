@@ -1,5 +1,6 @@
 package com.example.transcriters;
 
+import com.example.enums.Relation;
 import com.example.enums.Subject;
 import com.example.enums.SwitchPosition;
 import com.ibm.icu.text.Transliterator;
@@ -54,19 +55,21 @@ public class RusTranscripter implements AbstractTranscripter {
             new AbstractMap.SimpleEntry<>("Шоссе", "шоссе "));
 
     public final Map<String,String> matrixOfTextGeneration= Map.ofEntries(
-            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE.name(), "Введенная основная информация соответствует другой персоне в базе. Его ID: "),
-            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_HIDE.name(), "Введенная основная информация соответствует альтернативному имени другой персоны в базе. Его ID: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE.name(), "Введенная основная информация соответствует другой персоне в базе. Ввод данных отменен. Его ID: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_HIDE.name(), "Введенная основная информация соответствует альтернативному имени другой персоны в базе. Ввод данных отменен. Его ID: "),
             new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER.name(), "Введенное альтернативное имя идентично альтернативному имени другой персоны в базе. Данное имя игнорировано. ID персоны: "),
             new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HIDE.name(), "Введенное альтернативное имя соответствует другой персоне в базе. Данное имя игнорировано. ID персоны: "),
-            new AbstractMap.SimpleEntry<>(Subject.RIGHTS.name(), "Вы не имеете прав на действия с данной персоной"),
-            new AbstractMap.SimpleEntry<>(Subject.MODERATION_CHILD.name(), "Обнаруженый ребенок находится под модерацией/голосованием. Повторите Вашу попытку позже. Найденный ребенок: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HARD.name(), "Введенное или бывшее альтернативное имя в совокупности с изменением даты рождения идентично альтернативному имени другой персоны в базе. Ввод данных отменен. ID персоны: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HIDE_HARD.name(), "Введенное или бывшее альтернативное имя в совокупности с изменением даты рождения соответствует другой персоне в базе. Ввод данных отменен. ID персоны: "),
+            new AbstractMap.SimpleEntry<>(Subject.RIGHTS.name(), "Вы не имеете прав на действия с данной персоной. Ввод данных отменен."),
+            new AbstractMap.SimpleEntry<>(Subject.MODERATION_CHILD.name(), "Обнаруженый ребенок находится под модерацией/голосованием. Ввод данных отменен. Повторите Вашу попытку позже. Найденный ребенок: "),
             new AbstractMap.SimpleEntry<>(Subject.MODERATION_FATHER.name(), "Обнаруженый отец находится под модерацией/голосованием. Введенные данные отца игнорированы. Введите эти данные позже. Найденный отец: "),
             new AbstractMap.SimpleEntry<>(Subject.MODERATION_MOTHER.name(), "Обнаруженая мать находится под модерацией/голосованием. Введенные данные матери игнорированы. Введите эти данные позже. Найденная мать:  "),
-            new AbstractMap.SimpleEntry<>(Subject.MODERATION_WARNING.name(), "Персона находится на модерации/голосовании. Повторите Вашу попытку позже. Персона: "),
-            new AbstractMap.SimpleEntry<>(Subject.LAST_UPDATE.name(), "Персона между Вашими запросами изменилась. Повторите Ваши запросы сначала. Персона: "),
+            new AbstractMap.SimpleEntry<>(Subject.MODERATION_WARNING.name(), "Персона находится на модерации/голосовании. Ввод данных отменен. Повторите Вашу попытку позже. Персона: "),
+            new AbstractMap.SimpleEntry<>(Subject.LAST_UPDATE.name(), "Персона между Вашими запросами изменилась. Ввод данных отменен. Повторите Ваши запросы сначала. Персона: "),
             new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_DATE.name(), "Введенные даты рождения родителей не могут соответствовать действительности. Данный блок игнорирован."),
-            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_SEX.name(), "Ошибка в введенном поле персоны."),
-            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_PARENTS.name(), "Родители не могут иметь таковые имена."),
+            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_SEX.name(), "Ошибка в введенном поле персоны. Ввод данных отменен."),
+            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_PARENTS.name(), "Родители не могут иметь таковые имена. Ввод данных отменен."),
             new AbstractMap.SimpleEntry<>(Subject.VOTING.name(), "Начато голосование на наличие взаимосвязи: "),
             new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_OTHER.name(), "Введенное альтернативное имя не корректно."),
             new AbstractMap.SimpleEntry<>(Subject.LINK.name(), "Линкование пользователя с: "),
@@ -144,5 +147,11 @@ public class RusTranscripter implements AbstractTranscripter {
     public String getAnd() {
         return " и ";
     }
+
+    @Override
+    public String getRelation(Relation relation) {
+        return relation.getRus();
+    }
+
 }
 
