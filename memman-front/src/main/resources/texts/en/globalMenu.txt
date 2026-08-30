@@ -1,0 +1,18 @@
+{"choice": 1000, "text": "News"}
+{"choice": 1100, "text": "System"}
+{"choice": 1200, "text": "Common"}
+{"choice": 1300, "text": "Family"}
+{"choice": 1400, "text": "Private"}
+{"choice": 2000, "text": "Person base"}
+{"choice": 2100, "text": "Creat new person"}
+{"choice": 2200, "text": "Find person"}
+{"choice": 2300, "text": "Creating by you"}
+{"choice": 2400, "text": "You in base"}
+{"choice": 3000, "text": "Communication"}
+{"choice": 3100, "text": "Message"}
+{"choice": 3200, "text": "Chats"}
+{"choice": 3300, "text": "Contacts"}
+{"choice": 4000, "text": "Journal"}
+{"choice": 5000, "text": "Move"}
+{"choice": 5100, "text": "About project"}
+{"choice": 5200, "text": "Start page"}

@@ -1,0 +1,5 @@
+package ru.memman.enums;
+
+public enum RoleInFamily {
+    CHILD,FATHER,MOTHER,HALF_CHILD_FATHER,HALF_CHILD_MOTHER, FANTOM_CHILD, OTHER,GUARD
+}

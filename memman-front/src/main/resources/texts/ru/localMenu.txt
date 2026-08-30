@@ -1,0 +1,6 @@
+    {"choice": 1100, "text": "Система"}
+    {"choice": 1200, "text": "&nbsp;Общее&nbsp;"}
+    {"choice": 1300, "text": "&nbsp;Семья&nbsp;"}
+    {"choice": 1400, "text": "&nbsp;Личное"}
+    {"choice": 3110, "text": "Портал"}
+    {"choice": 3120, "text": "Емайл"}

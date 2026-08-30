@@ -1,0 +1,19 @@
+{"choice": 0, "text": "About portal"}
+{"choice": 1, "text": "Language change"}
+{"choice": 1100, "text": "Registration"}
+{"choice": 1200, "text": "Base"}
+{"choice": 1300, "text": "Communication"}
+{"choice": 1400, "text": "Notes"}
+{"choice": 1101, "text": "SSO"}
+{"choice": 1102, "text": "System roles"}
+{"choice": 1103, "text": "Confidential system"}
+{"choice": 1104, "text": "Бла-бла"}
+{"choice": 1201, "text": "Person profile"}
+{"choice": 1202, "text": "Linking"},
+{"choice": 1203, "text": "Система конфиденциальности"}
+{"choice": 1301, "text": "Профиль персоны"}
+{"choice": 1302, "text": "Связывание"}
+{"choice": 1303, "text": "Система конфиденциальности"}
+{"choice": 1401, "text": "Профиль персоны"}
+{"choice": 1402, "text": "Связывание"}
+{"choice": 1403, "text": "Система конфиденциальности"}

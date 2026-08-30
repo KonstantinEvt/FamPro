@@ -1,0 +1,11 @@
+{"choice": 0, "text": "Welcome to your personal portal space! We hope that you are in a good mood and that you will spend your time on the portal productively!"}
+{"choice": 1, "text": "You have changed the language scheme to English. Please use the Latin alphabet for correct search and data entry."}
+{"choice": 2, "text": "Content not added yet"}
+{"choice": 1101, "text": "System news"}
+{"choice": 1102, "text": "System news are absent"}
+{"choice": 1201, "text": "Common news"}
+{"choice": 1202, "text": "Common news are absent"}
+{"choice": 1301, "text": "Family news"}
+{"choice": 1302, "text": "Family news are absent"}
+{"choice": 1401, "text": "Private news"}
+{"choice": 1402, "text": "Private news are absent"}

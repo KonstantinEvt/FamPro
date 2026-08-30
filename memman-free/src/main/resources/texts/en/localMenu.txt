@@ -1,0 +1,4 @@
+    {"choice": 1100, "text": "Reg"}
+    {"choice": 1200, "text": "Base"}
+    {"choice": 1300, "text": "Conf"}
+    {"choice": 1400, "text": "Notes"}

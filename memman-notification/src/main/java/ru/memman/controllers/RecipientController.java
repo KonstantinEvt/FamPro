@@ -1,0 +1,37 @@
+package ru.memman.controllers;
+
+import ru.memman.dtos.ContactDto;
+import ru.memman.dtos.RecipientDto;
+import ru.memman.service.ContactService;
+import ru.memman.service.RecipientService;
+import ru.memman.service.TokenService;
+import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
+
+@RestController
+@RequestMapping("/notify/recipient")
+@AllArgsConstructor
+public class RecipientController {
+    private TokenService tokenService;
+    private RecipientService recipientService;
+    private ContactService contactService;
+
+    @PostMapping("/contact/add")
+    public ContactDto addContact(@RequestBody RecipientDto recipientDto){
+        return recipientService.addContactToOwner((String)tokenService.getTokenUser().getClaims().get("sub"), recipientDto);
+    }
+    @GetMapping("/contact/get")
+    public Set<ContactDto> getContacts(){
+        return recipientService.getContactDtos((String)tokenService.getTokenUser().getClaims().get("sub"));
+    }
+    @PostMapping("/contact/edit")
+    public ContactDto editContact(@RequestBody RecipientDto recipientDto){
+        return recipientService.editContact((String)tokenService.getTokenUser().getClaims().get("sub"), recipientDto);
+    }
+    @GetMapping("/contact/get/{uuid}")
+    public boolean getAccessContact(@PathVariable("uuid") String uuid){
+        return contactService.getAccessContact((String)tokenService.getTokenUser().getClaims().get("sub"),uuid);
+    }
+}

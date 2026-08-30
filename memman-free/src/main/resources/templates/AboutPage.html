@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Портал предназначен для систематизации, фиксации, отображения и поиска всего, что связано с Вашей семьей/родом.
+    Семейные переписки, локализации, дневники, генеалогическое древо и т.д. - это сюда">
+    <meta name="robots" content="index,follow">
+    <title>About Memman</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
+    <link rel="icon" type="image/jpg" href="/free/imj/favicon">
+</head>
+<body style="background: url('/free/imj/start')  center top 1px / cover no-repeat; min-width: 350px;height: 100vh">
+<div class="container-fluid row mh-100 no-gutters">
+    <span class="col"></span>
+    <button class="btn btn-outline-warning col-2 no-gutters" aria-current="page"
+            style="color: lightgreen;font-family: 'Times New Roman',serif; font-size: 12px; margin-bottom:3px; margin-top: 3px; padding:3px 0px 3px ;width: 50px; align-content: end"
+            type="button" data-bs-toggle="offcanvas" data-bs-target="#langTab"
+            id="langButton"
+            aria-controls="offcanvasRight">
+    </button>
+</div>
+<div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="langTab" style="width: 200px"
+     aria-labelledby="langTab">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="langTabLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body" id="locForm">
+        <form id="locForm1" onclick="changeLangMenu(loc.value)">
+            <br>
+            <div>
+                <button id="selectLang" type="button" class="btn btn-outline-warning" data-bs-dismiss="offcanvas"
+                        aria-label="Close" onclick="changeLang(loc.value,false,`about`)"></button>
+            </div>
+            <br>
+            <div>
+                <input type="radio" id="enLoc" name="loc" value="en"/>
+                <label for="enLoc">English </label>
+            </div>
+            <div>
+                <input type="radio" id="ruLoc" name="loc" value="ru"/>
+                <label for="ruLoc">Русский </label>
+            </div>
+        </form>
+    </div>
+</div>
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid row mh-100 no-gutters">
+        <h1 id="mainTitle"
+            style="color: chocolate; font-family: 'Times New Roman',serif; font-size: xx-large; text-align: center">Memman</h1>
+        <h2 id="secondaryTitle" style="color: chocolate; font-family: 'Times New Roman',serif; font-style: italic; font-size: x-large; text-align: center">Memory of Mankind</h2>
+    </div>
+</nav>
+<br>
+
+<nav class="navbar navbar-expand-lg bg-body-secondary "
+     style="color: chocolate;font-family: 'Times New Roman',serif; font-size: 16px; padding:0; align-content: center; ">
+    <div class="container-fluid">
+        <a class="navbar-brand" id="infoMain" style="color: darkred" href="#" onclick="getCommon(0)">Инфо</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+                aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+
+        </div>
+    </div>
+</nav>
+<div id="mainPanel" style="background: url('/free/imj/ground')  repeat; padding:0; margin: 0; max-width: 100%; height: 100%"
+     class="container-fluid row mh-100 no-gutters">
+
+</div>
+<script>    let currentLang = (localStorage.getItem(`currentLang`)===null)?"ru":localStorage.getItem('currentLang');
+let callbackPage = (localStorage.getItem(`callbackPage`)===null)?"/free/page/front":localStorage.getItem('callbackPage');
+</script>
+<!--<script>-->
+<!--    window.contacts=[];-->
+<!--    window.defaultPhotos=[];-->
+<!--</script>-->
+<script src='/free/js/Rus/CommonRus.js'></script>
+<script src='/free/js/Eng/CommonEn.js'></script>
+<script src='/free/js/Common.js'></script>
+<script src='/free/js/CommonAbout.js'></script>
+<script src='/free/js/UserForm.js'></script>
+
+</body>
+</html>

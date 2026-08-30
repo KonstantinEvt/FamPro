@@ -1,0 +1,30 @@
+{"choice": "langButton", "text": "&nbsp;&#x1F1F7;&#x1F1FA;&nbsp;"}
+{"choice": "mainTitle", "text": "Личный кабинет"}
+{"choice": "frontTitle", "text": "Привет"}
+{"choice": "cabinetFront", "text": "Кабинет:"}
+{"choice": "nickNameFront", "text": "Ник:"}
+{"choice": "roleFront", "text": "Роль:"}
+{"choice": "newsFront", "text": "Новости"}
+{"choice": "category", "text": "Категория"}
+{"choice": "langTabLabel", "text": "Язык"}
+{"choice": "selectLang", "text": "Выбрать"}
+{"choice": "logoutFront", "text": "Выйти"},
+{"choice": "attentionToExit", "text": "Подтверждение выхода"}
+{"choice": "logoutFrontAgree", "text": "Да"}
+{"choice": "logoutFrontDecline", "text": "Нет"}
+{"choice": "logoutText", "text": "Вы действительно хотите выйти из системы"}
+{"choice": "onlineUsers", "text": "Онлайн:"}
+{"choice": "usersInBase", "text": "Пользватели:"}
+{"choice": "personsInBase", "text": "Персоны:"}
+{"choice": "linkingButton", "text": "Связать"}
+{"choice": "SIMPLE_USER", "text": "Простой"}
+{"choice": "BASE_USER", "text": "Базовый"}
+{"choice": "LINKED_USER", "text": "Связанный"}
+{"choice": "ADMIN", "text": "Админ"}
+{"choice": "VIP", "text": "VIP"}
+{"choice": "destination", "text": "Назначение"}
+{"choice": "all", "text": "все"}
+{"choice": "new", "text": "новые"}
+{"choice": "begin", "text": "начало"}
+{"choice": "end", "text": "конец"}
+{"choice": "list", "text": "список"}

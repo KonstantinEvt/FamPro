@@ -1,0 +1,61 @@
+package ru.memman.conrollers;
+
+import ru.memman.dtos.FamilyMemberDto;
+import ru.memman.dtos.TokenUser;
+import ru.memman.enums.CheckStatus;
+import ru.memman.exceptions.ModeratingContent;
+import ru.memman.exceptions.RightsIsAbsent;
+import ru.memman.services.BaseService;
+import lombok.AllArgsConstructor;
+import ru.memman.models.OnlineUserHolder;
+import ru.memman.models.SimpleUserInfo;
+import ru.memman.services.TokenService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+
+@RestController
+@RequestMapping("/onlineUserAPI")
+@AllArgsConstructor
+public class SSOController {
+    private TokenService tokenService;
+    private OnlineUserHolder onlineUserHolder;
+    private final BaseService baseService;
+
+    @GetMapping("/info")
+    public SimpleUserInfo getOnlineUser() {
+        return onlineUserHolder.getSimpleUser();
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<String> createUser(@RequestBody TokenUser tokenUser) {
+        if (onlineUserHolder.getSimpleUser().getRole().equals("Admin")) tokenService.addUser(tokenUser);
+        else return ResponseEntity.ok("Your are haven't rights");
+        return ResponseEntity.ok("New User added to SSO");
+    }
+
+    @PostMapping("/edit")
+    public ResponseEntity<String> editUser(@RequestBody TokenUser tokenUser) {
+        SimpleUserInfo simpleUserInfo = onlineUserHolder.getSimpleUser();
+        tokenService.editUser(tokenUser);
+        onlineUserHolder.addUser(simpleUserInfo.editUser(tokenUser));
+        return ResponseEntity.ok("You are update in SSO");
+    }
+//
+
+    @GetMapping("/link/{id}")
+    public ResponseEntity<String> linkingUser(@PathVariable("id") Long id) {
+        FamilyMemberDto dto = baseService.getFamilyMemberById(id, onlineUserHolder.getSimpleUser().getLocalisation());
+        if (dto.getCheckStatus() == CheckStatus.LINKED)
+            throw new RightsIsAbsent("Запись уже связана. Если Вы претендуете на нее - обратитесь к администрации");
+        else if (dto.getCheckStatus() == CheckStatus.MODERATE)
+            throw new ModeratingContent("Запись находится на модерации. Если Вы претендуете на нее - обратитесь к администрации");
+
+        if (baseService.linkFamilyMember(dto) == CheckStatus.LINKED) {
+            tokenService.linkUser(dto);
+            onlineUserHolder.getSimpleUser().editUserByLinked(dto);
+            return ResponseEntity.ok("Вы успешно связаны с челоеком c Id: " + id);
+        }
+        return ResponseEntity.ok("Запрос на связь отправлен");
+    }
+}

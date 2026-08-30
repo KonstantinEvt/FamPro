@@ -1,0 +1,55 @@
+package ru.memman.config;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import ru.memman.dtos.*;
+import ru.memman.models.StandardInfo;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+@Configuration
+public class TaskResource {
+
+    @Bean("directiveResource")
+    LinkedList<Directive> sender() {
+        return new LinkedList<>();
+    }
+    @Bean("directiveVoting")
+    LinkedList<DirectiveGuards> senderVoting() {
+        return new LinkedList<>();
+    }
+
+    @Bean("onlineInfo")
+    ConcurrentHashMap<String, StandardInfo> onlineInfo() {
+        return new ConcurrentHashMap<>();
+    }
+    @Bean("directiveRights")
+    LinkedList<DirectiveGuards> directiveRights() {
+        return new LinkedList<>();
+    }
+    @Bean("systemGlobalMask")
+    public List<Integer> systemGlobalMask() {
+        return new CopyOnWriteArrayList<>();
+    }
+
+    @Bean("commonGlobalMask")
+    public List<Integer> commonGlobalMask() {
+        return new CopyOnWriteArrayList<>();
+    }
+
+    @Bean("systemNewsGlobal")
+    public List<AloneNewDto> systemNewsGlobal() {
+        return new CopyOnWriteArrayList<>();
+    }
+
+    @Bean("commonNewsGlobal")
+    public List<AloneNewDto> commonNewsGlobal() {
+        return new CopyOnWriteArrayList<>();
+    }
+    @Bean("inlineResource")
+    LinkedList<OnlineUserDto> inline(){return new LinkedList<>();}
+}

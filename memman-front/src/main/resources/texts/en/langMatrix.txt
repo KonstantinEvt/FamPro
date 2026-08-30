@@ -1,0 +1,30 @@
+{"choice": "langButton", "text": "&nbsp;&#x1F1FA;&#x1F1F8;&nbsp;"}
+{"choice": "mainTitle", "text": "Personal page"}
+{"choice": "frontTitle", "text": "Welcome"}
+{"choice": "cabinetFront", "text": "Cabinet:"}
+{"choice": "nickNameFront", "text": "Nick:"}
+{"choice": "roleFront", "text": "Role:"}
+{"choice": "newsFront", "text": "News"}
+{"choice": "category", "text": "Category"}
+{"choice": "langTabLabel", "text": "Languish"}
+{"choice": "selectLang", "text": "Select"}
+{"choice": "logoutFront", "text": "Exit"},
+{"choice": "attentionToExit", "text": "Logout confirmation"}
+{"choice": "logoutFrontAgree", "text": "Agree"}
+{"choice": "logoutFrontDecline", "text": "Decline"}
+{"choice": "logoutText", "text": "Do you really want to log out"}
+{"choice": "onlineUsers", "text": "Online:"}
+{"choice": "usersInBase", "text": "Users:"}
+{"choice": "personsInBase", "text": "Persons:"}
+{"choice": "linkingButton", "text": "Linking"}
+{"choice": "SIMPLE_USER", "text": "Simple"}
+{"choice": "BASE_USER", "text": "Base"}
+{"choice": "LINKED_USER", "text": "Linked"}
+{"choice": "ADMIN", "text": "Admin"}
+{"choice": "VIP", "text": "VIP"}
+{"choice": "destination", "text": "Destination"}
+{"choice": "all", "text": "all"}
+{"choice": "new", "text": "new"}
+{"choice": "begin", "text": "begin"}
+{"choice": "end", "text": "end"}
+{"choice": "list", "text": "list"}

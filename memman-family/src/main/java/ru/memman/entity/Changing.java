@@ -1,0 +1,26 @@
+package ru.memman.entity;
+
+import ru.memman.enums.ChangingStatus;
+import ru.memman.enums.KafkaOperation;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+@Setter
+@Getter
+@ToString
+public class Changing {
+    private boolean changeIsPresent;
+    private boolean changingMain;
+    private ChangingStatus changingFather;
+    private ChangingStatus changingMother;
+    private boolean oneChildInFamily;
+
+    public Changing() {
+        this.changeIsPresent = false;
+        this.oneChildInFamily = false;
+        this.changingMain = false;
+        this.changingFather = ChangingStatus.NONE;
+        this.changingMother = ChangingStatus.NONE;
+    }
+}

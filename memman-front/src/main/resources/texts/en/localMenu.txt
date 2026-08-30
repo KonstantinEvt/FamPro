@@ -1,0 +1,6 @@
+    {"choice": 1100, "text": "System"}
+    {"choice": 1200, "text": "Common"}
+    {"choice": 1300, "text": "Family"}
+    {"choice": 1400, "text": "Private"}
+    {"choice": 3110, "text": "Portal"}
+    {"choice": 3120, "text": "Email"}
