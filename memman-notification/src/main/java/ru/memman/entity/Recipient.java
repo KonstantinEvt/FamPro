@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import ru.memman.enums.SecretLevel;
 
 import java.sql.Timestamp;
 import java.util.*;
@@ -14,7 +15,6 @@ import java.util.*;
 @NoArgsConstructor
 @Setter
 @Getter
-@ToString
 @Builder
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Recipient {
@@ -40,35 +40,37 @@ public class Recipient {
     @Column(name = "email")
     private String email;
 
-    @OneToMany(mappedBy = "owner")
-    private Set<Contact> contacts;
-
     @Column (name="read_common")
     private String commonReading;
 
     @Column (name="read_system")
     private String systemReading;
 
-    @Column (name="exist_prime_Photo")
-    private boolean urlPhoto;
+    @Enumerated(EnumType.STRING)
+    @Column (name="secretLevelPhoto")
+    private SecretLevel secretLevelPhoto;
+
+    @Column(name = "exist_prime")
+    private boolean existPrimePhoto;
 
     @Column(name="link_extern_id")
     private String linkExternId;
-
-    @OneToMany(mappedBy = "person")
-    private Set<Contact> podpisota;
 
     @Enumerated(EnumType.STRING)
     private Localisation localisation;
 
     @Column(name = "lastEntering")
     private Timestamp lastOnline;
+
+    @Column (name="last_change")
+    private Timestamp lastUpdate;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Recipient recipient = (Recipient) o;
-        return Objects.equals(id, recipient.id) && Objects.equals(externUuid, recipient.externUuid) && Objects.equals(nickName, recipient.nickName) && Objects.equals(sendingLetters, recipient.sendingLetters) && Objects.equals(receivedLetters, recipient.receivedLetters) && Objects.equals(email, recipient.email) && Objects.equals(contacts, recipient.contacts) && Objects.equals(commonReading, recipient.commonReading) && Objects.equals(systemReading, recipient.systemReading);
+        return Objects.equals(id, recipient.id) && Objects.equals(externUuid, recipient.externUuid) && Objects.equals(nickName, recipient.nickName) && Objects.equals(sendingLetters, recipient.sendingLetters) && Objects.equals(receivedLetters, recipient.receivedLetters) && Objects.equals(email, recipient.email) &&  Objects.equals(commonReading, recipient.commonReading) && Objects.equals(systemReading, recipient.systemReading);
     }
 
     @Override

@@ -1,21 +1,22 @@
 let tempCount;
-let tempChoice = new Map([[false, false], [true, false]]);
+
+clearNewsLoads();
+
+function clearNewsLoads() {
+    for (let i = 1; i < 5; i++) {
+        tempChoice.set(i, new Map([[false, false], [true, false]]));
+        rawNewsMap.set(i, [])
+    }
+}
 
 async function getNews() {
+    clearNewsLoads();
+    await getContacts();
     tempCount = counts;
-    tempChoice.set(false, false);
-    tempChoice.set(true, false);
     loadStandardMainPanel();
-    let temp = `<br>
-        <div style="font-family: 'Times New Roman', serif; font-size: 14px; text-align: center; color: chocolate;text-shadow: -1px -1px 0 #f1f1f1,
-        1px -1px 0 #f1f1f1,
-        -1px  1px 0 #f1f1f1,
-        1px  1px 0 #f1f1f1,
-        0 -1px 0 #f1f1f1,
-        0  1px 0 #f1f1f1,
-        -1px  0 0 #f1f1f1,
-        1px  0 0 #f1f1f1;" >${langMatrix.get("category")}</div>
-        <div class="btn-group-vertical" role="group" aria-label="Vertical button group" style="background-color:rgb(255,255,255,40%);margin-left: 7px; margin-right: 4px">`
+    let temp = `
+        <div class="main_select" style="margin-top:24px;" >${langMatrix.get("category")}</div>
+        <div class="btn-group-vertical" role="group" aria-label="Vertical button group" style="background-color:rgb(255,255,255,40%);margin-left: 7px; margin-right: 4px; min-width: 80%">`
     for (let i = 1; i < numOfPart.get(1); i++) {
         temp += `<input type="radio" class="btn-check" name="news-radio" onclick="menuFunc${1000}(${i})" id="news-radio${i}" autoComplete="off" >
         <label class="btn btn-outline-warning" style="padding-right: 3px; padding-left: 3px; text-align:center; font-size: 14px; color: darkred" for="news-radio${i}">${localMenu.get(1000 + i * 100)} 
@@ -26,7 +27,7 @@ async function getNews() {
     document.getElementById("taskPart").innerHTML = temp;
     document.getElementById("news-radio1").checked = true;
     await menuFunc1000(1);
-    loadNewsCounts();
+    drawNewsCounts();
 }
 
 function getCategory(chapter) {
@@ -48,33 +49,24 @@ function getCategory(chapter) {
 }
 
 async function menuFunc1000(chapter) {
-    cards = [];
-    numCards = [];
     let category = getCategory(chapter);
     drawHatOfNews(chapter, category);
     if (counts[chapter] !== null && counts[chapter] !== 0) {
         drawPlaceOfNews(chapter, category, true);
-        await loadCategoryNews(category, false)
+        await refreshGlobalNews(chapter, category, false)
     } else drawPlaceOfNews(chapter, category, false)
 }
 
 function drawHatOfNews(chapter, category) {
     document.getElementById("resultPart").innerHTML = `<div class="container-fluid row" style=" margin-right: 0; margin-bottom: 10px; padding:0">
-        <span class="col" style="text-shadow: -1px -1px 0 #f1f1f1,
-        1px -1px 0 #f1f1f1,
-        -1px  1px 0 #f1f1f1,
-        1px  1px 0 #f1f1f1,
-        0 -1px 0 #f1f1f1,
-        0  1px 0 #f1f1f1,
-        -1px  0 0 #f1f1f1,
-        1px  0 0 #f1f1f1;padding-right: 0;padding-left:0;text-align: right; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px; font-style:italic">${globalTexts.get(1001 + chapter * 100)}</span>
+        <span class="col main_title">${globalTexts.get(1001 + chapter * 100)}</span>
         <span class="col-1" style="padding-right: 0;padding-left:0"></span>
         <span class="col-4" style="padding-left:0; padding-right: 0">
            <div class="btn-group-horizontal" role="group" aria-label="Vertical button group" style="margin-left: 5px; text-align: right">
                 <input type="radio" class="btn-check" name="news-choice"  id="news-choice1" autoComplete="off">
-                <label class="btn btn-outline-warning" style="padding: 2px 5px 2px 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice1" onclick="refreshGlobalNews(${chapter},true)">${langMatrix.get("all")}</label>
+                <label class="btn btn-outline-warning" style="padding: 2px 5px 2px 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice1" onclick="refreshGlobalNews(${chapter}, '${category}', true)">${langMatrix.get("all")}</label>
                 <input type="radio" class="btn-check" name="news-choice"  id="news-choice2" autoComplete="off" checked>
-                <label class="btn btn-outline-warning" style="padding: 2px 5px 2px 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice2" onclick="refreshGlobalNews(${chapter},false)">${langMatrix.get("new")} </label>
+                <label class="btn btn-outline-warning" style="padding: 2px 5px 2px 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice2" onclick="refreshGlobalNews(${chapter},'${category}', false)">${langMatrix.get("new")} </label>
            </div>
         </span>
     </div>
@@ -100,7 +92,7 @@ function drawPlaceOfNews(chapter, category, existNews) {
                     </li>  
                     <li class="nav-item dropdown" >
                         <a class="nav-link dropdown-toggle" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 12px" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">${langMatrix.get('list')}</a>
-                        <ul class="dropdown-menu" >
+                        <ul class="dropdown-menu"  style="max-height:350px;overflow: auto; webkit-scrollbar: " ="background-color: ">
                              <span id="dropdown-message-list"> 
                             </span>
                             <li><hr class="dropdown-divider"></li>
@@ -114,191 +106,400 @@ function drawPlaceOfNews(chapter, category, existNews) {
             </nav>            
             <div data-bs-spy="scroll" style="background: rgb(255,255,255,40%); height: 71vh; overflow: auto" data-bs-target="#navbar-${category}" data-bs-smooth-scroll="true" class="scrollspy-example" tabindex="0">
                 <div id="first-message"></div>
-                <div id="message-list"></div>
+                <div class="card-group" id="message-list"></div>
                 <div id="last-message"></div>
             </div>
             </div>`;
-        URL.revokeObjectURL(defaultPhotos.groundTrees)
+        URL.revokeObjectURL(defaultPhotos.groundTrees);
     } else document.getElementById(category + "-place").innerHTML = globalTexts.get(1002 + chapter * 100);
 }
 
-async function refreshGlobalNews(chapter, choice) {
-    if (tempCount[chapter] === counts[chapter] && tempChoice[choice]) getPresentCards();
-    else {
-        document.getElementById(`message-list`).innerHTML = ``;
-        await loadCategoryNews(getCategory(chapter), choice)
+async function refreshGlobalNews(chapter, category, choice) {
+    console.log("Выбор (расшифровка): ", (choice) ? "Все" : "Новые");
+    console.log("Кол-во загруженных новостей до начала просмотра: ", rawNewsMap.get(chapter).length);
+    console.log("Счетчик новых новостей в просмотре: ", tempCount[chapter]);
+    console.log("Счетчик новых новостей в общем: ", counts[chapter]);
+    console.log("Загружены ли новости выбора до начала просмотра: ", tempChoice.get(chapter).get(choice));
+    if ((!choice && (counts[chapter] === null || counts[chapter] === 0))
+        || (choice && tempChoice.get(chapter).get(true) && rawNewsMap.get(chapter).length === 0)) {
+        drawPlaceOfNews(chapter, category, false)
+    } else {
+        let newsCards;
+        if (tempCount[chapter] === counts[chapter] && tempChoice.get(chapter).get(choice) && rawNewsMap.get(chapter).length !== 0) {
+            drawPlaceOfNews(chapter, category, true);
+            drawNewsGlobal(rawNewsMap.get(chapter), chapter, drawCategoryCards(rawNewsMap.get(chapter), chapter, choice), choice);
+            await loadPicturesToNews(rawNewsMap.get(chapter), category)
+        } else {
+            tempChoice.get(chapter).set(choice, false);
+            console.log("Loading news from notify server")
+            loadCategoryNews(category, choice)
+                .then((rawNews) => {
+                    rawNewsMap.set(chapter, rawNews);
+                    newsCards = drawCategoryCards(rawNews, chapter, choice);
+                    return rawNews
+                })
+                .then(() => {
+                    if (rawNewsMap.get(chapter).length !== 0) {
+                        drawPlaceOfNews(chapter, category, true);
+                        drawNewsGlobal(rawNewsMap.get(chapter), chapter, newsCards, choice)
+                    } else drawPlaceOfNews(chapter, category, false)
+                }).then(() => {
+                if (rawNewsMap.get(chapter).length !== 0) loadPicturesToNews(rawNewsMap.get(chapter), category);
+                tempChoice.get(chapter).set(choice, true);
+            })
+        }
     }
 }
-async function getPresentCards(){}
-async function loadCategoryNews(category, choice) {
-    let temp1 = ``;
-    let i = 0;
-    let linkOn = `message-list`;
-    // if (document.getElementById(linkOn) === undefined || document.getElementById(linkOn) === null) document.getElementById(category + "-empty").innerHTML = `<div id='${linkOn}' class="card-group" style="height: 84vh; max-width:100%; overflow-x: auto"></div>`
-    if (!document.getElementById(linkOn).innerHTML || /^\s*$/.test(document.getElementById(linkOn).innerHTML)) {
-        let url = endPoints.get('newsPortal') + "/" + category + "/" + choice;
-        cards = [];
-        numCards = [];
-        let newsForm = []
-        let promise = await fetch(url, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json; charset=UTF-8"
-            }
-        }).then(response => response.json()).then(letters => {
-            if (letters !== null && !letters.isEmpty) {
-                letters.forEach(aloneNew => {
-                        let creationDateJS = new Date(aloneNew.creationDate);
-                        let fetchData = {
-                            externId: aloneNew.externId,
-                            timeMessage: getTime(creationDateJS),
-                            dateMessage: getDate(creationDateJS),
-                            sendingFromJS: aloneNew.sendingFrom,
-                            sendingFromAlt: aloneNew.sendingFromAlt,
-                            sendingTo: aloneNew.sendingTo,
-                            subjectJS: aloneNew.subject,
-                            textInfoJS: aloneNew.textInfo,
-                            categoryJS: aloneNew.category,
-                            attention: aloneNew.attention,
-                            alreadyRead: aloneNew.alreadyRead,
-                            localisation: aloneNew.localisation,
-                            imj: ``
-                        }
-                        i += 1;
-                        newsForm.push(fetchData);
-                    }
-                )
-            }
-        });
-        console.log("new is received", promise);
 
-        for (let j = 0; j < i; j++) {
-            let imjUrl = endPoints.get("fileSystem") + "/" + category + "/" + newsForm[j].subjectJS;
-            newsForm[j].imj = await loadPicture(imjUrl);
-            console.log("picture is loading", newsForm);
-            numCards[j] = true;
-            let operation = choice ? 'Remove' : 'Read'
-            let pictureUrl = URL.createObjectURL(newsForm[j].imj)
-            cards[j] = `
-                <div class="card" style="max-height:700px; min-width:290px; max-width: 290px; margin-bottom: 10px">
-                    <img src=${pictureUrl} id="img-conteiner${i}" class="card-img-top" width="290px" alt="tytPhoto">                    
-                    <div class="card-body" style="text-align: center">
-                        <h5 class="card-title">${newsForm[j].subjectJS}</h5>
-                        <p class="card-text">${newsForm[j].textInfoJS}</p>
-                        <br>                        
-                        <a class="btn btn-outline-warning" onclick="readCategoryMessage('${newsForm[j].sendingFromJS}','${j}','${category}','${operation}')" href="#">${operation}</a>   
+function drawNewsGlobal(rawNews, chapter, cards, choice) {
+    let temp = "";
+    let tempNav = "";
+    for (let i = 0; i < cards.length; i++) {
+        if (cards[i] !== undefined) {
+            temp += cards[i];
+            tempNav += `<div><a class="dropdown-item" style="color: goldenrod;font-family: 'Times New Roman',serif; font-size: 12px;text-align: center" href="#card${i}">${rawNews[i].subject}</a></div>`
+        }
+    }
+    document.getElementById("message-list").innerHTML = temp;
+    document.getElementById("dropdown-message-list").innerHTML = tempNav;
+    for (let i = 0; i < cards.length; i++) {
+        if (cards[i] !== undefined) {
+            drawNewsButtons(rawNews[i], i, chapter, choice)
+        }
+    }
+}
+
+function drawCategoryCards(rawNews, chapter, choice) {
+    let cards;
+    switch (chapter) {
+        case 1:
+        case 2:
+            cards = drawSystemCards(rawNews, chapter, choice);
+            break;
+        default:
+            cards = drawPrivateCards(rawNews, chapter, choice)
+    }
+    return cards;
+}
+
+async function loadCategoryNews(category, choice) {
+    let url = endPoints.get('newsPortal') + "/get/" + category + "/" + choice + "/" + currentLang;
+    let promise = await fetch(url, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json; charset=UTF-8"
+        }
+    }).then(response => response.json()).then(letters => {
+        let newsForm = [];
+        if (letters !== null && !letters.isEmpty) {
+            letters.forEach(aloneNew => {
+                    let creationDate = new Date(aloneNew.creationDate);
+                    let fetchData = {
+                        externId: aloneNew.externId,
+                        timeMessage: getTime(creationDate),
+                        dateMessage: getDate(creationDate),
+                        sendingFrom: aloneNew.sendingFrom,
+                        sendingFromAlt: aloneNew.sendingFromAlt,
+                        sendingTo: aloneNew.sendingTo,
+                        subject: aloneNew.subject,
+                        textInfo: aloneNew.textInfo,
+                        category: aloneNew.category,
+                        attention: aloneNew.attention,
+                        alreadyRead: aloneNew.alreadyRead,
+                        localisation: aloneNew.localisation,
+                        imageUrl: aloneNew.imageUrl,
+                        existPrimePhoto: aloneNew.existPrimePhoto,
+                        hidden: aloneNew.hidden,
+                        primePhoto: ``,
+                        primePhotoText: ``,
+                        img: ``,
+                        imgText: ``,
+                        imgLoading: false,
+                        primeLoading: false
+                    }
+                    newsForm.push(fetchData);
+                }
+            )
+        }
+        return newsForm;
+    })
+    console.log("news begin loading");
+    return promise;
+}
+
+async function loadPicturesToNews(rawNews, category) {
+    console.log(rawNews);
+    let sysPhoto = URL.createObjectURL(defaultPhotos.systemPhoto);
+    let defPhoto = URL.createObjectURL(defaultPhotos.person);
+    let noPhoto = URL.createObjectURL(defaultPhotos.borderImage);
+    for (let j = 0; j < rawNews.length; j++) {
+        let place = `prime_img_container${j}`;
+        let textPlace = `prime_over_text${j}`;
+        if (document.getElementById(place) !== undefined && document.getElementById(place) !== null)
+            if (category !== "system" && category !== "common") {
+                if (rawNews[j].primePhoto !== '' && !rawNews[j].primeLoading) {
+                    document.getElementById(place).src = URL.createObjectURL(rawNews[j].primePhoto);
+                    URL.revokeObjectURL(rawNews[j].primePhoto);
+                    document.getElementById(`prime_over_text${j}`).innerHTML = rawNews[j].primePhotoText;
+                } else if (rawNews[j].sendingFrom === systemRecipientID || rawNews[j].sendingFrom === informerRecipientID) {
+                    directNewImageToPlace(place, textPlace, sysPhoto, ``)
+                } else if (contacts.get(rawNews[j].sendingFrom) !== undefined && contacts.get(rawNews[j].sendingFrom) !== null && contacts.get(rawNews[j].sendingFrom).img !== "") {
+                    directNewImageToPlace(place, textPlace, URL.createObjectURL(contacts.get(rawNews[j].sendingFrom).img), contacts.get(rawNews[j].sendingFrom).primePhotoText);
+                    URL.revokeObjectURL(contacts.get(rawNews[j].sendingFrom).img);
+                } else if (rawNews[j].existPrimePhoto) {
+                    if (rawNews[j].hidden === null || rawNews[j].hidden) {
+                        directNewImageToPlace(place, textPlace, defPhoto, globalTexts.get(8));
+                    } else if (!rawNews[j].primeLoading) {
+                        rawNews[j].primeLoading = true;
+                        loadPicture(endPoints.get("filePrivate") + "/get/little/" + rawNews[j].externId)
+                            .then(r => {
+                                if (r != null && r.length !== 0) {
+                                    rawNews[j].primePhoto = r;
+                                    rawNews[j].primePhotoText = ``;
+                                    directNewImageToPlace(place, textPlace, URL.createObjectURL(rawNews[j].primePhoto), ``);
+                                    URL.revokeObjectURL(rawNews[j].primePhoto);
+                                }
+                            })
+                            .catch((reason) => {
+                                if (reason.message === "empty") {
+                                    directNewImageToPlace(place, textPlace, defPhoto, globalTexts.get(9));
+                                    console.log("catch error");
+                                } else
+                                    console.log(reason)
+                            })
+                    } else directNewImageToPlace(place, textPlace, defPhoto, globalTexts.get(9));
+                } else {
+                    directNewImageToPlace(place, textPlace, defPhoto, globalTexts.get(3));
+                }
+            }
+        let placeMain = `img-container${j}`;
+        let textPlaceMain = `overText${j}`;
+        if (document.getElementById(placeMain) !== undefined && document.getElementById(placeMain) !== null)
+            if (rawNews[j].imageUrl !== null && rawNews[j].imageUrl !== '' && rawNews[j].img === `` && !rawNews[j].imgLoading) {
+                rawNews[j].imgLoading = true;
+                let path;
+                if (category === "system" || category === "common") path = endPoints.get("fileSystem") + "/get/" + category + "/" + rawNews[j].imageUrl;
+                else path = endPoints.get("filePrivate") + "/getNews/" + rawNews[j].imageUrl + "/" + rawNews[j].sendingFrom;
+                await loadPicture(path)
+                    .then((pic) => {
+                        rawNews[j].img = pic;
+                        rawNews[j].imgText = ``;
+                        directNewImageToPlace(placeMain, textPlaceMain, URL.createObjectURL(rawNews[j].img), '');
+                        return pic;
+                    }).then(pic => URL.revokeObjectURL(pic))
+                    .catch((reason) => {
+                        if (reason.message === "empty") {
+                            rawNews[j].img = "";
+                            directNewImageToPlace(placeMain, textPlaceMain, noPhoto, globalTexts.get(9));
+                            console.log("catch error");
+                        } else
+                            console.log(reason)
+                    })
+            } else if (rawNews[j].imageUrl !== null && rawNews[j].imageUrl !== '' && rawNews[j].img !== "") {
+                directNewImageToPlace(placeMain, textPlaceMain, URL.createObjectURL(rawNews[j].img), rawNews[j].imgText);
+                URL.revokeObjectURL(rawNews[j].img);
+            } else if (!rawNews[j].imgLoading) {
+                rawNews[j].img = ``;
+                rawNews[j].imgText = globalTexts.get(3);
+                directNewImageToPlace(placeMain, textPlaceMain, noPhoto, globalTexts.get(3));
+            } else directNewImageToPlace(placeMain, textPlaceMain, noPhoto, globalTexts.get(9));
+    }
+    URL.revokeObjectURL(defaultPhotos.systemPhoto);
+    URL.revokeObjectURL(defaultPhotos.person);
+    URL.revokeObjectURL(defaultPhotos.borderImage);
+    console.log("pictures to raw news begin loading");
+}
+
+function directNewImageToPlace(place, placeText, photoSrc, text) {
+    document.getElementById(place).src = photoSrc;
+    document.getElementById(placeText).innerHTML = text;
+}
+
+function drawSystemCards(rawNews, chapter, choice) {
+    let category = getCategory(chapter);
+    let cards = [];
+    let tempTextPhoto = `<div class="spinner-border" role="status"> 
+        <span class="visually-hidden">Loading...</span></div>`;
+    let pictureUrl = URL.createObjectURL(defaultPhotos.borderImage);
+    let pictureUrl5 = URL.createObjectURL(defaultPhotos.borderImage5);
+    for (let i = 0; i < rawNews.length; i++) {
+        if (choice || !rawNews[i].alreadyRead) {
+            cards[i] = `
+                <div class="card" id="card${i}" style="max-height:730px; width: 290px; min-width: 290px;  max-width: 350px; margin: 0 5px 15px 5px">
+                <div style="font-family: 'Times New Roman', serif; font-size: 14px; text-align: center; color: chocolate; font-style: italic">${langMatrix.get("date")}:&nbsp;${rawNews[i].dateMessage}</div>
+                    <img style="padding: 5px; max-height:50vh; object-fit: contain" src=${pictureUrl} id="img-container${i}" class="card-img-top" alt="${globalTexts.get(3)}">
+                    <div class="card-img-overlay" style="height: 50%">
+                            <div class="card-text" id="overText${i}" style="padding-top: 40%">${tempTextPhoto}</div>
+                        </div>                   
                         
+                    <div class="card-body" style="background: url(${pictureUrl5}) right top 0/ contain no-repeat; text-align: center; padding: 0 5px 0 0">
+                        <h5 class="card-title" style="text-align: left; margin: 10px 50px 8px 10px">${rawNews[i].subject}</h5>
+                        <hr style="color:#a12121; width: 40%; margin:0 0 0 10px" >
+                        <p class="card-text" style="font-size: 14px; width: 80%; min-height:120px; margin: 10px 5px 5px 5px">${rawNews[i].textInfo}</p>
                     </div> 
                     <div class="card-footer">
-                        <small class="text-body-secondary">
-                           ${newsForm[j].dateMessage}
-                        </small>
+                        <div class="container-fluid row mh-100 no-gutters" id="cardButtons${i}">                           
+                        </div>
                     </div>                    
-                </div>
-                <div id="mar${newsForm[j].sendingFromJS}" class="card" style="border:0;max-height:0; min-width:10px; max-width: 10px">
-                </div>                
-               `
-            URL.revokeObjectURL(newsForm[j].imj)
-            temp1 += cards[j];
-            document.getElementById(linkOn).innerHTML = temp1;
+                </div> `
         }
-        console.log(newsForm, promise);
-    } else {
-        console.log("News is already loaded")
-        for (let j = 0; j < numCards.length; j++) {
-            if (numCards[j]) temp1 += cards[j];
-        }
-        document.getElementById(linkOn).innerHTML = temp1;
     }
-
+    URL.revokeObjectURL(defaultPhotos.borderImage);
+    URL.revokeObjectURL(defaultPhotos.borderImage5)
+    return cards;
 }
 
-async function readCategoryMessage(id, i, category, operation) {
-    numCards[i] = false;
-    let url = endPoints.get('newsPortal') + "/globalNews" + operation + "/" + category.toUpperCase() + "/" + id
+function drawNewsButtons(rawNew, i, chapter, choice) {
+    let temp = ``
+    if (!rawNew.alreadyRead) {
+        temp += `<span class="col-5" style="color: darkred; text-shadow: none"><a style="padding: 3px 6px 3px 6px;" type="button" class="btn btn-outline-warning" onclick="readOrRemoveCategoryMessage('${rawNew.sendingFrom}',${i},${chapter},true,${choice})">${langMatrix.get("read")}</a></span>`
+        temp += `<span class="col-1"></span>`
+    }
+    temp += `<span class="col"  style="color: darkred; text-shadow: none"><a style="padding: 3px 6px 3px 6px;" type="button" class="btn btn-outline-danger" href="#" onclick="readOrRemoveCategoryMessage('${rawNew.sendingFrom}',${i},${chapter},false,${choice})">${langMatrix.get("remove")}</a></span>`
+    document.getElementById(`cardButtons${i}`).innerHTML = temp;
+}
+
+async function readOrRemoveCategoryMessage(id, i, chapter, operation, choice) {
+    let stringOperation = operation ? 'read' : 'remove'
+    let url = endPoints.get('newsPortal') + "/" + stringOperation + "/" + getCategory(chapter).toUpperCase() + "/" + id
     fetch(url, {
         method: 'GET',
         headers: {},
     }).then(r => r).then(() => {
-            if (operation === 'Read') {
+            if (!rawNewsMap.get(chapter)[i].alreadyRead) {
                 counts[0] = counts[0] - 1;
-                if (counts[0] !== 0) document.getElementById("newsCount").innerHTML = counts[0] + "";
-                else document.getElementById("badge0").innerHTML = "";
-                if (category === "system") {
-                    counts[1] = counts[1] - 1;
-                    if (counts[1] !== 0) document.getElementById("countNew1").innerHTML = counts[1] + "";
-                    else {
-                        document.getElementById("badge1").innerHTML = "";
-                        document.getElementById("system-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">Больше системных сообщений нет</div>`;
-                    }
-                } else if (category === "common") {
-                    counts[2] = counts[2] - 1;
-                    if (counts[2] !== 0) document.getElementById("countNew2").innerHTML = counts[2] + "";
-                    else {
-                        document.getElementById("badge2").innerHTML = "";
-                        document.getElementById("common-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 18px;text-align: center">Больше общих сообщений нет</div>`;
-                    }
-                }
+                counts[chapter] = counts[chapter] - 1;
+                tempCount = counts;
+                drawNewsCounts();
             }
+            if (operation) {
+                rawNewsMap.get(chapter)[i].alreadyRead = true;
+                console.log("reading")
+            } else {
+                rawNewsMap.get(chapter).splice(i, 1);
+                console.log("removing")
+            }
+            refreshGlobalNews(chapter, getCategory(chapter), choice);
+
         }
     )
-    loadNewsCounts();
-    redrawGlobalCards(category);
-    // await loadCategoryNews(category, false)
+    console.log("do: {}", stringOperation)
 }
 
-function redrawGlobalCards(category) {
-    let temp1 = ``;
-    for (let j = 0; j < numCards.length; j++) {
-        if (numCards[j]) temp1 += cards[j];
+function drawPrivateCards(rawNews, chapter, choice) {
+    let unknown=false;
+    let cards = [];
+    let tempTextPhoto = `<div class="spinner-border" role="status"> 
+        <span class="visually-hidden">Loading...</span></div>`;
+    let pictureUrl = URL.createObjectURL(defaultPhotos.borderImage);
+    let pictureUrl5 = URL.createObjectURL(defaultPhotos.borderImage5);
+    let personPhoto = URL.createObjectURL(defaultPhotos.person);
+    let relation;
+    let nick;
+    let lastTimeOnline = null;
+    for (let i = 0; i < rawNews.length; i++) {
+        if (choice || !rawNews[i].alreadyRead) {
+            let con = contacts.get(rawNews[i].sendingFrom);
+            if (con !== undefined && con !== null) {
+                relation = con.specify;
+                nick = con.name;
+                if (con.online) lastTimeOnline = langMatrix.get("online"); else lastTimeOnline = '' + con.lastOnline;
+            } else if (rawNews[i].sendingFrom === systemRecipientID) {
+                nick = globalMenu.get(1100);
+                relation = globalMenu.get(1100);
+            } else if (rawNews[i].sendingFrom === informerRecipientID) {
+                nick = globalMenu.get(1100);
+                relation = langMatrix.get("informer");
+            } else {
+                nick = rawNews[i].sendingFromAlt;
+                relation = langMatrix.get("unknown");
+                unknown=true;
+            }
+            cards[i] = `
+                <div class="card" id="card${i}" style="max-height:730px; width: 290px; min-width: 290px;  max-width: 350px; margin: 0 5px 15px 5px">
+                <div class="container-fluid row" style=" margin-right: 0; margin-bottom: 10px; font-size:16px; padding:0">
+                <div class="col-5" style="padding-right: 0">
+                <div>${nick}</div>
+                <div id="load_picture${i}">
+                <img style="padding: 5px; max-height:50vh; object-fit: contain" src=${personPhoto} id="prime_img_container${i}" class="card-img-top" alt="${globalTexts.get(3)}">
+                    <div class="card-img-overlay" style="z-index:100; padding:0">
+                            <div class="card-text" id="prime_over_text${i}" style="margin-top:10%;margin-right:64%;padding-top: 40px; font-size:10px">${tempTextPhoto}</div>
+                    <div class="card-text" id="overText${i}" style="margin-top: 60%">${tempTextPhoto}</div>    
+                        </div>
+                </div>          
+                <div>${relation}</div>        
+                        </div>
+                <div class="col" style="z-index: 200; padding:0; font-family: 'Times New Roman', serif; font-size: 14px; text-align: center; color: chocolate; font-style: italic">
+                <div>${langMatrix.get("date")}:&nbsp;${rawNews[i].dateMessage}</div>
+                <div>${langMatrix.get("time")}:&nbsp;${rawNews[i].timeMessage}</div>`
+            if (unknown) cards[i] += `<div style="margin-top: 20px"><button class="btn btn-outline-warning" style="color: darkred;padding:6px; width:90px; font-size:14px" type="button" onclick="addUserToBan('${rawNews[i].sendingFrom}')">${langMatrix.get("ban")}</button>
+                <br><button class="btn btn-outline-warning" style="color: darkred;padding:6px; margin-top:6px;width:90px; font-size:14px" type="button" onclick="menuFunc3100('${rawNews[i].sendingFrom}', '${rawNews[i].sendingFromAlt}')">${langMatrix.get("answer")}</button></div>`;
+            cards[i] += `</div>
+                    </div>
+                    
+                    <img style="padding: 10px; height:30vh;max-height:35vh; object-fit: contain" src=${pictureUrl} id="img-container${i}" class="card-img-top" alt="${globalTexts.get(3)}">
+                    <div class="card-body" style="background: url(${pictureUrl5}) right top 0/ contain no-repeat; text-align: center; padding: 0 5px 0 0">
+                        <h5 class="card-title" style="text-align: left; margin: 10px 50px 8px 10px">${rawNews[i].subject}</h5>
+                        <hr style="color:#a12121; width: 40%; margin:0 0 0 10px" >
+                        <p class="card-text" style="font-size: 14px; width: 80%; min-height:120px; margin: 10px 5px 5px 5px">${rawNews[i].textInfo}</p>
+                    </div> 
+                    <div class="card-footer" style="z-index: 300;">
+                        <div class="container-fluid row mh-100 no-gutters" id="cardButtons${i}">                           
+                        </div>
+                    </div>                    
+                </div> `
+        }
     }
-    document.getElementById(category + '-list').innerHTML = temp1;
+    URL.revokeObjectURL(defaultPhotos.borderImage);
+    URL.revokeObjectURL(defaultPhotos.borderImage5)
+    URL.revokeObjectURL(defaultPhotos.person)
+    return cards;
+}
+
+// Вниз это исправлять ------------------------------------------------------------------------------------
+function addUserToBan(userUuid) {
 }
 
 
-async function getFamilyNews() {
-    cards = [];
-    rawNews = null;
-    let category = "family";
-    document.getElementById("resultPart").innerHTML = `
-            <div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px">*** Family News ***</div>
-            <div class="btn-group-horizontal" role="group" aria-label="Vertical button group" style="margin-left: 5px; text-align: right">
-                <input type="radio" class="btn-check" name="news-choice"  id="news-choice1" autoComplete="off">
-                <label class="btn btn-outline-warning" style="padding: 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice1" onclick="refreshNews('${category}',true)">Все</label>
-                <input type="radio" class="btn-check" name="news-choice"  id="news-choice2" autoComplete="off" checked>
-                <label class="btn btn-outline-warning" style="padding: 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice2" onclick="refreshNews('${category}',false)">Новые </label>
-            </div>
-            <nav id="navbar-family" class="navbar bg-body-tertiary no-gutters">
-                <ul class="nav nav-pills" >
-                    <li class="nav-item">
-                        <a class="nav-link bg-dark-red" role="button" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 12px" href="#first-message">Начало</a>
-                    </li>  
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 12px" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Список</a>
-                        <ul class="dropdown-menu ">
-                             <span id="dropdown-message-list"> 
-                            </span>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" style="color: goldenrod;font-family: 'Times New Roman',serif; font-size: 12px" href="#last-message">Last</a></li> 
-                        </ul>
-                    </li>    
-                    <li class="nav-item">
-                        <a class="nav-link bg-dark-red" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 12px" role="button" href="#last-message">Конец</a>
-                    </li>
-                </ul>
-            </nav>
-            <div id="family-list" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center"> </div>
-            <div data-bs-spy="scroll" style="height:750px; overflow: auto" data-bs-target="#navbar-family" data-bs-smooth-scroll="true" class="scrollspy-example bg-body-tertiary" tabindex="0">
-                <div id="first-message"></div>
-                <div id="message-list">  </div>
-                <div id="last-message"></div>
-            </div> `
-    if (counts[3] !== null && counts[3] !== 0) {
-        await loadNewNews("family", false);
-    } else {
-        document.getElementById("family-list").innerHTML = "Messages are absent";
+function ifLoadPictureError(i, defPhoto) {
+    document.getElementById(`load_picture${i}`).innerHTML = `
+    <img style="padding: 5px; max-height:50vh; object-fit: contain" src=${defPhoto} id="prime_img_container${i}" class="card-img-top" alt="${globalTexts.get(3)}">
+                    <div class="card-img-overlay" style="padding:0">
+                            <div class="card-text" id="prime_over_text${i}" style="margin-top:10%;margin-right:68%;padding-top: 40px; font-size:10px">${globalTexts.get(9)}</div>
+                        <div class="card-text" id="overText${i}" style="padding-top: 40%"></div>
+                        </div>`
+}
+
+function drawPrivateCard2(rawNews, chapter, choice) {
+
+    let pictureUrl = URL.createObjectURL(defaultPhotos.photono);
+    let cards = [];
+    let operation = choice ? 'Remove' : 'Read'
+    for (let i = 0; i < newsForm.length; i++) {
+        cards[i] = `
+                <div class="card" style="max-height:700px; min-width:290px; max-width: 290px; margin-bottom: 10px">
+                    <img src=${pictureUrl} id="img-conteiner${i}" class="card-img-top" width="290px" alt="tytPhoto">                    
+                    <div class="card-body" style="text-align: center">
+                        <h5 class="card-title">${newsForm[i].subjectJS}</h5>
+                        <p class="card-text">${newsForm[i].textInfoJS}</p>
+                        <br>                        
+                        <a class="btn btn-outline-warning" onclick="readOrRemoveCategoryMessage('${newsForm[i].sendingFromJS}','${i}','${chapter}','${operation}')" href="#">${operation}</a>   
+                        
+                    </div> 
+                    <div class="card-footer">
+                        <small class="text-body-secondary">
+                           ${newsForm[i].dateMessage}
+                        </small>
+                    </div>                    
+                </div>
+                <div id="mar${newsForm[i].sendingFromJS}" class="card" style="border:0;max-height:0; min-width:10px; max-width: 10px">
+                </div>                
+               `
+        URL.revokeObjectURL(defaultPhotos.photono)
     }
+    return cards;
 }
+
 
 async function loadingIndividualNews(category, choice) {
     let num = 0;

@@ -10,11 +10,6 @@ import java.util.LinkedList;
 
 @Configuration
 public class TaskResource {
-
-//    @Bean("directiveResource")
-//    LinkedList<Directive> sender() {
-//        return new LinkedList<>();
-//    }
     @Bean("inlineResource")
     LinkedList<DirectiveGuards> inline() {
         return new LinkedList<>();

@@ -2,22 +2,25 @@ package ru.memman.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import ru.memman.dtos.*;
+import ru.memman.entity.Recipient;
 import ru.memman.models.StandardInfo;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ru.memman.transcriters.AbstractTranscripter;
+import ru.memman.transcriters.EnglishTranscripter;
+import ru.memman.transcriters.RusTranscripter;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Configuration
 public class TaskResource {
 
-    @Bean("directiveResource")
-    LinkedList<Directive> sender() {
-        return new LinkedList<>();
-    }
+//    @Bean("directiveResource")
+//    LinkedList<Directive> sender() {
+//        return new LinkedList<>();
+//    }
     @Bean("directiveVoting")
     LinkedList<DirectiveGuards> senderVoting() {
         return new LinkedList<>();
@@ -52,4 +55,31 @@ public class TaskResource {
     }
     @Bean("inlineResource")
     LinkedList<OnlineUserDto> inline(){return new LinkedList<>();}
+    @Bean("systemRecipientHard")
+    Recipient systemRecipientHard(){return Recipient.builder()
+            .nickName("System")
+            .systemReading("")
+            .build();}
+    @Bean("commonRecipientHard")
+    Recipient commonRecipientHard(){return Recipient.builder()
+            .nickName("Common")
+            .commonReading("")
+            .build();}
+    @Bean("informerRecipientHard")
+    Recipient informerRecipientHard(){return Recipient.builder()
+            .nickName("Informer")
+            .build();}
+    @Bean("rusTranscript")
+    AbstractTranscripter rusTranscript() {
+        return new RusTranscripter();
+    }
+
+    @Bean("englishTranscript")
+    AbstractTranscripter englishTranscript() {
+        return new EnglishTranscripter();
+    }
+    @Bean
+    Map<String, Set<String>> rightsMap() {
+        return new ConcurrentHashMap<>();
+    }
 }

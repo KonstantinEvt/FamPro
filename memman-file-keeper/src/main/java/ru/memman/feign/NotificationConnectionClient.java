@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "MEMMAN-NOTIFICATION", configuration = FeignRequestIntercepter.class, fallbackFactory = NotificationConnectionClient.checkRightsFallbackFactory.class)
-public interface NotificationConnectionClient {
-
-    @GetMapping("/notify/recipient/contact/get/{uuid}")
+public interface NotificationConnectionClient extends ConnectionClient{
+    @Override
+    @GetMapping("/notify/news/rights/{uuid}")
     boolean checkRights(@PathVariable("uuid") String uuid);
 
     @Component

@@ -1,5 +1,6 @@
 package ru.memman.service;
 
+import ru.memman.dtos.ContactDto;
 import ru.memman.dtos.FamilyMemberDto;
 import ru.memman.entity.Guard;
 import ru.memman.entity.ShortFamilyMember;
@@ -20,9 +21,11 @@ import java.util.stream.Collectors;
 public class TreeService implements SimpleFamilyService {
     private MemberService memberService;
     private MemberRepository memberRepository;
+    private final SendAndFormService sendAndFormService;
     private GuardService guardService;
     private FamilyMemberMapper familyMemberMapper;
     private TokenService tokenService;
+
 
     @Transactional(readOnly = true)
     public Collection<FamilyMemberDto> getFamilyTreeOfMember(UUID memberUuid, SecretLevel choice) {
@@ -423,5 +426,64 @@ public class TreeService implements SimpleFamilyService {
         }
         mainMember.setFirstCreator(null);
     }
+
+    @Transactional
+    public void setContactsRelations(List<ContactDto> contactDtoList) {
+        String ownerUuid = contactDtoList.get(0).getOwnerId();
+        Set<String> neededGuards = new HashSet<>();
+        for (ContactDto contact :
+                contactDtoList) {
+            neededGuards.add(contact.getPersonUuid());
+        }
+        neededGuards.add(ownerUuid);
+        List<Guard> guards = guardService.getAllGuardWithLinkingPersons(neededGuards);
+        Optional<Guard> owner = guards.stream().filter(x -> Objects.equals(x.getTokenUser(), ownerUuid)).findFirst();
+        if (owner.isEmpty()) {
+            contactDtoList.forEach(x -> {
+                x.setRelation(SecretLevel.OPEN.ordinal());
+                x.setSpecify(Relation.OTHER.name());
+            });
+            sendAndFormService.sendContactRelativeStatus(contactDtoList);
+        } else {
+            guards.remove(owner.get());
+            Map<String, ContactDto> contactDtoMap = contactDtoList.stream().collect(Collectors.toMap(ContactDto::getPersonUuid, x -> x));
+            ShortFamilyMember member = owner.get().getLinkedPerson();
+            Set<ShortFamilyMember> topAnc = memberService.getAllTopAncestors(member);
+            memberService.getExtendedTopAncestors(topAnc);
+            Set<ShortFamilyMember> geneticTreeMembers = memberService.getGeneticTreeMembers(topAnc, false);
+            List<Guard> relative = new ArrayList<>();
+            for (Guard guard :
+                    guards) {
+                if (geneticTreeMembers.contains(guard.getLinkedPerson())) {
+                    relative.add(guard);
+                    String guardLinkUuid = guard.getLinkedPerson().getUuid().toString();
+                    if (member.getActiveMember() != null && !member.getActiveMember().isBlank() && getAllStringUuidFromInfo(member.getActiveMember()).contains(guardLinkUuid)) {
+                        contactDtoMap.get(guard.getTokenUser()).setRelation(SecretLevel.ACTIVE_FAMILY.ordinal());
+                    } else if (member.getAncestors() != null && !member.getAncestors().isBlank() && getAllStringUuidFromInfo(member.getAncestors()).contains(guardLinkUuid)) {
+                        contactDtoMap.get(guard.getTokenUser()).setRelation(SecretLevel.ANCESTOR.ordinal());
+                    } else if (member.getDescendants() != null && !member.getDescendants().isBlank() && getAllStringUuidFromInfo(member.getDescendants()).contains(guardLinkUuid)) {
+                        contactDtoMap.get(guard.getTokenUser()).setRelation(SecretLevel.STRAIGHT_BLOOD.ordinal());
+                    } else if (member.getPrimaryMembers() != null && !member.getPrimaryMembers().isBlank() && getAllStringUuidFromInfo(member.getPrimaryMembers()).contains(guardLinkUuid)) {
+                        contactDtoMap.get(guard.getTokenUser()).setRelation(SecretLevel.PRIMARY_FAMILY.ordinal());
+                    } else contactDtoMap.get(guard.getTokenUser()).setRelation(SecretLevel.GENETIC_TREE.ordinal());
+                } else {
+                    contactDtoMap.get(guard.getTokenUser()).setRelation(SecretLevel.OPEN.ordinal());
+                    contactDtoMap.get(guard.getTokenUser()).setSpecify(Relation.OTHER.name());
+                }
+            }
+            if (!relative.isEmpty()) {
+                Set<FamilyMemberDto> memberDtoSet = setRelationsAndMapToDto(member, geneticTreeMembers, SecretLevel.GENETIC_TREE);
+                for (Guard guard :
+                        relative) {
+                    Optional<FamilyMemberDto> personDto = memberDtoSet.stream().filter(x -> Objects.equals(x.getUuid(), guard.getLinkedPerson().getUuid())).findFirst();
+                    if (personDto.isPresent())
+                        contactDtoMap.get(guard.getTokenUser()).setSpecify(personDto.get().getRelation().name());
+                    else contactDtoMap.get(guard.getTokenUser()).setSpecify(Relation.RELATIVE.name());
+                }
+            }
+            sendAndFormService.sendContactRelativeStatus(new ArrayList<>(contactDtoMap.values()));
+        }
+    }
+
 }
 

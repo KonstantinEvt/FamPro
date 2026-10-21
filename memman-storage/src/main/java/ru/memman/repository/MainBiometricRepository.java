@@ -32,4 +32,22 @@ public class MainBiometricRepository {
         }
         return null;
     }
+    @Transactional
+    public void persistAll(List<Biometric> biometricList){
+        try {
+            int count = 0;
+            for (Biometric biometric :
+                    biometricList) {
+                count++;
+                if (count == 100) {
+                    entityManager.flush();
+                    entityManager.clear();
+                    count = 0;
+                }
+                entityManager.persist(biometric);
+            }
+        } catch (RuntimeException e) {
+            log.warn("biometrics not persist");
+        }
+    }
 }

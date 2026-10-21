@@ -82,10 +82,10 @@ function drawAccordion(chosePart, chose) {
     let temp = `
         <div class="accordion"
              style=" 
-             --bs-accordion-btn-bg: rgba(234,154,50,0.35);
-             --bs-accordion-bg: rgba(234,154,50,0.15); 
-             --bs-accordion-active-bg: rgba(234,154,50,0.75);  
-             --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgba(234,154,50,0.5);"
+             --bs-accordion-btn-bg: rgba(255,255,255,0.65);
+             --bs-accordion-bg: rgba(255,255,255,0.35); 
+             --bs-accordion-active-bg: #eaecbd;  
+             --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem #ffc107;"
              id="accordionInfo"> `
     for (let i = 1; i <= number; i++) {
         temp += drawAccordionPage(chosePart + i, chose);

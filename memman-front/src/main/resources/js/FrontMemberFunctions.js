@@ -1,45 +1,55 @@
-function resizeImagePlus(place) {
-    const file = document.getElementById(place).files[0];
+function selectInputImage(place, picWidthMax, picHeightMax) {
+    const fileName = document.getElementById(place).files[0].name;
+    document.getElementById(`label_${place}`).innerHTML = `${globalTexts.get(7)} : ${fileName}`
+    resizeImagePlus(place, picWidthMax, picHeightMax)
+}
+
+function removeEntered(place) {
+    document.getElementById(place).files = null;
+    document.getElementById(`label_${place}`).innerHTML = globalTexts.get(6)
+    document.getElementById(`canvasBlock_${place}`).hidden = true;
+    document.getElementById(`imageDefault_${place}`).hidden = false;
+}
+
+function resizeImagePlus(place, picWidthMax, picHeightMax) {
+    let file;
+    if (place === "little") file = document.getElementById("prime").files[0];
+    else file = document.getElementById(place).files[0];
     if (file.type.match(/image.*/)) {
         const img = new Image();
         img.src = URL.createObjectURL(file);
         img.onload = function () {
-            let canvas = document.getElementById(`canvas${place}`);
-            const aspectRatio = img.width / img.height; // вычисляем соотношение сторон
-
-            // Устанавливаем новые размеры
-            const newWidth = 600;  // Желаемая ширина
-            const newHeight = newWidth / aspectRatio;
-            canvas.width = newWidth; // Задайте требуемые размеры
-            canvas.height = newHeight; // Определите высоту и ширину
-            let ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            document.getElementById(`canvasBlock${place}`).hidden = false;
-            URL.revokeObjectURL(img.src); // Освобождаем память
+            let newWidth;
+            let newHeight;
+            let placeImg = document.getElementById(`canvas_${place}`);
+            const aspectMax = picWidthMax / picHeightMax;
+            const aspectRatio = img.width / img.height;
+            if (aspectMax > aspectRatio) {
+                newWidth = picWidthMax;
+                newHeight = newWidth / aspectRatio;
+            } else {
+                newHeight = picHeightMax;
+                newWidth = newHeight * aspectRatio;
+            }
+            placeImg.width = newWidth;
+            placeImg.height = newHeight;
+            let ctx = placeImg.getContext("2d");
+            ctx.drawImage(img, 0, 0, placeImg.width, placeImg.height);
+            if (document.getElementById(`imageDefault_${place}`) !== undefined && (document.getElementById(`imageDefault_${place}`) !== null)) document.getElementById(`imageDefault_${place}`).hidden = true;
+            if (place !== "little") document.getElementById(`canvasBlock_${place}`).hidden = false;
+            URL.revokeObjectURL(img.src);
         };
-
     }
+    if (place === "prime") resizeImagePlus("little", 200, 200);
 }
 
-function dropPhotosToServer() {
-    if (document.getElementById("PrimePhoto").files[0] !== null
-        && document.getElementById("canvasBlockPrimePhoto").hidden !== true) {
-        primePhotoExist = true;
-        dropBlobToServer(document.getElementById("canvasPrimePhoto"), "PrimePhoto");
+function backgroundChange(idEl, color) {
+    document.getElementById(idEl).style.backgroundColor = color;
+}
 
-    } else document.getElementById("resultSavePrimePhoto").innerHTML = 'Prime photo not selected!';
-
-    if (document.getElementById("BirthPhoto").files[0] !== null && document.getElementById("canvasBlockBirthPhoto").hidden !== true) {
-        birthPhotoExist = true;
-        dropBlobToServer(document.getElementById("canvasBirthPhoto"), "BirthPhoto");
-
-    } else document.getElementById("resultSaveBirthPhoto").innerHTML = 'BirthPhoto photo not selected!';
-
-    if (document.getElementById("BurialPhoto").files[0] !== null && document.getElementById("canvasBlockBurialPhoto").hidden !== true) {
-        burialPhotoExist = true;
-        dropBlobToServer(document.getElementById("canvasBurialPhoto"), "BurialPhoto");
-    } else document.getElementById("resultSaveBurialPhoto").innerHTML = 'BurialPhoto photo not selected!';
-
+function getExistToProfileMember(place) {
+    return (document.getElementById(`${place}`).files[0] !== undefined && document.getElementById(`${place}`).files[0] !== null
+        && document.getElementById(`canvasBlock_${place}`).hidden !== true)
 }
 
 function markOtherToDrop() {
@@ -88,23 +98,30 @@ function markPhoneToDrop() {
     return (exist) ? otherPhones : null;
 }
 
-function dropBlobToServer(canvas, place) {
+async function dropBlobToServer(canvas, place, bucket, namePhoto) {
     canvas.toBlob(function (blob) {
-            uploadPhoto(place, blob)
+            uploadPhoto(place, blob, bucket, namePhoto)
         }
         , 'image/jpeg', 0.9);
 }
 
-function uploadPhoto(place, blob) {
+async function uploadPhoto(place, blob, bucket, namePhoto) {
     let file = new FormData();
-    file.append(place, blob, place + '.jpeg');
-    fetch(`/file/private/save${place}`, {
+    console.log("отгружаем фото", place, bucket, namePhoto);
+    if (namePhoto !== undefined && namePhoto !== null) file.append("name", namePhoto)
+    if (bucket !== undefined && bucket !== null) file.append("bucket", bucket)
+    file.append("photo", blob);
+    file.append("place", place)
+    let url;
+    if (place === "news") url = endPoints.get("fileSystem") + `/save`; else url = endPoints.get("filePrivate") + `/save`
+    await fetch(url, {
         method: 'POST',
         headers: {},
         body: file,
-    }).then(async status => {
-        URL.revokeObjectURL(document.getElementById(`canvas${place}`).src)
-        document.getElementById(`resultSave${place}`).innerHTML = await status.text();
+        // }).then(async status => {
+        //     URL.revokeObjectURL(document.getElementById(`canvas_${place}`).src)
+        //     if (document.getElementById(`resultSave_${place}`) !== undefined && document.getElementById(`resultSave_${place}`) !== null)
+        //         document.getElementById(`resultSave_${place}`).innerHTML = await status.text();
     });
 }
 
@@ -125,13 +142,13 @@ function clearMainVariable() {
 function createAgeBio(pagActive) {
     const form = document.getElementById('baseFormAddFM');
     inputBio[pagActive] = {
-        age: form.elements.ageFM.value,
-        height: form.elements.heightFM.value,
-        weight: form.elements.weightFM.value,
-        footSize: form.elements.footSizeFM.value,
+        age: (~~(form.elements.ageFM.value / 1000) === 0 && form.elements.ageFM.value > 0) ? form.elements.ageFM.value : '',
+        height: (form.elements.heightFM.value === null || form.elements.heightFM.value === '') ? 0 : form.elements.heightFM.value,
+        weight: (form.elements.weightFM.value === null || form.elements.weightFM.value === '') ? 0 : form.elements.weightFM.value,
+        footSize: (form.elements.footSizeFM.value === null || form.elements.footSizeFM.value === '') ? 0 : form.elements.footSizeFM.value,
         hairColor: (form.elements.hairColorFM.value === "UNKNOWN") ? null : form.elements.hairColorFM.value,
         eyesColor: (form.elements.eyesColorFM.value === "UNKNOWN") ? null : form.elements.eyesColorFM.value,
-        shirtSize: form.elements.shirtSizeFM.value,
+        shirtSize: (form.elements.shirtSizeFM.value === null || form.elements.shirtSizeFM.value === '') ? 0 : form.elements.shirtSizeFM.value,
         description: form.elements.descriptionFM.value
     };
 }
@@ -146,15 +163,15 @@ function addBiometricField() {
 
 function clearCurrentEntries() {
     const form = document.getElementById('baseFormAddFM');
-    form.elements.ageFM.value = '';
-    form.elements.ageFM.disabled =false;
-    form.elements.heightFM.value = '';
-    form.elements.weightFM.value = '';
-    form.elements.footSizeFM.value = '';
+    form.elements.ageFM.value = null;
+    form.elements.ageFM.disabled = false;
+    form.elements.heightFM.value = null;
+    form.elements.weightFM.value = null;
+    form.elements.footSizeFM.value = null;
     form.elements.hairColorFM.value = "UNKNOWN";
     form.elements.eyesColorFM.value = "UNKNOWN";
-    form.elements.shirtSizeFM.value = '';
-    form.elements.descriptionFM.value = '';
+    form.elements.shirtSizeFM.value = null;
+    form.elements.descriptionFM.value = null;
 
 }
 
@@ -189,63 +206,77 @@ function displayBio(pagActive, oldActive) {
 }
 
 function createCurrentPagination(pagActive) {
-    let tempPagBio = `<br>
-        <div>Введенные возрасты</div>
-        <nav aria-label="BioNavigation">
-            <ul class="pagination">`
+    let tempPagBio = `
+        <div style="margin-top: 15px; color: chocolate">${globalTexts.get(2144)}</div>
+        <div style="align-content: center">`
     if (pagActive !== 0) tempPagBio += `
-                        <li class="page-item" >
-                            <button class="btn btn-outline-warning" type="button" onclick="displayBio(${pagActive - 1},${pagActive})">Предыдущий</button>
-                        </li>`
+                        <span class="page-item" >
+                            <button class="btn btn-outline-warning" type="button" style="padding: 4px;font-size: 20px;color: black"  onclick="displayBio(${pagActive - 1},${pagActive})">&#171;</button>
+                        </span>`
     else tempPagBio += `
-                        <li class="page-item " >
-                            <button class="btn btn-outline-secondary" type="button" disabled>Предыдущий</button>
-                        </li>`
+                        <span class="page-item " >
+                            <button class="btn btn-outline-secondary" type="button" style="padding: 4px;font-size: 20px;color: black" disabled>&#171;</button>
+                        </span>`
+    let lastPoint = false;
     for (let i = 0; i <= countBio; i++) {
-        if (i === pagActive && inputBio[i] !== undefined && inputBio[i].age !== undefined && inputBio[i].age !== ``)
-            tempPagBio += `<li class="page-item active">
-                        <button class="btn btn-warning" type="button" onclick="displayBio(${i},${pagActive})">${inputBio[i].age}</button>
-                     </li>`
-        else if (inputBio[i] !== undefined && inputBio[i].age !== undefined && inputBio[i].age !== ``) tempPagBio += `<li class="page-item">
-                        <button class="btn btn-outline-warning" type="button" onclick="displayBio(${i},${pagActive})">${inputBio[i].age}</button>
-                     </li>`
-        else if (i === pagActive && i === countBio && inputBio[i] === undefined) tempPagBio += `<li class="page-item">
-                        <button class="btn btn-warning" type="button" onclick="displayBio(${i},${pagActive})">новый</button>
-                     </li>`
-        else if (i === countBio && inputBio[i] === undefined) tempPagBio += `<li class="page-item">
-                        <button class="btn btn-outline-warning" type="button" onclick="displayBio(${i},${pagActive})">новый</button>
-                     </li>`
-        else if (i === pagActive && (inputBio[i] === undefined || inputBio[i].age === ``)) tempPagBio += `<li class="page-item">
-                        <button class="btn btn-warning" type="button" onclick="displayBio(${i},${pagActive})">!</button>
-                     </li>`
-        else if (inputBio[i] === undefined || inputBio[i].age === ``) tempPagBio += `<li class="page-item">
-                        <button class="btn btn-outline-warning" type="button" onclick="displayBio(${i},${pagActive})">!</button>
-                     </li>`
+        if (countBio < 6 || i === 0 || i === countBio || i === activeBio - 1 || i === activeBio || i === activeBio + 1) {
+            if (i === pagActive && inputBio[i] !== undefined && inputBio[i].age !== undefined && inputBio[i].age !== ``)
+                tempPagBio += `<span class="page-item active">
+                        <button class="btn btn-warning" type="button" style="padding:6px;color: black" onclick="displayBio(${i},${pagActive})">${inputBio[i].age}</button>
+                     </span>`
+            else if (inputBio[i] !== undefined && inputBio[i].age !== undefined && inputBio[i].age !== ``) tempPagBio += `<span class="page-item">
+                        <button class="btn btn-outline-warning" type="button" style="padding:6px;color: black" onclick="displayBio(${i},${pagActive})">${inputBio[i].age}</button>
+                     </span>`
+            else if (i === pagActive && i === countBio && inputBio[i] === undefined) tempPagBio += `<span class="page-item">
+                        <button class="btn btn-warning" type="button" style="padding:6px;color: black" onclick="displayBio(${i},${pagActive})">${globalTexts.get(2143)}</button>
+                     </span>`
+            else if (i === countBio && inputBio[i] === undefined) tempPagBio += `<span class="page-item">
+                        <button class="btn btn-outline-warning" type="button" style="padding:6px;color: black" onclick="displayBio(${i},${pagActive})">${globalTexts.get(2143)}</button>
+                     </span>`
+            else if (i === pagActive && (inputBio[i] === undefined || inputBio[i].age === ``)) tempPagBio += `<span class="page-item">
+                        <button class="btn btn-warning" type="button" style="padding:6px;color: black" onclick="displayBio(${i},${pagActive})">!</button>
+                     </span>`
+            else if (inputBio[i] === undefined || inputBio[i].age === ``) tempPagBio += `<span class="page-item">
+                        <button class="btn btn-outline-warning" type="button" style="padding:6px;color: black" onclick="displayBio(${i},${pagActive})">!</button>
+                     </span>`;
+            lastPoint = false;
+        } else if (!lastPoint) {
+            tempPagBio += `<span style="margin: 5px">...</span>`;
+            lastPoint = true;
+        }
+
     }
     if (pagActive !== countBio) tempPagBio += `
-                        <li class="page-item" id="navBioPrev">
-                            <button class="btn btn-outline-warning" type="button" onclick="displayBio(${pagActive + 1},${pagActive})">Следующий</button>
-                        </li>`
+                        <span class="page-item" id="navBioPrev">
+                            <button class="btn btn-outline-warning" type="button" style="padding: 4px;font-size: 20px;color: black" onclick="displayBio(${pagActive + 1},${pagActive})">&#187;</button>
+                        </span>`
     else tempPagBio += `
-                        <li class="page-item" id="navBioPrev">
-                            <button class="btn btn-outline-secondary" type="button" disabled>Следующий</button>
-                        </li>`
-    tempPagBio += `
-            </ul>
-        </nav>`
+                        <span class="page-item" id="navBioPrev">
+                            <button class="btn btn-outline-secondary" type="button" style="padding: 4px;font-size: 20px;color: black" disabled>&#187;</button>
+                        </span>`
+    tempPagBio += `</div>`
     document.getElementById("pagan").innerHTML = tempPagBio;
 }
 
-function getFormToDrop(other, otherPhones, otherEmails) {
+function bioReduce() {
+    let reduceBio = [];
+    for (let i = 0; i < inputBio.length; i++) {
+        if (inputBio[i].age !== null && inputBio[i].age !== '' && inputBio[i].age > 0) reduceBio.push(inputBio[i])
+    }
+    return reduceBio;
+}
+
+function getFormToDrop(other, otherPhones, otherEmails, reduceBio) {
     const form = document.getElementById('baseFormAddFM');
     let formData = {
-        primePhoto: primePhotoExist,
+        primePhoto: getExistToProfileMember("prime"),
         id: (tempPerson !== null && tempPerson.id !== null) ? tempPerson.id : null,
-        secretLevelPhoto: form.elements.chooseSecurePP.value,
-        secretLevelEdit: form.elements.chooseSecureEE.value,
-        secretLevelBirthday: form.elements.chooseSecureBirthday.value,
-        secretLevelMainInfo: form.elements.chooseSecureMain.value,
-        secretLevelRemove: form.elements.chooseSecureRM.value,
+        localisation: currentLang.toUpperCase(),
+        secretLevelPhoto: form.elements.chooseSecure0.value,
+        secretLevelEdit: form.elements.chooseSecure1.value,
+        secretLevelMainInfo: form.elements.chooseSecure2.value,
+        secretLevelBirthday: form.elements.chooseSecure3.value,
+        secretLevelRemove: form.elements.chooseSecure4.value,
         firstName: form.elements.firstNameAddFM.value,
         middleName: form.elements.middleNameAddFM.value,
         lastName: form.elements.lastNameAddFM.value,
@@ -255,16 +286,16 @@ function getFormToDrop(other, otherPhones, otherEmails) {
         memberInfo: {
             mainPhone: form.elements.mainPhoneAddFM.value,
             mainEmail: form.elements.mainEmailAddFM.value,
-            photoBurialExist: burialPhotoExist,
-            photoBirthExist: birthPhotoExist,
-            secretLevelBirth: form.elements.chooseSecurePBur.value,
-            secretLevelBurial: form.elements.chooseSecurePBirth.value,
-            secretLevelEmail: form.elements.chooseSecureME.value,
-            secretLevelAddress: form.elements.chooseSecureMA.value,
-            secretLevelPhone: form.elements.chooseSecureMP.value,
-            secretLevelBiometric: form.elements.chooseSecureBio.value,
-            secretLevelDescription: form.elements.chooseSecureDes.value,
-            biometric: inputBio,
+            photoBurialExist: getExistToProfileMember("burial"),
+            photoBirthExist: getExistToProfileMember("birth"),
+            secretLevelEmail: form.elements.chooseSecure5.value,
+            secretLevelPhone: form.elements.chooseSecure6.value,
+            secretLevelAddress: form.elements.chooseSecure7.value,
+            secretLevelBirth: form.elements.chooseSecure8.value,
+            secretLevelBurial: form.elements.chooseSecure9.value,
+            secretLevelBiometric: form.elements.chooseSecure10.value,
+            // secretLevelDescription: form.elements.chooseSecure11.value,
+            biometric: reduceBio,
             birth: {
                 country: form.elements.birthCountryAddFM.value,
                 region: form.elements.birthRegionAddFM.value,
@@ -272,7 +303,7 @@ function getFormToDrop(other, otherPhones, otherEmails) {
                 street: form.elements.birthStreetAddFM.value,
                 birthHouse: form.elements.birthHouseAddFM.value,
                 registration: form.elements.birthRegisterAddFM.value,
-                photoExist: birthPhotoExist
+                photoExist: getExistToProfileMember("birth")
             },
             burial: {
                 country: form.elements.burialCountryAddFM.value,
@@ -283,7 +314,7 @@ function getFormToDrop(other, otherPhones, otherEmails) {
                 chapter: form.elements.burialHouseAddFM.value,
                 square: form.elements.burialBuildingAddFM.value,
                 grave: form.elements.burialFlatAddFM.value,
-                photoExist: burialPhotoExist
+                photoExist: getExistToProfileMember("burial")
             },
             phones: otherPhones,
             emails: otherEmails,
@@ -319,8 +350,24 @@ function getFormToDrop(other, otherPhones, otherEmails) {
 
 async function assignPersonInfoToPerson(person) {
     console.log(person);
-    if (tempPerson.memberInfo.photoBirthExist && tempPerson.memberInfo.secretLevelBirth !== "CLOSE") tempPerson.memberInfo.birthImj = await loadPicture("/file/get/birth/" + tempPerson.uuid);
-    if (tempPerson.memberInfo.photoBurialExist && tempPerson.memberInfo.secretLevelBurial !== "CLOSE") tempPerson.memberInfo.burialImj = await loadPicture("/file/get/burial/" + tempPerson.uuid);
+    if (tempPerson.memberInfo.photoBirthExist && tempPerson.memberInfo.secretLevelBirth !== "CLOSE") {
+        await loadPicture(endPoints.get("filePrivate") + "/get/birth/" + tempPerson.uuid)
+            .then((r) => {
+                tempPerson.memberInfo.birthImj = r;
+            })
+            .catch(() => {
+                tempPerson.memberInfo.birthImj = "";
+            });
+    }
+    if (tempPerson.memberInfo.photoBurialExist && tempPerson.memberInfo.secretLevelBurial !== "CLOSE") {
+        await loadPicture(endPoints.get("filePrivate") + "/get/burial/" + tempPerson.uuid)
+            .then((r) => {
+                tempPerson.memberInfo.burImj = r;
+            })
+            .catch(() => {
+                tempPerson.memberInfo.burImj = "";
+            });
+    }
     tempPerson.memberInfo.emails = person.memberInfo.emails;
     tempPerson.memberInfo.biometric = person.memberInfo.biometric;
     tempPerson.memberInfo.description = person.memberInfo.description;
@@ -356,4 +403,23 @@ function getAge(birthday, deathday) {
         // if ((vis % 4 === 0 && vis % 100 !== 100) || vis % 400 === 0)
     }
     return age;
+}
+function analyzeResult(successString,stat,data){
+    let temp=``;
+    if (stat.person !== undefined) {
+        if (stat.person) temp += `<div>${successString}</div><div style="font-weight: bold">Id</div><div style="color: darkred">${data}</div>`;
+    } else throw new Error();
+    if (stat.prime !== undefined) {
+        if (stat.prime) temp += `<div>${globalTexts.get(2161)}: <span style="font-style: italic">${globalTexts.get(2166)}</span></div>`;
+        else temp += `<div>${globalTexts.get(2161)}: <span style="font-style: italic">${globalTexts.get(2164)}</span></div>`;
+    } else temp += `<div>${globalTexts.get(2161)}: <span style="font-style: italic">${globalTexts.get(2165)}</span></div>`;
+    if (stat.birth !== undefined) {
+        if (stat.birth) temp += `<div>${globalTexts.get(2162)}: <span style="font-style: italic">${globalTexts.get(2166)}</span></div>`;
+        else temp += `<div>${globalTexts.get(2162)}: <span style="font-style: italic">${globalTexts.get(2164)}</span></div>`;
+    } else temp += `<div>${globalTexts.get(2162)}: <span style="font-style: italic"> ${globalTexts.get(2165)}</span></div>`;
+    if (stat.burial !== undefined) {
+        if (stat.burial) temp += `<div>${globalTexts.get(2163)}: <span style="font-style: italic">${globalTexts.get(2166)}</span></div>`;
+        else temp += `<div>${globalTexts.get(2163)}: <span style="font-style: italic">${globalTexts.get(2164)}</span></div></div>`;
+    } else temp += `<div>${globalTexts.get(2163)}: <span style="font-style: italic">${globalTexts.get(2165)}</span></div>`;
+    return temp;
 }

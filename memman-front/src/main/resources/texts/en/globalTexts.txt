@@ -1,6 +1,13 @@
 {"choice": 0, "text": "Welcome to your personal portal space! We hope that you are in a good mood and that you will spend your time on the portal productively!"}
 {"choice": 1, "text": "You have changed the language scheme to English. Please use the Latin alphabet for correct search and data entry."}
 {"choice": 2, "text": "Content not added yet"}
+{"choice": 3, "text": "Photo is absent"}
+{"choice": 4, "text": "Preload of picture"}
+{"choice": 5, "text": "File of picture"}
+{"choice": 6, "text": "Select file of picture"}
+{"choice": 7, "text": "Selected file"}
+{"choice": 8, "text": "Photo is hidden"}
+{"choice": 9, "text": "Loading error"}
 {"choice": 1101, "text": "System news"}
 {"choice": 1102, "text": "System news are absent"}
 {"choice": 1201, "text": "Common news"}
@@ -9,3 +16,116 @@
 {"choice": 1302, "text": "Family news are absent"}
 {"choice": 1401, "text": "Private news"}
 {"choice": 1402, "text": "Private news are absent"}
+{"choice": 2101, "text": "Adding person"}
+{"choice": 2102, "text": "Main information"}
+{"choice": 2103, "text": "Birthday"}
+{"choice": 2104, "text": "Date of death"}
+{"choice": 2105, "text": "NO information will be entered into the database if the fields (First name), (Patronymic), (Last name), and (Date of birth) are not filled in!"}
+{"choice": 2106, "text": "Parents information"}
+{"choice": 2107, "text": "Pseudonyms / Maiden / Other names"}
+{"choice": 2108, "text": "The number of attempts to enter additional data is limited"}
+{"choice": 2109, "text": "Attempts left"}
+{"choice": 2110, "text": "Contact information"}
+{"choice": 2111, "text": "Region / Oblast"}
+{"choice": 2112, "text": "City / Settlement"}
+{"choice": 2113, "text": "Street / Prospect / Alley"}
+{"choice": 2114, "text": "House number"}
+{"choice": 2115, "text": "Building number"}
+{"choice": 2116, "text": "Flat number"}
+{"choice": 2117, "text": "Confidential level"}
+{"choice": 2118, "text": "Active family"}
+{"choice": 2119, "text": "Logic family"}
+{"choice": 2120, "text": "Straight relatives"}
+{"choice": 2121, "text": "Prime family"}
+{"choice": 2122, "text": "Family tree"}
+{"choice": 2123, "text": "Confidentiality levels are based on whether the person in question has relevant relatives (or more close) who are portal users! If they do not, the confidentiality level is reduced."}
+{"choice": 2124, "text": "Observation age"}
+{"choice": 2125, "text": "Height (cm)"}
+{"choice": 2126, "text": "Weight (kg)"}
+{"choice": 2127, "text": "Foot size (cm)"}
+{"choice": 2128, "text": "Shirt size"}
+{"choice": 2129, "text": "Eyes color"}
+{"choice": 2130, "text": "Hair color"}
+{"choice": 2131, "text": "Additional age"}
+{"choice": 2132, "text": "Clear age"}
+{"choice": 2133, "text": "Enter number"}
+{"choice": 2134, "text": "Enter text"}
+{"choice": 2135, "text": "Place of birth"}
+{"choice": 2136, "text": "Place of burial"}
+{"choice": 2137, "text": "House of birth"}
+{"choice": 2138, "text": "Registration place"}
+{"choice": 2139, "text": "Add person"}
+{"choice": 2140, "text": "Massive / Chapter"}
+{"choice": 2141, "text": "Number of plot"}
+{"choice": 2142, "text": "Number of grave"}
+{"choice": 2143, "text": "New"}
+{"choice": 2144, "text": "Entered ages"}
+{"choice": 2145, "text": "Bookmarks with unspecified ages will not be saved (they are marked with the ! symbol)"}
+{"choice": 2146, "text": "Search of person"}
+{"choice": 2147, "text": "Data of chosen criteria"}
+{"choice": 2148, "text": "Result of search"}
+{"choice": 2149, "text": "The request has not been fulfilled"}
+{"choice": 2150, "text": "Find person"}
+{"choice": 2151, "text": "Data waiting"}
+{"choice": 2152, "text": "Person Id"}
+{"choice": 2153, "text": "Link yourself with person"}
+{"choice": 2154, "text": "Linking with person"}
+{"choice": 2155, "text": "Select operation"}
+{"choice": 2156, "text": "Person not found"}
+{"choice": 2157, "text": "Its you!"}
+{"choice": 2158, "text": "Person successfully added"}
+{"choice": 2159, "text": "Its your contact"}
+{"choice": 2160, "text": "Person is not added"}
+{"choice": 2161, "text": "Main photo"}
+{"choice": 2162, "text": "Birth place photo"}
+{"choice": 2163, "text": "Burial place photo"}
+{"choice": 2164, "text": "is not selected"}
+{"choice": 2165, "text": "is not saved"}
+{"choice": 2166, "text": "is saved"}
+{"choice": 2200, "text": "Photo visibility"}
+{"choice": 2201, "text": "Possibility of common editing"}
+{"choice": 2202, "text": "Possibility of main editing"}
+{"choice": 2203, "text": "Visibility of birthday"}
+{"choice": 2204, "text": "Possibility of removing"}
+{"choice": 2205, "text": "Visibility of email"}
+{"choice": 2206, "text": "Visibility of phone"}
+{"choice": 2207, "text": "Visibility of address"}
+{"choice": 2208, "text": "Place of birth"}
+{"choice": 2209, "text": "Place of burial"}
+{"choice": 2210, "text": "Physical parameters"}
+{"choice": 2211, "text": "Visibility of annotation"}
+{"choice": 2301, "text": "Editing person"}
+{"choice": 2302, "text": "Information is absent"}
+{"choice": 2303, "text": "Information is close"}
+{"choice": 2304, "text": "Corrupt information"}
+{"choice": 2305, "text": "Hidden"}
+{"choice": 2306, "text": "You cannot change the parent — a person in the database (its fields are shaded): If you want to change the parents data, use editing of their record. If you want to break the connection, use Remove menu"}
+{"choice": 2307, "text": "The mother is a person in the database. Her data CANNOT be changed from here: if you want to change this parents data, use the editing feature for their record. Changing the data here will break the existing relationships and attempt to establish a new one"}
+{"choice": 2308, "text": "The father is a person in the database. His data CANNOT be changed from here: if you want to change this parents data, use the editing feature for their record. Changing the data here will break the existing relationships and attempt to establish a new one"}
+{"choice": 2309, "text": "Both parents are persons in the database. Their data CANNOT be changed from here: if you want to change the parents data, use the editing feature for their record. Changing the data here will break the existing relationships and attempt to establish new ones"}
+{"choice": 2310, "text": "The alternative name CANNOT be changed/deleted directly (its fields are shaded): To change it, enter a new alternative name, and for an incorrect entry, use the Remove menu. In addition, you can change any alternative name with the main one"}
+{"choice": 2311, "text": "Person successfully update"}
+{"choice": 2312, "text": "Photo for change <br> is not selected"}
+{"choice": 2313, "text": "Person is not updated"}
+{"choice": 2314, "text": "Update person"}
+{"choice": 2400, "text": "List of persons you have created"}
+{"choice": 2401, "text": "You are not entered any person yet"}
+{"choice": 2402, "text": "Genealogical tree (list) for a person"}
+{"choice": 2403, "text": "Hidden by privacy settings"}
+{"choice": 2404, "text": "Ancestors of person"}
+{"choice": 2405, "text": "Not detected or hidden by privacy settings"}
+{"choice": 2406, "text": "Descendants of person"}
+{"choice": 3101, "text": "Sending portal letter"}
+{"choice": 3102, "text": "Sending email"}
+{"choice": 3103, "text": "Entering subject of message here"}
+{"choice": 3104, "text": "Entering text of message here"}
+{"choice": 3105, "text": "Alternate localisations"}
+{"choice": 3106, "text": "Select of alternate localisation"}
+{"choice": 3107, "text": "Proposed localisations"}
+{"choice": 3108, "text": "Selected localisations"}
+{"choice": 3109, "text": "There are no contacts yet. Perhaps you havent been connected with the person yet."}
+{"choice": 3110, "text": "User online"}
+{"choice": 3111, "text": "Last online"}
+{"choice": 3112, "text": "Enter the contact names separated by commas or select them from the carousel"}
+{"choice": 3113, "text": "Select contacts from the carousel"}
+{"choice": 3114, "text": "The message is successful sending"}

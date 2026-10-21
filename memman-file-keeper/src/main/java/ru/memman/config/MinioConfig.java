@@ -22,10 +22,6 @@ public class MinioConfig {
     String minioAccessKey;
     @Value("${minio.secretKey}")
     String minioSecretKey;
-    @Value("${minio.first_photo_bucket}")
-    String firstPhoto;
-    @Value("${minio.photo_events_bucket}")
-    String events;
 
     @Bean
     public MinioClient minioClient() {
@@ -34,20 +30,6 @@ public class MinioConfig {
                 .credentials(minioAccessKey, minioSecretKey)
                 .build();
     }
-//    @Bean(name = "commonsMultipartResolver")
-//    public MultipartResolver multipartResolver() {
-//        return new StandardServletMultipartResolver();
-//    }
-//
-//
-//    @Bean
-//    public MultipartConfigElement multipartConfigElement() {
-//        MultipartConfigFactory factory = new MultipartConfigFactory();
-//
-//        factory.setMaxFileSize(DataSize.ofBytes(2000000L));
-//        factory.setMaxRequestSize(DataSize.ofBytes(2000000L));
-//
-//        return factory.createMultipartConfig();
-//    }
+
 }
 

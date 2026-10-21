@@ -48,8 +48,8 @@ public class ActualUserService {
     @Transactional
     public BaseUser getActualUser(TokenUser tokenUser) {
         String externUuid=(String) tokenUser.getClaims().get("sub");
-        BaseUser onlineUser = actualUserHolder.getActualUser(externUuid);
-        if (onlineUser == null) {
+        BaseUser actualUser = actualUserHolder.getActualUser(externUuid);
+        if (actualUser == null) {
             Optional<BaseUser> baseUser = onlineUserRepository.getOnlineUserByExternUuid(externUuid);
             if (baseUser.isEmpty()) {
                 BaseUser baseUserNew = BaseUser.builder()
@@ -61,16 +61,22 @@ public class ActualUserService {
                         .nickName(getTokenUserNickName(tokenUser))
                         .email(getEmail(tokenUser))
                         .priorityRole(getPriorityRole(tokenUser))
+                        .primePhoto(false)
                         .build();
                 onlineUserRepository.persistNewUser(baseUserNew);
                 onlineUserHolder.addMenToBaseCount();
                 return baseUserNew;
             } else {
+                baseUser.get().setLocalisation(getTokenUserLocalisation(tokenUser));
+                baseUser.get().setFullName(getFullName(tokenUser));
+                baseUser.get().setLogName(getLogName(tokenUser));
+                baseUser.get().setPriorityRole(getPriorityRole(tokenUser));
+                baseUser.get().setNickName(getTokenUserNickName(tokenUser));
                 baseUser.get().setLastOnline(new Timestamp(System.currentTimeMillis()));
                 return baseUser.get();
             }
         }
-        return onlineUser;
+        return actualUser;
     }
     @SuppressWarnings("unchecked")
     private UserRole getPriorityRole(TokenUser tokenUser) {
@@ -163,7 +169,7 @@ public class ActualUserService {
                 fromChangeMap) {
             BaseUser fromBaseUser=fromBase.stream().filter(x->Objects.equals(x.getExternUuid(),user.getExternUuid())).findFirst().orElseThrow(()->new RuntimeException("user in base absent"));
             fromBaseUser.setEmail(user.getEmail());
-            fromBaseUser.setUrlPhoto(user.isUrlPhoto());
+            fromBaseUser.setPrimePhoto(user.isPrimePhoto());
             fromBaseUser.setNickName(user.getNickName());
             fromBaseUser.setLinkExternId(user.getLinkExternId());
             fromBaseUser.setLocalisation(user.getLocalisation());

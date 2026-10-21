@@ -34,7 +34,7 @@ function submitAddForm() {
         password: form.elements.passwordAddSSO.value
     };
     let jsonData = JSON.stringify(formData);
-    fetch("/onlineUserAPI/create", {
+    fetch(endPoints.get("sso")+"/create", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -93,7 +93,7 @@ function editUserSSO() {
         <div>Если поля будут не заполнены, то сохранятся прежние значения</div>  
         <div>Часть внесенных изменений (например, ваша роль в системе) произойдут с течением времени.</div>     
         <div>Для немедленного их применения выйдете из системы и войдите в нее.</div>`;
-    fetch("/onlineUserAPI/info", {
+    fetch(endPoints.get("sso")+"/info", {
         method: "GET",
         headers: {
             "Content-Type": "application/json; charset=UTF-8"
@@ -111,7 +111,7 @@ function editUserSSO() {
 }
 function linkUser() {
     var form = document.getElementById('linkForm');
-    var uri="/onlineUserAPI/link/"+form.elements.idLink.value
+    var uri=endPoints.get("sso")+"/link/"+form.elements.idLink.value
     fetch(uri, {
         method: 'GET',
         headers: {'Content-Type': 'application/json'}
@@ -138,7 +138,7 @@ function submitEditFormSSO() {
         birthday: form.elements.birthdayEditSSO.value
     };
     let jsonData = JSON.stringify(formData);
-    fetch("/onlineUserAPI/edit", {
+    fetch(endPoints.get("sso")+"/edit", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

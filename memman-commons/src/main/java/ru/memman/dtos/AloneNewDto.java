@@ -7,9 +7,7 @@ import ru.memman.enums.Attention;
 import ru.memman.enums.Localisation;
 import ru.memman.enums.NewsCategory;
 
-import java.util.Date;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
 @Setter
@@ -24,11 +22,17 @@ public class AloneNewDto {
     private String externId;
     @Schema(description = "Кто послал")
     private String sendingFrom;
+    @Schema(description = "Есть ли прайм фото у посылающего")
+    private boolean existPrimePhoto;
+    @Schema(description = "Скрыто ли прайм фото посылающего")
+    private boolean hidden;
     @Schema(description = "Альтернативный посылающий")
     private String sendingFromAlt;
     @Schema(description = "Кому послали")
     private String sendingTo;
-    @Schema(description = "Аннотаия письма")
+    @Schema(description = "Кому послали список")
+    private Set<String> addressList;
+    @Schema(description = "Аннотация письма")
     private Attention attention;
     @Schema(description = "Дата создания")
     private Date creationDate;
@@ -42,13 +46,19 @@ public class AloneNewDto {
     private boolean alreadyRead;
     @Schema(description = "Локализация письма")
     private Localisation localisation;
+    @Schema(description = "Адрес картинки письма")
+    private String imageUrl;
+    @Schema(description = "Альтернативные локализации")
+    private List<LetterLocalDto> letterLocals;
+    @Schema(description = "Наличие дополнительных локализаций")
+    private boolean existLocalisations;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AloneNewDto that = (AloneNewDto) o;
-        return Objects.equals(id, that.id) && Objects.equals(subject, that.subject) && Objects.equals(textInfo, that.textInfo) && category == that.category;
+        return existPrimePhoto == that.existPrimePhoto && alreadyRead == that.alreadyRead && existLocalisations == that.existLocalisations && Objects.equals(id, that.id) && Objects.equals(externId, that.externId) && Objects.equals(sendingFrom, that.sendingFrom) && Objects.equals(sendingFromAlt, that.sendingFromAlt) && Objects.equals(sendingTo, that.sendingTo) && Objects.equals(addressList, that.addressList) && attention == that.attention && Objects.equals(creationDate, that.creationDate) && Objects.equals(subject, that.subject) && Objects.equals(textInfo, that.textInfo) && category == that.category && localisation == that.localisation && Objects.equals(imageUrl, that.imageUrl) && Objects.equals(letterLocals, that.letterLocals);
     }
 
     @Override

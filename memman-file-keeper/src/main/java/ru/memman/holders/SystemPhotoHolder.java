@@ -1,6 +1,6 @@
 package ru.memman.holders;
 
-import jakarta.annotation.PostConstruct;
+import ru.memman.enums.UserRole;
 import ru.memman.services.FileStorageService;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import ru.memman.services.TokenService;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,58 +19,49 @@ import java.util.Map;
 @Setter
 @Slf4j
 public class SystemPhotoHolder {
-    private Map<String, byte[]> systemPictures;
-    private Map<String, byte[]> commonPictures;
-    private Map<String, byte[]> defaultPhotos;
-    private FileStorageService fileStorageService;
+    private final Map<String, byte[]> systemPictures;
+    private final Map<String, byte[]> commonPictures;
+    private final Map<String, byte[]> defaultPhotos;
+    private final FileStorageService fileStorageService;
+    private final TokenService tokenService;
 
-    @Value("${minio.system_news_bucket}")
+    @Value("${minio.buckets.system_news}")
     private String sysNewsBucket;
-    @Value("${minio.common_news_bucket}")
+    @Value("${minio.buckets.common_news}")
     private String commonNewsBucket;
-    @Value("${minio.default_photo_bucket}")
+    @Value("${minio.buckets.default_photo}")
     private String defaultPhotoBucket;
 
-
-    public SystemPhotoHolder(Map<String, byte[]> systemPictures, Map<String, byte[]> commonPictures, Map<String, byte[]> defaultPhotos, FileStorageService fileStorageService) {
+    public SystemPhotoHolder(Map<String, byte[]> systemPictures,
+                             Map<String, byte[]> commonPictures,
+                             Map<String, byte[]> defaultPhotos,
+                             FileStorageService fileStorageService,
+                             TokenService tokenService) {
         this.systemPictures = systemPictures;
         this.commonPictures = commonPictures;
         this.defaultPhotos = defaultPhotos;
         this.fileStorageService = fileStorageService;
+        this.tokenService = tokenService;
     }
 
-    public void addPicture(String name, MultipartFile frontPicture, String bucket) {
-        String bucketMinio = (bucket.equals("SYSTEM")) ? sysNewsBucket : commonNewsBucket;
-        System.out.println(name);
-        System.out.println(bucketMinio);
-        System.out.println(frontPicture.getSize());
+    public void addSystemPicture(String name, MultipartFile frontPicture, String bucket) {
+        log.info("Добавляем фото в холдер/хранилище. Категория: {}, имя: {}", bucket,name);
+        if (tokenService.getPriorityRole(tokenService.getTokenUser()).ordinal()>UserRole.MANAGER.ordinal()) return;
         try (InputStream file = frontPicture.getInputStream()) {
             byte[] bytesOfPicture = file.readAllBytes();
-            if (bucketMinio.equals(sysNewsBucket)) systemPictures.put(name, bytesOfPicture);
-            else if (bucketMinio.equals(commonNewsBucket)) commonPictures.put(name, bytesOfPicture);
+            if (bucket.equals(sysNewsBucket)) systemPictures.put(name, bytesOfPicture);
+            else if (bucket.equals(commonNewsBucket)) commonPictures.put(name, bytesOfPicture);
             fileStorageService.savePhoto(bytesOfPicture,
-                    name, bucketMinio);
+                    name, bucket);
             log.info("Файл успешно сохранен на сервер MinIO.");
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (Exception e) {
             log.error("Ошибка при сохранении файла на сервер MinIO.", e);
         }
-        System.out.println("tyt_tyt");
     }
 
-    //public ResponseEntity<Resource> getPhoto(String bucket, String fileName){
-//    if (systemPictures.containsKey(fileName)){
-//    Resource resource = new InputStreamResource(new ByteArrayInputStream(systemPictures.get(fileName)));
-//    // Возвращение ResponseEntity с содержимым файла
-//    return ResponseEntity.ok()
-//            .header("Content-Name", "UUID = \"" + fileName + "\"")
-//            .contentLength(systemPictures.get(fileName).length)
-//            .body(resource);}
-//    else return fileStorageService.getPhoto(bucket, fileName);
-//}
     public byte[] getPhoto(String bucket, String fileName) {
-
         if (bucket.equals(sysNewsBucket) && systemPictures.containsKey(fileName))
             return systemPictures.get(fileName);
         else if (bucket.equals(commonNewsBucket) && commonPictures.containsKey(fileName))

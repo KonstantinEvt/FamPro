@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/onlineUserAPI")
+@RequestMapping("/frontAPI/sso")
 @AllArgsConstructor
 public class SSOController {
     private TokenService tokenService;

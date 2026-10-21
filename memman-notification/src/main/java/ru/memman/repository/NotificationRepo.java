@@ -1,7 +1,6 @@
 package ru.memman.repository;
 
 import ru.memman.entity.AloneNew;
-import ru.memman.entity.Contact;
 import ru.memman.entity.Recipient;
 import ru.memman.entity.Voting;
 import ru.memman.enums.NewsCategory;
@@ -77,60 +76,47 @@ public class NotificationRepo {
     }
 
     @Transactional(readOnly = true)
-    public Recipient findRecipientWithContacts(String externId) {
-        Recipient owner;
+    public List<AloneNew> getLettersWithSenders(List<AloneNew> aloneNewListEntering) {
+        List<AloneNew> aloneNewList;
         try {
-            owner = entityManager.createQuery("select a from Recipient a left join fetch a.contacts where a.externUuid= :externId", Recipient.class)
-                    .setParameter("externId", externId)
-                    .getSingleResult();
+            aloneNewList = entityManager.createQuery("from AloneNew a left join fetch a.sendFrom where a in :letters", AloneNew.class)
+                    .setParameter("letters", aloneNewListEntering)
+                    .getResultList();
         } catch (RuntimeException e) {
-            log.warn("owner not found");
-            owner = null;
+            log.info("Letters not found");
+            aloneNewList = new ArrayList<>();
         }
-        return owner;
+        return aloneNewList;
     }
 
-    @Transactional(readOnly = true)
-    public Recipient findRecipientWithContactsByLinkExternId(String externId) {
-        Recipient owner;
-        try {
-            owner = entityManager.createQuery("select a from Recipient a left join fetch a.contacts where a.linkExternId= :externId", Recipient.class)
-                    .setParameter("externId", externId)
-                    .getSingleResult();
-        } catch (RuntimeException e) {
-            log.warn("owner not found");
-            owner = null;
-        }
-        return owner;
-    }
+//    @Transactional(readOnly = true)
+//    public Recipient findRecipientWithContacts(String externId) {
+//        Recipient owner;
+//        try {
+//            owner = entityManager.createQuery("select a from Recipient a left join fetch a.contacts where a.externUuid= :externId", Recipient.class)
+//                    .setParameter("externId", externId)
+//                    .getSingleResult();
+//        } catch (RuntimeException e) {
+//            log.warn("owner not found");
+//            owner = null;
+//        }
+//        return owner;
+//    }
 
-    @Transactional(readOnly = true)
-    public Recipient findRecipientWithPodpisotaByLink(String externId) {
-        Recipient owner;
-        try {
-            owner = entityManager.createQuery("select a from Recipient a left join fetch a.podpisota where a.linkExternId= :externId", Recipient.class)
-                    .setParameter("externId", externId)
-                    .getSingleResult();
-        } catch (RuntimeException e) {
-            log.warn("recipient not found");
-            owner = null;
-        }
-        return owner;
-    }
+//    @Transactional(readOnly = true)
+//    public Recipient findRecipientWithContactsByLinkExternId(String externId) {
+//        Recipient owner;
+//        try {
+//            owner = entityManager.createQuery("select a from Recipient a left join fetch a.contacts where a.linkExternId= :externId", Recipient.class)
+//                    .setParameter("externId", externId)
+//                    .getSingleResult();
+//        } catch (RuntimeException e) {
+//            log.warn("owner not found");
+//            owner = null;
+//        }
+//        return owner;
+//    }
 
-    @Transactional(readOnly = true)
-    public Recipient findRecipientWithPodpisota(String externId) {
-        Recipient owner;
-        try {
-            owner = entityManager.createQuery("from Recipient a left join fetch a.podpisota where a.externUuid= :externId", Recipient.class)
-                    .setParameter("externId", externId)
-                    .getSingleResult();
-        } catch (RuntimeException e) {
-            log.warn("recipient not found");
-            owner = null;
-        }
-        return owner;
-    }
 
     @Transactional(readOnly = true)
     public Set<Recipient> findGuards(Set<String> guardExternId) {
@@ -173,33 +159,5 @@ public class NotificationRepo {
         return aloneNews;
     }
 
-    @Transactional
-    public Set<Contact> getContactsWithAll(Set<Recipient> guard, Set<String> extern) {
-        Set<Contact> contacts;
-        try {
-            contacts = new HashSet<>(entityManager.createQuery("from Contact a join fetch a.owner b join fetch a.person where b in :guard and a.externId in :extern", Contact.class)
-                    .setParameter("guard", guard)
-                    .setParameter("extern", extern)
-                    .getResultList());
-        } catch (RuntimeException e) {
-            log.warn("something is wrong", e);
-            contacts = null;
-        }
-        return contacts;
-    }
 
-    @Transactional
-    public Optional<Contact> getContact(String owner, String recipient) {
-        Optional<Contact> contact;
-        try {
-            contact = Optional.of(entityManager.createQuery("from Contact a join fetch a.owner b join fetch a.person where b.externUuid= :owner and a.externId= :recipient", Contact.class)
-                    .setParameter("owner", owner)
-                    .setParameter("recipient", recipient)
-                    .getSingleResult());
-        } catch (RuntimeException e) {
-            log.warn("something is wrong", e);
-            contact = Optional.empty();
-        }
-        return contact;
-    }
 }

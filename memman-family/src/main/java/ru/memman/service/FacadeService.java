@@ -1,6 +1,7 @@
 package ru.memman.service;
 
 
+import ru.memman.dtos.ContactDto;
 import ru.memman.dtos.FamilyDirective;
 import ru.memman.dtos.FamilyMemberDto;
 import ru.memman.dtos.TokenUser;
@@ -74,7 +75,7 @@ public class FacadeService implements SimpleFamilyService {
                 && mainMember.getCreator() != null
                 && !mainMember.getCreator().isBlank()
                 && Objects.equals(mainMember.getCreator(), mainDirective.getTokenUser()))
-            guardFromDirective = Optional.of(new Guard(null, mainMember.getCreator(), mainMember,Localisation.RU));
+            guardFromDirective = Optional.of(Guard.builder().id(null).tokenUser(mainMember.getCreator()).linkedPerson(mainMember).localisation(Localisation.RU).build());
         Set<Family> familyToRemove = new HashSet<>();
         Set<ShortFamilyMember> ancestors;
         Set<ShortFamilyMember> potentialBloodBrothers;
@@ -112,7 +113,7 @@ public class FacadeService implements SimpleFamilyService {
                 changing.setChangingFather(getChangingStatus(mainDto.getFatherInfo(), mainMember.getFatherInfo()));
                 changing.setChangingMother(getChangingStatus(mainDto.getMotherInfo(), mainMember.getMotherInfo()));
                 memberService.editFamilyMember(mainDto, mainMember);
-               if (primeFamily.getChildren().size() == 1) changing.setOneChildInFamily(true);
+                if (primeFamily.getChildren().size() == 1) changing.setOneChildInFamily(true);
                 log.info("CHANGING_STATUS_1: {}", changing);
 
                 if (changing.getChangingFather().ordinal() > 4 || changing.getChangingMother().ordinal() > 4) {
@@ -442,10 +443,19 @@ public class FacadeService implements SimpleFamilyService {
         } else
             return directiveGuard.isPresent() && familyGuard.contains(UUID.fromString(directiveGuard.get().getTokenUser()));
     }
+    public Localisation getLocalisationFromString(String localisation) {
+        if (localisation == null) return Localisation.RU;
+        for (Localisation loc :
+                Localisation.values()) {
+            if (localisation.toUpperCase().equals(loc.name())) return loc;
+        }
+        return Localisation.RU;
+    }
 
     @Transactional
     public CheckStatus addGuardByLink(FamilyMemberDto familyMemberDto, TokenUser tokenUser) {
         String token = (String) tokenUser.getClaims().get("sub");
+        Localisation localisation = getLocalisationFromString((String) tokenUser.getClaims().get("locale"));
         if (tokenUser.getRoles().contains(UserRole.LINKED_USER.getNameSSO())) {
             log.warn("this user is already linked");
             throw new RuntimeException("you are already linked");
@@ -461,7 +471,8 @@ public class FacadeService implements SimpleFamilyService {
                 throw new RuntimeException("person is under voting or moderate. Try linking later");
             }
             case UNCHECKED -> {
-                guardService.creatLinkingGuard(shortFamilyMember, token);
+                guardService.creatLinkingGuard(shortFamilyMember, token, localisation);
+                sendAndFormService.sendContactRelativeStatus(List.of(ContactDto.builder().ownerId(token).build()));
                 return CheckStatus.LINKED;
             }
             default -> {
@@ -497,8 +508,8 @@ public class FacadeService implements SimpleFamilyService {
             if (!geneticTreeGuard.isEmpty() && geneticTreeGuard.contains(UUID.fromString(guardFromToken.get().getTokenUser())))
                 return SecretLevel.CONFIDENTIAL;
             else {
-                Set<ShortFamilyMember> topBrothers=memberService.getBrothersOfTopAncestors(topAncestors);
-                if (topBrothers.isEmpty()&&!geneticTreeGuard.isEmpty()) return SecretLevel.OPEN;
+                Set<ShortFamilyMember> topBrothers = memberService.getBrothersOfTopAncestors(topAncestors);
+                if (topBrothers.isEmpty() && !geneticTreeGuard.isEmpty()) return SecretLevel.OPEN;
                 else if (topBrothers.isEmpty()) return SecretLevel.CONFIDENTIAL;
                 geneticTreeGuard = memberService.getGeneticTreeGuards(topBrothers, false);
                 if (geneticTreeGuard.isEmpty() || !geneticTreeGuard.contains(UUID.fromString(guardFromToken.get().getTokenUser())))
@@ -509,16 +520,17 @@ public class FacadeService implements SimpleFamilyService {
         SecretLevel tempStatus = memberService.getSecretStatus(member, UUID.fromString(guardFromToken.get().getTokenUser()), null, false);
         if (tempStatus == SecretLevel.OPEN) {
             Set<ShortFamilyMember> topAncestors = memberService.getAllTopAncestors(member);
-            Set<UUID> geneticTreeGuard = memberService.getGeneticTreeGuards(topAncestors,false);
+            Set<UUID> geneticTreeGuard = memberService.getGeneticTreeGuards(topAncestors, false);
             if (!geneticTreeGuard.isEmpty() && geneticTreeGuard.contains(UUID.fromString(guardFromToken.get().getTokenUser())))
                 return SecretLevel.GENETIC_TREE;
             else {
-                Set<ShortFamilyMember> topBrothers=memberService.getBrothersOfTopAncestors(topAncestors);
+                Set<ShortFamilyMember> topBrothers = memberService.getBrothersOfTopAncestors(topAncestors);
                 if (topBrothers.isEmpty()) return SecretLevel.OPEN;
                 geneticTreeGuard = memberService.getGeneticTreeGuards(topBrothers, false);
                 if (!geneticTreeGuard.isEmpty() && geneticTreeGuard.contains(UUID.fromString(guardFromToken.get().getTokenUser())))
                     return SecretLevel.GENETIC_TREE;
-                return SecretLevel.OPEN;}
+                return SecretLevel.OPEN;
+            }
         }
         log.info("Status user: {}", tempStatus.name());
         log.info("Status person: {}", max.name());

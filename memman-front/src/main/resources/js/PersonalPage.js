@@ -1,4 +1,4 @@
-function getPersonalPage() {
+function menuFunc2400() {
     document.getElementById("mainPanel").innerHTML = `
 <div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px">*** Personal Page ***</div>
 <div style="text-align: center;" id="yourselfMain"></div>

@@ -75,8 +75,6 @@ public  FamilyMemberDto getExtendedInfoFamilyMember(SecurityDto securityDto) thr
     public FamilyMemberDto addFamilyMember(FamilyMemberDto familyMemberDto) {
         System.out.println("к нам пришел:" + familyMemberDto);
         AbstractTranscripter transcripter=transcriptHolder.getTranscript(familyMemberDto, familyMemberDto.getLocalisation().name());
-
-
         System.out.println("переводчик установлен");
         checkFamilyMember.check(transcripter, familyMemberDto);
         System.out.println("проверка пройдена");
@@ -93,8 +91,8 @@ public  FamilyMemberDto getExtendedInfoFamilyMember(SecurityDto securityDto) thr
         AbstractTranscripter transcripter=transcriptHolder.getTranscript(familyMemberDto, familyMemberDto.getLocalisation().name());
         checkFamilyMember.check(transcripter,familyMemberDto);
         transcritFamilyMember.from(transcripter, familyMemberDto);
-        membersClient.editFamilyMember(familyMemberDto);
-        return familyMemberDto;
+        FamilyMemberDto dto=membersClient.editFamilyMember(familyMemberDto);
+        return dto;
     }
     public Collection<FamilyMemberDto> getMembersByFirstCreator(Localisation localisation){
         AbstractTranscripter transcripter=transcriptHolder.getTranscript(localisation);

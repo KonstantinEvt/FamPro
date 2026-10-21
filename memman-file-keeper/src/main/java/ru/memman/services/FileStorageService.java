@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,46 +28,42 @@ import java.util.Map;
 @Service
 public class FileStorageService {
 
-    private MinioClient minioClient;
-    private TokenService tokenService;
+    private final MinioClient minioClient;
 
-    @Value("${minio.first_photo_bucket}")
-    private String firstPhoto;
-    @Value("${minio.photo_events_bucket}")
-    private String events;
-    @Value("${minio.system_news_bucket}")
+    @Value("${minio.buckets.first_photo}")
+    private String primePhoto;
+    @Value("${minio.buckets.little_prime}")
+    private String littlePrime;
+    @Value("${minio.buckets.system_news}")
     private String sysNews;
-    @Value("${minio.common_news_bucket}")
+    @Value("${minio.buckets.common_news}")
     private String commonNews;
-    @Value("${minio.default_photo_bucket}")
+    @Value("${minio.buckets.default_photo}")
     private String defaultPhoto;
-    @Value("${minio.photo_burial_bucket}")
+    @Value("${minio.buckets.photo_burial}")
     private String burial;
-    @Value("${minio.photo_birth_bucket}")
+    @Value("${minio.buckets.photo_birth}")
     private String birth;
-
-    private Map<String, byte[]> systemPictures;
-    private Map<String, byte[]> commonPictures;
-
-    private Map<String, byte[]> defaultPhotos;
+    private final List<String> bucketsNames = new ArrayList<>();
+    private final Map<String, byte[]> systemPictures;
+    private final Map<String, byte[]> commonPictures;
+    private final Map<String, byte[]> defaultPhotos;
 
     public FileStorageService(MinioClient minioClient,
-                              TokenService tokenService,
                               Map<String, byte[]> systemPictures,
                               Map<String, byte[]> commonPictures,
                               Map<String, byte[]> defaultPhotos) {
         this.minioClient = minioClient;
-        this.tokenService = tokenService;
         this.systemPictures = systemPictures;
         this.commonPictures = commonPictures;
         this.defaultPhotos = defaultPhotos;
     }
 
     @PostConstruct
-    void initStartBuckets() throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        createBucketInMinioIfNotExist(firstPhoto);
+    void initStartBuckets() {
+        createBucketInMinioIfNotExist(primePhoto);
         createBucketInMinioIfNotExist(defaultPhoto);
-        createBucketInMinioIfNotExist(events);
+        createBucketInMinioIfNotExist(littlePrime);
         createBucketInMinioIfNotExist(sysNews);
         createBucketInMinioIfNotExist(commonNews);
         createBucketInMinioIfNotExist(birth);
@@ -73,6 +71,7 @@ public class FileStorageService {
         getSystemNews();
         getCommonNews();
         getDefaultPhotos();
+        bucketsNames.addAll(List.of(primePhoto,defaultPhoto,commonNews, littlePrime,sysNews,burial,birth));
     }
 
     public void createBucketInMinioIfNotExist(String bucketName) {
@@ -95,18 +94,14 @@ public class FileStorageService {
 
 
     public void savePhoto(byte[] photo, String uuid, String bucket) {
-        if (!bucket.equals(firstPhoto) || !bucket.equals(sysNews) || !bucket.equals(commonNews) || !bucket.equals(events))
-            createBucketInMinioIfNotExist(bucket);
+        if (!bucketsNames.contains(bucket)) createBucketInMinioIfNotExist(bucket);
         try (InputStream inputStream = new ByteArrayInputStream(photo)) {
-
-//            String fileName = ((String) tokenService.getTokenUser().getClaims().get("sub"));
             minioClient.putObject(PutObjectArgs
                     .builder()
                     .bucket(bucket)
                     .object(uuid)
                     .stream(inputStream, photo.length, -1)
                     .build());
-
         } catch (ServerException | InternalException | XmlParserException | InvalidResponseException |
                  InvalidKeyException |
                  NoSuchAlgorithmException | ErrorResponseException | InsufficientDataException | IOException e) {
@@ -116,26 +111,24 @@ public class FileStorageService {
     }
 
     public byte[] getPhoto(String bucket, String fileName) {
+        log.info("Получаем фото из бакета {} с именем {}", bucket, fileName);
         try {
-            // Получение объекта (файла) из MinIO
             try (InputStream inputStream = minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(bucket)
                             .object(fileName)
                             .build()
             )) {
-                // Создание ресурса с содержимым файла
+                log.info("Получено фото из бакета {} с именем {}", bucket, fileName);
                 return IOUtils.toByteArray(inputStream);
-
             } catch (ServerException | InsufficientDataException | ErrorResponseException | NoSuchAlgorithmException |
                      InvalidKeyException | InvalidResponseException | XmlParserException | InternalException e) {
                 throw new RuntimeException(e);
             }
         } catch (RuntimeException | IOException e) {
             log.error("Ошибка при получении файла из сервера MinIO.");
-
         }
-
+        log.info("Something wrong");
         return new byte[0];
     }
 
@@ -169,7 +162,7 @@ public class FileStorageService {
                 )) {
                     // Создание ресурса с содержимым файла
                     byte[] fileBytes = IOUtils.toByteArray(inputStream);
-                    String name=object.get()
+                    String name = object.get()
                             .objectName()
                             .split("\\.")[0];
                     mapOfPhoto.put(name, fileBytes);
@@ -195,34 +188,34 @@ public class FileStorageService {
         }
     }
 
-    public void saveNewsPhoto(String name, MultipartFile frontPicture) {
-        String bucketMinio = (String) tokenService.getTokenUser().getClaims().get("sub");
+    public void savePrivatePhoto(String name, MultipartFile frontPicture, String bucket) {
         try (InputStream file = frontPicture.getInputStream()) {
             byte[] bytesOfPicture = file.readAllBytes();
-            savePhoto(bytesOfPicture, name, bucketMinio);
+            savePhoto(bytesOfPicture, name, bucket);
             log.info("Файл успешно сохранен на сервер MinIO.");
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (Exception e) {
             log.error("Ошибка при сохранении файла на сервер MinIO.", e);
         }
-        System.out.println("tyt_tyt");
     }
-public void deletePhoto(String bucket, String name) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        minioClient.removeObject( RemoveObjectArgs.builder()
+
+    public void deletePhoto(String bucket, String name) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        minioClient.removeObject(RemoveObjectArgs.builder()
                 .bucket(bucket)
                 .object(name)
                 .build());
-}
-public void renamePhoto(String bucket, String oldName, String newName) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    }
+
+    public void renamePhoto(String bucket, String oldName, String newName) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         minioClient.copyObject(CopyObjectArgs.builder()
+                .bucket(bucket)
+                .object(newName)
+                .source(CopySource.builder()
                         .bucket(bucket)
-                        .object(newName)
-                        .source(CopySource.builder()
-                                .bucket(bucket)
-                                .object(oldName)
-                                .build())
+                        .object(oldName)
+                        .build())
                 .build());
-        deletePhoto(bucket,oldName);
-}
+        deletePhoto(bucket, oldName);
+    }
 }

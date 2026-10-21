@@ -1,14 +1,12 @@
 package ru.memman.config;
 
-import ru.memman.dtos.Directive;
-import ru.memman.dtos.DirectiveGuards;
-import ru.memman.dtos.FamilyDirective;
-import ru.memman.dtos.OnlineUserDto;
+import ru.memman.dtos.*;
 import ru.memman.enums.Localisation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +23,10 @@ public class TaskResource {
     LinkedList<OnlineUserDto> inline() {
         return new LinkedList<>();
     }
-
+    @Bean("checkRelation")
+    LinkedList<List<ContactDto>> checkRelation() {
+        return new LinkedList<>();
+    }
     @Bean("storageDirective")
     LinkedList<FamilyDirective> storageDirective() {
         return new LinkedList<>();

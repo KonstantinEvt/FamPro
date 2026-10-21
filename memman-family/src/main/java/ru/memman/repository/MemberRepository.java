@@ -1,5 +1,6 @@
 package ru.memman.repository;
 
+import jakarta.persistence.NoResultException;
 import ru.memman.entity.Family;
 import ru.memman.entity.ShortFamilyMember;
 import ru.memman.entity.ShortFamilyMemberInfo;
@@ -25,7 +26,18 @@ public class MemberRepository {
             log.warn("familyMember not persist:", e);
         }
     }
-
+    @Transactional(readOnly = true)
+    public long getInBasePersonsCount(){
+        long usersInBase;
+        try {
+            usersInBase = (long) entityManager.createNativeQuery("SELECT count(*) from fam_fam.short_family_members")
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            log.warn("users in base not register yet ");
+            usersInBase = 0;
+        }
+        return usersInBase;
+    }
     @Transactional
     public void updateMember(ShortFamilyMember member) {
         try {
@@ -118,7 +130,19 @@ public class MemberRepository {
         }
         return member;
     }
-
+    @Transactional
+    public Optional<ShortFamilyMember> getMemberWithInfoByUuid(UUID uuid) {
+        Optional<ShortFamilyMember> member;
+        try {
+            member = Optional.of(entityManager.createQuery("from ShortFamilyMember m left join fetch m.shortFamilyMemberInfo where m.uuid=:uuid", ShortFamilyMember.class)
+                    .setParameter("uuid", uuid)
+                    .getSingleResult());
+        } catch (RuntimeException e) {
+            log.warn("Error in finding familyMember by uuid: {}", uuid.toString());
+            member = Optional.empty();
+        }
+        return member;
+    }
     @Transactional
     public Optional<ShortFamilyMemberInfo> getInfoByUuid(UUID uuid) {
         Optional<ShortFamilyMemberInfo> info;

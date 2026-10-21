@@ -1,7 +1,9 @@
 package ru.memman.conrollers;
 
+import lombok.extern.log4j.Log4j2;
 import ru.memman.dtos.FamilyMemberDto;
 import ru.memman.dtos.SecurityDto;
+import ru.memman.enums.Localisation;
 import ru.memman.enums.SecretLevel;
 import ru.memman.models.OnlineUserHolder;
 import ru.memman.models.SimpleUserInfo;
@@ -9,63 +11,58 @@ import ru.memman.services.BaseService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.memman.services.TokenService;
 
 import java.util.Collection;
 import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/base")
+@Log4j2
+@RequestMapping("/frontAPI/base")
 public class BaseController {
     private final BaseService baseService;
     private OnlineUserHolder onlineUserHolder;
+    private TokenService tokenService;
 
-    @PostMapping("/family_member/{id}")
-    public ResponseEntity<FamilyMemberDto> getFamilyMemberById(@PathVariable("id") Long id) {
-        SimpleUserInfo simpleUserInfo=onlineUserHolder.getSimpleUser();
-        return ResponseEntity.status(200).header("resultFindStatus","Person is found").body(baseService.getFamilyMemberById(id, simpleUserInfo.getLocalisation()));
+    @PostMapping("/{id}/{localisation}")
+    public ResponseEntity<FamilyMemberDto> getFamilyMemberById(@PathVariable("id") Long id, @PathVariable("localisation") String localisation) {
+        return ResponseEntity.status(200).header("resultFindStatus","Person is found").body(baseService.getFamilyMemberById(id, tokenService.getLocalisation(localisation)));
     }
 
-    @PostMapping("/family_member/")
+    @PostMapping("/")
     public FamilyMemberDto getFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
-        SimpleUserInfo simpleUserInfo=onlineUserHolder.getSimpleUser();
-        familyMemberDto.setLocalisation(simpleUserInfo.getLocalisation());
         return baseService.getFamilyMember(familyMemberDto);
     }
 
-    @PostMapping("/family_member/add")
-    public ResponseEntity<String> addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
-        SimpleUserInfo simpleUserInfo=onlineUserHolder.getSimpleUser();
-        familyMemberDto.setLocalisation(simpleUserInfo.getLocalisation());
-        System.out.println(familyMemberDto);
-        String success= "Person is saved with id:".concat(Long.toString(baseService.addFamilyMember(familyMemberDto)));
-        return ResponseEntity.ok(success);
+    @PostMapping("/add")
+    public ResponseEntity<FamilyMemberDto> addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
+        FamilyMemberDto dto=baseService.addFamilyMember(familyMemberDto);
+        log.info(dto);
+        return ResponseEntity.ok(dto);
     }
 
-    @PostMapping("/family_member/edit")
-    public ResponseEntity<String> editFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
-        SimpleUserInfo simpleUserInfo=onlineUserHolder.getSimpleUser();
-        familyMemberDto.setLocalisation(simpleUserInfo.getLocalisation());
-        baseService.editFamilyMember(familyMemberDto);
-        return ResponseEntity.ok("Person is update");
+    @PostMapping("edit")
+    public ResponseEntity<FamilyMemberDto> editFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
+        FamilyMemberDto dto=baseService.editFamilyMember(familyMemberDto);
+       log.info(dto);
+        return ResponseEntity.ok(dto);
     }
-    @PostMapping("/family_member/i")
-    public FamilyMemberDto getYourself() {
-        return baseService.getYourself(onlineUserHolder.getSimpleUser().getLocalisation());
+    @PostMapping("/i/{localisation}")
+    public FamilyMemberDto getYourself(@PathVariable("localisation")Localisation localisation) {
+        return baseService.getYourself(localisation);
     }
 
-    @PostMapping("/family_member/get/extended")
+    @PostMapping("/get/extended")
     public FamilyMemberDto getFullFamilyMember(@RequestBody SecurityDto securityDto) {
-        SimpleUserInfo simpleUserInfo=onlineUserHolder.getSimpleUser();
-        securityDto.setLocalisation(simpleUserInfo.getLocalisation());
         return baseService.getExtendedInfoFamilyMember(securityDto);
     }
-    @PostMapping("/family_member/getFirstCreator")
-    public Collection<FamilyMemberDto> getMembersByFirstCreator() {
-        return baseService.getMembersByFirstCreator(onlineUserHolder.getSimpleUser().getLocalisation());
+    @PostMapping("/getFirstCreator/{localisation}")
+    public Collection<FamilyMemberDto> getMembersByFirstCreator(@PathVariable("localisation")Localisation localisation) {
+        return baseService.getMembersByFirstCreator(localisation);
     }
-    @PostMapping("/family_member/getFamilyTree/{uuid}/{choice}")
-    public Collection<FamilyMemberDto> getFamilyTreeOfMember(@PathVariable("uuid") UUID uuid, @PathVariable("choice") SecretLevel choice) {
-        return baseService.getFamilyTreeOfMember(uuid, choice, onlineUserHolder.getSimpleUser().getLocalisation());
+    @PostMapping("/getFamilyTree/{uuid}/{choice}/{localisation}")
+    public Collection<FamilyMemberDto> getFamilyTreeOfMember(@PathVariable("uuid") UUID uuid, @PathVariable("choice") SecretLevel choice, @PathVariable("localisation")Localisation localisation) {
+        return baseService.getFamilyTreeOfMember(uuid, choice, localisation);
     }
 }

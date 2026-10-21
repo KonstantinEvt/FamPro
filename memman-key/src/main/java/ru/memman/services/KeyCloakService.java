@@ -1,6 +1,9 @@
 package ru.memman.services;
 
+import lombok.extern.log4j.Log4j2;
+import ru.memman.dtos.OnlineUserDto;
 import ru.memman.dtos.TokenUser;
+import ru.memman.enums.Localisation;
 import ru.memman.enums.UserRole;
 import ru.memman.exceptions.KeyCloakUserNotFound;
 import lombok.Data;
@@ -25,7 +28,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Data
-
+@Log4j2
 public class KeyCloakService {
     private final Keycloak keycloak;
 
@@ -33,10 +36,11 @@ public class KeyCloakService {
     private String realm;
     @Value("${keycloak.default-role}")
     private String defaultRole;
+    private final LinkedList<OnlineUserDto> inline;
 
-
-    public KeyCloakService(Keycloak keycloak) {
+    public KeyCloakService(Keycloak keycloak, LinkedList<OnlineUserDto> inline) {
         this.keycloak = keycloak;
+        this.inline = inline;
     }
 
     public TokenUser getTokenUser() {
@@ -52,6 +56,7 @@ public class KeyCloakService {
     }
 
     //addUser must be option set
+
     public void addUser(TokenUser dto) {
         String username = dto.getUsername();
         CredentialRepresentation credential = createPasswordCredentials(dto.getPassword());
@@ -68,8 +73,10 @@ public class KeyCloakService {
 
     public void editUser(TokenUser dto) {
         String userName;
-        if (SecurityContextHolder.getContext().getAuthentication()==null) userName=dto.getUsername();
+        OnlineUserDto onlineUserDto = new OnlineUserDto();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) userName = dto.getUsername();
         else userName = getTokenUser().getUsername();
+        onlineUserDto.setLogName(userName);
         UsersResource usersResource = getUsersResource();
         List<UserRepresentation> users = usersResource.search(userName);
         UserRepresentation user = users.stream().filter(x -> x.getUsername().equals(userName)).findFirst().orElseThrow(() -> new KeyCloakUserNotFound("User not found"));
@@ -81,7 +88,10 @@ public class KeyCloakService {
         }
         if (dto.getFirstName() != null && !dto.getFirstName().isBlank()) user.setFirstName(dto.getFirstName());
         //Разобраться с Identity провадером OpenID и настройками для изменения Email
-        if (dto.getEmail() != null && !dto.getEmail().isBlank()) user.setEmail(dto.getEmail());
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            user.setEmail(dto.getEmail());
+            onlineUserDto.setEmail(dto.getEmail());
+        }
         if (dto.getLastName() != null && !dto.getLastName().isBlank()) user.setLastName(dto.getLastName());
         if (user.getAttributes() == null) {
             user.setAttributes(new HashMap<>());
@@ -90,27 +100,65 @@ public class KeyCloakService {
             user.getAttributes().put("middleName", Collections.singletonList(dto.getMiddleName()));
         if (dto.getBirthday() != null && !dto.getBirthday().isBlank())
             user.getAttributes().put("birthday", Collections.singletonList(dto.getBirthday()));
-        if (dto.getNickName() != null && !dto.getNickName().isBlank())
+        if (dto.getNickName() != null && !dto.getNickName().isBlank()) {
             user.getAttributes().put("nickName", Collections.singletonList(dto.getNickName()));
+            onlineUserDto.setNickName(dto.getNickName());
+        }
         if (dto.getRoles() != null && dto.getRoles().contains(UserRole.LINKED_USER.getNameSSO())) {
             if (user.getRealmRoles() != null) {
                 user.getRealmRoles().add(UserRole.LINKED_USER.getNameSSO());
             } else user.setRealmRoles(Collections.singletonList(UserRole.LINKED_USER.getNameSSO()));
         }
+        if (user.getRealmRoles() != null) onlineUserDto.setPriorityRole(getPriorityRole(user.getRealmRoles()));
         UserResource userResource = usersResource.get(user.getId());
         userResource.update(user);
         addRolesToUser(user);
+        onlineUserDto.setSendOver(true);
+        inline.add(onlineUserDto);
     }
 
     public void chooseLocalisation(String loc) {
         String userName = getTokenUser().getUsername();
         UsersResource usersResource = getUsersResource();
-        List<UserRepresentation> users = usersResource.search(userName);
-        UserRepresentation user = users.stream().filter(x -> x.getUsername().equals(userName)).findFirst().orElseThrow(() -> new KeyCloakUserNotFound("User not found"));
-        if (user.getAttributes() == null) user.setAttributes(new HashMap<>());
-        user.getAttributes().put("locale", Collections.singletonList(loc));
-        UserResource userResource = usersResource.get(user.getId());
-        userResource.update(user);
+        if (usersResource == null) log.info("User Resource not found");
+        else {
+            log.info("List of users is loaded");
+            List<UserRepresentation> users = usersResource.search(userName);
+//            if (users==null||users.isEmpty()) log.info("but user {} not found", userName); else {System.out.println(users.get(0).getUsername());}
+//            UserRepresentation user = users.stream().filter(x -> x.getUsername().equals(userName)).findFirst().orElseThrow(() -> new KeyCloakUserNotFound("User not found"));
+            UserRepresentation user = users.get(0);
+            if (user.getAttributes() == null) {
+                log.info("user attributes is not set yet");
+                user.setAttributes(new HashMap<>());
+            }
+            if (user.getAttributes().get("locale") == null) {
+                user.getAttributes().put("locale", Collections.singletonList(loc));
+                UserResource userResource = usersResource.get(user.getId());
+                userResource.update(user);
+            } else {
+                String locBase = user.getAttributes().get("locale").get(0);
+                if (locBase == null || !Objects.equals(locBase, loc)) {
+                    user.getAttributes().put("locale", Collections.singletonList(loc));
+                    UserResource userResource = usersResource.get(user.getId());
+                    userResource.update(user);
+                    inline.add(OnlineUserDto.builder()
+                            .externUuid((String) getTokenUser().getClaims().get("sub"))
+                            .localisation(getLocalisationFromString(loc))
+                            .online(true)
+                            .sendOver(true)
+                            .build());
+                }
+            }
+        }
+    }
+
+    public Localisation getLocalisationFromString(String localisation) {
+        if (localisation == null) return Localisation.RU;
+        for (Localisation loc :
+                Localisation.values()) {
+            if (localisation.toUpperCase().equals(loc.name())) return loc;
+        }
+        return Localisation.RU;
     }
 
     private void addRolesToUser(UserRepresentation user) {
@@ -128,6 +176,7 @@ public class KeyCloakService {
         if (user.getRealmRoles().contains(UserRole.LINKED_USER.getNameSSO()))
             roles.add(UserRole.LINKED_USER.getNameSSO());
         if (!roles.isEmpty()) addRealmRoleToUser(user.getId(), roles);
+
     }
 
     /**
@@ -159,5 +208,12 @@ public class KeyCloakService {
         return passwordCredentials;
     }
 
+    private UserRole getPriorityRole(List<String> realmRoles) {
+        for (UserRole role :
+                UserRole.values()) {
+            if (realmRoles.contains(role.getNameSSO())) return role;
+        }
+        return UserRole.SIMPLE_USER;
+    }
 }
 

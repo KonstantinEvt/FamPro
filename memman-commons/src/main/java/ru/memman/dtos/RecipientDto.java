@@ -17,7 +17,7 @@ public class RecipientDto {
         private String linkExternId;
         private String info;
         private String name;
-        private Boolean urlPhoto;
+        private Boolean existPrimePhoto;
         private Localisation localisation;
         private Timestamp lastOnline;
     }

@@ -41,7 +41,7 @@ public class ValidationFamilyMember {
 
     ;
 
-    @PostMapping("")
+    @PostMapping("/add")
     public ResponseEntity<FamilyMemberDto> addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto) {
         return ResponseEntity.ok(familyMembersValidationService.addFamilyMember(familyMemberDto));
     }

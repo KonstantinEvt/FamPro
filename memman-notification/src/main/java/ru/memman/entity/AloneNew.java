@@ -1,23 +1,18 @@
 package ru.memman.entity;
 
 import ru.memman.enums.Attention;
-import ru.memman.enums.CheckStatus;
 import ru.memman.enums.Localisation;
 import ru.memman.enums.NewsCategory;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Date;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
 @Getter
-@ToString
 @Builder
 public class AloneNew {
     @Id
@@ -31,11 +26,17 @@ public class AloneNew {
     @JoinColumn(name = "sending_from")
     private Recipient sendFrom;
 
+    @Column(name = "exist_prime")
+    private boolean existPrimePhoto;
+
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "letter_recipient",
             joinColumns = @JoinColumn(name = "letter_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "man_id", referencedColumnName = "id"))
     private Set<Recipient> sendTo;
+
+    @OneToMany(mappedBy = "mainLetter", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    private List<LetterLocal> letterLocalisations;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "attention")
@@ -57,8 +58,14 @@ public class AloneNew {
     @Enumerated(EnumType.STRING)
     private NewsCategory category;
 
+    @Column(name = "notReadingString")
+    private String notReadingString;
+
     @Column(name = "already_read")
     private boolean alreadyRead;
+
+    @Column(name = "exist_loc")
+    private boolean existLocalisations;
 
     @Enumerated(EnumType.STRING)
     private Localisation localisation;
@@ -68,7 +75,7 @@ public class AloneNew {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AloneNew aloneNew = (AloneNew) o;
-        return alreadyRead == aloneNew.alreadyRead && Objects.equals(id, aloneNew.id) && Objects.equals(sendFrom, aloneNew.sendFrom) && Objects.equals(sendTo, aloneNew.sendTo) && Objects.equals(creationDate, aloneNew.creationDate) && Objects.equals(subject, aloneNew.subject) && Objects.equals(imageUrl, aloneNew.imageUrl) && Objects.equals(textInfo, aloneNew.textInfo) && category == aloneNew.category;
+        return existPrimePhoto == aloneNew.existPrimePhoto && existLocalisations == aloneNew.existLocalisations && Objects.equals(id, aloneNew.id) && Objects.equals(externId, aloneNew.externId) && Objects.equals(sendFrom, aloneNew.sendFrom) && Objects.equals(sendTo, aloneNew.sendTo) && Objects.equals(letterLocalisations, aloneNew.letterLocalisations) && attention == aloneNew.attention && Objects.equals(creationDate, aloneNew.creationDate) && Objects.equals(subject, aloneNew.subject) && Objects.equals(imageUrl, aloneNew.imageUrl) && Objects.equals(textInfo, aloneNew.textInfo) && category == aloneNew.category && Objects.equals(notReadingString, aloneNew.notReadingString) && localisation == aloneNew.localisation;
     }
 
     @Override
@@ -76,3 +83,4 @@ public class AloneNew {
         return Objects.hash(id);
     }
 }
+

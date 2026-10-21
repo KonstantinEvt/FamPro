@@ -2,6 +2,7 @@ package ru.memman.enums;
 
 public enum SwitchPosition {
     PRIME("photo of person", "фото персоны"),
+    LITTLE("small photo of person", "фото персоны для контакта"),
     BIRTH("photo of birth place", "фото места рождения"),
     BURIAL("photo of burial place", "фото места захоронения"),
     ADDRESS("photo of address", "фото места проживания"),

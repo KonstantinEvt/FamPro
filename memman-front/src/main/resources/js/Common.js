@@ -1,33 +1,63 @@
+console.log(localStorage.getItem(`currentLang`));
+let currentLang = (localStorage.getItem(`currentLang`) === null) ? "ru" : localStorage.getItem('currentLang');
+const localisation = [{name: 'ru', value: 'Русский'},
+    {name: 'en', value: 'English'},
+    {name: 'bu', value: 'Белорусский'}
+];
 const langEn = new Map([
     ['langTabLabel', 'Languish'],
-    ['selectLang', 'Select']
+    ['selectLang', 'Select'],
+    ['ADMIN', 'Admin'],
+    ['LINKED_USER', 'Linked'],
+    ['SIMPLE_USER', 'Simple'],
+    ['BASE_USER', 'Base'],
+    ['VIP', 'VIP']
 ]);
 const langRu = new Map([
     ['langTabLabel', 'Язык'],
-    ['selectLang', 'Выбрать']
+    ['selectLang', 'Выбрать'],
+    ['ADMIN', 'Админ'],
+    ['LINKED_USER', 'Связанный'],
+    ['SIMPLE_USER', 'Простой'],
+    ['BASE_USER', 'Базовый'],
+    ['VIP', 'VIP']
 ]);
 const numOfPart = new Map([
     [10, 6],
     [1, 5],
     [2, 5],
     [3, 4],
-    [31, 3],
     [4, 0],
-    [5, 3]
+    [5, 3],
+    [22,5]
 ]);
 const globalMenuEn = new Map([
     [0, 'Welcome'],
     [1, 'Language change'],
+    [1000, 'News'],
+    [2000, 'Person base'],
+    [3000, 'Communication'],
+    [4000, 'Journal'],
+    [5000, 'Move']
 ]);
 const globalMenuRu = new Map([
     [0, 'Привет'],
-    [1, 'Смена языка']
+    [1, 'Смена языка'],
+    [1000, 'Новости'],
+    [2000, 'База персон'],
+    [3000, 'Коммуникация'],
+    [4000, 'Дневник'],
+    [5000, 'Перейти']
 ]);
 let langMatrix = new Map([[``, ``]]);
 let globalTexts = new Map([[0, ``]]);
 let globalMenu = new Map([[0, ``]]);
 let localMenu = new Map([[0, ``]]);
 let tempLoad;
+let tempChoice = new Map([]);
+let rawNewsMap = new Map([]);
+let systemRecipientID = "4825cb05-9a8c-373b-9c8a-1ff422af5c2f";
+let informerRecipientID="ba275e26-9a88-3cd9-bf6a-5507ca85053a";
 
 const endPoints = new Map([
         [`getLang`, `/front/languish/get`],
@@ -37,50 +67,63 @@ const endPoints = new Map([
         [`languishBeginLoad`, '/front/languish/beginLoad'],
         [`home`, `/front/welcome`],
         [`filePrivate`, `/file/private`],
-        [`contactPhoto`, `/file/photoContact`],
-        [`fileSystem`, `/file/system`],
+        [`contactPhoto`, `/file/contact`],
+        [`fileSystem`, `/file/standard`],
         [`getLinkGuard`, `/family/guard/getLinkGuard`],
         [`newsPortal`, `/notify/news`],
         [`newsPrivate`, `/notify/message`],
         [`recipient`, `/notify/recipient`],
         [`getInline`, `/inline/get`],
-        [`setOffline`, `/inline/out`]
+        [`setOffline`, `/inline/out`],
+        [`guard`, `/family/guard`],
+        [`base`, `/frontAPI/base`],
+        [`sso`, `/frontAPI/sso`],
+        [`contacts`, `/contact/contact`]
 
     ]
 );
-
+drawLocalisationList()
+clearLoads(currentLang)
 setupLang()
 
+function drawLocalisationList() {
+    let temp = ``;
+    for (let i = 0; i < localisation.length; i++) {
+        temp += `<div>
+            <input type="radio" id="${localisation[i].name}Loc" name="loc" value=${localisation[i].name}>
+            <label for="${localisation[i].name}Loc">${localisation[i].value} </label>
+        </div>`
+    }
+    document.getElementById('localisationList').innerHTML = temp;
+}
+
 function clearLoads(lang) {
+    if (lang === undefined) lang = 'ru';
     if (lang === 'en') {
         globalMenu = globalMenuEn;
+        langMatrix = langEn
     } else {
         globalMenu = globalMenuRu;
+        langMatrix=langRu
     }
     globalTexts.clear();
     localMenu.clear();
-    langMatrix.clear()
 }
 
 function setupLang() {
     drawNavPanel();
     let justChange = localStorage.getItem('justChange');
     const now = Date.now();
-    if (justChange !== null) {
-        if ((now - justChange) / 60000 < 10) {
-            switch (localStorage.getItem(`currentLang`)) {
-                case "en":
-                    changeLang("en", true);
-                    break;
-                default:
-                    changeLang("ru", true);
-            }
-            console.log((now - justChange) / 60000)
-        } else getRegisterLang();
+    if (justChange !== null && justChange !== undefined && ((now - justChange) / 60000 < 10)) {
+        switch (localStorage.getItem(`currentLang`)) {
+            case "en":
+                changeLang("en", true);
+                break;
+            default:
+                changeLang("ru", true);
+        }
+        console.log((now - justChange) / 60000)
     } else getRegisterLang();
-
-    console.log("languish setup resume: ", currentLang);
-    console.log("Current time delay", (now - justChange) / 60000);
     localStorage.setItem('justChange', now + ``);
 }
 
@@ -91,8 +134,8 @@ function getRegisterLang() {
     }).then(response =>
         response.text())
         .then(lang => {
-                console.log("Try to receive register langvish", lang);
-                if (lang !== "en" || lang !== "ru") {
+                console.log("Try to receive register languish", lang);
+                if (lang !== "en" && lang !== "ru") {
                     currentLang = "ru";
                     setRegisterLang(currentLang).then(() => {
                         console.log("Установлен русский язык по-умолчвнию");
@@ -160,7 +203,7 @@ function drawNavPanel() {
     for (let i = 2; i < 6; i++) {
         temp += `<li class="nav-item dropdown">
                 <a id="mainMenu${i * 1000}" class="nav-link dropdown-toggle" style="color: darkred" href="#" role="button"
-                    data-bs-toggle="dropdown" aria-expanded="false">                
+                    data-bs-toggle="dropdown" aria-expanded="false">${globalMenu.get(i * 1000)}                
                 </a>
                 <ul class="dropdown-menu"
                 style="background-color: #eaecbd; color: chocolate;font-family: 'Times New Roman',serif; font-size: 16px; padding:0; align-content: center">
@@ -179,32 +222,20 @@ function drawNavPanel() {
                            onclick="menuFunc2200(0)" hidden="hidden">${langMatrix.get("linkingButton")}</a></li>  
             </ul>`
     document.getElementById('navbarNavDropdown').innerHTML = temp;
+    document.getElementById(`mainMenu2400`).hidden=true;
 }
 
 function getCommon(choice) {
     document.getElementById("newsFront").innerHTML = `${langMatrix.get("newsFront")}`;
-    document.getElementById("mainPanel").innerHTML = `<div style="max-height: 25%; text-align: center; color: chocolate; 
-        text-shadow: -1px -1px 0 #d1d1d1,
-        1px -1px 0 #d1d1d1,
-        -1px  1px 0 #d1d1d1,
-        1px  1px 0 #d1d1d1,
-        0 -1px 0 #d1d1d1,
-        0  1px 0 #d1d1d1,
-        -1px  0 0 #d1d1d1,
-        1px  0 0 #d1d1d1;
-        font-family: 'Times New Roman',serif; font-weight:bold; font-style: italic; font-size: 22px">*** ${globalMenu.get(choice)} ***</div>
-                <div style="text-align: center; color: white; text-shadow: -1px -1px 0 #000,
-       1px -1px 0 #000,
-      -1px  1px 0 #000,
-       1px  1px 0 #000,
-       0 -1px 0 #000,
-       0  1px 0 #000,
-      -1px  0 0 #000,
-       1px  0 0 #000; font-family: 'Times New Roman',serif; margin-bottom:40%; font-weight:500; font-size: 18px">${globalTexts.get(choice)}</div>`;
+    document.getElementById("mainPanel").innerHTML = `<div class="main_title" style="max-height: 25%">*** ${globalMenu.get(choice)} ***</div>
+                <div class="main_under" style="margin-bottom:40%">${globalTexts.get(choice)}</div>`;
     document.querySelector('title').textContent = `${langMatrix.get("mainTitle")}`
 }
 
 function getLogout() {
+    let confirmNote=document.getElementById("logoutText");
+    if (confirmNote!==undefined&&confirmNote!==null) confirmNote.innerHTML=`<div class="spinner-border" role="status"> 
+        <span class="visually-hidden">Logout...</span></div>`;
     fetch(endPoints.get("setOffline"), {
         method: 'GET',
         headers: {},

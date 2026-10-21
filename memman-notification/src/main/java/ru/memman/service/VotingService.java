@@ -36,7 +36,6 @@ public class VotingService {
     private final RecipientRepo recipientRepo;
     private final VotingRepo votingRepo;
     private final LinkedList<DirectiveGuards> votingDirective;
-    private final ContactService contactService;
 
     public VotingService(NotificationRepo notificationRepo,
                          MessageService messageService,
@@ -44,7 +43,7 @@ public class VotingService {
                          AloneNewMapper aloneNewMapper,
                          AloneNewRepo aloneNewRepo,
                          RecipientRepo recipientRepo,
-                         VotingRepo votingRepo, @Qualifier("directiveVoting") LinkedList<DirectiveGuards> votingDirective, ContactService contactService) {
+                         VotingRepo votingRepo, @Qualifier("directiveVoting") LinkedList<DirectiveGuards> votingDirective) {
         this.notificationRepo = notificationRepo;
         this.messageService = messageService;
         this.standardInfoHolder = standardInfoHolder;
@@ -53,7 +52,6 @@ public class VotingService {
         this.recipientRepo = recipientRepo;
         this.votingRepo = votingRepo;
         this.votingDirective = votingDirective;
-        this.contactService = contactService;
     }
 
     @Transactional
@@ -93,24 +91,24 @@ public class VotingService {
         if (value) {
             List<Recipient> contactPerson = lettersOfVoting.stream().flatMap(x -> x.getSendTo().stream()).toList();
             RecipientDto recipientDto = new RecipientDto();
-            contactService.addContact(contactPerson.get(0), recipientDto, contactPerson.get(1));
-            contactService.addContact(contactPerson.get(1), recipientDto, contactPerson.get(0));
+//            contactService.addContact(contactPerson.get(0), recipientDto, contactPerson.get(1));
+//            contactService.addContact(contactPerson.get(1), recipientDto, contactPerson.get(0));
             for (int i = 0; i < 2; i++) {
                 AloneNew aloneNew =new AloneNew();
-                aloneNew.setAlreadyRead(false);
+//                aloneNew.setAlreadyRead(false);
                 aloneNew.setExternId(lettersOfVoting.get(i).getExternId().concat("i"));
                 aloneNew.setCategory(NewsCategory.PRIVATE);
                 aloneNew.setCreationDate(new Timestamp(System.currentTimeMillis()));
                 aloneNew.setTextInfo("New contact is added. This letter is send automatic");
                 aloneNew.setSubject("Contact added");
                 aloneNew.setSendFrom(contactPerson.get(i));
-                aloneNew.setImageUrl(contactPerson.get(i).isUrlPhoto() ? contactPerson.get(i).getLinkExternId() : "");
+                aloneNew.setImageUrl(contactPerson.get(i).isExistPrimePhoto() ? contactPerson.get(i).getLinkExternId() : "");
                 aloneNew.setSendTo(Set.of((i == 0) ? contactPerson.get(1) : contactPerson.get(0)));
                 aloneNewRepo.save(aloneNew);
                 AloneNewDto letter = aloneNewMapper.entityToDto(aloneNew);
                 letter.setSendingTo((i == 0) ? contactPerson.get(1).getExternUuid() : contactPerson.get(0).getExternUuid());
                 letter.setSendingFromAlt(contactPerson.get(i).getNickName());
-                standardInfoHolder.addNewMessageToPerson(letter);
+                standardInfoHolder.addNewMessageToPerson(letter,letter.getSendingTo());
 
 //                standardInfoHolder.removeMessageFromPerson(lettersOfVoting.get(i).getSendFrom().getExternId(), aloneNewMapper.entityToDto(lettersOfVoting.get(i)));
             } aloneNewRepo.deleteAll(lettersOfVoting);
@@ -118,7 +116,7 @@ public class VotingService {
             int i = (lettersOfVoting.get(0).getSubject().equals("Contact request")) ? 1 : 0;
             String nickName = (i == 0) ? lettersOfVoting.get(1).getSendTo().stream().findFirst().orElseThrow().getNickName() : lettersOfVoting.get(0).getSendTo().stream().findFirst().orElseThrow().getNickName();
             AloneNew aloneNew = lettersOfVoting.get(i);
-            aloneNew.setAlreadyRead(false);
+//            aloneNew.setAlreadyRead(false);
             aloneNew.setCreationDate(new Timestamp(System.currentTimeMillis()));
             aloneNew.setTextInfo(StringUtils.join("Request for contact with ", nickName, " is rejected",' '));
             aloneNew.setSubject("Contact reject");
@@ -127,7 +125,7 @@ public class VotingService {
             AloneNewDto letter = aloneNewMapper.entityToDto(aloneNew);
             letter.setSendingTo(aloneNew.getSendTo().stream().findFirst().orElseThrow().getExternUuid());
             letter.setSendingFromAlt("System");
-            standardInfoHolder.addNewMessageToPerson(letter);
+            standardInfoHolder.addNewMessageToPerson(letter, letter.getSendingTo());
             if (i == 0) aloneNewRepo.delete(lettersOfVoting.get(1));
             else aloneNewRepo.delete(lettersOfVoting.get(0));
         }
@@ -158,7 +156,7 @@ public class VotingService {
         voting.getRecipients().addAll(lettersOfVoting.get(0).getSendTo());
         voting.getRecipients().addAll(lettersOfVoting.get(1).getSendTo());
         AloneNew aloneNew = AloneNew.builder()
-                .alreadyRead(false)
+//                .alreadyRead(false)
                 .externId(voting.getLetter())
                 .subject("Голосование завершено")
                 .creationDate(new Timestamp(System.currentTimeMillis()))
@@ -218,7 +216,7 @@ public class VotingService {
                 aloneNew.getSendTo()) {
             letterForGuard.setSendingTo(guard.getExternUuid());
             letterForGuard.setSendingFromAlt("Informer");
-            standardInfoHolder.addNewMessageToPerson(letterForGuard);
+            standardInfoHolder.addNewMessageToPerson(letterForGuard,guard.getExternUuid());
         }
         votingRepo.delete(voting);
         votingDirective.add(directive);

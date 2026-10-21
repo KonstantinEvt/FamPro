@@ -1,40 +1,38 @@
 function menuFunc2200(cause) {
     loadStandardMainPanel();
     loadOnlineUser();
-    document.getElementById("taskPart").innerHTML = `
-        <br>
-        <div style="font-family: 'Times New Roman', serif; font-size: 14px; text-align: center; color: chocolate">Поиск по:</div>
-        <div class="btn-group-vertical" role="group" aria-label="Vertical button group" style="width:100%; margin-left: 5px; margin-right: -5px">
-            <input type="radio" class="btn-check" name="search-option" onclick="getPersonFromBaseById(${cause})" id="search-radio1" autocomplete="off" checked>
-            <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; text-align:center; font-size: 14px; color: darkred" for="search-radio1">ID</label>
-            <input type="radio" class="btn-check" name="search-option" onclick="getPersonFromBaseByFio(${cause})" id="search-radio2" autocomplete="off"> 
-            <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; font-size: 14px; color: darkred" for="search-radio2">ФИО/ДР</label>
-            <input type="radio" class="btn-check" name="search-option" id="search-radio3" autocomplete="off" hidden="hidden">           
-            <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; font-size: 14px; color: darkred" for="search-radio3" hidden="hidden">ФИО</label>
-            <input type="radio" class="btn-check" name="search-option" id="search-radio4" autocomplete="off" hidden="hidden">           
-            <label class="btn btn-outline-warning" style="padding-right: 0; padding-left: 0; font-size: 14px; color: darkred" for="search-radio4" hidden="hidden">Any</label>
-        </div>
-        <div id="link-block"></div>
-`
-    if (cause !== null) document.getElementById("link-block").innerHTML = `       
-        <div style="margin-top:50px; color: black;font-family: 'Times New Roman',serif; font-size: 12px; text-align: center; padding-left: 10px">Связать регистрацию с записью в базе</div>
+    let temp = `
+        <div class="main_select" style="margin-top:24px;" >${langMatrix.get("criteria")}</div>
+        <div class="btn-group-vertical" role="group" aria-label="Vertical button group" style="background-color:rgb(255,255,255,40%);margin-left: 7px; margin-right: 4px; min-width: 80%">`
+    for (let i = 1; i < numOfPart.get(22); i++) {
+        temp += `<input type="radio" class="btn-check" name="search-radio" onclick="menuFunc${2200 + i}(${cause})" id="search-radio${i}" autoComplete="off" >
+        <label class="btn btn-outline-warning" style="padding-right: 3px; padding-left: 3px; text-align:center; font-size: 14px; color: darkred" for="search-radio${i}">${localMenu.get(2000 + i * 100)}             
+        </label>`;
+    }
+    temp += `</div><div id="link-block"></div>`
+    document.getElementById("taskPart").innerHTML = temp;
+    document.getElementById(`search-radio1`).checked = true;
+    document.getElementById(`search-radio3`).disabled = true;
+    document.getElementById(`search-radio4`).disabled = true;
+    if (cause === 0) document.getElementById("link-block").innerHTML = `       
+        <div style="margin-top:50px; color: darkred;font-family: 'Times New Roman',serif; font-size: 12px; text-align: center; padding-left: 10px">${globalTexts.get(2153)}</div>
         <br>
         <form id="linkForm" class="form-group" style="align-items: center; align-content: center; text-align: center; padding-left: 10px">
-            <label for="idLink" style="color: chocolate; ">Id человека в базе</label>
+            <label for="idLink" style="color: chocolate; ">${globalTexts.get(2152)}</label>
             <input class="form-control" type="text" id="idLink" name="idLink" required>
-            <br>
-            <button class="btn btn-outline-warning" style="color: darkred" type="button" onclick="linkUser()">Связать</button>
+            <button class="btn btn-outline-warning" style="color: darkred; margin-top: 24px" type="button" onclick="linkUser()">${langMatrix.get("link")}</button>
         </form>`
-
+    temp = (cause === 0) ? globalTexts.get(2154) : globalTexts.get(2146);
     document.getElementById("resultPart").innerHTML = `
-        <div class="accordion" style=" --bs-accordion-active-bg: #eaecbd;  --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgb(234 212 101 / 25%); padding-top: 4px" id="accordionExample" >
+        <div class="main_title" >${temp}</div>
+        <div class="accordion" style=" --bs-accordion-active-bg: #eaecbd;  --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgb(234 212 101 / 25%); padding-top: 4px" id="accordionSearch" >
         <div class="accordion-item">
             <h2 class="accordion-header">
                <button class="accordion-button" style="padding-bottom:8px; padding-top:8px; color: darkred;text-align: center" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSearchForm" aria-expanded="true" aria-controls="collapseSearchForm">
-                Форма поиска
+                ${globalTexts.get(2147)}
                 </button>
             </h2>
-            <div id="collapseSearchForm" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+            <div id="collapseSearchForm" class="accordion-collapse collapse show" data-bs-parent="#accordionSearch">
                 <div class="accordion-body" style="padding-right: 5px;padding-left: 10px">
                     <div class="container-fluid row mh-100 no-gutters">
                         <span class="col" style="width: 20%"></span>
@@ -49,54 +47,49 @@ function menuFunc2200(cause) {
         <div class="accordion-item">
             <h2 class="accordion-header">
                 <button class="accordion-button collapsed" style="padding-bottom:8px; padding-top:8px; color: darkred;text-align: center" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" aria-expanded="false" aria-controls="collapseResultForm">
-                    Результат поиска
+                    ${globalTexts.get(2148)}
                 </button>
             </h2>
-            <div id="collapseResultForm" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                <div class="accordion-body">
+            <div id="collapseResultForm" class="accordion-collapse collapse" data-bs-parent="#accordionSearch">
+                <div class="accordion-body" style="padding: 3px">
                     <div id="resultFindingPerson">
                         <div class="container-fluid row mh-100 no-gutters">
-                            <span style="text-align: center; font-size: 18px; color: darkred; font-family: 'Times New Roman',serif" >Запрос не выполнен</span> 
+                            <span style="text-align: center; font-size: 18px; color: darkred; font-family: 'Times New Roman',serif" >${globalTexts.get(2149)}</span> 
                         </div> 
                     </div> 
                 </div>
             </div>
         </div>
-        </div>
-            `;
-    getPersonFromBaseById(cause);
+        </div>`;
+    menuFunc2201(cause);
 }
 
-function getPersonFromBaseById(cause) {
-
+function menuFunc2201(cause) {
     document.getElementById("formOfSearch").innerHTML = `                            
         <form class="form-group" style="margin:2px; text-align: center" id="findPersonById">
-            <label for="idFindFM" style="color: chocolate; padding-top: 5px">Id:</label>
+            <label for="idFindFM" style="color: chocolate; padding-top: 5px">${localMenu.get(2100)}</label>
             <input class="form-control" type="text" id="idFindFM" name="idFindFM" autocomplete="on" required> 
-            <br>
-            <button class="btn btn-outline-warning" style="color: darkred" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" onclick="findPerson(0,${cause},null)">Найти человека</button>
+            <button class="btn btn-outline-warning" style="color: darkred; margin-top:24px" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" onclick="findPerson(0,${cause})">${globalTexts.get(2150)}</button>
         </form> 
 `
 }
 
-function getPersonFromBaseByFio(cause) {
+function menuFunc2202(cause) {
     document.getElementById("formOfSearch").innerHTML = `
-        <form class="form-group" style="margin:5px; text-align: center" id="findPersonById">
-                       
-            <label for="firstNameFindFM" style="color: chocolate; padding-top: 5px">Имя:</label>
+        <form class="form-group" style="margin:5px; text-align: center" id="findPersonById">                       
+            <label for="firstNameFindFM" style="color: chocolate; padding-top: 5px">${langMatrix.get("name")}</label>
             <input class="form-control" type="text" id="firstNameFindFM" name="firstNameFindFM" autocomplete="on" required>
             
-            <label for="middleNameFindFM" style="color: chocolate; padding-top: 5px">Отчество:</label>
+            <label for="middleNameFindFM" style="color: chocolate; padding-top: 5px">${langMatrix.get("patronymic")}</label>
             <input class="form-control" type="text" id="middleNameFindFM" name="middleNameFindFM" autocomplete="on" required> 
                        
-            <label for="lastNameFindFM" style="color: chocolate; padding-top: 5px">Фимилия:</label>
+            <label for="lastNameFindFM" style="color: chocolate; padding-top: 5px">${langMatrix.get("surname")}</label>
             <input class="form-control" type="text" id="lastNameFindFM" name="lastNameFindFM" autocomplete="on" required>             
 
-            <label for="birthdayFindFM" style="color: chocolate; padding-top: 5px">День рождения:</label>
+            <label for="birthdayFindFM" style="color: chocolate; padding-top: 5px">${langMatrix.get("birthday")}</label>
             <input class="form-control" type="date" id="birthdayFindFM" name="birthdayFindFM" required>               
 
-            <br>
-            <button class="btn btn-outline-warning" style="color: darkred" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" onclick="findPerson(1,${cause},null)">Найти человека</button>
+            <button class="btn btn-outline-warning" style="color: darkred; margin-top: 24px" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" onclick="findPerson(1,${cause})">${globalTexts.get(2150)}</button>
         </form>
  `;
 }
@@ -104,148 +97,164 @@ function getPersonFromBaseByFio(cause) {
 async function simplePaintingOfPerson(choice, cause, uuidIn) {
     loadStandardMainPanel();
     document.getElementById("taskPart").innerHTML = `
-        <div id="link-block"></div>
-`
+        <div id="link-block"></div>`
+    let back = URL.createObjectURL(defaultPhotos.groundTrees)
     document.getElementById("resultPart").innerHTML = `
-                    <div id="resultFindingPerson">
-                        <div class="container-fluid row mh-100 no-gutters">
-                            <span style="text-align: center; font-size: 18px; color: darkred; font-family: 'Times New Roman',serif" >Ожидание данных</span> 
+                    <div id="resultFindingPerson" style="background: url(${back}) repeat">
+                        <div class="container-fluid row mh-100 no-gutters" >
+                            <span style="text-align: center; padding:6px;font-size: 18px; color: darkred; font-family: 'Times New Roman',serif" >${globalTexts.get(2151)}</span> 
                         </div> 
                     </div> `
     findPerson(choice, cause, uuidIn).then(x => console.log(x));
+    URL.revokeObjectURL(defaultPhotos.groundTrees);
 }
 
-async function getMembersCreated() {
-
+async function menuFunc2300() {
     let members = await findCreatedMembers();
     if (members.length !== 0) {
-        let temp=drawFindingMembers(members,"create");
-        document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Список созданных Вами персон</div>`
+        let temp = drawFindingMembers(members, "create");
+        let back = URL.createObjectURL(defaultPhotos.groundTrees)
+        document.getElementById("mainPanel").innerHTML = `<div class="main_title">${globalTexts.get(2400)}</div>`
         document.getElementById("mainPanel").innerHTML += `
         <div class="container-fluid row mh-100 no-gutters" style="margin-top: 10px" >
-            <span class="navbar-brand col-8"
-                style="color: black;font-family: 'Times New Roman',serif; font-size: 16px; width: 70%;margin: 0;padding: 0">Имя &nbsp;            
-                Отчество&nbsp;Фамилия</span>
-            <span class="navbar-brand col-1"
-                style="padding:0; color: darkred;font-family: 'Times New Roman',serif; font-size: 16px; overflow-x: auto" >ДР</span>
-            <span class="navbar-brand col-1" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 16px">Статус</span> 
-            <span class="navbar-brand col"></span>
-        </div><div style="height: 84vh; max-width:100%; overflow-x: auto">` + temp+`</div>`
-    } else {document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Вы пока не вводили никаких персон</div>`;
+            <div class="col"><span class="main_under" style="width: 70%; text-align: left;font-size: 16px">
+                            ${langMatrix.get("name")}&nbsp;${langMatrix.get("patronymic")}&nbsp;${langMatrix.get("surname")}</span></div>
+            <div class="col-1" style="width: 70px"><span class="main_under" style="font-size: 16px">${langMatrix.get("birthday")}</span></div>
+            <div class="col-1" style="width: 70px"><span class="main_under" style="font-size: 16px">${langMatrix.get("status")}</span></div>
+            <div class="col-1" style="width: 2%"></div>
+        </div><div style="height: 84vh; max-width:100%; overflow-x: auto; background: url('${back}') repeat">` + temp + `</div>`;
+        URL.revokeObjectURL(defaultPhotos.groundTrees);
+    } else {
+        document.getElementById("mainPanel").innerHTML = `<div class="main_title" style="text-align: center">${globalTexts.get(2401)}</div>`;
     }
 }
-function drawFindingMembers(members,choice){
-    let rows ;
+
+function drawFindingMembers(members, choice) {
+    let rows;
     let temp;
     let status;
     let birthday;
-    let rowAnc=``;
-    let rowRel=``;
-    let rowBro=``;
-    let rowGrandCh=``;
-    let rowGrand=``;
-    let rowChild=``;
-    let rowParent=``;
-    let rowOther=``;
-    let rowDes=``;
-    let rowPer=``;
-        for (let tempMember of members) {
-            let memberInfoTemp = tempMember.firstName + ' ' + tempMember.middleName + ' ' + tempMember.lastName;
-            if (choice==="create") tempMember.relationString="Персона";
-                switch (tempMember.checkStatus) {
-                case "LINKED":
-                    status = "Связан";
-                    break;
-                case "CHECKED":
-                    status = "Защита";
-                    break;
-                case "MODERATE":
-                    status = "Модерация";
-                    break;
-                default :
-                    status = "Общий";
-            }
-            if (tempMember.birthday===null) birthday= "скрыто"
-            else birthday=tempMember.birthday;
-            temp= `<div class="container-fluid row mh-100 no-gutters" style="margin-top: 15px; background-color: #EFF0ED">
+    let rowAnc = ``;
+    let rowRel = ``;
+    let rowBro = ``;
+    let rowGrandCh = ``;
+    let rowGrand = ``;
+    let rowChild = ``;
+    let rowParent = ``;
+    let rowOther = ``;
+    let rowDes = ``;
+    let rowPer = ``;
+    for (let tempMember of members) {
+        let memberInfoTemp = tempMember.firstName + ' ' + tempMember.middleName + ' ' + tempMember.lastName;
+        if (choice === "create") tempMember.relationString = "<strong>" + langMatrix.get("created") + ":</strong> " + getDate(new Date(tempMember.createTime));
+        status = langMatrix.get(tempMember.checkStatus);
+        if (tempMember.birthday === null) birthday = langMatrix.get("hidden")
+        else birthday = getDate(new Date(tempMember.birthday));
+        temp = `<div class="container-fluid row mh-100 no-gutters" style="margin-top: 15px; background-color: rgb(200, 200, 180, 60%)">
         <span class="navbar-brand col-9 "
-              style="color: darkred;font-family: 'Times New Roman',serif; font-size: 16px; width: margin-top: 15px;70%;margin: 0;padding: 0"><em>${tempMember.firstName}&nbsp;
-                            ${tempMember.middleName}&nbsp;
-                            ${tempMember.lastName}</em></span>
+              style="color: darkred;font-family: 'Times New Roman',serif; font-size: 16px; width: 70%;margin: 5px 0 5px 0;padding: 0;font-style: italic">${tempMember.firstName}&nbsp;
+                            ${tempMember.middleName}&nbsp;                            
+                            ${tempMember.lastName}</span>
                             <span class="col"></span>
                             </div>
-        <div class="container-fluid row mh-100 no-gutters" style="margin-bottom: 5px;background-color: #EFF0ED"> 
-                 <span class="navbar-brand col" style="color: black;font-family: 'Times New Roman',serif; font-size: 14px"><em>${tempMember.relationString}</em></span>         
-        <span class="navbar-brand col-2"
-              style="padding:0; color: black;font-family: 'Times New Roman',serif; font-size: 14px; margin-right: 10px">${birthday}</span>
-        <span class="navbar-brand col-1" style="color: black;font-family: 'Times New Roman',serif; font-size: 14px">${status}</span>
-        <span class="navbar-brand col-1"></span>
-        </div>
-                <div class="container-fluid row mh-100 no-gutters" >
-               
-                    <span class="btn-group-horizontal" role="group"  style="width:100%; margin: 0; padding:0">
-                     <span style="color: green;margin-top: 0; margin-bottom: 10px;font-size: 14px">Операции:</span>
-                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px " type="button" onclick="simplePaintingOfPerson(2,1,'${tempMember.uuid}')">Найти</button>
-                    
-                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px" type="button" onclick="getGeneticTree('${tempMember.uuid}', 'GENETIC_TREE', '${memberInfoTemp}')">Древо</button>
-                    
-                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px" type="button" onclick="getGeneticTree('${tempMember.uuid}', 'ANCESTOR','${memberInfoTemp}')">Предки</button>
-                    
-                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px" type="button" onclick="getGeneticTree('${tempMember.uuid}', 'STRAIGHT_BLOOD', '${memberInfoTemp}')">Потомки</button></span>
- 
-                            </div>`
-        switch (tempMember.relationString){
-            case "Предок": rowAnc+= temp; break;
-            case "Дедушка": case "Бабушка" : rowGrand+= temp; break;
-            case "Мать": case "Отец"   : rowParent+= temp; break;
-            case "Брат": case "Сестра": rowBro+= temp; break;
-            case "Сын": case "Дочь"  : rowChild+= temp; break;
-            case "Внук": case "Внучка": rowGrandCh+= temp; break;
-            case "Потомок":  rowDes+= temp; break;
-            case "Родственник"  : rowRel+= temp; break;
-            case "Персона": rowPer+=temp; break;
-            default: rowOther+= temp;
-            }
+        <div class="container-fluid row mh-100 no-gutters" style="background-color: rgb(230, 230, 200, 40%); margin-left: -12px;padding-left: 12px"> 
+                <span class="navbar-brand col" style="text-align:left; padding-left:0;color: black;font-family: 'Times New Roman',serif; font-size: 14px;font-style: italic">${tempMember.relationString}</span>         
+                <span class="navbar-brand col-2"
+                    style="padding:0; color: black;font-family: 'Times New Roman',serif; font-size: 14px; margin-right: 10px; width: 70px">${birthday}</span>
+                <span class="navbar-brand col-1" style="color: black;font-family: 'Times New Roman',serif; font-size: 14px;width: 70px">${status}</span>
+        </div>`
+        if (choice === "create") temp += `
+        <div class="container-fluid row mh-100 no-gutters" style="background-color: rgb(230, 230, 200, 40%); margin-left: -12px;padding-left: 12px"> 
+            <div style="color: black;font-family: 'Times New Roman',serif; padding-left:0; font-size: 14px;font-style: italic;text-align: left;"><strong>${langMatrix.get("changed")}:</strong> ${getDate(new Date(tempMember.lastUpdate))}</div></div>`
+        temp += `
+        <div style="color: green;margin: 0;font-size: 14px; text-align: center">${globalTexts.get(2155)}</div>
+                <div class="container-fluid row mh-100 no-gutters" style="margin-bottom: 5px; text-align: center">
+                    <span class="btn-group-horizontal" role="group"  style="width:100%; margin: 0; padding:0">                     
+                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px " type="button" onclick="simplePaintingOfPerson(2,1,'${tempMember.uuid}')">${langMatrix.get("find")}</button>
+                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px" type="button" onclick="getGeneticTree('${tempMember.uuid}', 'GENETIC_TREE', '${memberInfoTemp}')">${langMatrix.get("tree")}</button>
+                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px" type="button" onclick="getGeneticTree('${tempMember.uuid}', 'ANCESTOR','${memberInfoTemp}')">${langMatrix.get("ancestors")}</button>
+                        <button class="btn btn-outline-warning" style="color: darkred; font-size: 12px" type="button" onclick="getGeneticTree('${tempMember.uuid}', 'STRAIGHT_BLOOD', '${memberInfoTemp}')">${langMatrix.get("descendants")}</button></span>
+                             </div>`
+        switch (tempMember.relationString) {
+            case "Предок":
+                rowAnc += temp;
+                break;
+            case "Дедушка":
+            case "Бабушка" :
+                rowGrand += temp;
+                break;
+            case "Мать":
+            case "Отец"   :
+                rowParent += temp;
+                break;
+            case "Брат":
+            case "Сестра":
+                rowBro += temp;
+                break;
+            case "Сын":
+            case "Дочь"  :
+                rowChild += temp;
+                break;
+            case "Внук":
+            case "Внучка":
+                rowGrandCh += temp;
+                break;
+            case "Потомок":
+                rowDes += temp;
+                break;
+            case "Родственник"  :
+                rowRel += temp;
+                break;
+            case "Персона":
+                rowPer += temp;
+                break;
+            default:
+                rowOther += temp;
         }
-        rows = rowAnc+rowGrand+rowParent+rowBro+rowPer+rowChild+rowGrandCh+rowDes+rowOther+rowRel;
-     return rows;
+    }
+    rows = rowAnc + rowGrand + rowParent + rowBro + rowPer + rowChild + rowGrandCh + rowDes + rowOther + rowRel;
+    return rows;
 }
+
 async function getGeneticTree(member, choice, memberInfo) {
     let members = await findGeneticTree(member, choice);
+    let title;
+    let text;
+    if (choice === 'GENETIC_TREE') {
+        title = globalTexts.get(2402);
+        text = globalTexts.get(2403)
+    } else if (choice === 'ANCESTOR') {
+        title = globalTexts.get(2404);
+        text = globalTexts.get(2405)
+    } else {
+        title = globalTexts.get(2406);
+        text = globalTexts.get(2405)
+    }
     if (members.length !== 0) {
-    let temp=drawFindingMembers(members,"tree");
-
-        if (choice === 'GENETIC_TREE') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Генеалогическое древо</div>
-            <div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>`;
-        if (choice === 'ANCESTOR') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Предки персоны</div><div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>`;
-        if (choice === 'STRAIGHT_BLOOD') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Потомки персоны</div><div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>`;
+        let back = URL.createObjectURL(defaultPhotos.groundTrees)
+        let temp = drawFindingMembers(members, "tree");
+        document.getElementById("mainPanel").innerHTML = `<div class="main_title">${title}</div>
+            <div class="main_under" style="font-style: italic">${memberInfo}</div>`;
 
         document.getElementById("mainPanel").innerHTML += `
         <div class="container-fluid row mh-100 no-gutters" style="margin-top: 10px" >
-            <span class="navbar-brand col-8"
-                style="color: black;font-family: 'Times New Roman',serif; font-size: 16px; width: 70%;margin: 0;padding: 0">Имя &nbsp;            
-                Отчество&nbsp;Фамилия</span>
-            <span class="navbar-brand col-1"
-                style="padding:0; color: darkred;font-family: 'Times New Roman',serif; font-size: 16px; overflow-x: auto" >ДР</span>
-            <span class="navbar-brand col-1" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 16px">Статус</span> 
-            <span class="navbar-brand col"></span>
-        </div><div style="height: 84vh; max-width:100%; overflow-x: auto">` + temp+`</div>`
-        console.log(members);
+            <div class="col"><span class="main_under" style="width: 70%; text-align: left;font-size: 16px">
+                            ${langMatrix.get("name")}&nbsp;${langMatrix.get("patronymic")}&nbsp;${langMatrix.get("surname")}</span></div>
+            <div class="col-1" style="width: 70px"><span class="main_under" style="font-size: 16px">${langMatrix.get("birthday")}</span></div>
+            <div class="col-1" style="width: 70px"><span class="main_under" style="font-size: 16px">${langMatrix.get("status")}</span></div>
+            <div class="col-1" style="width: 2%"></div>
+        </div><div style="height: 84vh; max-width:100%; overflow-x: auto; background: url('${back}') repeat">` + temp + `</div>`;
+        URL.revokeObjectURL(defaultPhotos.groundTrees);
     } else {
-        if (choice === 'GENETIC_TREE') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Генеалогическое древо для персоны</div>  
-            <div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>
-            <div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">скрыто настройками конфидениальности</div>`;
-        if (choice === 'ANCESTOR') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Предки персоны </div>
-            <div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>
-            <div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">не обнаружены или скрыты настройками конфидениальности</div>`;
-        if (choice === 'STRAIGHT_BLOOD') document.getElementById("mainPanel").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Потомки персоны</div>
-            <div style="color: green;font-family: 'Times New Roman',serif; font-size: 20px;text-align: center"><em>${memberInfo}</em></div>
-            <div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">не обнаружены или скрыты настройками конфидениальности</div>`;
+        document.getElementById("mainPanel").innerHTML = `<div class="main_title">${title}</div>
+            <div class="main_under" style="font-style: italic">${memberInfo}</div>
+            <div class="main_title" style="color: darkred;">${text}</div>`;
     }
 }
+
 async function findCreatedMembers() {
     let members = [];
-    let url = `/base/family_member/getFirstCreator`;
+    let url = endPoints.get("base") + `/getFirstCreator/` + currentLang.toUpperCase();
     await fetch(url, {
         method: 'POST',
         headers: {
@@ -259,7 +268,7 @@ async function findCreatedMembers() {
 
 async function findGeneticTree(member, choice) {
     let members = [];
-    let url = `/base/family_member/getFamilyTree/${member}/${choice}`;
+    let url = endPoints.get("base") + `/getFamilyTree/${member}/${choice}/${currentLang.toUpperCase()}`;
     await fetch(url, {
         method: 'POST',
         headers: {
@@ -271,30 +280,28 @@ async function findGeneticTree(member, choice) {
     return members;
 }
 
-async function findPerson(choice, cause, uuidIn) {
+async function findPerson(choice, cause, externId) {
     const form = document.getElementById('findPersonById');
     let isContact = -1;
     let formData;
-    let urlId = `/base/family_member/`;
+    let urlId = endPoints.get("base") + `/`;
     if (choice === 0) {
         formData = {
             id: form.elements.idFindFM.value
         };
-        urlId += formData.id;
+        urlId += formData.id + "/" + currentLang.toUpperCase();
     }
     if (choice === 1) {
         formData = {
             firstName: form.elements.firstNameFindFM.value,
             middleName: form.elements.middleNameFindFM.value,
             lastName: form.elements.lastNameFindFM.value,
-            birthday: form.elements.birthdayFindFM.value
+            birthday: form.elements.birthdayFindFM.value,
+            localisation: currentLang.toUpperCase()
         }
-
     }
-    if (choice === 2) {
-        formData = {
-            uuid: uuidIn
-        }
+    if (choice === 2 && externId !== undefined && externId !== null) {
+        formData = {uuid: externId, localisation: currentLang.toUpperCase()}
     }
     const jsonData = JSON.stringify(formData);
 
@@ -306,99 +313,67 @@ async function findPerson(choice, cause, uuidIn) {
         body: jsonData,
     }).then(tokenUser => tokenUser.json()).then(async familyMember => {
         paintingFindPerson();
-        externId = familyMember.uuid.toString();
+        externId = familyMember.creator;
         tempPerson = familyMember;
         console.log(tempPerson);
         tempPerson.primePhotoImj = defaultPhotos.person;
         tempSecurity = ``;
         tempTextPhoto = ``
         let pictureUrl = ``
-        let real = false;
-        if (externId === ownLinkId) isContact = -2;
-        else
-            for (let z = 0; z < contacts.length; z++) {
-                if (externId === contacts[z].externId) {
-                    isContact = z;
-                    tempPerson.primePhotoImj = contacts[z].imj;
-                }
-            }
+        if (contacts.get(externId) !== undefined || externId === mainUser.ownId)
+            if (externId === mainUser.ownId) isContact = -2; else isContact = externId;
         document.getElementById("resultListId").innerHTML = familyMember.id;
-
-        if (isContact === -1 || isContact === -2) {
-            tempTextPhoto = '<div class="spinner-border" role="status">\n' +
-                '  <span class="visually-hidden">Loading...</span>\n' +
-                '</div>';
-            pictureUrl = URL.createObjectURL(defaultPhotos.person);
-            if (isContact !== -2 && familyMember.secretLevelPhoto === "CLOSE") {
-                tempTextPhoto = "Фото скрыто";
-            } else if (!familyMember.primePhoto) {
-                tempTextPhoto = "Фото отсутствует";
-            } else real = true;
-            document.getElementById("resultPrimePhoto").innerHTML = `
-                    <div class="card text-bg-dark" style="width: 250px">
+        let real = false;
+        tempTextPhoto = '<div class="spinner-border" role="status"> <span class="visually-hidden">Loading...</span></div>';
+        pictureUrl = URL.createObjectURL(defaultPhotos.person);
+        if (isContact !== -2 && familyMember.secretLevelPhoto === "CLOSE") {
+            tempTextPhoto = globalTexts.get(8);
+        } else if (!familyMember.primePhoto) {
+            tempTextPhoto = globalTexts.get(3);
+        } else real = true;
+        document.getElementById("result_prime").innerHTML = `
+                    <div class="card text-bg-dark" style="display: block; margin: 0 auto; width: 70%;min-width:200px; max-width: 350px">
                         <img src="${pictureUrl}" class="card-img" alt="loading...">
                         <div class="card-img-overlay">
-                            <div class="card-text" style="padding-top: 35%">${tempTextPhoto}</div>
+                            <div class="card-text" id="textOverPrime" style="padding-top: 35%">${tempTextPhoto}</div>
                         </div>
                     </div>`
-            URL.revokeObjectURL(defaultPhotos.person);
-        } else {
-            let pictureUrl = URL.createObjectURL(contacts[isContact].imj);
-            let textPhoto;
-            if (!contacts[isContact].primePhoto && !contacts[isContact].contactPhoto) {
-                textPhoto = "Фото контакта отсутствует";
-            } else textPhoto = ``;
-            document.getElementById("resultPrimePhoto").innerHTML = `
-                    <div class="card text-bg-dark" style="width: 250px">
-                        <img src="${pictureUrl}" class="card-img" alt="loading...">
-                        <div class="card-img-overlay">
-                            <div class="card-text" style="padding-top: 35%">${textPhoto}</div>
-                        </div>                        
-                    </div>`;
-            URL.revokeObjectURL(contacts[isContact].imj);
-        }
-        document.getElementById("resultListFullName").innerHTML = familyMember.fullName;
-        document.getElementById("resultListFather").innerHTML = familyMember.fatherInfo;
-        document.getElementById("resultListMother").innerHTML = familyMember.motherInfo;
-        if (familyMember.memberInfo.secretLevelPhone !== "CLOSE") document.getElementById("resultListPhone").innerHTML = familyMember.memberInfo.mainPhone; else document.getElementById("resultListPhone").innerHTML = "Телефон скрыт";
-        if (familyMember.memberInfo.secretLevelAddress !== "CLOSE") document.getElementById("resultListAddress").innerHTML = familyMember.memberInfo.mainAddress; else document.getElementById("resultListAddress").innerHTML = "Адрес скрыт";
-        if (familyMember.memberInfo.secretLevelEmail !== "CLOSE") document.getElementById("resultListEmail").innerHTML = familyMember.memberInfo.mainEmail; else document.getElementById("resultListEmail").innerHTML = "Email скрыт";
-        switch (familyMember.checkStatus) {
-            case "CHECKED": {
-                document.getElementById("status-finding-person").innerHTML = "защита";
-                document.getElementById("agree-finding-person").innerHTML = ``;
-                break;
+        URL.revokeObjectURL(defaultPhotos.person);
+
+        let motherInfo = familyMember.motherInfo.split(".");
+        let fatherInfo = familyMember.fatherInfo.split(".");
+        let fullName = familyMember.fullName.split(".");
+        document.getElementById("resultListFullName").innerHTML = `<div style="font-size: 16px">${fullName[0]}</div>` + `<div>${fullName[1]}</div>`;
+        document.getElementById("resultListMother").innerHTML = `<div style="font-size: 16px">${motherInfo[0]}</div>`;
+        document.getElementById("resultListFather").innerHTML = `<div style="font-size: 16px">${fatherInfo[0]}</div>`;
+        if (motherInfo.length > 1) document.getElementById("resultListMother").innerHTML += `<div>${motherInfo[1]}</div>`;
+        if (fatherInfo.length > 1) document.getElementById("resultListFather").innerHTML += `<div>${fatherInfo[1]}</div>`;
+
+        if (familyMember.memberInfo.secretLevelPhone !== "CLOSE") document.getElementById("resultListPhone").innerHTML = familyMember.memberInfo.mainPhone; else document.getElementById("resultListPhone").innerHTML = langMatrix.get("phone") + "&nbps;" + langMatrix.get("hidden");
+        if (familyMember.memberInfo.secretLevelAddress !== "CLOSE") document.getElementById("resultListAddress").innerHTML = familyMember.memberInfo.mainAddress; else document.getElementById("resultListAddress").innerHTML = langMatrix.get("address") + "&nbps;" + langMatrix.get("hidden");
+        if (familyMember.memberInfo.secretLevelEmail !== "CLOSE") document.getElementById("resultListEmail").innerHTML = familyMember.memberInfo.mainEmail; else document.getElementById("resultListEmail").innerHTML = langMatrix.get("email") + "&nbps;" + langMatrix.get("hidden");
+        document.getElementById("status-finding-person").innerHTML = langMatrix.get(familyMember.checkStatus);
+        if (familyMember.checkStatus === `LINKED`) if (isContact === -1 && (mainUser.role !== "SIMPLE_USER" && mainUser.role !== "BASE_USER"))
+            document.getElementById("agree-finding-person").innerHTML += `<div><button class="btn btn-outline-warning" style="color: darkred;padding:3px; width:90px; font-size:14px" type="button" onclick="addContactBySearch('${familyMember.creator}')">${langMatrix.get("contact")}</button>
+                <br><button class="btn btn-outline-warning" style="color: darkred;padding:3px; margin-top:6px;font-size:14px; width:90px;" type="button" onclick="menuFunc3100('${familyMember.creator}', '${fullName[0]}')">${langMatrix.get("message")}</button></div>`;
+        else if (isContact === -2) document.getElementById("agree-finding-person").innerHTML += `<div style="color: green;margin-right:-12px; font-size: 18px">${globalTexts.get(2157)}</div>`;
+        else if (isContact === -1) document.getElementById("agree-finding-person").innerHTML += `<button class="btn btn-outline-warning" style="color: darkred;padding:3px; margin-top:6px;font-size:14px" type="button" onclick="menuFunc3100('${familyMember.creator}', '${fullName[0]}')">${langMatrix.get("message")}</button></div>`;
+        else document.getElementById("agree-finding-person").innerHTML += globalTexts.get(2159);
+        if (real) {
+            pictureUrl = endPoints.get("filePrivate") + '/get/prime/' + familyMember.uuid;
+            tempPerson.primePhotoImj = await loadPicture(pictureUrl).then((pic) => {
+                tempTextPhoto = "";
+                return pic;
+            }).catch(() => {
+                tempPerson.primePhotoImj = defaultPhotos.person;
+                tempTextPhoto = globalTexts.get(9)
+            })
+            if (tempPerson.primePhotoImj === undefined) {
+                tempPerson.primePhotoImj = defaultPhotos.person;
+                tempTextPhoto = globalTexts.get(9);
             }
-            case "UNCHECKED": {
-                document.getElementById("status-finding-person").innerHTML = "общий";
-                document.getElementById("agree-finding-person").innerHTML = ``;
-                break;
-            }
-            case "LINKED": {
-                document.getElementById("status-finding-person").innerHTML = "связан";
-                if (isContact === -1 && (document.getElementById("nav2").innerHTML === "LinkedUser" || document.getElementById("nav2").innerHTML === "VIP"))
-                    document.getElementById("agree-finding-person").innerHTML += `<div><button class="btn btn-outline-warning" style="color: darkred" type="button" onclick="addContactBySearch('${externId}')">Контакт</button></div>`;
-                else if (isContact === -2) document.getElementById("agree-finding-person").innerHTML += `<div style="color: green;margin-right:-12px; font-size: 18px">It's you!</div>`
-                break;
-            }
-            case "MODERATE": {
-                document.getElementById("status-finding-person").innerHTML = "на модерации";
-                document.getElementById("agree-finding-person").innerHTML = ``;
-                break;
-            }
-            default: {
-                document.getElementById("status-finding-person").innerHTML = ``;
-                document.getElementById("agree-finding-person").innerHTML = ``;
-                break;
-            }
-        }
-        if (real && (isContact === -1 || isContact === -2)) {
-            tempTextPhoto = ``;
-            pictureUrl = endPoints.get("filePrivate")+'/get/' + familyMember.uuid;
-            tempPerson.primePhotoImj = await loadPicture(pictureUrl);
             let tempPhoto = URL.createObjectURL(tempPerson.primePhotoImj);
-            document.getElementById("resultPrimePhoto").innerHTML = `
-                    <div class="card text-bg-dark" style="width: 250px">
+            document.getElementById("result_prime").innerHTML = `<div class="card text-bg-dark" style="display: block; margin: 0 auto; width: 70%;min-width:200px; max-width: 350px">
                         <img src="${tempPhoto}" class="card-img" alt="loading...">
                         <div class="card-img-overlay">
                             <div class="card-text" style="padding-top: 35%">${tempTextPhoto}</div>
@@ -407,16 +382,16 @@ async function findPerson(choice, cause, uuidIn) {
             URL.revokeObjectURL(tempPerson.primePhotoImj);
         }
         if (cause !== 0 && (familyMember.secretLevelEdit !== "UNDEFINED"
-            || familyMember.memberInfo.secretLevelPhone !== "CLOSE" || familyMember.secretLevelPhone !== "UNDEFINED"
-            || familyMember.memberInfo.secretLevelBiometric !== "CLOSE" || familyMember.secretLevelBiometric !== "UNDEFINED"
-            || familyMember.memberInfo.secretLevelEmail !== "CLOSE" || familyMember.secretLevelEmail !== "UNDEFINED"
-            || familyMember.memberInfo.secretLevelAddress !== "CLOSE" || familyMember.secretLevelAddress !== "UNDEFINED"
-            || familyMember.memberInfo.secretLevelBurial !== "CLOSE" || familyMember.secretLevelBurial !== "UNDEFINED"
-            || familyMember.memberInfo.secretLevelBirth !== "CLOSE" || familyMember.secretLevelBirth !== "UNDEFINED"
-            || familyMember.memberInfo.secretLevelDescription !== "CLOSE" || familyMember.secretLevelDescription !== "UNDEFINED")) {
+            || (familyMember.memberInfo.secretLevelPhone !== "CLOSE" && familyMember.secretLevelPhone !== "UNDEFINED")
+            || (familyMember.memberInfo.secretLevelBiometric !== "CLOSE" && familyMember.secretLevelBiometric !== "UNDEFINED")
+            || (familyMember.memberInfo.secretLevelEmail !== "CLOSE" && familyMember.secretLevelEmail !== "UNDEFINED")
+            || (familyMember.memberInfo.secretLevelAddress !== "CLOSE" && familyMember.secretLevelAddress !== "UNDEFINED")
+            || (familyMember.memberInfo.secretLevelBurial !== "CLOSE" && familyMember.secretLevelBurial !== "UNDEFINED")
+            || (familyMember.memberInfo.secretLevelBirth !== "CLOSE" && familyMember.secretLevelBirth !== "UNDEFINED")
+            || (familyMember.memberInfo.secretLevelDescription !== "CLOSE" && familyMember.secretLevelDescription !== "UNDEFINED"))) {
 
             tempSecurity = {
-                owner: ownId,
+                owner: mainUser.ownId,
                 personId: familyMember.id,
                 personUuid: familyMember.uuid,
                 lastUpdate: familyMember.lastUpdate,
@@ -432,50 +407,44 @@ async function findPerson(choice, cause, uuidIn) {
                 secretLevelBirth: familyMember.memberInfo.secretLevelBirth,
                 secretLevelRemove: familyMember.secretLevelRemove,
                 secretLevelMainInfo: familyMember.secretLevelMainInfo,
+                localisation: currentLang.toUpperCase()
             }
             let tempPanel = `<form id="changePersonForm" class="form-group">
-            <div style="text-align: center; font-size: 12px; color: chocolate; padding-right: 0; padding-left: 5px; padding-bottom:0; margin-top:20px">Выберите</div>
-            <div style="text-align: center; font-size: 12px; color: chocolate; padding-right: 0; padding-left: 5px;">операцию:</div>
-            <div class="btn-group-vertical" role="group" aria-label="Choose group" style="width:100%; margin-left: 5px; margin-right: -5px; margin-bottom: 5px;  text-align: center;">
+                <div class="main_select" style="padding:0 0 0 5px; margin-top:20px">${globalTexts.get(2155)}</div>
+                <div class="btn-group-vertical" role="group" aria-label="Choose group" style="background-color:rgb(255,255,255,40%); width:85%; margin: 6px 0 0 3%;  text-align: center;">
                 <input type="radio" class="btn-check" name="person-operation" id="person-get" value="extended" autocomplete="off" checked>
-                <label class="btn btn-outline-warning" style="padding-right: 6px; padding-left: 6px; font-size: 14px; color: darkred" for="person-get">Info</label>`;
+                <label class="btn btn-outline-warning" style="padding:3px; font-size: 14px; color: darkred" for="person-get">${langMatrix.get("info")}</label>`;
             if (familyMember.secretLevelEdit !== "CLOSE") {
                 tempPanel += `<input type="radio" class="btn-check" name="person-operation" id="person-edit" value="edit"
                        autoComplete="off">
                     <label class="btn btn-outline-warning"
-                           style="padding-right: 6px; padding-left: 6px; font-size: 14px; color: darkred"
-                           for="person-edit">Изменить</label>`
+                           style="padding:3px; font-size: 14px; color: darkred"
+                           for="person-edit">${langMatrix.get("edit")}</label>`
             }
             if (familyMember.secretLevelRemove !== "CLOSE") {
                 tempPanel += `<input type="radio" class="btn-check" name="person-operation" id="person-remove" value="remove" autocomplete="off"> 
-                <label class="btn btn-outline-warning" style="padding-right: 6px; padding-left: 6px; font-size: 14px; color: darkred" for="person-remove">Удалить</label>`
+                <label class="btn btn-outline-warning" style="; padding:3px; font-size: 14px; color: darkred" for="person-remove">${langMatrix.get("remove")}</label>`
             }
             tempPanel += `</div>
-             <div class="btn-group-vertical" role="group" aria-label="Confirm group" style="width:100%; margin-left: 5px; margin-right: -5px;  text-align: center;">            
-                <input type="radio" class="btn-check" name="person-operation" id="person-info" value="none" disabled autocomplete="off"> 
-                          <label for="idChoose" style="font-size:10px; text-align:center; padding-left:8px; padding-right: 3px; border-radius:0; background-color: #F2F1EE">Для подтверждения введите Id человека в базе</label>            
-                <input class="form-control" type="number" style="font-size:10px; text-align:center; padding-left:0; padding-right: 0; border-radius:0" id="idChoose" name="idChoose" placeholder="id" required>                
-                <button class="btn btn-outline-warning" style="padding-right: 6px; padding-left: 6px; color: darkred" type="button" onclick="checkAndSendStorageRequest()">OK</button>
-            </div>
-            </form>`
+                             <button class="btn btn-outline-warning" style="background-color:rgb(255,255,255,40%); padding: 3px; margin-top: 6px; color: darkred" type="button" onclick="checkAndSendStorageRequest()">${langMatrix.get("ok")}</button>
+                            </form>`
             if (familyMember.secretLevelBirthday !== "UNDEFINED" && familyMember.secretLevelBirthday !== "CLOSE") {
-                let tempMemberInfo = familyMember.firstName + ' ' + familyMember.middleName + ' ' + familyMember.lastName
-                tempPanel += `<div class="btn-group-vertical" role="group"  style="width:100%; margin-left: 5px; margin-right: -5px; margin-top: 20px; text-align: center;">
-                    <button class="btn btn-outline-warning" style="color: darkred" type="button"
-                    onclick="getGeneticTree('${familyMember.uuid}', 'GENETIC_TREE', '${tempMemberInfo}')">Древо</button>
-                    <button class="btn btn-outline-warning" style="color: darkred" type="button"
-                    onclick="getGeneticTree('${familyMember.uuid}', 'ANCESTOR', '${tempMemberInfo}')">Предки</button>
-                    <button class="btn btn-outline-warning" style="color: darkred" type="button"
-                    onclick="getGeneticTree('${familyMember.uuid}', 'STRAIGHT_BLOOD', '${tempMemberInfo}')">Потомки</button></div>
-`
-
+                let tempMemberInfo = familyMember.firstName + ' ' + familyMember.middleName + ' ' + familyMember.lastName;
+                tempPanel += `<div class="main_select" style="padding:0 0 0 5px; margin-top:20px">${langMatrix.get("relations")}</div>
+                    <div class="btn-group-vertical" role="group"  style="background-color:rgb(255,255,255,40%); width:85%; margin: 6px 0 0 3%; text-align: center;">
+                        <button class="btn btn-outline-warning" style="color: darkred;padding:3px; font-size:12px" type="button"
+                            onclick="getGeneticTree('${familyMember.uuid}', 'GENETIC_TREE', '${tempMemberInfo}')">${langMatrix.get("tree")}</button>
+                        <button class="btn btn-outline-warning" style="color: darkred; padding:3px; font-size:12px" type="button"
+                            onclick="getGeneticTree('${familyMember.uuid}', 'ANCESTOR', '${tempMemberInfo}')">${langMatrix.get("ancestors")}</button>
+                        <button class="btn btn-outline-warning" style="color: darkred;padding:3px; font-size:12px" type="button"
+                            onclick="getGeneticTree('${familyMember.uuid}', 'STRAIGHT_BLOOD', '${tempMemberInfo}')">${langMatrix.get("descendants")}</button></div>`
             }
             document.getElementById("link-block").innerHTML = tempPanel;
         } else if (cause !== 0) document.getElementById("link-block").innerHTML = ``;
     }).catch(() => {
             document.getElementById("resultFindingPerson").innerHTML = `
                  <div class="container-fluid row mh-100 no-gutters">
-                    <span style="text-align: center; font-size: 18px; color: darkred; font-family: 'Times New Roman',serif" > Человек с данным Id не найден</span> 
+                    <span style="text-align: center; font-size: 18px; color: darkred; font-family: 'Times New Roman',serif" > ${globalTexts.get(2156)}</span> 
                 </div>
                 `;
             document.getElementById("link-block").innerHTML = ``
@@ -485,44 +454,44 @@ async function findPerson(choice, cause, uuidIn) {
 
 function checkAndSendStorageRequest() {
     const form = document.getElementById('changePersonForm');
-    if (form.elements.idChoose.value !== document.getElementById('resultListId').innerHTML)
-        document.getElementById("resultFindingPerson").innerHTML = "Указанный ID не соответствует найденной персоне. Введите правильный ID";
-    else {
-        switch (form.elements.namedItem('person-operation').value) {
-            case "extended" : {
-                const jsonData = JSON.stringify(tempSecurity);
-                fetch('/base/family_member/get/extended', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: jsonData,
-                }).then(response => response.json()).then(async person => {
-                    await assignPersonInfoToPerson(person);
-                }).then(() => paintExtendedPerson());
-                break;
-            }
-            case "edit" : {
-                const jsonData = JSON.stringify(tempSecurity);
-                fetch('/base/family_member/get/extended', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: jsonData,
-                }).then(response => response.json()).then(async person => {
-                    await assignPersonInfoToPerson(person);
-                }).then(() => editPersonInBase());
-                break;
-            }
-            case "remove" : {
-                loadMenuRemove();
-                break;
-            }
-            default:
-                console.log("unknown choose")
+    // if (form.elements.idChoose.value !== document.getElementById('resultListId').innerHTML)
+    //     document.getElementById("resultFindingPerson").innerHTML = "Указанный ID не соответствует найденной персоне. Введите правильный ID";
+    // else {
+    switch (form.elements.namedItem('person-operation').value) {
+        case "extended" : {
+            const jsonData = JSON.stringify(tempSecurity);
+            fetch(endPoints.get("base") + '/get/extended', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: jsonData,
+            }).then(response => response.json()).then(async person => {
+                await assignPersonInfoToPerson(person);
+            }).then(() => paintExtendedPerson());
+            break;
         }
+        case "edit" : {
+            const jsonData = JSON.stringify(tempSecurity);
+            fetch(endPoints.get("base") + '/get/extended', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: jsonData,
+            }).then(response => response.json()).then(async person => {
+                await assignPersonInfoToPerson(person);
+            }).then(() => editPerson());
+            break;
+        }
+        case "remove" : {
+            loadMenuRemove();
+            break;
+        }
+        default:
+            console.log("unknown choose")
     }
+    // }
 }
 
 function paintExtendedPerson() {
@@ -731,48 +700,36 @@ function paintBirth() {
 function paintingFindPerson() {
     document.getElementById("resultFindingPerson").innerHTML = `
         <div class="container-fluid row mh-100 no-gutters">
-            <span class="col" style="width: 30%"> 
-                <div style="margin-top:0; font-size: 16px;text-align: center; color: darkred;">Статус: </div>
-                <div id="status-finding-person" style="font-size: 18px; text-align: center; color: green;font-family: 'Times New Roman',serif"></div>
+            <span class="col" style="width: 30%; text-align: center"> 
+                <div style="margin-top:6px; font-size: 18px; color: darkred;">${langMatrix.get("status")}</div>
+                <div id="status-finding-person" style="font-size: 18px; color: green;font-family: 'Times New Roman',serif"></div>
             </span>
             <span class="col-4"> 
-                <div style="font-size: 14px;text-align: center; color: darkred;">ID: </div>
+                <div style="font-size: 18px;text-align: center; color: darkred;">ID: </div>
                 <div style="margin-bottom:6px; font-size: 18px;text-align: center; color: green;font-family: 'Times New Roman',serif" id="resultListId"><br></div>
             </span>
-            <span class="col" style="width: 30%">
-                <div id="agree-finding-person" style="margin-top:6px; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;font-family: 'Times New Roman',serif"></div>
+            <span class="col" style="width: 30%;">
+                <div id="agree-finding-person" style="margin-top:6px; margin-bottom: 10px; text-align: center; color: black;font-family: 'Times New Roman',serif"></div>
             </span>
         </div>
-        <div class="container-fluid row mh-100 no-gutters">
-            <span class="col" style="width: 20%"></span>
-            <span class="col-6" style="width: 250px">
-                <div id="resultPrimePhoto" style="margin-bottom:2px; font-size: 18px; text-align: center; color: black;font-family: 'Times New Roman',serif"></div>
-            </span>
-            <span class="col" style="width: 20%"></span>
-        </div>
-        <div class="container-fluid row mh-100 no-gutters">
-             <span class="col" style="width: 10%"></span>
-             <span class="col-10" style="min-width: 220px; padding-left: 0;padding-right: 0">
+         <div id="result_prime" style="margin-bottom:2px; font-size: 18px; text-align: center; color: black;font-family: 'Times New Roman',serif"></div>
     <em>
-        <div style="color: chocolate; font-size: 16px">Полное имя</div>
+        <div style="color: chocolate; font-size: 16px">${langMatrix.get("fullName")}</div>
         <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListFullName"><br></div>
-        <div style="color: chocolate; font-size: 16px">Mother info:</div>
+        <div style="color: chocolate; font-size: 16px">${langMatrix.get("mother")}</div>
         <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListMother"><br></div>
 
-        <div style="color: chocolate; font-size: 16px">Father info:</div>
+        <div style="color: chocolate; font-size: 16px">${langMatrix.get("father")}</div>
         <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black;font-family: 'Times New Roman',serif" id="resultListFather"><br></div>
 
-        <div style="color: chocolate; font-size: 16px">Phone:</div>
+        <div style="color: chocolate; font-size: 16px">${langMatrix.get("phone")}</div>
         <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListPhone"><br></div>
 
-        <div style="color: chocolate; font-size: 16px">Email:</div>
+        <div style="color: chocolate; font-size: 16px">${langMatrix.get("email")}</div>
         <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListEmail"><br></div>
 
-        <div style="color: chocolate; font-size: 16px">Address:</div>
+        <div style="color: chocolate; font-size: 16px">${langMatrix.get("address")}</div>
         <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListAddress"><br></div>
     </em>
-            </span>
-            <span class="col" style="width: 10%"></span>
-        </div>
     `
 }

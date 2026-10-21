@@ -32,7 +32,7 @@ public interface BaseClient {
     @PostMapping("/validation/family_member/get")
     FamilyMemberDto getFamilyMember(@RequestBody FamilyMemberDto familyMemberDto);
 
-    @PostMapping("/validation/family_member")
+    @PostMapping("/validation/family_member/add")
     FamilyMemberDto addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto);
 
     @PostMapping("/validation/family_member/edit")

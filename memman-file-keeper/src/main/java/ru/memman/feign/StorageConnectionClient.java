@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "MEMMAN-STORAGE", configuration = FeignRequestIntercepter.class, fallbackFactory = StorageConnectionClient.checkGuardFallbackFactory.class)
-public interface StorageConnectionClient {
+public interface StorageConnectionClient extends ConnectionClient {
 
-    @GetMapping("/storage/acceptPhoto/{uuid}")
+    @GetMapping("/storage/util/acceptPhoto/{uuid}")
     boolean checkRights(@PathVariable("uuid") String uuid);
 
     @Component

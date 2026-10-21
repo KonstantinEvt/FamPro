@@ -51,7 +51,7 @@ public class OnlineUserRepository {
                     .setParameter("uuids", externUuids)
                     .getResultList());
         } catch (NoResultException e) {
-            log.warn("users {} is not register in base yet ", externUuids);
+            log.warn("baseUsers {} is not register in base yet ", externUuids);
             usersOnline = new ArrayList<>();
         }
         return usersOnline;
@@ -61,7 +61,7 @@ public class OnlineUserRepository {
         try {
             entityManager.persist(baseUser);
         } catch (RuntimeException e) {
-            log.warn("recipient: {} not persist", baseUser.getNickName());
+            log.warn("baseUser: {} not persist", baseUser.getNickName());
         }
     }
 
@@ -70,7 +70,7 @@ public class OnlineUserRepository {
         try {
             entityManager.merge(baseUser);
         } catch (RuntimeException e) {
-            log.warn("recipient: {} not update", baseUser.getNickName());
+            log.warn("baseUser: {} not update", baseUser.getNickName());
         }
     }
 
@@ -91,20 +91,6 @@ public class OnlineUserRepository {
         } catch (RuntimeException e) {
             log.warn("online users not updated");
         }
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<BaseUser> getRecipientWithReceiveLettersByExternId(String externUuid) {
-        Optional<BaseUser> recipient;
-        try {
-            recipient = Optional.of(entityManager.createQuery("from BaseUser r where r.externUuid=:externUuid", BaseUser.class)
-                    .setParameter("externUuid", externUuid)
-                    .getSingleResult());
-        } catch (NoResultException e) {
-            log.warn("recipient with externId: {} not found", externUuid);
-            recipient = Optional.empty();
-        }
-        return recipient;
     }
 
 }

@@ -39,12 +39,12 @@ public class BaseService {
         return baseClient.getExtendedInfoFamilyMember(securityDto);
     }
 
-    public long addFamilyMember(FamilyMemberDto familyMemberDto) {
-        return baseClient.addFamilyMember(familyMemberDto).getId();
+    public FamilyMemberDto addFamilyMember(FamilyMemberDto familyMemberDto) {
+        return baseClient.addFamilyMember(familyMemberDto);
     }
 
-    public void editFamilyMember(FamilyMemberDto familyMemberDto) {
-        baseClient.editFamilyMember(familyMemberDto);
+    public FamilyMemberDto editFamilyMember(FamilyMemberDto familyMemberDto) {
+        return baseClient.editFamilyMember(familyMemberDto);
     }
 
     public CheckStatus linkFamilyMember(FamilyMemberDto familyMemberDto) {

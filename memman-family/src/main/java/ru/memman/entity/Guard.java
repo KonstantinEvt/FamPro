@@ -5,7 +5,9 @@ import lombok.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import ru.memman.enums.Localisation;
+import ru.memman.enums.SecretLevel;
 
+import java.sql.Timestamp;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -35,8 +37,6 @@ public class Guard {
     @Enumerated(EnumType.STRING)
     @Column(name = "localisation")
     private Localisation localisation;
-
-
 
     @Override
     public boolean equals(Object o) {

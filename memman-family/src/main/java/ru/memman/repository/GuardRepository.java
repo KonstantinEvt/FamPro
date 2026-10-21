@@ -7,7 +7,10 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @AllArgsConstructor
@@ -42,6 +45,20 @@ private EntityManager entityManager;
     }
     return guard;
 }
+    @Transactional(readOnly = true)
+    public List<Guard> findAllGuardWithLinkingPersons(Set<String> uuids){
+        List<Guard> guards;
+        try {
+            guards = entityManager.createQuery("from Guard a left join fetch a.linkedPerson where a.tokenUser in :uuid", Guard.class)
+                    .setParameter("uuid", uuids)
+                    .getResultList();
+
+        } catch (RuntimeException e) {
+            log.warn("Error in finding guard with linkPerson: {}", e.getMessage());
+            guards = new ArrayList<>();
+        }
+        return guards;
+    }
 @Transactional
     public Guard persistGuard(Guard guard) {
         try {

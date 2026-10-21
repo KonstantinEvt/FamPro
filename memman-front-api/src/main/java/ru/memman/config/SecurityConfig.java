@@ -18,7 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http)  {
         http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated()).oauth2ResourceServer((oath2)->oath2.jwt(Customizer.withDefaults()));
 //                .oauth2ResourceServer((oauth2) -> oauth2.jwt(jwt -> jwt
 //                        .jwtAuthenticationConverter(authenticationConverter)));
@@ -26,12 +26,4 @@ public class SecurityConfig {
 //                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }
-
-//    @Bean
-//    @LoadBalanced
-//    public WebClient webClient() {
-//        return WebClient.builder()
-//                .filter(new ServletBearerExchangeFilterFunction())
-//                .build();
-//    }
 }

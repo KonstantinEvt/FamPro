@@ -45,8 +45,15 @@ public class TokenService {
         tokenUser.setRoles(roles);
         return tokenUser;
     }
-
-
+    private UserRole getPriorityRole(TokenUser tokenUser) {
+        final var realmAccess=(Map<String, Object>) tokenUser.getClaims().getOrDefault("realm_access", Map.of());
+        final var realmRoles = (Collection<String>) realmAccess.getOrDefault("roles", List.of());
+        for (UserRole role :
+                UserRole.values()) {
+            if (realmRoles.contains(role.getNameSSO())) return role;
+        }
+        return UserRole.SIMPLE_USER;
+    }
 
     public void editUser(TokenUser tokenUser) {
         keyCloakManageClient.editUser(tokenUser);
@@ -94,4 +101,12 @@ public class TokenService {
         DirectiveGuards directive=DirectiveGuards.builder().tokenUser(inlineUuid).operation(KafkaOperation.GET).localisation(localisation).build();
         setLanguishStorage.add(directive);
         setLanguishFamily.add(directive);}
+    public Localisation getLocalisation(String localisation) {
+        if (localisation == null) return Localisation.RU;
+        for (Localisation loc :
+                Localisation.values()) {
+            if (localisation.toUpperCase().equals(loc.name())) return loc;
+        }
+        return Localisation.RU;
+    }
 }

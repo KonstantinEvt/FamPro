@@ -15,18 +15,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(name = "MEMMAN-STORAGE", configuration = FeignRequestIntercepter.class, fallbackFactory = MembersClient.FamilyMemberFallbackFactory.class)
 public interface MembersClient {
 
-    @GetMapping("/family_members/database/{id}")
+    @GetMapping("/storage/database/{id}")
     FamilyMemberDto getFamilyMemberById(@PathVariable("id") Long id);
-    @GetMapping("/family_members/database/i")
+    @GetMapping("/storage/database/i")
     FamilyMemberDto getYourself();
-    @PostMapping("/family_members/database/get")
+    @PostMapping("/storage/database/get")
     FamilyMemberDto getFamilyMember(@RequestBody FamilyMemberDto familyMemberDto);
-    @PostMapping("/family_members/database/get/extended")
+    @PostMapping("/storage/database/extended")
     FamilyMemberDto getExtendedInfoFamilyMember(@RequestBody SecurityDto securityDto);
-    @PostMapping("/family_members/database/")
+    @PostMapping("/storage/database/add")
     FamilyMemberDto addFamilyMember(@RequestBody FamilyMemberDto familyMemberDto);
 
-    @PostMapping("/family_members/database/edit")
+    @PostMapping("/storage/database/edit")
     FamilyMemberDto editFamilyMember(@RequestBody FamilyMemberDto familyMemberDto);
 
 

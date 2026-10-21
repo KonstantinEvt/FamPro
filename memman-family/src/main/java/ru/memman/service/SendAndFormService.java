@@ -1,5 +1,6 @@
 package ru.memman.service;
 
+import ru.memman.dtos.ContactDto;
 import ru.memman.dtos.DirectiveGuards;
 import ru.memman.entity.DeferredDirective;
 import ru.memman.entity.ShortFamilyMember;
@@ -17,16 +18,18 @@ public class SendAndFormService {
     private final LinkedList<DirectiveGuards> checkLevelDirective;
     private final LinkedList<DirectiveGuards> guardsLetters;
     private final List<DirectiveGuards> contactDirective;
+    private final LinkedList<List<ContactDto>> checkRelation;
     private final Map<UUID, Localisation> tempLocalisation;
 
 
     SendAndFormService(@Qualifier("checkLevelDirective") LinkedList<DirectiveGuards> checkLevelDirective,
                        @Qualifier("directiveGuards") LinkedList<DirectiveGuards> guardsLetters,
                        @Qualifier("contactDirective") List<DirectiveGuards> contactDirective,
-                       @Qualifier("tempLocalisation") Map<UUID, Localisation> tempLocalisation) {
+                       LinkedList<List<ContactDto>> checkRelation, @Qualifier("tempLocalisation") Map<UUID, Localisation> tempLocalisation) {
         this.checkLevelDirective = checkLevelDirective;
         this.guardsLetters = guardsLetters;
         this.contactDirective = contactDirective;
+        this.checkRelation = checkRelation;
         this.tempLocalisation = tempLocalisation;
     }
 
@@ -125,7 +128,7 @@ public class SendAndFormService {
         log.info("Directive to storage for remove parent-child link is send");
     }
 
-    public void sendAddingNewContacts(Set<String> guards) {
+    public void formAndSendKinContacts(Set<String> guards) {
         contactDirective.add(DirectiveGuards.builder()
                 .operation(KafkaOperation.ADD)
                 .switchPosition(SwitchPosition.MAIN)
@@ -133,4 +136,9 @@ public class SendAndFormService {
                 .build());
         log.info("Directive for contact is send");
     }
+    public void sendContactRelativeStatus(List<ContactDto> contactDtoList){
+        checkRelation.add(contactDtoList);
+    }
+
+
 }

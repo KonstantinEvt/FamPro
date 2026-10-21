@@ -1,5 +1,6 @@
 package ru.memman.service;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -35,6 +36,9 @@ public class OnlineUserService {
     private long delayToOffline;
     @Value("${application.schedule.delayToOnlineRemove}")
     private long delayToOnlineRemove;
+    @Value("${application.schedule.sagaHeartbeat}")
+    private long heartbeat;
+
     public OnlineUserService(OnlineUserHolder onlineUserHolder,
                              Map<String, Timestamp> actualTimeMap,
                              ActualUserService actualUserService,
@@ -49,13 +53,20 @@ public class OnlineUserService {
         this.inline = inline;
     }
 
+    @PostConstruct
+    private void setPersonsInBaseCount() {
+        inline.add(new OnlineUserDto());
+    }
+
     public OnlineUserDto getOnlineUser() {
-        TokenUser tokenUser=tokenService.getTokenUser();
+        TokenUser tokenUser = tokenService.getTokenUser();
         OnlineUserDto onlineUserDto = onlineUserHolder.getOnlineUser((String) tokenUser.getClaims().get("sub"));
         if (onlineUserDto == null) {
             onlineUserDto = onlineUserMapper.entityToDto(actualUserService.getActualUser(tokenUser));
             onlineUserHolder.addMenToOnlineCount();
             onlineUserDto.setNewsCounts(new int[5]);
+            onlineUserDto.setSendOver(true);
+            log.info("User: {} enter in portal", onlineUserDto.getLogName());
             inline.add(onlineUserDto);
         }
         onlineUserDto.setLastOnline(new Timestamp(System.currentTimeMillis()));
@@ -63,22 +74,24 @@ public class OnlineUserService {
         onlineUserDto.setPeopleInBase(onlineUserHolder.getInBasePeopleCount());
         onlineUserDto.setPersonsInBase(onlineUserHolder.getInBasePersonsCount());
         onlineUserDto.setOnline(true);
-        System.out.println(onlineUserDto);
         onlineUserHolder.addUser(onlineUserDto);
         return onlineUserDto;
     }
+
     public void setOffline() {
-        TokenUser tokenUser=tokenService.getTokenUser();
+        TokenUser tokenUser = tokenService.getTokenUser();
         OnlineUserDto onlineUserDto = onlineUserHolder.getOnlineUser((String) tokenUser.getClaims().get("sub"));
         onlineUserDto.setLastOnline(new Timestamp(System.currentTimeMillis()));
         onlineUserDto.setOnline(false);
+        onlineUserDto.setSendOver(true);
         BaseUser baseUser = onlineUserMapper.dtoToEntity(onlineUserDto);
-        System.out.println(onlineUserDto);
         actualTimeMap.put(baseUser.getExternUuid(), new Timestamp(System.currentTimeMillis()));
         onlineUserHolder.removeUser(onlineUserDto.getExternUuid());
+        onlineUserHolder.removeMenFromOnlineCount();
         actualUserService.addActualUser(baseUser);
         inline.add(onlineUserDto);
     }
+
     public OnlineUserDto getOnlineUser(String externUuid) {
         OnlineUserDto onlineUserDto = onlineUserHolder.getOnlineUser(externUuid);
         if (onlineUserDto == null) {
@@ -89,6 +102,10 @@ public class OnlineUserService {
         return onlineUserDto;
     }
 
+    public void reloadInline() {
+        inline.addAll(onlineUserHolder.getOnlineUsers());
+    }
+
     @Async
     @Scheduled(fixedDelayString = "${application.schedule.onlineToActual}")
     void dropOnlineToActual() {
@@ -96,8 +113,8 @@ public class OnlineUserService {
         List<OnlineUserDto> users = onlineUserHolder.getOnlineUsers();
         log.info("Drop online to actual");
         for (OnlineUserDto onlineUser : users) {
-            long lastOnline = now-onlineUser.getLastOnline().getTime();
-            log.info("Check of {} time:{}", onlineUser.getNickName(),lastOnline);
+            long lastOnline = now - onlineUser.getLastOnline().getTime();
+            log.info("Check of {} time:{}", onlineUser.getNickName(), lastOnline);
             BaseUser baseUser = onlineUserMapper.dtoToEntity(onlineUser);
             if (lastOnline > delayToOffline) {
                 if (onlineUser.isOnline()) onlineUser.setOnline(false);
@@ -105,12 +122,18 @@ public class OnlineUserService {
                     actualUserService.setToDrop(baseUser);
                     actualTimeMap.put(baseUser.getExternUuid(), new Timestamp(System.currentTimeMillis()));
                     onlineUserHolder.removeUser(onlineUser.getExternUuid());
+                    onlineUser.setSendOver(true);
                     inline.add(onlineUser);
                 }
             }
             actualUserService.addActualUser(baseUser);
         }
         onlineUserHolder.setOnlinePeopleCount(onlineUserHolder.getOnlineUsers().size());
+    }
+    @Async
+    @Scheduled(fixedDelayString = "${application.schedule.sagaHeartbeat}")
+    void heartbeat(){
+        inline.add(OnlineUserDto.builder().build());
     }
 }
 

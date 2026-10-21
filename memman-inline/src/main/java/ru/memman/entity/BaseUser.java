@@ -1,6 +1,7 @@
 package ru.memman.entity;
 
 import ru.memman.enums.Localisation;
+import ru.memman.enums.SecretLevel;
 import ru.memman.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
@@ -43,7 +44,14 @@ public class BaseUser {
     private String email;
 
     @Column(name = "exist_prime_Photo")
-    private boolean urlPhoto;
+    private boolean primePhoto;
+
+    @Column(name = "update_time")
+    private Timestamp lastUpdate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_photo")
+    private SecretLevel secretLevelPhoto;
 
     @Column(name = "link_extern_id")
     private String linkExternId;
@@ -57,12 +65,26 @@ public class BaseUser {
     @Column(name = "lastEntering")
     private Timestamp lastOnline;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_phone")
+    private SecretLevel secretLevelPhone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "security_email")
+    private SecretLevel secretLevelEmail;
+
+    @Column(name = "main_phone")
+    private String mainPhone;
+
+    @Column(name = "main_email")
+    private String mainEmail;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         BaseUser baseUser = (BaseUser) o;
-        return urlPhoto == baseUser.urlPhoto && Objects.equals(id, baseUser.id) && Objects.equals(externUuid, baseUser.externUuid) && Objects.equals(nickName, baseUser.nickName) && Objects.equals(email, baseUser.email) && Objects.equals(linkExternId, baseUser.linkExternId) && localisation == baseUser.localisation && priorityRole == baseUser.priorityRole && Objects.equals(lastOnline, baseUser.lastOnline);
+        return primePhoto == baseUser.primePhoto && Objects.equals(id, baseUser.id) && Objects.equals(externUuid, baseUser.externUuid) && Objects.equals(nickName, baseUser.nickName) && Objects.equals(email, baseUser.email) && Objects.equals(linkExternId, baseUser.linkExternId) && localisation == baseUser.localisation && priorityRole == baseUser.priorityRole && Objects.equals(lastOnline, baseUser.lastOnline);
     }
 
     @Override

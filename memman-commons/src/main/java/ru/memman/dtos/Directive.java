@@ -9,6 +9,7 @@ import java.io.Serializable;
 
 @Setter
 @Getter
+@EqualsAndHashCode
 @AllArgsConstructor
 @RequiredArgsConstructor
 @ToString

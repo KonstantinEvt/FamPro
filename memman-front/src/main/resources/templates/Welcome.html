@@ -11,50 +11,50 @@
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
             crossorigin="anonymous"></script>
     <link rel="icon" type="image/jpg" href="/front/images/tree.jpg">
-
+    <link rel="stylesheet" href="/front/css/mainStyle.css">
 <style>
-body {
-margin: 0;
-}
+/*body {*/
+/*margin: 0;*/
+/*}*/
 
-.preloader {
-position: fixed;
-left: 0;
-top: 0;
-right: 0;
-bottom: 0;
-overflow: hidden;
-/* фоновый цвет */
-background: #e0e0e0;
-z-index: 1001;
-}
+/*.preloader {*/
+/*position: fixed;*/
+/*left: 0;*/
+/*top: 0;*/
+/*right: 0;*/
+/*bottom: 0;*/
+/*overflow: hidden;*/
+/*!* фоновый цвет *!*/
+/*background: #e0e0e0;*/
+/*z-index: 1001;*/
+/*}*/
 
-.preloader__image {
-position: relative;
-top: 50%;
-left: 50%;
-width: 70px;
-height: 70px;
-margin-top: -35px;
-margin-left: -35px;
-text-align: center;
-animation: preloader-rotate 2s infinite linear;
-}
+/*.preloader__image {*/
+/*position: relative;*/
+/*top: 50%;*/
+/*left: 50%;*/
+/*width: 70px;*/
+/*height: 70px;*/
+/*margin-top: -35px;*/
+/*margin-left: -35px;*/
+/*text-align: center;*/
+/*animation: preloader-rotate 2s infinite linear;*/
+/*}*/
 
-@keyframes preloader-rotate {
-100% {
-transform: rotate(360deg);
-}
-}
+/*@keyframes preloader-rotate {*/
+/*100% {*/
+/*transform: rotate(360deg);*/
+/*}*/
+/*}*/
 
-.loaded_hiding .preloader {
-transition: 0.3s opacity;
-opacity: 0;
-}
+/*.loaded_hiding .preloader {*/
+/*transition: 0.3s opacity;*/
+/*opacity: 0;*/
+/*}*/
 
-.loaded .preloader {
-display: none;
-}
+/*.loaded .preloader {*/
+/*display: none;*/
+/*}*/
 </style>
 
 </head>
@@ -104,14 +104,7 @@ display: none;
                         aria-label="Close" onclick="changeLang(loc.value,false)"></button>
             </div>
             <br>
-            <div>
-                <input type="radio" id="enLoc" name="loc" value="en"/>
-                <label for="enLoc">English </label>
-            </div>
-            <div>
-                <input type="radio" id="ruLoc" name="loc" value="ru"/>
-                <label for="ruLoc">Русский </label>
-            </div>
+            <div id="localisationList"></div>
         </form>
     </div>
 </div>
@@ -132,7 +125,7 @@ display: none;
                         <div class="modal-header">
                             <div class="modal-title" id="attentionToExit" style="color: darkred; text-align: center"></div>
                         </div>
-                        <div id="logoutText" class="modal-body"></div>
+                        <div id="logoutText" style="text-align: center" class="modal-body"></div>
                         <div class="modal-footer">
                             <button type="submit" id="logoutFrontAgree" class="btn btn-outline-danger" onclick="getLogout()"></button>
                             <button type="button" id="logoutFrontDecline" class="btn btn-outline-success" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -160,7 +153,7 @@ display: none;
         </div>
     </div>
 </nav>
-<div id="mainPanel" style="padding:0; margin: 0; max-width: 100%; min-height: 82%"
+<div id="mainPanel" style="padding:0; margin: 0; max-width: 100%; min-height: 82%; overflow: auto"
      class="container-fluid row mh-100 no-gutters">
 </div>
 <nav class="navbar navbar-expand-lg"
@@ -177,7 +170,7 @@ display: none;
     </div>
 </nav>
 <script>
-    let currentLang = (localStorage.getItem(`currentLang`)===null)?"ru":localStorage.getItem('currentLang');
+
     window.onload = function () {
         document.body.classList.add('loaded_hiding');
         window.setTimeout(function () {

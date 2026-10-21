@@ -38,7 +38,7 @@ public class ReceiveAndFormService {
         AloneNewDto letterForRequester = aloneNewMapper.entityToDto(letter);
         letterForRequester.setSendingTo(sendingTo);
         letterForRequester.setSendingFromAlt(letter.getSendFrom().getNickName());
-        standardInfoHolder.addNewMessageToPerson(letterForRequester);
+        standardInfoHolder.addNewMessageToPerson(letterForRequester, sendingTo);
     }
 
     @Transactional
@@ -59,7 +59,7 @@ public class ReceiveAndFormService {
         letterForGuards.setSendingFromAlt(aloneNewGuards.getSendFrom().getNickName());
         for (String guard : directiveGuards.getGuards()) {
             letterForGuards.setSendingTo(guard);
-            standardInfoHolder.addNewMessageToPerson(letterForGuards);
+            standardInfoHolder.addNewMessageToPerson(letterForGuards,guard);
         }
         directiveGuards.setSwitchPosition(SwitchPosition.BURIAL);
         directiveGuards.setInfo1(null);
@@ -72,7 +72,7 @@ public class ReceiveAndFormService {
         Set<Recipient> guards = notificationRepo.findGuards(directiveGuards.getGuards());
         AloneNew aloneNew = AloneNew.builder()
                 .category(NewsCategory.FAMILY)
-                .alreadyRead(false)
+//                .alreadyRead(false)
                 .externId(directiveGuards.getId())
                 .subject(directiveGuards.getInfo1())
                 .textInfo(directiveGuards.getInfo2())
@@ -106,7 +106,7 @@ public class ReceiveAndFormService {
 
         AloneNew aloneNew = AloneNew.builder()
                 .externId(directiveGuards.getId())
-                .alreadyRead(false)
+//                .alreadyRead(false)
                 .subject(directiveGuards.getInfo3())
                 .creationDate(directiveGuards.getCreated())
                 .textInfo(info)

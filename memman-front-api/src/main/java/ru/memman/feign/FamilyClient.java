@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 @FeignClient(name = "MEMMAN-FAMILY", configuration = FeignRequestIntercepter.class, fallbackFactory = FamilyClient.LinkedFallbackFactory.class)
 public interface FamilyClient {
 
-    @PostMapping("/guard/addLinkGuard")
+    @PostMapping("/family/guard/addLinkGuard")
     CheckStatus addGuard(FamilyMemberDto familyMemberDto);
 
      @Component

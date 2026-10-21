@@ -49,8 +49,6 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     private final Map<String, FamilyMemberDto> tempExtendedDto;
     private final Map<Long, Timestamp> lastUpdateMap;
     private final Map<String, MainContact> tempMainContact;
-
-    private final Map<UUID, Localisation> tempLocalisation;
     private volatile AtomicLong inBasePersonsCount;
     private final LinkedList<Long> personsCount;
 
@@ -73,8 +71,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                                Map<String, FamilyMemberDto> tempGuardStatus,
                                Map<String, FamilyMemberDto> tempExtendedDto,
                                Map<Long, Timestamp> lastUpdateMap,
-                               Map<String, MainContact> tempMainContact,
-                               Map<UUID, Localisation> tempLocalisation, LinkedList<Long> personsCount) {
+                               Map<String, MainContact> tempMainContact, LinkedList<Long> personsCount) {
         super(fioMapper);
         this.familyMemberMapper = familyMemberMapper;
         this.familyMemberInfoService = familyMemberInfoService;
@@ -94,7 +91,6 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         this.tempExtendedDto = tempExtendedDto;
         this.lastUpdateMap = lastUpdateMap;
         this.tempMainContact = tempMainContact;
-        this.tempLocalisation = tempLocalisation;
         this.personsCount = personsCount;
     }
 
@@ -298,12 +294,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         log.info("--------ВНОСИМ НОВОГО ЧЕЛОВЕКА-------");
         TokenUser tokenUser = tokenService.getTokenUser();
         String token = (String) tokenUser.getClaims().get("sub");
-        Localisation localisation = tempLocalisation.get(UUID.fromString(token));
-        if (localisation == null) {
-            if (tokenUser.getClaims().get("localisation") != null)
-                localisation = getLocalisation(((String) tokenUser.getClaims().get("localisation")).toUpperCase());
-            else localisation = getLocalisation("EN");
-        }
+        Localisation localisation = (familyMemberDto.getLocalisation() != null) ? familyMemberDto.getLocalisation() : Localisation.EN;
         if (familyMemberDto.getId() != null) throw new ProblemWithId("Удалите ID нового человека");
         if (familyMemberDto.getFirstName() == null
                 || familyMemberDto.getMiddleName() == null
@@ -396,8 +387,10 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 .operation(KafkaOperation.ADD).build());
         directives.add(toFamily);
         formAndSendService.sendAllNotifications(token, localisation, notifications);
-        if (familyMember.isPrimePhoto())
+        if (familyMember.isPrimePhoto()) {
             directivePhotos.add(new Directive(token, familyMember.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.ADD));
+            directivePhotos.add(new Directive(token, familyMember.getUuid().toString(), SwitchPosition.LITTLE, KafkaOperation.ADD));
+        }
         if (familyMember.getFamilyMemberInfo().get(0).isPhotoBirthExist())
             directivePhotos.add(new Directive(token, familyMember.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.ADD));
         if (familyMember.getFamilyMemberInfo().get(0).isPhotoBurialExist())
@@ -424,12 +417,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         Long dtoId = familyMemberDto.getId();
         TokenUser tokenUser = tokenService.getTokenUser();
         String token = (String) tokenUser.getClaims().get("sub");
-        Localisation localisation = tempLocalisation.get(UUID.fromString(token));
-        if (localisation == null) {
-            if (tokenUser.getClaims().get("localisation") != null)
-                localisation = getLocalisation(((String) tokenUser.getClaims().get("localisation")).toUpperCase());
-            else localisation = getLocalisation("EN");
-        }
+        Localisation localisation = (familyMemberDto.getLocalisation() != null) ? familyMemberDto.getLocalisation() : Localisation.EN;
         FamilyMemberDto fromTemp = tempGuardStatus.get(token);
         if (fromTemp.getSecretLevelEdit() == SecretLevel.CLOSE && familyMemberDto.getSecretLevelEdit() != SecretLevel.CLOSE)
             throw new RuntimeException("подделка прав");
@@ -597,10 +585,19 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
             familyMemberDto.setUuid(fm.getUuid());
         }
-        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE && familyMemberDto.isPrimePhoto()) {
-            directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.ADD));
-            fm.setPrimePhoto(true);
-        }
+        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE)
+            if (familyMemberDto.isPrimePhoto()) {
+                directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.ADD));
+                directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.LITTLE, KafkaOperation.ADD));
+                fm.setPrimePhoto(true);
+                if (fromTemp.isPrimePhoto() && changing.isChangingMain()) {
+                    directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.REMOVE));
+                    directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.LITTLE, KafkaOperation.REMOVE));
+                }
+            } else if (fm.isPrimePhoto() && changing.isChangingMain()) {
+                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.RENAME));
+                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.LITTLE, KafkaOperation.RENAME));
+            }
 
         if (fm.getFamilyMemberInfo() != null && !fm.getFamilyMemberInfo().isEmpty())
             familyMemberInfoService.merge(familyMemberDto, fm.getFamilyMemberInfo().get(0), token, changing.isChangingMain());
@@ -625,24 +622,40 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
         FamilyMemberDto result = familyMemberMapper.entityToDto(fm);
         result.setMemberInfo(familyMemberInfoService.getSimpleInfoDto(fm.getFamilyMemberInfo().get(0)));
-        if (familyMemberDto.getMemberInfo().isPhotoBirthExist())
-            directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.ADD));
-        if (familyMemberDto.getMemberInfo().isPhotoBurialExist())
-            directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.ADD));
-        if (changing.isChangingMain()) {
-            if (familyMemberDto.isPrimePhoto())
-                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.REMOVE));
-            else if (fm.isPrimePhoto())
-                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.RENAME));
-            if (familyMemberDto.getMemberInfo().isPhotoBirthExist())
-                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.REMOVE));
-            else if (fm.getFamilyMemberInfo().get(0).isPhotoBirthExist())
+        if (fromTemp.getMemberInfo().getSecretLevelBirth() != SecretLevel.CLOSE)
+            if (familyMemberDto.getMemberInfo().isPhotoBirthExist()) {
+                directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.ADD));
+                if (changing.isChangingMain() && fromTemp.getMemberInfo().isPhotoBirthExist()) {
+                    directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.REMOVE));
+                }
+            } else if (changing.isChangingMain() && fm.getFamilyMemberInfo().get(0).isPhotoBirthExist())
                 directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.RENAME));
-            if (familyMemberDto.getMemberInfo().isPhotoBurialExist())
-                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.REMOVE));
-            else if (fm.getFamilyMemberInfo().get(0).isPhotoBurialExist())
+        if (fromTemp.getMemberInfo().getSecretLevelBurial() != SecretLevel.CLOSE)
+            if (familyMemberDto.getMemberInfo().isPhotoBurialExist()) {
+                directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.ADD));
+                if (changing.isChangingMain() && fromTemp.getMemberInfo().isPhotoBurialExist()) {
+                    directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.REMOVE));
+                }
+            } else if (changing.isChangingMain() && fm.getFamilyMemberInfo().get(0).isPhotoBurialExist())
                 directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.RENAME));
-        }
+
+//        if (changing.isChangingMain()) {
+//            if (familyMemberDto.isPrimePhoto()) {
+//                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.REMOVE));
+//                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.LITTLE, KafkaOperation.REMOVE));
+//            } else if (fm.isPrimePhoto()) {
+//                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.RENAME));
+//                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.LITTLE, KafkaOperation.RENAME));
+//            }
+//            if (familyMemberDto.getMemberInfo().isPhotoBirthExist())
+//                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.REMOVE));
+//            else if (fm.getFamilyMemberInfo().get(0).isPhotoBirthExist())
+//                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.RENAME));
+//            if (familyMemberDto.getMemberInfo().isPhotoBurialExist())
+//                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.REMOVE));
+//            else if (fm.getFamilyMemberInfo().get(0).isPhotoBurialExist())
+//                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.RENAME));
+//        }
 
         fm.setCheckStatus(CheckStatus.MODERATE);
 //        mainStorageRepository.updateMember(fm);
@@ -979,14 +992,6 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         tempPhotoAccept.remove(token.concat(String.valueOf(SwitchPosition.PRIME.ordinal())));
         tempPhotoAccept.remove(token.concat(String.valueOf(SwitchPosition.BIRTH.ordinal())));
         tempPhotoAccept.remove(token.concat(String.valueOf(SwitchPosition.BURIAL.ordinal())));
-    }
-
-    Localisation getLocalisation(String loc) {
-        for (Localisation local :
-                Localisation.values()) {
-            if (Objects.equals(local.name(), loc)) return local;
-        }
-        return Localisation.EN;
     }
 }
 

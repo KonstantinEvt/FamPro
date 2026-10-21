@@ -60,7 +60,7 @@ function loadMenuRemove() {
 
 function loadSelectMenuRemove() {
     const jsonData = JSON.stringify(tempSecurity);
-    fetch('/base/family_member/get/extended', {
+    fetch(endPoints.get("base")+'/family_member/get/extended', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -73,7 +73,7 @@ function loadSelectMenuRemove() {
 
 function fullRemovePerson() {
     const jsonData = JSON.stringify(tempSecurity);
-    fetch("/family_members/database/remove", {
+    fetch(endPoints.get("base")+"/family_members/database/remove", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

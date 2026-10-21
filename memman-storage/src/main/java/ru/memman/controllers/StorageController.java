@@ -19,20 +19,20 @@ import java.util.Objects;
 @AllArgsConstructor
 @Log4j2
 @Tag(name = "Операции со всеми данными")
-@RequestMapping("/storage/")
+@RequestMapping("/storage/util")
 public class StorageController {
     private final ServiceOfStorageBD serviceOfStorageBD;
     private final Map<String, String> tempPhotoAccept;
     private final TokenService tokenService;
 
-    @GetMapping("/database/save{filename}")
+    @GetMapping("/save{filename}")
     @Operation(method = "Сохранить все данные в файл", description = "Данные в файл", summary = "Сохранить базу в файл")
     public ResponseEntity<String> saveDataToFile(@PathVariable String filename) {
         serviceOfStorageBD.saveDataToFile(filename);
         return ResponseEntity.status(222).body("File is saved");
     }
 
-    @GetMapping("/database/recover{filename}")
+    @GetMapping("/recover{filename}")
     public ResponseEntity<String> recoverBaseFromFile(@PathVariable String filename) {
         serviceOfStorageBD.recoverBaseFromFile(filename);
         return ResponseEntity.status(223).body("base is good");

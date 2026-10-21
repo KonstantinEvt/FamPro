@@ -387,8 +387,8 @@ public class DirectiveService {
         if (!setUncheckedStatus.isEmpty())
             sendAndFormService.formDirectiveToStorageForChangeStatus(deferredDirective.getTokenUser(), null, null, KafkaOperation.RENAME, setUncheckedStatus, CheckStatus.UNCHECKED);
 
-
-        sendAndFormService.sendAddingNewContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(mainMember),true).stream().map(UUID::toString).collect(Collectors.toSet()));
+        guardService.formKinContacts(mainMember);
+//        sendAndFormService.formAndSendKinContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(mainMember),true).stream().map(UUID::toString).collect(Collectors.toSet()));
     }
 
     @Transactional
@@ -475,14 +475,15 @@ public class DirectiveService {
     @Transactional
     public void setLinkGuardFromVotingDirective(String directiveUuid) {
         DeferredDirective directive = directiveRepository.getLinkingDirective(UUID.fromString(directiveUuid)).orElseThrow(() -> new RuntimeException("directive is missing"));
-        guardService.creatLinkingGuard(directive.getDirectiveMember(), directive.getTokenUser());
+        guardService.creatLinkingGuard(directive.getDirectiveMember(), directive.getTokenUser(),Localisation.EN);
         log.info("New guard is created");
         cloakDirective.add(Directive.builder()
                 .operation(KafkaOperation.EDIT)
                 .tokenUser(directive.getInfo())
                 .person(directive.getTokenUser())
                 .build());
-        sendAndFormService.sendAddingNewContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(directive.getDirectiveMember()),true).stream().map(UUID::toString).collect(Collectors.toSet()));
+        guardService.formKinContacts(directive.getDirectiveMember());
+//        sendAndFormService.formAndSendKinContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(directive.getDirectiveMember()),true).stream().map(UUID::toString).collect(Collectors.toSet()));
         directiveRepo.delete(directive);
 
     }

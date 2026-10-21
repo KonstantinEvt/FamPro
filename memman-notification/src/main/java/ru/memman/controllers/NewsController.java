@@ -1,5 +1,6 @@
 package ru.memman.controllers;
 
+import lombok.extern.log4j.Log4j2;
 import ru.memman.dtos.AloneNewDto;
 import ru.memman.enums.Attention;
 import ru.memman.enums.NewsCategory;
@@ -16,56 +17,66 @@ import java.util.List;
 @RestController
 @RequestMapping("/notify/news")
 @AllArgsConstructor
+@Log4j2
 public class NewsController {
     private TokenService tokenService;
     private MessageService messageService;
     private final StandardInfoHolder infoHolder;
 
-    @GetMapping("/system/{full}")
-    public ResponseEntity<List<AloneNewDto>> getSystemNewsAll(@PathVariable("full") boolean full) {
+    @GetMapping("/get/system/{full}/{localisation}")
+    public ResponseEntity<List<AloneNewDto>> getSystemNews(@PathVariable("full") boolean full, @PathVariable("localisation") String loc) {
         String token = (String) tokenService.getTokenUser().getClaims().get("sub");
+        log.info("User: {} getting system news. Localisation: {}", token, loc);
         if (infoHolder.getOnlineInfo().get(token) == null)
             return ResponseEntity.ok(new ArrayList<>());
-        return ResponseEntity.ok(messageService.getSystemMessages(token, full));
+        return ResponseEntity.ok(messageService.getSystemMessages(token, full,tokenService.getLocalisation(loc)));
     }
 
-    @GetMapping("/common/{full}")
-    public ResponseEntity<List<AloneNewDto>> getCommonNewsAll(@PathVariable("full") boolean full) {
+    @GetMapping("/get/common/{full}/{localisation}")
+    public ResponseEntity<List<AloneNewDto>> getCommonNews(@PathVariable("full") boolean full, @PathVariable("localisation") String loc) {
         String token = (String) tokenService.getTokenUser().getClaims().get("sub");
+        log.info("User: {} getting common news. Localisation: {}", token, loc);
         if (infoHolder.getOnlineInfo().get(token) == null)
             return ResponseEntity.ok(new ArrayList<>());
-        return ResponseEntity.ok(messageService.getCommonMessages(token, full));
+        return ResponseEntity.ok(messageService.getCommonMessages(token, full,tokenService.getLocalisation(loc)));
     }
 
-    @GetMapping("/family/{full}")
-    public ResponseEntity<List<AloneNewDto>> getFamilyNews(@PathVariable("full") boolean full) {
+    @GetMapping("/get/family/{full}/{localisation}")
+    public ResponseEntity<List<AloneNewDto>> getFamilyNews(@PathVariable("full") boolean full, @PathVariable("localisation") String loc) {
         String token = (String) tokenService.getTokenUser().getClaims().get("sub");
+        log.info("User: {} getting family news. Localisation: {}", token, loc);
         List<AloneNewDto> messageList;
         if (full) {
-            messageList = messageService.getAllNewsByCategory(token, NewsCategory.FAMILY);
+            messageList = messageService.getAllNewsByCategory(token, NewsCategory.FAMILY,loc);
             return ResponseEntity.ok(messageList);
         } else if (infoHolder.getOnlineInfo().get(token) == null)
             return ResponseEntity.ok(new ArrayList<>());
-        return ResponseEntity.ok(infoHolder.getOnlineInfo().get(token).getFamilyNews());
+
+        return ResponseEntity.ok(messageService.getFreshNewsByCategory(NewsCategory.FAMILY,token,loc));
     }
-    @GetMapping("/private/{full}")
-    public ResponseEntity<List<AloneNewDto>> getPrivateNews(@PathVariable("full") boolean full) {
+    @GetMapping("/get/private/{full}/{localisation}")
+    public ResponseEntity<List<AloneNewDto>> getPrivateNews(@PathVariable("full") boolean full, @PathVariable("localisation") String loc) {
         String token = (String) tokenService.getTokenUser().getClaims().get("sub");
+        log.info("User: {} getting private news. Localisation: {}", token, loc);
         List<AloneNewDto> messageList;
         if (full) {
-            messageList = messageService.getAllNewsByCategory(token, NewsCategory.PRIVATE);
+            messageList = messageService.getAllNewsByCategory(token, NewsCategory.PRIVATE,loc);
             return ResponseEntity.ok(messageList);
         } else if (infoHolder.getOnlineInfo().get(token) == null)
             return ResponseEntity.ok(new ArrayList<>());
-        return ResponseEntity.ok(infoHolder.getOnlineInfo().get(token).getIndividualNews());
+        return ResponseEntity.ok(messageService.getFreshNewsByCategory(NewsCategory.PRIVATE,token,loc));
     }
-    @GetMapping("/globalNewsRead/{category}/{id}")
+    @GetMapping("/read/{category}/{id}")
     public void readNews(@PathVariable("category") Attention category, @PathVariable("id") String id) {
         messageService.readOrRemoveGlobalMessage((String) tokenService.getTokenUser().getClaims().get("sub"), category, id, true);
     }
 
-    @GetMapping("/globalNewsRemove/{category}/{id}")
+    @GetMapping("/remove/{category}/{id}")
     public void removeNews(@PathVariable("category") Attention category, @PathVariable("id") String id) {
         messageService.readOrRemoveGlobalMessage((String) tokenService.getTokenUser().getClaims().get("sub"), category, id, false);
+    }
+    @GetMapping("/rights/{externUuid}")
+    public boolean checkRights(@PathVariable("externUuid") String externUuid) {
+        return messageService.checkRights((String) tokenService.getTokenUser().getClaims().get("sub"), externUuid);
     }
 }

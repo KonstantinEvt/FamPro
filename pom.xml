@@ -21,6 +21,7 @@
         <module>memman-storage</module>
         <module>memman-commons</module>
         <module>memman-validation</module>
+        <module>memman-contact</module>
 <!--        <module>famPro-integration</module>-->
         <module>memman-notification</module>
         <module>memman-config</module>

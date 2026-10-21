@@ -133,6 +133,7 @@ public class  MainStorageRepository {
         try {
             entityManager.persist(familyMember);
         } catch (RuntimeException e) {
+            log.warn(e.getMessage());
             log.warn("Person not save");
         }
     }

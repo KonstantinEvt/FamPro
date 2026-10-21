@@ -8,6 +8,7 @@ public enum Colors {
     YELLOW("желтый"),
     WHITE("белый"),
     BLUE("голубой"),
+    BALD("лысый"),
     GREEN("зеленый");
     private final String comment;
 

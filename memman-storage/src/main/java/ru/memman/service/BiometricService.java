@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -22,19 +23,22 @@ public class BiometricService {
         if (fmiMergeResult.getBiometricData() == null) fmiMergeResult.setBiometricData(new ArrayList<>());
         for (int i = 0; i < ages; i++) {
             int age = fmiData.getBiometricData().get(i).getAge();
-            Biometric bio = fmiMergeResult.getBiometricData().stream().filter(x -> x.getAge() == age).findFirst().orElse(null);
-            if (bio == null) {fmiData.getBiometricData().get(i).setUuid(fmiMergeResult.getUuid());outBase.add(fmiData.getBiometricData().get(i));}
-            else {
-                bio.setHeight(fmiData.getBiometricData().get(i).getHeight());
-                bio.setWeight(fmiData.getBiometricData().get(i).getWeight());
-                bio.setHairColor(fmiData.getBiometricData().get(i).getHairColor());
-                bio.setShirtSize(fmiData.getBiometricData().get(i).getShirtSize());
-                bio.setEyesColor(fmiData.getBiometricData().get(i).getEyesColor());
-                bio.setFootSize(fmiData.getBiometricData().get(i).getFootSize());
-                bio.setDescription(fmiData.getBiometricData().get(i).getDescription());
+            Optional<Biometric> bio = fmiMergeResult.getBiometricData().stream().filter(x -> x.getAge() == age).findFirst();
+            if (bio.isEmpty()) {
+                fmiData.getBiometricData().get(i).setUuid(fmiData.getUuid());
+                outBase.add(fmiData.getBiometricData().get(i));
+            } else {
+                bio.get().setUuid(fmiData.getUuid());
+                bio.get().setHeight(fmiData.getBiometricData().get(i).getHeight());
+                bio.get().setWeight(fmiData.getBiometricData().get(i).getWeight());
+                bio.get().setHairColor(fmiData.getBiometricData().get(i).getHairColor());
+                bio.get().setShirtSize(fmiData.getBiometricData().get(i).getShirtSize());
+                bio.get().setEyesColor(fmiData.getBiometricData().get(i).getEyesColor());
+                bio.get().setFootSize(fmiData.getBiometricData().get(i).getFootSize());
+                bio.get().setDescription(fmiData.getBiometricData().get(i).getDescription());
             }
         }
-        if (!outBase.isEmpty()) fmiMergeResult.getBiometricData().addAll(outBase);
+        if (!outBase.isEmpty()) {mainBiometricRepository.persistAll(outBase); fmiMergeResult.getBiometricData().addAll(outBase);}
     }
 
     @Transactional

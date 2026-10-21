@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @AllArgsConstructor
@@ -71,5 +71,25 @@ public class RecipientRepository {
         }
         return recipient;
     }
-
+    @Transactional(readOnly = true)
+    public Set<Recipient> getRecipients(Set<String> externUuids) {
+        Set<Recipient> recipients;
+        try {
+            recipients = new HashSet<>(entityManager.createQuery("from Recipient r where r.externUuid in :externUuids", Recipient.class)
+                    .setParameter("externUuids", externUuids)
+                    .getResultList());
+        } catch (RuntimeException e) {
+            log.warn("something is wrong", e);
+            recipients = new HashSet<>();
+        }
+        return recipients;
+    }
+    @Transactional
+    public void detach(Recipient recipient) {
+        try {
+            entityManager.detach(recipient);
+        } catch (RuntimeException e) {
+            log.warn("realMen: {} not detached", recipient.getNickName());
+        }
+    }
 }

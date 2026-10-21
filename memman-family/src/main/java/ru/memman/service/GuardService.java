@@ -3,11 +3,10 @@ package ru.memman.service;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.memman.dtos.ContactDto;
+import ru.memman.dtos.FamilyMemberDto;
 import ru.memman.dtos.OnlineUserDto;
-import ru.memman.entity.Family;
-import ru.memman.entity.FamilyMemberLink;
-import ru.memman.entity.Guard;
-import ru.memman.entity.ShortFamilyMember;
+import ru.memman.entity.*;
 import ru.memman.enums.*;
 import ru.memman.repository.FamilyMemberLinkRepository;
 import ru.memman.repository.GuardRepository;
@@ -52,9 +51,10 @@ public class GuardService implements SimpleFamilyService {
     }
 
     @Transactional
-    public Guard creatGuard(ShortFamilyMember familyMember, String uuid) {
+    public Guard creatGuard(ShortFamilyMember familyMember, String uuid, Localisation localisation) {
         Guard linkGuard = Guard.builder()
                 .linkedPerson(familyMember)
+                .localisation(localisation)
                 .tokenUser(uuid)
                 .build();
         return guardRepository.persistGuard(linkGuard);
@@ -62,28 +62,52 @@ public class GuardService implements SimpleFamilyService {
 
     @Transactional
     public void mergeGuard(OnlineUserDto onlineUserDto) {
-        if (onlineUserDto.getPriorityRole() != UserRole.SIMPLE_USER && onlineUserDto.getPriorityRole() != UserRole.BASE_USER) {
-            Optional<Guard> guard = guardRepository.findGuard(onlineUserDto.getExternUuid());
+        if (onlineUserDto.getPriorityRole() != null && onlineUserDto.getPriorityRole() != UserRole.SIMPLE_USER && onlineUserDto.getPriorityRole() != UserRole.BASE_USER) {
+            Optional<Guard> guard = guardRepository.findGuardWithLinkingPerson(onlineUserDto.getExternUuid());
             if (guard.isEmpty() && onlineUserDto.getLinkExternId() != null && !onlineUserDto.getLinkExternId().isBlank()) {
                 Optional<ShortFamilyMember> member = memberRepository.getMemberByUuid(UUID.fromString(onlineUserDto.getLinkExternId()));
-                member.ifPresent(shortFamilyMember -> creatGuard(shortFamilyMember, onlineUserDto.getExternUuid()));
+                member.ifPresent(shortFamilyMember -> creatGuard(shortFamilyMember, onlineUserDto.getExternUuid(), onlineUserDto.getLocalisation()));
             } else if (guard.isPresent()) {
-                ShortFamilyMember member=guard.get().getLinkedPerson();
-                if (!Objects.equals(guard.get().getLocalisation(), onlineUserDto.getLocalisation()))
+                ShortFamilyMember member = guard.get().getLinkedPerson();
+                if (onlineUserDto.getLocalisation() != null && !Objects.equals(guard.get().getLocalisation(), onlineUserDto.getLocalisation())) {
                     guard.get().setLocalisation(onlineUserDto.getLocalisation());
-                if (!Objects.equals(member.getUuid().toString(), onlineUserDto.getLinkExternId()))
+                    guardRepository.updateGuard(guard.get());
+                }
+                if (member.getUuid() != null && !Objects.equals(member.getUuid().toString(), onlineUserDto.getLinkExternId()))
                     onlineUserDto.setLinkExternId(member.getUuid().toString());
-                if (!Objects.equals(member.isPrimePhoto(), onlineUserDto.isUrlPhoto()))
-                    onlineUserDto.setUrlPhoto(member.isPrimePhoto());
-                guardRepository.updateGuard(guard.get());
+                if (member.getLastUpdate() != null && !Objects.equals(member.getLastUpdate(), onlineUserDto.getLastUpdate()))
+                    onlineUserDto.setLastUpdate(member.getLastUpdate());
+                else if (member.getLastUpdate() == null) onlineUserDto.setLastUpdate(member.getCreateTime());
+                if (member.getSecretLevelPhoto() != null && !Objects.equals(member.getSecretLevelPhoto(), onlineUserDto.getSecretLevelPhoto()))
+                    onlineUserDto.setSecretLevelPhoto(member.getSecretLevelPhoto());
+                else if (member.getSecretLevelPhoto() == null) onlineUserDto.setSecretLevelEmail(SecretLevel.CLOSE);
+                if (member.getShortFamilyMemberInfo() != null) {
+                    ShortFamilyMemberInfo info = member.getShortFamilyMemberInfo().get(0);
+                    if (info.getMainEmail() != null) onlineUserDto.setMainEmail(info.getMainEmail());
+                    if (info.getMainPhone() != null) onlineUserDto.setMainPhone(info.getMainPhone());
+                    if (info.getSecretLevelEmail() != null)
+                        onlineUserDto.setSecretLevelEmail(info.getSecretLevelEmail());
+                    else onlineUserDto.setSecretLevelEmail(SecretLevel.CLOSE);
+                    if (info.getSecretLevelPhone() != null)
+                        onlineUserDto.setSecretLevelPhone(info.getSecretLevelPhone());
+                    else onlineUserDto.setSecretLevelPhone(SecretLevel.CLOSE);
+                }
+                if (member.isPrimePhoto())
+                    onlineUserDto.setPrimePhoto(true);
             }
         }
         inline.add(onlineUserDto);
     }
 
     @Transactional
-    public void creatLinkingGuard(ShortFamilyMember shortFamilyMember, String token) {
-        Guard guard = creatGuard(shortFamilyMember, token);
+    public void reloadInline(OnlineUserDto onlineUserDto) {
+        onlineUserDto.setPersonsInBase(memberRepository.getInBasePersonsCount());
+        inline.add(onlineUserDto);
+    }
+
+    @Transactional
+    public void creatLinkingGuard(ShortFamilyMember shortFamilyMember, String token, Localisation localisation) {
+        Guard guard = creatGuard(shortFamilyMember, token, localisation);
         memberService.addGuardToMemberByLinking(shortFamilyMember, guard);
         memberService.addGuardToMemberKin(shortFamilyMember, guard);
         Set<String> changingStatus = memberService.repairGeneticTreeCheckStatus(memberService.getAllTopAncestors(shortFamilyMember), true);
@@ -103,7 +127,7 @@ public class GuardService implements SimpleFamilyService {
         log.info("New linking guard is created");
         sendAndFormService.formDirectiveToStorageForChangeStatus(token, shortFamilyMember.getUuid().toString(), SwitchPosition.FATHER, KafkaOperation.RENAME, changingStatus, CheckStatus.CHECKED);
         sendAndFormService.sendAttentionToUser(token, shortFamilyMember.getFullName(), shortFamilyMember, Attention.LINK);
-        inline.add(OnlineUserDto.builder().externUuid(guard.getTokenUser()).linkExternId(shortFamilyMember.getUuid().toString()).build());
+//        inline.add(OnlineUserDto.builder().externUuid(guard.getTokenUser()).sendOver(true).linkExternId(shortFamilyMember.getUuid().toString()).build());
     }
 
     @Transactional
@@ -204,6 +228,27 @@ public class GuardService implements SimpleFamilyService {
             case LOGIC -> {
                 log.info("its logic change");
             }
+        }
+    }
+
+    @Transactional
+    public List<Guard> getAllGuardWithLinkingPersons(Set<String> uuids) {
+        return guardRepository.findAllGuardWithLinkingPersons(uuids);
+    }
+
+    @Transactional
+    public void formKinContacts(ShortFamilyMember member) {
+        Set<ShortFamilyMember> topAnc = memberService.getAllTopAncestors(member);
+        memberService.getExtendedTopAncestors(topAnc);
+        Set<UUID> guards = memberService.getGeneticTreeGuards(topAnc, false);
+        if (!guards.isEmpty()) {
+            List<ContactDto> familyContactList = new ArrayList<>();
+            for (UUID guard :
+                    guards) {
+                familyContactList.add(ContactDto.builder().ownerId(guard.toString()).build());
+
+            }
+            sendAndFormService.sendContactRelativeStatus(familyContactList);
         }
     }
 }
