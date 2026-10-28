@@ -5,7 +5,6 @@ import ru.memman.entity.FamilyMember;
 import ru.memman.entity.Fio;
 import ru.memman.enums.Sex;
 import ru.memman.mappers.FioMapper;
-import com.ibm.icu.text.SimpleDateFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -78,7 +77,7 @@ public class FioServiceImp<T extends Fio> implements FioService<T> {
 
     public Date getDateFromInfo(String str) {
         Date birthday;
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd");
+//        SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd");
         if (str.charAt(0) == '(') {
             if (str.charAt(1) == 'A' || str.charAt(1) == 'I') {
                 String str1 = str.substring(17);

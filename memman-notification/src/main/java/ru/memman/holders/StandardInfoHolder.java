@@ -123,12 +123,12 @@ public class StandardInfoHolder {
             if (comLetters != null && !comLetters.isEmpty()) {
                 letterWithLocalisations = aloneNewRepository.getLettersWithLetterLocals(comLetters.stream().filter(AloneNew::isExistLocalisations).toList());
                 commonNewsGlobal.addAll(comLetters
-                    .stream()
-                    .filter(Objects::nonNull)
-                    .filter(x -> Objects.equals(x.getAttention(), Attention.COMMON))
-                    .sorted(Comparator.comparing(AloneNew::getCreationDate))
-                    .map(aloneNewMapper::entityToDto)
-                    .toList());
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .filter(x -> Objects.equals(x.getAttention(), Attention.COMMON))
+                        .sorted(Comparator.comparing(AloneNew::getCreationDate))
+                        .map(aloneNewMapper::entityToDto)
+                        .toList());
             } else letterWithLocalisations = new ArrayList<>();
             for (int i = 0; i < commonNewsGlobal.size(); i++) {
                 AloneNewDto comAloneDto = commonNewsGlobal.get(i);
@@ -189,21 +189,23 @@ public class StandardInfoHolder {
         }
         return result;
     }
-    public void addLetterToHolderRecipient(AloneNewDto aloneNewDto, String externUuid,boolean rightPrime) {
+
+    public void addLetterToHolderRecipient(AloneNewDto aloneNewDto, String externUuid, boolean rightPrime) {
         log.info("letter {} is entered to holder", aloneNewDto.getSubject());
-        rightsConfirm(aloneNewDto,externUuid,rightPrime);
+        rightsConfirm(aloneNewDto, externUuid, rightPrime);
         if (onlineInfo.containsKey(externUuid)) onlineInfo.get(externUuid).addNewMessage(aloneNewDto);
     }
-    public void rightsConfirm(AloneNewDto aloneNewDto, String externUuid, boolean rightPrime){
-        if (!Objects.equals(aloneNewDto.getSendingFrom(), getSystemRecipientHard().getExternUuid())) {
+
+    public void rightsConfirm(AloneNewDto aloneNewDto, String externUuid, boolean rightPrime) {
+        if (aloneNewDto.getSendingFrom() != null && !Objects.equals(aloneNewDto.getSendingFrom(), informerRecipientHard.getExternUuid()) && aloneNewDto.getAttention() != Attention.COMMON) {
             Set<String> rightAgree = new HashSet<>();
-            rightsMap.putIfAbsent(externUuid,new HashSet<>());
-            if (aloneNewDto.isExistPrimePhoto()&&rightPrime) {
+            rightsMap.putIfAbsent(externUuid, new HashSet<>());
+            if (aloneNewDto.getAttention() != Attention.SYSTEM && aloneNewDto.isExistPrimePhoto() && rightPrime) {
                 String accessLittle = String.valueOf(SwitchPosition.LITTLE.ordinal()).concat(aloneNewDto.getExternId());
                 rightsMap.get(externUuid).add(accessLittle);
                 rightAgree.add(accessLittle);
             }
-            if (aloneNewDto.getImageUrl() != null && !aloneNewDto.getImageUrl().isBlank()) {
+            if (aloneNewDto.getImageUrl() != null && !aloneNewDto.getImageUrl().isBlank() && (aloneNewDto.getAttention() != Attention.SYSTEM || Objects.equals(aloneNewDto.getSendingFrom(), systemRecipientHard.getExternUuid()))) {
                 String accessMain = String.valueOf(SwitchPosition.MAIN.ordinal()).concat(aloneNewDto.getImageUrl());
                 rightsMap.get(externUuid).add(accessMain);
                 rightAgree.add(accessMain);

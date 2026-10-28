@@ -22,7 +22,6 @@ public class VotingFamilyProcess implements Consumer<Message<DirectiveGuards>> {
         case ADD ->  directiveService.setChangesFromVotingDirective(directive.getPerson());
         case REMOVE ->  directiveService.negativeVoting(directive.getPerson());
         case EDIT -> directiveService.setLinkGuardFromVotingDirective(directive.getPerson());
-        case GET -> directiveService.setLanguish(directive);
         default -> directiveService.rejectLinkGuard(directive.getPerson());
 }}
 }

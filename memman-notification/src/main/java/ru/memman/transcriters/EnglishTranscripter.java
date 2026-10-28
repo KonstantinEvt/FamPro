@@ -1,7 +1,6 @@
 package ru.memman.transcriters;
 
 
-import org.springframework.stereotype.Component;
 import ru.memman.enums.CheckStatus;
 import ru.memman.enums.Relation;
 import ru.memman.enums.Subject;
@@ -10,31 +9,57 @@ import ru.memman.enums.SwitchPosition;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
+
 public class EnglishTranscripter implements AbstractTranscripter {
-    public static final Map<String,String> matrixOfChange=new HashMap<>();
-    public final Map<String,String> matrixOfTextGeneration= Map.ofEntries(
-            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE.name(), "(En) Введенная основная информация соответствует другой персоне в базе. Его ID: "),
-            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_HIDE.name(), "(En) Введенная основная информация соответствует альтернативному имени другой персоны в базе. Его ID: "),
-            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER.name(), "(En) Введенное альтернативное имя идентично альтернативному имени другой персоны в базе. Данное имя игнорировано. ID персоны: "),
-            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HIDE.name(), "(En) Введенное альтернативное имя соответствует другой персоне в базе. Данное имя игнорировано. ID персоны: "),
-            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HARD.name(), "(En) Введенное или бывшее альтернативное имя в совокупности с изменением даты рождения идентично альтернативному имени другой персоны в базе. Ввод данных отменен. ID персоны: "),
-            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HIDE_HARD.name(), "(En) Введенное или бывшее альтернативное имя в совокупности с изменением даты рождения соответствует другой персоне в базе. Ввод данных отменен. ID персоны: "),
-            new AbstractMap.SimpleEntry<>(Subject.RIGHTS.name(), "(En) Вы не имеете прав на действия с данной персоной"),
-            new AbstractMap.SimpleEntry<>(Subject.MODERATION_CHILD.name(), "(En) Обнаруженый ребенок находится под модерацией/голосованием. Повторите Вашу попытку позже. Найденный ребенок: "),
-            new AbstractMap.SimpleEntry<>(Subject.MODERATION_FATHER.name(), "(En) Обнаруженый отец находится под модерацией/голосованием. Введенные данные отца игнорированы. Введите эти данные позже. Найденный отец: "),
-            new AbstractMap.SimpleEntry<>(Subject.MODERATION_MOTHER.name(), "(En) Обнаруженая мать находится под модерацией/голосованием. Введенные данные матери игнорированы. Введите эти данные позже. Найденная мать:  "),
-            new AbstractMap.SimpleEntry<>(Subject.MODERATION_WARNING.name(), "(En) Персона находится на модерации/голосовании. Повторите Вашу попытку позже. Персона: "),
-            new AbstractMap.SimpleEntry<>(Subject.LAST_UPDATE.name(), "(En) Персона между Вашими запросами изменилась. Повторите Ваши запросы сначала. Персона: "),
-            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_DATE.name(), "(En) Введенные даты рождения родителей не могут соответствовать действительности. Данный блок игнорирован."),
-            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_SEX.name(), "(En) Ошибка в введенном поле персоны."),
-            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_PARENTS.name(), "(En) Родители не могут иметь таковые имена."),
-            new AbstractMap.SimpleEntry<>(Subject.VOTING.name(), "(En) Начато голосование на наличие взаимосвязи: "),
-            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_OTHER.name(), "(En) Введенное альтернативное имя не корректно."),
-            new AbstractMap.SimpleEntry<>(Subject.LINK.name(), "(En) Линкование пользователя с: "),
-            new AbstractMap.SimpleEntry<>(Subject.LINK_POSITIVE.name(), "(En) Вы успешно связались с персоной: "),
-            new AbstractMap.SimpleEntry<>(Subject.LINK_NEGATIVE.name(), "(En) Не удалась связь с персоной: "),
-            new AbstractMap.SimpleEntry<>("USER_NICK", "(En) запрос пользователя с НИКОМ: "),
-            new AbstractMap.SimpleEntry<>(Subject.NOT_FULLY.name(), "(En) Введенная информация не полна.")
+    public static final Map<String, String> matrixOfChange = new HashMap<>();
+    public final Map<String, String> matrixOfTextGeneration = Map.ofEntries(
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE.name().concat("1"), "The main information entered:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE.name().concat("2"), "</em><br>corresponds to another person in the database. Data entry has been cancelled.<br><strong>ID</strong> of person: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_HIDE.name().concat("1"), "The main information entered:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_HIDE.name().concat("2"), "</em><br>corresponds to the alternative name of another person in the database. Data entry has been cancelled.<br><strong>ID</strong> of person: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER.name().concat("1"), "The entered alternative name:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER.name().concat("2"), "</em><br>identical to the alternative name of another person in the database. This name has been ignored.<br><strong>ID</strong> of person: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HIDE.name().concat("1"), "The entered alternative name:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HIDE.name().concat("2"), "</em><br>corresponds to another person in the database. This name has been ignored.<br><strong>ID</strong> of person: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HARD.name().concat("1"), "The entered or former alternative name:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HARD.name().concat("2"), "</em><br>combined with the change in the date of birth, it is identical to an alternative name of another person in the database. Data entry has been cancelled.<br><strong>ID</strong> of person: "),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HIDE_HARD.name().concat("1"), "The entered or former alternative name:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.DUPLICATE_OTHER_HIDE_HARD.name().concat("2"), "</em><br>combined with the change in the date of birth, it is corresponds to another person in the database. Data entry has been cancelled.<br><strong>ID</strong> of person: "),
+            new AbstractMap.SimpleEntry<>(Subject.RIGHTS.name().concat("1"), "You do not have the right to take any action regarding the person:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.RIGHTS.name().concat("2"), "</em><br>Data entry has been cancelled."),
+            new AbstractMap.SimpleEntry<>(Subject.MODERATION_CHILD.name().concat("1"), "The found child:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.MODERATION_CHILD.name().concat("2"), "</em><br>is under moderation/voting. Data entry has been cancelled. Please try again later.<br><strong>ID</strong> of child: "),
+            new AbstractMap.SimpleEntry<>(Subject.MODERATION_FATHER.name().concat("1"), "The found father:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.MODERATION_FATHER.name().concat("2"), "</em><br>is under moderation/voting. This entry position has been ignored. Please try again later.<br><strong>ID</strong> of father: "),
+            new AbstractMap.SimpleEntry<>(Subject.MODERATION_MOTHER.name().concat("1"), "The found mother:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.MODERATION_MOTHER.name().concat("2"), "</em><br>is under moderation/voting. This entry position has been ignored. Please try again later.<br><strong>ID</strong> of mother:  "),
+            new AbstractMap.SimpleEntry<>(Subject.MODERATION_WARNING.name().concat("1"), "Person:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.MODERATION_WARNING.name().concat("2"), "</em><br>is under moderation/voting. Data entry has been cancelled. Please try again later.<strong>ID</strong> of person: "),
+            new AbstractMap.SimpleEntry<>(Subject.LAST_UPDATE.name().concat("1"), "Person:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.LAST_UPDATE.name().concat("2"), "</em><br>between your requests has changed. Requests has been aborted. Please repeat them from the beginning.<strong>ID</strong> of person: "),
+            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_DATE.name().concat("1"), "The entered dates of birth of the parent(s):<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_DATE.name().concat("2"), "</em><br>cannot correspond to reality.This entry position(s) has been ignored."),
+            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_SEX.name().concat("1"), "Mistake in the entered person field:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_SEX.name().concat("2"), "</em><br>Data entry has been cancelled."),
+            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_PARENTS.name().concat("1"), "Parents cannot have such names:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_PARENTS.name().concat("2"), "</em><br>Data entry has been cancelled."),
+            new AbstractMap.SimpleEntry<>(Subject.VOTING.name().concat("1"), "Voting has begun to determine the presence of a relationship between: <br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.VOTING.name().concat("2"), "</em><br>and<br>"),
+            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_OTHER.name().concat("1"), "The entered alternative name:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.WRONG_INFO_OTHER.name().concat("2"), "</em><br>is uncorrected."),
+            new AbstractMap.SimpleEntry<>(Subject.LINK.name().concat("1"), "You requested to be associated with a person:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.LINK.name().concat("2"), "</em><br>Voting has begun."),
+            new AbstractMap.SimpleEntry<>(Subject.LINK_POSITIVE.name().concat("1"), "Successful associated of the user with the person:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.LINK_POSITIVE.name().concat("2"), "</em><br>Congratulate."),
+            new AbstractMap.SimpleEntry<>(Subject.LINK_NEGATIVE.name().concat("1"), "Association of the user with the person:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.LINK_NEGATIVE.name().concat("2"), "</em><br>is failed"),
+            new AbstractMap.SimpleEntry<>(Subject.NOT_FULLY.name().concat("1"), "The information entered:<br><em>"),
+            new AbstractMap.SimpleEntry<>(Subject.NOT_FULLY.name().concat("2"), "</em><br>is not fully."),
+            new AbstractMap.SimpleEntry<>("USER_NICK","User with nickname <em>(on request moment)</em>: <strong>"),
+            new AbstractMap.SimpleEntry<>("USER_NICK1","</strong> want "),
+            new AbstractMap.SimpleEntry<>("USER_NICK2","linking himself with person:<br>"),
+            new AbstractMap.SimpleEntry<>("USER_NICK3","set relationship between:<br>"),
+            new AbstractMap.SimpleEntry<>("end_voting", "(En) Голосование завершено")
     );
 
     @Override
@@ -48,10 +73,33 @@ public class EnglishTranscripter implements AbstractTranscripter {
     }
 
     @Override
-    public String getAbsent() {
-        return CheckStatus.ABSENT.getComment();
+    public String getAbsentLocalisation() {
+        return "<em>(This message have not your localisation)</em><br>";
     }
 
+    @Override
+    public String getAbsent() {
+        return "absent in database parents";
+    }
+    @Override
+    public String getElection() {
+        return "Are you agree with this operation?";
+    }
+    @Override
+    public String getUser() {
+        return "User";
+    }
+    @Override
+    public String getUnknown() {
+        return "Unknown";}
+    @Override
+    public String getPerson() {
+        return "person";
+    }
+    @Override
+    public String getRequest() {
+        return "Your request ";
+    }
     @Override
     public String getInfoNotFully() {
         return CheckStatus.NOT_FULLY.getComment();
@@ -96,6 +144,7 @@ public class EnglishTranscripter implements AbstractTranscripter {
     public Map<String, String> getMatrixOfTextGeneration() {
         return matrixOfTextGeneration;
     }
+
     @Override
     public String getTextSwitchPosition(SwitchPosition switchPosition) {
         return switchPosition.getCommit();

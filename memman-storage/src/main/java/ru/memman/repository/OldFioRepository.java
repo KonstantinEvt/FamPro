@@ -12,8 +12,6 @@ import java.util.*;
 @Log4j2
 public class OldFioRepository {
     private final EntityManager entityManager;
-//    @Value("${spring.jpa.properties.hibernate.default_schema}")
-//    private String base;
 
     public OldFioRepository(EntityManager entityManager) {
         this.entityManager = entityManager;

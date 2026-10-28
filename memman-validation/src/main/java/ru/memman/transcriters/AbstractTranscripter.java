@@ -18,9 +18,9 @@ String getOut();
 String getClose();
 String empty();
 Map<String,String> getMatrixOfChange();
-String getTextSubject(Subject subject);
-Map<String,String> getMatrixOfTextGeneration();
-String getTextSwitchPosition(SwitchPosition switchPosition);
-String getAnd();
+//String getTextSubject(Subject subject);
+//Map<String,String> getMatrixOfTextGeneration();
+//String getTextSwitchPosition(SwitchPosition switchPosition);
+//String getAnd();
 String getRelation(Relation relation);
 }

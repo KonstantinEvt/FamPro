@@ -1,21 +1,18 @@
 package ru.memman.service;
 
-import ru.memman.dtos.TokenUser;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import ru.memman.dtos.TokenUser;
 import ru.memman.enums.Localisation;
 import ru.memman.enums.UserRole;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor

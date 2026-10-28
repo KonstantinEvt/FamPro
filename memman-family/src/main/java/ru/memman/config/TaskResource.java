@@ -1,15 +1,11 @@
 package ru.memman.config;
 
-import ru.memman.dtos.*;
-import ru.memman.enums.Localisation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ru.memman.dtos.*;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
 public class TaskResource {
@@ -45,7 +41,6 @@ public class TaskResource {
     LinkedList<Directive> cloakDirective() {
         return new LinkedList<>();
     }
-    @Bean("tempLocalisation")
-    Map<UUID, Localisation> tempLocalisation(){return new ConcurrentHashMap<>();}
+
 
 }

@@ -3,6 +3,7 @@ package ru.memman.config;
 import org.springframework.beans.factory.annotation.Qualifier;
 import ru.memman.dtos.*;
 import ru.memman.entity.Recipient;
+import ru.memman.enums.Localisation;
 import ru.memman.models.StandardInfo;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,16 +59,19 @@ public class TaskResource {
     @Bean("systemRecipientHard")
     Recipient systemRecipientHard(){return Recipient.builder()
             .nickName("System")
+            .localisation(Localisation.EN)
             .systemReading("")
             .build();}
     @Bean("commonRecipientHard")
     Recipient commonRecipientHard(){return Recipient.builder()
             .nickName("Common")
+            .localisation(Localisation.EN)
             .commonReading("")
             .build();}
     @Bean("informerRecipientHard")
     Recipient informerRecipientHard(){return Recipient.builder()
             .nickName("Informer")
+            .localisation(Localisation.EN)
             .build();}
     @Bean("rusTranscript")
     AbstractTranscripter rusTranscript() {

@@ -18,7 +18,7 @@ function menuFunc2200(cause) {
         <div style="margin-top:50px; color: darkred;font-family: 'Times New Roman',serif; font-size: 12px; text-align: center; padding-left: 10px">${globalTexts.get(2153)}</div>
         <br>
         <form id="linkForm" class="form-group" style="align-items: center; align-content: center; text-align: center; padding-left: 10px">
-            <label for="idLink" style="color: chocolate; ">${globalTexts.get(2152)}</label>
+            <label for="idLink" class="main_select">${globalTexts.get(2152)}</label>
             <input class="form-control" type="text" id="idLink" name="idLink" required>
             <button class="btn btn-outline-warning" style="color: darkred; margin-top: 24px" type="button" onclick="linkUser()">${langMatrix.get("link")}</button>
         </form>`

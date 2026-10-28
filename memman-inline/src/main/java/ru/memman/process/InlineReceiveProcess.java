@@ -34,7 +34,7 @@ public class InlineReceiveProcess implements Consumer<Message<OnlineUserDto>> {
             if (Objects.equals(externUuid, "system") || Objects.equals(externUuid, "common"))
                 onlineUserHolder.addGlobalMessageCount(externUuid);
             else {
-                onlineUserHolder.mergeUser(onlineUserDto);
+                onlineUserService.mergeUser(onlineUserDto);
                 log.info("Receiving inline User:{}", onlineUserDto);
             }
         }

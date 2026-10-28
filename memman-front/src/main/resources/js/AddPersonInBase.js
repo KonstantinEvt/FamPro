@@ -4,8 +4,9 @@ function menuFunc2100() {
     tempSecurity = ``;
     loadBio = 0;
     countBio = 0;
-    let background=URL.createObjectURL(defaultPhotos.groundTrees);
-    let noPhoto=URL.createObjectURL(defaultPhotos.borderImage);
+    alive = true;
+    let background = URL.createObjectURL(defaultPhotos.groundTrees);
+    let noPhoto = URL.createObjectURL(defaultPhotos.borderImage);
     document.getElementById("mainPanel").innerHTML = `<div style="vertical-align: top; "><div class="main_title" id="addPerson-title">${globalTexts.get(2101)}</div>
 <form class="form-group" style="margin:5px; text-align: center; background: url(${background}) repeat" id="baseFormAddFM">
         <div class="accordion" style=" --bs-accordion-active-bg: #eaecbd;  --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgb(234 212 101 / 25%)" id="addPersonAccord" >
@@ -28,8 +29,13 @@ function menuFunc2100() {
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="text" id="lastNameAddFM" name="lastNameAddFM" required>
         <label for="birthdayAddFM" style="color: chocolate; padding-top: 5px">${globalTexts.get(2103)}</label>
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="birthdayAddFM" name="birthdayAddFM" required>
-        <label for="deathdayAddFM" style="color: chocolate; padding-top: 4px">${globalTexts.get(2104)}</label>
-        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="deathdayAddFM" name="deathdayAddFM">
+        <label for="isAlive" style="color: chocolate; padding-top: 4px">${langMatrix.get("alive")}</label><br>        
+        <div><button type="button" class="btn btn-outline-warning" style="background:rgb(255,255,255,50%);padding-bottom:2px; padding-top:2px;" id="isAlive" name="isAlive" 
+                    onmouseover="backgroundChange('isAlive','#ffc107')"
+                    onmouseout="backgroundChange('isAlive','rgb(255,255,255,50%)')" 
+                    onclick="changeAlive()">${langMatrix.get("yes")}</button></div>
+        <label for="deathdayAddFM" id="deathdayLabel" style="color: chocolate; padding-top: 4px" hidden="hidden">${globalTexts.get(2104)}</label>        
+        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="deathdayAddFM" name="deathdayAddFM" hidden="hidden">
         <label for="chooseSexAddFM" style="color: chocolate; padding-top: 4px">${langMatrix.get("gender")}</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;" id="chooseSexAddFM" aria-label="chooseSexAddFM">            
             <option value="MALE" selected>${langMatrix.get("male")}</option>
@@ -139,7 +145,7 @@ function menuFunc2100() {
                 </div>
             </div>
         </div>
-        <div class="accordion-item">
+        <div class="accordion-item" id="contactItem">
             <h2 class="accordion-header">
                 <button class="accordion-button collapsed" style="padding-bottom:8px; padding-top:8px; color: darkred" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                     ${globalTexts.get(2110)}
@@ -345,7 +351,7 @@ function menuFunc2100() {
                 </div>
             </div>
         </div>
-        <div class="accordion-item">
+        <div class="accordion-item" id="burialItem" hidden="hidden">
             <h2 class="accordion-header">
                 <button class="accordion-button collapsed" style="padding-bottom:8px; padding-top:8px; color: darkred" type="button" data-bs-toggle="collapse" data-bs-target="#burialAddressAddFM" aria-expanded="false" aria-controls="burialAddressAddFM">
                    ${globalTexts.get(2136)}
@@ -411,10 +417,29 @@ function menuFunc2100() {
     drawSecurityMenu()
 }
 
-function drawSecurityMenu(){
-    let temp=``
+function changeAlive() {
+    const knopa = document.getElementById("isAlive");
+    const deathField = document.getElementById("deathdayAddFM");
+    alive = !alive;
+    if (alive) {
+        document.getElementById("deathdayLabel").hidden = true;
+        deathField.hidden = true;
+        document.getElementById("burialItem").hidden = true;
+        document.getElementById("contactItem").hidden = false;
+        knopa.innerHTML = langMatrix.get("yes");
+    } else {
+        document.getElementById("deathdayLabel").hidden = false;
+        deathField.hidden = false;
+        document.getElementById("burialItem").hidden = false;
+        document.getElementById("contactItem").hidden = true;
+        knopa.innerHTML = langMatrix.get("no");
+    }
+}
+
+function drawSecurityMenu() {
+    let temp = ``
     for (let i = 0; i < 11; i++) {
-        temp+=`<label for="chooseSecure${i}" style="color: chocolate; padding-top: 5px">${globalTexts.get(2200+i)}</label>
+        temp += `<label for="chooseSecure${i}" style="color: chocolate; padding-top: 5px">${globalTexts.get(2200 + i)}</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;text-align: center" id="chooseSecure${i}" aria-label="chooseSecure${i}">            
             <option value="CONFIDENTIAL" selected>${globalMenu.get(1400)}</option>
             <option value="ACTIVE_FAMILY">${globalTexts.get(2118)}</option>
@@ -426,8 +451,9 @@ function drawSecurityMenu(){
             <option value="OPEN" >${langMatrix.get("open")}</option>         
         </select>`
     }
-    document.getElementById("securityMenu").innerHTML=temp;
+    document.getElementById("securityMenu").innerHTML = temp;
 }
+
 function addPhonesField() {
     if (countPhone < 4) {
         document.getElementById("deleteButtonsPhoneAddFM").innerHTML += `
@@ -529,8 +555,8 @@ function submitBaseFormAddFM() {
     let otherPhones = markPhoneToDrop();
     let otherEmails = markEmailToDrop();
     if (inputBio !== null) createAgeBio(activeBio);
-    const jsonData = getFormToDrop(other, otherPhones, otherEmails,bioReduce());
-    let editStat = {person: undefined, prime: undefined, birth: undefined, burial: undefined};
+    const jsonData = getFormToDrop(other, otherPhones, otherEmails, bioReduce());
+    let editStat = {person: undefined, prime: undefined, birth: undefined, burial: undefined, alive: alive};
     fetch(endPoints.get("base") + "/add", {
         method: 'POST',
         headers: {
@@ -546,20 +572,23 @@ function submitBaseFormAddFM() {
                 dropBlobToServer(document.getElementById("canvas_little"), "little", null, fm.uuid)
                     .catch(() => console.log("save Little error"));
             } else editStat.prime = false;
-            if (getExistToProfileMember("burial")) dropBlobToServer(document.getElementById("canvas_burial"), "burial", null, fm.uuid)
-                .then(() => editStat.burial = true)
-                .catch(() => console.log("save Burial error"));
-            else editStat.burial = false;
+            if (!editStat.alive) {
+                if (getExistToProfileMember("burial")) dropBlobToServer(document.getElementById("canvas_burial"), "burial", null, fm.uuid)
+                    .then(() => editStat.burial = true)
+                    .catch(() => console.log("save Burial error"));
+                else editStat.burial = false;
+            }
             if (getExistToProfileMember("birth")) dropBlobToServer(document.getElementById("canvas_birth"), "birth", null, fm.uuid)
                 .then(() => editStat.birth = true)
                 .catch(() => console.log("save Birth error"));
             else editStat.birth = false;
-        return fm;
+            return fm;
         })
-        .then((fm)=>{
-            let temp=analyzeResult(globalTexts.get(2158), editStat,fm.id);
-            getDialogFrame(`menuFunc2100()`,langMatrix.get("success"), temp);}
+        .then((fm) => {
+                let temp = analyzeResult(globalTexts.get(2158), editStat, fm.id);
+                getDialogFrame(`menuFunc2100()`, langMatrix.get("success"), temp);
+            }
         )
-        .catch(()=>getDialogFrame(`menuFunc2100()`, langMatrix.get("failure"), globalTexts.get(2160)));
+        .catch(() => getDialogFrame(`menuFunc2100()`, langMatrix.get("failure"), globalTexts.get(2160)));
 
 }

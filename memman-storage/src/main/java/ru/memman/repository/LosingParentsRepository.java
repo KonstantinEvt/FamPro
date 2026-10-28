@@ -15,8 +15,6 @@ import java.util.UUID;
 @Log4j2
 public class LosingParentsRepository {
     private final EntityManager entityManager;
-//    @Value("${spring.jpa.properties.hibernate.default_schema}")
-//    private String base;
 
     public LosingParentsRepository(EntityManager entityManager) {
         this.entityManager = entityManager;

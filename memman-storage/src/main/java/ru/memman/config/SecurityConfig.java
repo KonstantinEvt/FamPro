@@ -15,7 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtConverter.Jwt2AuthenticationConverter authenticationConverter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtConverter.Jwt2AuthenticationConverter authenticationConverter) {
         http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(jwt -> jwt
                         .jwtAuthenticationConverter(authenticationConverter)));

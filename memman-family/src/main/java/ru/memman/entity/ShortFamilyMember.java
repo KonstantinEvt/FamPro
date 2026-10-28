@@ -104,6 +104,9 @@ public class ShortFamilyMember extends Fio {
     @JoinColumn(name = "logic_primary")
     private Family logicPrimary;
 
+    @Column(name="alive")
+    private boolean alive;
+
     @Column(name = "death_day")
     private Date deathday;
 

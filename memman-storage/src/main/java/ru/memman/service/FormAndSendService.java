@@ -23,22 +23,16 @@ public class FormAndSendService {
         DirectiveGuards dd = DirectiveGuards.builder()
                 .tokenUser(tokenUser)
                 .operation(KafkaOperation.ADD)
-                .person(person)
+                .info1(person)
                 .number1(id)
                 .created(new Timestamp(System.currentTimeMillis()))
                 .localisation(localisation)
                 .subject(subject)
                 .build();
         switch (attention) {
-            case NEGATIVE -> {
-                dd.setSwitchPosition(SwitchPosition.MOTHER);
-            }
-            case MODERATE -> {
-                dd.setSwitchPosition(SwitchPosition.MAIN);
-            }
-            case RIGHTS -> {
-                dd.setSwitchPosition(SwitchPosition.FATHER);
-            }
+            case NEGATIVE -> dd.setSwitchPosition(SwitchPosition.MOTHER);
+            case MODERATE -> dd.setSwitchPosition(SwitchPosition.MAIN);
+            case RIGHTS -> dd.setSwitchPosition(SwitchPosition.FATHER);
             case POSITIVE -> dd.setSwitchPosition(SwitchPosition.BIRTH);
 
             default -> dd.setSwitchPosition(SwitchPosition.ADDRESS);
@@ -57,18 +51,12 @@ public class FormAndSendService {
                     .localisation(localisation)
                     .subject(notification.getSubject())
                     .build();
-            if (notification.getPerson()!=null) dd.setPerson(notification.getPerson());
+            if (notification.getPerson()!=null) dd.setInfo1(notification.getPerson());
             if (notification.getId()!=null) dd.setNumber1(notification.getId());
             switch (notification.getAttention()) {
-                case NEGATIVE -> {
-                    dd.setSwitchPosition(SwitchPosition.MOTHER);
-                }
-                case MODERATE -> {
-                    dd.setSwitchPosition(SwitchPosition.MAIN);
-                }
-                case RIGHTS -> {
-                    dd.setSwitchPosition(SwitchPosition.FATHER);
-                }
+                case NEGATIVE -> dd.setSwitchPosition(SwitchPosition.MOTHER);
+                case MODERATE -> dd.setSwitchPosition(SwitchPosition.MAIN);
+                case RIGHTS -> dd.setSwitchPosition(SwitchPosition.FATHER);
                 case POSITIVE -> dd.setSwitchPosition(SwitchPosition.BIRTH);
 
                 default -> dd.setSwitchPosition(SwitchPosition.ADDRESS);

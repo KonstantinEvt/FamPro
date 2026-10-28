@@ -1,13 +1,16 @@
 package ru.memman.config;
 
-import ru.memman.dtos.*;
-import ru.memman.entity.MainContact;
-import ru.memman.enums.Localisation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ru.memman.dtos.Directive;
+import ru.memman.dtos.DirectiveGuards;
+import ru.memman.dtos.FamilyDirective;
+import ru.memman.dtos.FamilyMemberDto;
+import ru.memman.entity.MainContact;
 
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
@@ -52,7 +55,4 @@ public class TaskResource {
 
     @Bean("tempMainContact")
     Map<String, MainContact> tempMainContact(){return new ConcurrentHashMap<>();}
-
-    @Bean("tempLocalisation")
-    Map<UUID, Localisation> tempLocalisation(){return new ConcurrentHashMap<>();}
 }

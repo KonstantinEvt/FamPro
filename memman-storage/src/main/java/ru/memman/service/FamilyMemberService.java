@@ -11,7 +11,6 @@ import ru.memman.mappers.FamilyMemberMapper;
 import ru.memman.mappers.FioMapper;
 import ru.memman.mappers.OldNamesMapper;
 import ru.memman.repository.FamilyMemberRepo;
-import ru.memman.repository.MainOtherFioRepository;
 import ru.memman.repository.MainStorageRepository;
 import ru.memman.repository.OldFioRepository;
 import ru.memman.utils.FamilyMemberUtils;
@@ -59,19 +58,19 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                                OldFioService oldFioService,
                                FamilyMemberRepo familyMemberRepo,
                                TokenService tokenService,
-                               FormAndSendService formAndSendService, LinkedList<LinkedList<FamilyDirective>> directives,
+                               FormAndSendService formAndSendService,
+                               LinkedList<LinkedList<FamilyDirective>> directives,
                                FamilyConnectionClient familyConnectionClient,
-                               LinkedList<DirectiveGuards> directiveGuardsList,
                                LinkedList<Directive> directivePhotos,
                                Map<String, String> tempPhotoAccept,
                                MainStorageRepository mainStorageRepository,
-                               MainOtherFioRepository mainOtherFioRepository,
                                OldNamesMapper oldNamesMapper,
                                OldFioRepository oldFioRepository,
                                Map<String, FamilyMemberDto> tempGuardStatus,
                                Map<String, FamilyMemberDto> tempExtendedDto,
                                Map<Long, Timestamp> lastUpdateMap,
-                               Map<String, MainContact> tempMainContact, LinkedList<Long> personsCount) {
+                               Map<String, MainContact> tempMainContact,
+                               LinkedList<Long> personsCount) {
         super(fioMapper);
         this.familyMemberMapper = familyMemberMapper;
         this.familyMemberInfoService = familyMemberInfoService;
@@ -296,11 +295,16 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         String token = (String) tokenUser.getClaims().get("sub");
         Localisation localisation = (familyMemberDto.getLocalisation() != null) ? familyMemberDto.getLocalisation() : Localisation.EN;
         if (familyMemberDto.getId() != null) throw new ProblemWithId("Удалите ID нового человека");
+        String enterFioInfo = generateFioStringInfo(Fio.builder()
+                .firstName(familyMemberDto.getFirstName())
+                .middleName(familyMemberDto.getMiddleName())
+                .lastName(familyMemberDto.getLastName())
+                .birthday(familyMemberDto.getBirthday()).build());
         if (familyMemberDto.getFirstName() == null
                 || familyMemberDto.getMiddleName() == null
                 || familyMemberDto.getLastName() == null
                 || familyMemberDto.getBirthday() == null) {
-            formAndSendService.sendNotification(token, Attention.NEGATIVE, null, 0L, Subject.NOT_FULLY, localisation);
+            formAndSendService.sendNotification(token, Attention.NEGATIVE, enterFioInfo, 0L, Subject.NOT_FULLY, localisation);
             throw new UncorrectedInformation("info not fully for creat person in base");
         }
         FamilyMember familyMember = familyMemberMapper.dtoToEntity(familyMemberDto);
@@ -308,12 +312,12 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         familyMember.setUuid(familyMemberDto.getUuid());
         Optional<FamilyMember> fm = familyMemberRepo.findFioByUuid(familyMemberDto.getUuid());
         if (fm.isPresent()) {
-            formAndSendService.sendNotification(token, Attention.NEGATIVE, null, fm.get().getId(), Subject.DUPLICATE, localisation);
+            formAndSendService.sendNotification(token, Attention.NEGATIVE, enterFioInfo, fm.get().getId(), Subject.DUPLICATE, localisation);
             throw new Dublicate("Такой человек уже есть в базе. Если Вы хотите его отредактировать - воспользуйтесь Patch-методом. ID человека " + (fm.get().getId()));
         } else {
             Set<OldFio> existOldFio = oldFioRepository.findAllOldFiosWithFamilyMembers(Set.of(familyMemberDto.getUuid()));
             if (!existOldFio.isEmpty()) {
-                formAndSendService.sendNotification(token, Attention.NEGATIVE, null, existOldFio.stream().findFirst().get().getId(), Subject.DUPLICATE_HIDE, localisation);
+                formAndSendService.sendNotification(token, Attention.NEGATIVE, enterFioInfo, existOldFio.stream().findFirst().get().getId(), Subject.DUPLICATE_HIDE, localisation);
                 throw new Dublicate("Такой человек уже есть в базе. Это его альтернативное имя");
             }
         }
@@ -426,6 +430,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             throw new RightsIsAbsent("У Вас нет прав для изменения");
         }
         FamilyMember fm;
+
         Changing changing = new Changing();
         if (dtoId != null) {
             fm = mainStorageRepository.findMemberWithInfoById(dtoId).orElseThrow(() ->
@@ -434,7 +439,11 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             fm = mainStorageRepository.findMemberWithInfoByUUID(familyMemberDto.getUuid()).orElseThrow(() ->
                     new FamilyMemberNotFound("Попытка изменить человека по UUID, которого нет в базе"));
         } else throw new ProblemWithId("Ни Id, ни UUID не указан для поиска/изменения человека");
-
+        String enterFioInfo = generateFioStringInfo(Fio.builder()
+                .firstName(familyMemberDto.getFirstName())
+                .middleName(familyMemberDto.getMiddleName())
+                .lastName(familyMemberDto.getLastName())
+                .birthday(familyMemberDto.getBirthday()).build());
 
         if (fm.getCheckStatus() == CheckStatus.MODERATE
                 && !FamilyMemberUtils.checkRightsToModerate(tokenService.getTokenUser())) {
@@ -448,7 +457,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         if (fromTemp.getSecretLevelRemove() == SecretLevel.CLOSE && fromTemp.getSecretLevelBirthday() != SecretLevel.CLOSE
                 && ((fromTemp.getMotherInfo() != null && fromTemp.getMotherInfo().charAt(0) != '(' && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getMotherFio())), fromTemp.getMotherInfo()))
                 || (fromTemp.getFatherInfo() != null && fromTemp.getFatherInfo().charAt(0) != '(' && !Objects.equals(generateFioStringInfo(fioMapper.dtoToEntity(familyMemberDto.getFatherFio())), fromTemp.getFatherInfo())))) {
-            formAndSendService.sendNotification(token, Attention.RIGHTS, null, dtoId, Subject.RIGHTS, localisation);
+            formAndSendService.sendNotification(token, Attention.RIGHTS, enterFioInfo, dtoId, Subject.RIGHTS, localisation);
             throw new RightsIsAbsent("У Вас нет прав для удаления");
         }
         boolean changeOnPseudonym = false;
@@ -530,12 +539,12 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             if (changeBirthday || !changeOnPseudonym) {
                 Optional<FamilyMember> existFM = familyMemberRepo.findFioByUuid(freshUuid);
                 if (existFM.isPresent() && !existFM.get().getId().equals(fm.getId())) {
-                    formAndSendService.sendNotification(token, Attention.NEGATIVE, null, existFM.get().getId(), Subject.DUPLICATE, localisation);
+                    formAndSendService.sendNotification(token, Attention.NEGATIVE, enterFioInfo, existFM.get().getId(), Subject.DUPLICATE, localisation);
                     throw new Dublicate("Информация в результате изменения совпадает с существующим человеком в базе. Его ID " + existFM.get().getId());
                 } else {
                     Optional<OldFio> existOldName = oldFioRepository.findOldFioWithFamilyMember(freshUuid);
                     if (existOldName.isPresent() && !existOldName.get().getId().equals(fm.getId())) {
-                        formAndSendService.sendNotification(token, Attention.NEGATIVE, null, existOldName.get().getId(), Subject.DUPLICATE_HIDE, localisation);
+                        formAndSendService.sendNotification(token, Attention.NEGATIVE, enterFioInfo, existOldName.get().getId(), Subject.DUPLICATE_HIDE, localisation);
                         throw new Dublicate("Информация в результате изменения совпадает с альтернативным именем человека в базе. Его ID " + existOldName.get().getMember().getId());
                     }
                 }
@@ -547,17 +556,17 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         List<FamilyDirective> listToFamily = new ArrayList<>();
         Set<FamilyMember> children = new HashSet<>();
         if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE) {
+            fm.setAlive(familyMemberDto.isAlive());
             Set<OldFio> otherNames;
             try {
                 otherNames = oldFioService.checkOtherNamesUniquer(fm, familyMemberDto.getFioDtos(), notifications, changeBirthday);
             } catch (Dublicate e) {
-                formAndSendService.sendNotification(token, Attention.NEGATIVE, null, Long.getLong(e.getMessage()), Subject.DUPLICATE_OTHER_HARD, localisation);
+                formAndSendService.sendNotification(token, Attention.NEGATIVE, enterFioInfo, Long.getLong(e.getMessage()), Subject.DUPLICATE_OTHER_HARD, localisation);
                 throw new Dublicate(e.getMessage());
             } catch (UncorrectedInformation e) {
-                formAndSendService.sendNotification(token, Attention.NEGATIVE, null, Long.getLong(e.getMessage()), Subject.DUPLICATE_OTHER_HIDE_HARD, localisation);
+                formAndSendService.sendNotification(token, Attention.NEGATIVE, enterFioInfo, Long.getLong(e.getMessage()), Subject.DUPLICATE_OTHER_HIDE_HARD, localisation);
                 throw new Dublicate(e.getMessage());
             }
-
             try {
                 if (!otherNames.isEmpty() || (changing.isChangingMain() && !changeOnPseudonym))
                     children.addAll(losingParentsService.findAdditionalChildren(changing, fm, otherNames));
@@ -579,13 +588,8 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                     fm.setChilds(children);
                 } else fm.getChilds().addAll(children);
             }
-
-
             setUpParents(familyMemberDto, fm, changing, notifications, listToFamily, fromTemp);
-
             familyMemberDto.setUuid(fm.getUuid());
-        }
-        if (fromTemp.getSecretLevelMainInfo() != SecretLevel.CLOSE)
             if (familyMemberDto.isPrimePhoto()) {
                 directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.ADD));
                 directivePhotos.add(new Directive(token, fm.getUuid().toString(), SwitchPosition.LITTLE, KafkaOperation.ADD));
@@ -598,7 +602,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.RENAME));
                 directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.LITTLE, KafkaOperation.RENAME));
             }
-
+        }
         if (fm.getFamilyMemberInfo() != null && !fm.getFamilyMemberInfo().isEmpty())
             familyMemberInfoService.merge(familyMemberDto, fm.getFamilyMemberInfo().get(0), token, changing.isChangingMain());
         else {
@@ -616,7 +620,6 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
         addChangingToBase(familyMemberDto, fm, changing);
         if (changing.isChangingMain()) addChangesInParensInfo(fm.getChilds(), fm, listToFamily);
         else if (!children.isEmpty()) addChangesInParensInfo(children, fm, listToFamily);
-//                addChangesInParensInfo(fm.getChilds(), fm, fromTemp.getUuid());
 
         fm.setLastUpdate(new Timestamp(System.currentTimeMillis()));
 
@@ -639,27 +642,9 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             } else if (changing.isChangingMain() && fm.getFamilyMemberInfo().get(0).isPhotoBurialExist())
                 directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.RENAME));
 
-//        if (changing.isChangingMain()) {
-//            if (familyMemberDto.isPrimePhoto()) {
-//                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.REMOVE));
-//                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.LITTLE, KafkaOperation.REMOVE));
-//            } else if (fm.isPrimePhoto()) {
-//                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.PRIME, KafkaOperation.RENAME));
-//                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.LITTLE, KafkaOperation.RENAME));
-//            }
-//            if (familyMemberDto.getMemberInfo().isPhotoBirthExist())
-//                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.REMOVE));
-//            else if (fm.getFamilyMemberInfo().get(0).isPhotoBirthExist())
-//                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.BIRTH, KafkaOperation.RENAME));
-//            if (familyMemberDto.getMemberInfo().isPhotoBurialExist())
-//                directivePhotos.add(new Directive(token, fromTemp.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.REMOVE));
-//            else if (fm.getFamilyMemberInfo().get(0).isPhotoBurialExist())
-//                directivePhotos.add(new Directive(fromTemp.getUuid().toString(), fm.getUuid().toString(), SwitchPosition.BURIAL, KafkaOperation.RENAME));
-//        }
-
         fm.setCheckStatus(CheckStatus.MODERATE);
-//        mainStorageRepository.updateMember(fm);
         mainStorageRepository.flushMember();
+
         LinkedList<FamilyDirective> toFamily = new LinkedList<>();
         for (FamilyDirective directive :
                 listToFamily) {
@@ -677,7 +662,6 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 .operation(KafkaOperation.RENAME).build());
         formAndSendService.sendAllNotifications(token, localisation, notifications);
         directives.add(toFamily);
-
         tempGuardStatus.remove(token);
         tempExtendedDto.remove(token);
         tempMainContact.remove(token);
@@ -699,13 +683,6 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 fm.setSecretLevelBirthday(familyMemberDto.getSecretLevelBirthday());
         }
     }
-
-//    public void checkOldNamesForAdditionalChilds(Set<FamilyMember> childrenOfFamilyMember, Set<OldFio> oldFios, FamilyMember familyMember) {
-//        if (childrenOfFamilyMember == null) childrenOfFamilyMember = new HashSet<>();
-//        for (OldFio oldFio : oldFios) {
-//            childrenOfFamilyMember.addAll(losingParentsService.checkForAdditionalChilds(oldFio.getUuid(), familyMember));
-//        }
-//    }
 
     @Transactional
     public void addChangesInParensInfo(Set<FamilyMember> setOfChilds, FamilyMember fm, List<FamilyDirective> toFamily) {
@@ -856,34 +833,6 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
     @Transactional
     public void addChangingToBase(FamilyMemberDto familyMemberDto, FamilyMember familyMember, Changing changing) {
-//        Set<UUID> fromDto = new HashSet<>();
-//        if (familyMemberDto.getFioDtos() != null) {
-//            for (FioDto old :
-//                    familyMemberDto.getFioDtos()) {
-//                old.setBirthday(familyMemberDto.getBirthday());
-//                fromDto.add(generateUUIDFromFio(fioMapper.dtoToEntity(old)));
-//            }
-//            if (tempExtendedDto.get(token) != null && tempExtendedDto.get(token).getFioDtos() != null)
-//                for (FioDto tempExtended :
-//                        tempExtendedDto.get(token).getFioDtos()) {
-//                    fromDto.remove(tempExtended.getUuid());
-//                }
-//        }
-//        if (changing.isChangingMain() || !fromDto.isEmpty()) {
-//            Set<FamilyMember> childrenOfFamilyMember = losingParentsService.checkForAdditionalChilds(familyMember.getUuid(), familyMember);
-//            if (familyMemberDto.getFioDtos() != null) {
-//                Set<OldFio> oldFios = oldFioService.addAllNewOldNames(familyMemberDto.getFioDtos(), familyMember);
-//                if (oldFios != null) {
-//                    checkOldNamesForAdditionalChilds(childrenOfFamilyMember, oldFios, familyMember);
-//                    if (familyMember.getOtherNames() != null) familyMember.getOtherNames().addAll(oldFios);
-//                    else familyMember.setOtherNames(oldFios);
-//                }
-//            }
-//            if (childrenOfFamilyMember != null)
-//                if (familyMember.getChilds() != null && !familyMember.getChilds().isEmpty()) {
-//                    familyMember.getChilds().addAll(childrenOfFamilyMember);
-//                } else familyMember.setChilds(childrenOfFamilyMember);
-//        }
         if (changing.isChangingFather() && familyMember.getFatherInfo() != null &&
                 familyMember.getFatherInfo().charAt(1) == 'A') {
             losingParentsService.addLosingParent(familyMemberDto.getFatherFio(), familyMember, Sex.MALE);

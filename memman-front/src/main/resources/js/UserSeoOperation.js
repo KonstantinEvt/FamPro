@@ -110,8 +110,8 @@ function editUserSSO() {
 
 }
 function linkUser() {
-    var form = document.getElementById('linkForm');
-    var uri=endPoints.get("sso")+"/link/"+form.elements.idLink.value
+    const form = document.getElementById('linkForm');
+    const uri = endPoints.get("sso") + "/link/" + form.elements.idLink.value + `/${currentLang.toUpperCase()}}`;
     fetch(uri, {
         method: 'GET',
         headers: {'Content-Type': 'application/json'}

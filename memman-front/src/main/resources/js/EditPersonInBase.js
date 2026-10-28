@@ -2,6 +2,7 @@ function editPerson() {
     clearMainVariable();
     let background = URL.createObjectURL(defaultPhotos.groundTrees);
     let noPhoto = URL.createObjectURL(defaultPhotos.borderImage);
+    alive = true;
     document.getElementById("mainPanel").innerHTML = `
 <div style="vertical-align: top; "><div class="main_title" id="addPerson-title">${globalTexts.get(2301)}</div>
 <div class="main_under">ID: <span class="main_title" style="color: darkred; font-style:normal">${tempPerson.id}</span></div>
@@ -33,8 +34,13 @@ function editPerson() {
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="text" id="lastNameAddFM" name="lastNameAddFM" value="${tempPerson.lastName}"required>
         <label for="birthdayAddFM" style="color: chocolate; padding-top: 5px">${globalTexts.get(2103)}</label>
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="birthdayAddFM" name="birthdayAddFM" required>
-        <label for="deathdayAddFM" style="color: chocolate; padding-top: 4px">${globalTexts.get(2104)}</label>
-        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="deathdayAddFM" name="deathdayAddFM">
+        <label for="isAlive" style="color: chocolate; padding-top: 4px">${langMatrix.get("alive")}</label><br>        
+        <div><button type="button" class="btn btn-outline-warning" style="padding-bottom:2px; padding-top:2px;" id="isAlive" name="isAlive" 
+                    onmouseover="backgroundChange('isAlive','#ffc107')"
+                    onmouseout="backgroundChange('isAlive','rgb(255,255,255,50%)')" 
+                    onclick="changeAliveEdit()">${langMatrix.get("yes")}</button></div>
+        <label for="deathdayAddFM" id="deathdayLabel" style="color: chocolate; padding-top: 4px" hidden="hidden">${globalTexts.get(2104)}</label>        
+        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="deathdayAddFM" name="deathdayAddFM" hidden="hidden">
         <label for="chooseSexAddFM" style="color: chocolate; padding-top: 4px">${langMatrix.get("gender")}</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;" id="chooseSexAddFM" aria-label="chooseSexAddFM">            
             <option value="MALE" selected>${langMatrix.get("male")}</option>
@@ -145,7 +151,7 @@ function editPerson() {
                 </div>
             </div>
         </div>
-        <div class="accordion-item" id="contactPage" hidden="hidden">
+        <div class="accordion-item" id="contactItem" hidden="hidden">
             <h2 class="accordion-header">
                 <button class="accordion-button collapsed" style="padding-bottom:8px; padding-top:8px; color: darkred" type="button" data-bs-toggle="collapse" data-bs-target="#collapseContact" aria-expanded="false" aria-controls="collapseContact">
                     ${globalTexts.get(2110)}
@@ -355,7 +361,7 @@ function editPerson() {
                 </div>
             </div>
         </div>
-        <div class="accordion-item" id="burialEdit" hidden="hidden">
+        <div class="accordion-item" id="burialItem" hidden="hidden" hidden="hidden">
             <h2 class="accordion-header">
                 <button class="accordion-button collapsed" style="padding-bottom:8px; padding-top:8px; color: darkred" type="button" data-bs-toggle="collapse" data-bs-target="#burialAddressAddFM" aria-expanded="false" aria-controls="burialAddressAddFM">
                    ${globalTexts.get(2136)}
@@ -447,7 +453,7 @@ function editPerson() {
     if (tempPerson.fatherFio !== null && tempPerson.fatherFio.middleName !== null) document.getElementById("middleNameFatherAddFM").value = tempPerson.fatherFio.middleName;
     if (tempPerson.fatherFio !== null && tempPerson.fatherFio.lastName !== null) document.getElementById("lastNameFatherAddFM").value = tempPerson.fatherFio.lastName;
     if (tempPerson.fatherFio !== null && tempPerson.fatherFio.birthday !== null) document.getElementById("birthdayFatherAddFM").value = getDateToFull(new Date(tempPerson.fatherFio.birthday));
-    if (tempPerson.deathday !== null) document.getElementById("deathdayAddFM").value = getDateToFull(new Date(tempPerson.deathday));
+    if (!tempPerson.alive && tempPerson.deathday !== null) document.getElementById("deathdayAddFM").value = getDateToFull(new Date(tempPerson.deathday));
     if (tempPerson.secretLevelMainInfo === "CLOSE") {
         document.getElementById("firstNameAddFM").disabled = "disabled";
         document.getElementById("middleNameAddFM").disabled = "disabled";
@@ -455,10 +461,11 @@ function editPerson() {
         document.getElementById("birthdayAddFM").disabled = "disabled";
         document.getElementById("deathdayAddFM").disabled = "disabled";
         document.getElementById("chooseSexAddFM").disabled = "disabled";
+        document.getElementById("isAlive").disabled = "disabled";
         lockMother();
         lockFather();
     } else {
-        document.getElementById("primeCard").hidden=false;
+        document.getElementById("primeCard").hidden = false;
         document.getElementById("otherNamesEdit").hidden = false;
         document.getElementById("securitySecurity").hidden = false;
         if (tempPerson.secretLevelEdit !== "CLOSE")
@@ -521,11 +528,13 @@ function editPerson() {
             document.getElementById("labelSecure8").hidden = true;
         }
         if (tempPerson.memberInfo.secretLevelBurial !== "CLOSE") {
+            document.getElementById("isAlive").disabled = false;
             if (tempPerson.memberInfo.secretLevelBurial !== "UNDEFINED")
                 document.getElementById("chooseSecure9").value = tempPerson.memberInfo.secretLevelBurial;
         } else {
             document.getElementById("chooseSecure9").hidden = true;
             document.getElementById("labelSecure9").hidden = true;
+            document.getElementById("isAlive").disabled = true;
         }
         if (tempPerson.memberInfo.secretLevelDescription !== "CLOSE") {
             if (tempPerson.memberInfo.secretLevelDescription !== "UNDEFINED")
@@ -537,7 +546,7 @@ function editPerson() {
         let linkingMother = tempPerson.motherInfo !== globalTexts.get(2302) && tempPerson.motherInfo !== globalTexts.get(2303) && tempPerson.motherInfo !== globalTexts.get(2304) && tempPerson.motherInfo !== globalTexts.get(2305) && tempPerson.motherInfo.charAt(0) !== '(';
         let linkingFather = tempPerson.fatherInfo !== globalTexts.get(2302) && tempPerson.fatherInfo !== globalTexts.get(2303) && tempPerson.fatherInfo !== globalTexts.get(2304) && tempPerson.fatherInfo !== globalTexts.get(2305) && tempPerson.fatherInfo.charAt(0) !== '(';
         if (linkingMother || linkingFather) {
-            document.getElementById("attentionParents").hidden=false;
+            document.getElementById("attentionParents").hidden = false;
             if (linkingMother && tempPerson.secretLevelRemove === "CLOSE") {
                 lockMother();
                 document.getElementById("lockParentsInfo").innerHTML = globalTexts.get(2306);
@@ -562,7 +571,7 @@ function editPerson() {
             document.getElementById(`middleNameOtherAddFM0`).disabled = "disabled";
             document.getElementById(`lastNameOtherAddFM0`).disabled = "disabled";
             insertOther[0] = 'no';
-            document.getElementById("attentionOtherNames").hidden=false;
+            document.getElementById("attentionOtherNames").hidden = false;
             document.getElementById("otherNamesInfo").innerHTML = globalTexts.get(2310);
             while (countOtherNames < tempPerson.fioDtos.length) {
                 addOtherFieldEdit();
@@ -580,8 +589,8 @@ function editPerson() {
         }
     }
     if (tempPerson.memberInfo.secretLevelPhone !== "CLOSE" || tempPerson.memberInfo.secretLevelEmail !== "CLOSE") {
-        document.getElementById("contactPage").hidden = false;
-        document.getElementById("contactPage").disabled = false;
+        document.getElementById("contactItem").hidden = false;
+        document.getElementById("contactItem").disabled = false;
 
         if (tempPerson.memberInfo.secretLevelEmail !== "CLOSE") {
             document.getElementById("mainEmailAddFM").disabled = false;
@@ -648,7 +657,7 @@ function editPerson() {
 
     }
     if (tempPerson.memberInfo.secretLevelBurial !== "CLOSE") {
-        document.getElementById("burialEdit").hidden = false;
+        document.getElementById("burialItem").hidden = false;
         if (tempPerson.memberInfo.photoBurialExist !== false && tempPerson.memberInfo.burImj !== undefined && tempPerson.memberInfo.burImj !== "") {
             let tempURL = URL.createObjectURL(tempPerson.memberInfo.burImj)
 
@@ -690,8 +699,17 @@ function editPerson() {
             document.getElementById("birthRegisterAddFM").value = tempPerson.memberInfo.birth.registration;
         }
     }
+    if (!tempPerson.alive) changeAliveEdit();
 }
+function changeAliveEdit() {
+    changeAlive();
+    if (tempPerson.memberInfo.secretLevelBurial === "CLOSE")
+        document.getElementById("burialItem").hidden = true;
 
+    if (tempPerson.memberInfo.secretLevelPhone === "CLOSE" && tempPerson.memberInfo.secretLevelEmail === "CLOSE")
+        document.getElementById("contactItem").hidden = true;
+
+}
 function lockMother() {
     document.getElementById("firstNameMotherAddFM").disabled = "disabled";
     document.getElementById("middleNameMotherAddFM").disabled = "disabled";
@@ -854,7 +872,7 @@ function submitBaseFormEditFM() {
     if (inputBio !== null && tempPerson.memberInfo !== null && tempPerson.memberInfo.secretLevelBiometric !== "CLOSE") createAgeBio(activeBio);
     const jsonData = getFormToDrop(other, otherPhones, otherEmails);
     console.log(jsonData);
-    let editStat = {person: undefined, prime: undefined, birth: undefined, burial: undefined};
+    let editStat = {person: undefined, prime: undefined, birth: undefined, burial: undefined, alive: alive};
     fetch(endPoints.get("base") + "/edit", {
         method: 'POST',
         headers: {
@@ -871,10 +889,12 @@ function submitBaseFormEditFM() {
                 dropBlobToServer(document.getElementById("canvas_little"), "little", null, fm.uuid)
                     .catch(() => console.log("save Little error"));
             } else editStat.prime = false;
-            if (getExistToProfileMember("burial")) dropBlobToServer(document.getElementById("canvas_burial"), "burial", null, fm.uuid)
-                .then(() => editStat.burial = true)
-                .catch(() => console.log("save Burial error"));
-            else editStat.burial = false;
+            if (!editStat.alive) {
+                if (getExistToProfileMember("burial")) dropBlobToServer(document.getElementById("canvas_burial"), "burial", null, fm.uuid)
+                    .then(() => editStat.burial = true)
+                    .catch(() => console.log("save Burial error"));
+                else editStat.burial = false;
+            }
             if (getExistToProfileMember("birth")) dropBlobToServer(document.getElementById("canvas_birth"), "birth", null, fm.uuid)
                 .then(() => editStat.birth = true)
                 .catch(() => console.log("save Birth error"));

@@ -88,7 +88,32 @@ public class NotificationRepo {
         }
         return aloneNewList;
     }
-
+    @Transactional(readOnly = true)
+    public List<AloneNew> getFullLettersWithSenders(List<AloneNew> aloneNewListEntering) {
+        List<AloneNew> aloneNewList;
+        try {
+            aloneNewList = entityManager.createQuery("from AloneNew a left join fetch a.sendFrom left join fetch a.letterLocalisations where a in :letters", AloneNew.class)
+                    .setParameter("letters", aloneNewListEntering)
+                    .getResultList();
+        } catch (RuntimeException e) {
+            log.info("Letters not found");
+            aloneNewList = new ArrayList<>();
+        }
+        return aloneNewList;
+    }
+    @Transactional(readOnly = true)
+    public Optional<Voting> findVotingWithLetter(String externId) {
+        Optional<Voting> voting;
+        try {
+            voting = Optional.of(entityManager.createQuery("from Voting v left join fetch v.letter where v.letterId in :externId", Voting.class)
+                    .setParameter("letterId", externId)
+                    .getSingleResult());
+        } catch (RuntimeException e) {
+            log.info("voting not found");
+            voting = Optional.empty();
+        }
+        return voting;
+    }
 //    @Transactional(readOnly = true)
 //    public Recipient findRecipientWithContacts(String externId) {
 //        Recipient owner;
@@ -136,7 +161,7 @@ public class NotificationRepo {
     public Voting findVoting(String externId) {
         Voting voting;
         try {
-            voting = entityManager.createQuery("FROM Voting a left join fetch a.recipients where a.letter= :externId", Voting.class)
+            voting = entityManager.createQuery("FROM Voting a where a.letter= :externId", Voting.class)
                     .setParameter("externId", externId)
                     .getSingleResult();
         } catch (RuntimeException e) {
@@ -147,7 +172,7 @@ public class NotificationRepo {
     }
 
     @Transactional
-    public List<AloneNew> getAloneNewWithSendTo(String externId) {
+    public List<AloneNew> getAllAloneNewWithSendTo(String externId) {
         List<AloneNew> aloneNews;
         try {
             aloneNews = entityManager.createQuery("from AloneNew a left join fetch a.sendTo where a.externId= :externId", AloneNew.class)

@@ -29,7 +29,7 @@ public class EnglishTranscripter implements AbstractTranscripter {
 
     @Override
     public String getAbsent() {
-        return CheckStatus.ABSENT.getComment();
+        return "Anonymous";
     }
 
     @Override

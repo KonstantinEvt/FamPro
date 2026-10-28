@@ -43,6 +43,7 @@ public class FamilyMemberDto extends FioDto implements Serializable {
     private Timestamp createTime;
     private Timestamp lastUpdate;
     private Relation relation;
+    private boolean alive;
 //    @Schema(description = "Выбранная локализцаия")
 //    private String localisation;
     private boolean primePhoto;

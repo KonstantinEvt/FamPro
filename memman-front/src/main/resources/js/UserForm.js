@@ -33,6 +33,7 @@ let clickOther = false;
 let primePhotoExist = false;
 let birthPhotoExist = false;
 let burialPhotoExist = false;
+let alive=true;
 let formOfRemove = new Map([]);
 loadOnlineUser();
 let delay = 5000;

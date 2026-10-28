@@ -30,7 +30,6 @@ public class FacadeService implements SimpleFamilyService {
     private final MemberRepository memberRepository;
     private final FamilyRepository familyRepository;
     private final SendAndFormService sendAndFormService;
-    private final Map<UUID, Localisation> tempLocalisation;
     private final FamilyMemberLinkService familyMemberLinkService;
 
     public FacadeService(FamilyRepo familyRepo,
@@ -41,7 +40,6 @@ public class FacadeService implements SimpleFamilyService {
                          MemberRepository memberRepository,
                          FamilyRepository familyRepository,
                          SendAndFormService sendAndFormService,
-                         Map<UUID, Localisation> tempLocalisation,
                          FamilyMemberLinkService familyMemberLinkService) {
         this.familyRepo = familyRepo;
         this.memberService = memberService;
@@ -51,7 +49,6 @@ public class FacadeService implements SimpleFamilyService {
         this.memberRepository = memberRepository;
         this.familyRepository = familyRepository;
         this.sendAndFormService = sendAndFormService;
-        this.tempLocalisation = tempLocalisation;
         this.familyMemberLinkService = familyMemberLinkService;
     }
 
@@ -60,8 +57,10 @@ public class FacadeService implements SimpleFamilyService {
         FamilyDirective mainDirective = directiveLinkedList.pollLast();
         if (mainDirective == null || mainDirective.getFamilyMemberDto() == null)
             throw new RuntimeException("Directive is corrupt");
+
         ShortFamilyMember mainMember;
         FamilyMemberDto mainDto = mainDirective.getFamilyMemberDto();
+        Localisation localisation=(mainDto.getLocalisation()==null)?Localisation.RU:mainDto.getLocalisation();
         if (mainDirective.getOperation() != KafkaOperation.ADD)
             mainMember = memberService.findMemberWithPrimeFamily(UUID.fromString(mainDirective.getPerson())).orElseThrow(() -> new RuntimeException("Person not found"));
         else mainMember = memberService.addFamilyMember(mainDto);
@@ -90,7 +89,7 @@ public class FacadeService implements SimpleFamilyService {
             if (mainMember.getCheckStatus() == CheckStatus.MODERATE
                     && !mainDirective.getTokenUser().equals("moderator")) {
                 log.warn("Попытка изменения человека находящимся под голосованием или модерацией");
-                sendAndFormService.sendAttentionToUser(mainDirective.getTokenUser(), mainMember.getFullName(), null, Attention.MODERATE);
+                sendAndFormService.sendAttentionToUser(mainDirective.getTokenUser(), mainMember.getFullName(), null, Attention.MODERATE, localisation);
 // тут нужен откат в storage модуль и смена статуса там на Moderate
                 return;
             }
@@ -172,9 +171,9 @@ public class FacadeService implements SimpleFamilyService {
                                     .created(new Timestamp(System.currentTimeMillis()))
                                     .directiveMember(mainMember)
                                     .directiveMembers(directiveMembers)
-                                    .info(mainDto.getFatherInfo().concat("<br>").concat(mainDto.getMotherInfo()))
+                                    .info(mainDto.getFatherInfo().concat("!").concat(mainDto.getMotherInfo()))
                                     .tokenUser(mainDirective.getTokenUser())
-                                    .localisation(tempLocalisation.get(UUID.fromString(mainDirective.getTokenUser())))
+                                    .localisation(localisation)
                                     .switchPosition(SwitchPosition.MAIN)
                                     .build());
                         }
@@ -188,7 +187,7 @@ public class FacadeService implements SimpleFamilyService {
                 }
             } else {
                 log.warn("Попытка изменения человека под защитой");
-                sendAndFormService.sendAttentionToUser(mainDirective.getTokenUser(), mainMember.getFullName(), null, Attention.RIGHTS);
+                sendAndFormService.sendAttentionToUser(mainDirective.getTokenUser(), mainMember.getFullName(), null, Attention.RIGHTS, localisation);
 // тут нужен откат в storage модуль (и смена статуса?)
                 return;
             }
@@ -250,9 +249,9 @@ public class FacadeService implements SimpleFamilyService {
                                     .created(new Timestamp(System.currentTimeMillis()))
                                     .directiveMember(mainMember)
                                     .directiveMembers(directiveMembers)
-                                    .info(mainDto.getFatherInfo().concat("<br>").concat(mainDto.getMotherInfo()))
+                                    .info(mainDto.getFatherInfo().concat("!").concat(mainDto.getMotherInfo()))
                                     .tokenUser(mainDirective.getTokenUser())
-                                    .localisation(tempLocalisation.get(UUID.fromString(mainDirective.getTokenUser())))
+                                    .localisation(localisation)
                                     .switchPosition(SwitchPosition.MAIN)
                                     .build());
                         }
@@ -368,7 +367,7 @@ public class FacadeService implements SimpleFamilyService {
                             .created(new Timestamp(System.currentTimeMillis()))
                             .info(member.getFullName())
                             .directiveKeeper(member.getUuid())
-                            .localisation(tempLocalisation.get(UUID.fromString(mainDirective.getTokenUser())))
+                            .localisation(localisation)
                             .directiveMembers(directiveMembers)
                             .tokenUser(mainDirective.getTokenUser())
                             .switchPosition(processDirective.getSwitchPosition())
@@ -486,7 +485,7 @@ public class FacadeService implements SimpleFamilyService {
                         .created(new Timestamp(System.currentTimeMillis()))
                         .info(tokenUser.getUsername())
                         .tokenUser(token)
-                        .localisation(Objects.requireNonNullElse(tempLocalisation.get(UUID.fromString(token)), Localisation.RU))
+                        .localisation(Objects.requireNonNullElse(familyMemberDto.getLocalisation(), Localisation.RU))
                         .switchPosition(SwitchPosition.BIRTH)
                         .build();
                 directiveService.checkSaveAndSendVotingDirective(List.of(directive));

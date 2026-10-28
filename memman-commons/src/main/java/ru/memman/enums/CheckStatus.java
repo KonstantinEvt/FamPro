@@ -9,7 +9,9 @@ public enum CheckStatus {
     NOT_FULLY("(Info not fully) "),
     UNCORRECTED("(Uncorrected Information)"),
     CHECKED("checked"),
-    UNCHECKED("unchecked");
+    UNCHECKED("unchecked"),
+    NUL("null"),
+    PRESENT("present");
     private final String comment;
 
     CheckStatus(String comment) {

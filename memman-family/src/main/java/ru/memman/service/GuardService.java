@@ -4,7 +4,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.memman.dtos.ContactDto;
-import ru.memman.dtos.FamilyMemberDto;
 import ru.memman.dtos.OnlineUserDto;
 import ru.memman.entity.*;
 import ru.memman.enums.*;
@@ -126,8 +125,21 @@ public class GuardService implements SimpleFamilyService {
         memberRepository.flush();
         log.info("New linking guard is created");
         sendAndFormService.formDirectiveToStorageForChangeStatus(token, shortFamilyMember.getUuid().toString(), SwitchPosition.FATHER, KafkaOperation.RENAME, changingStatus, CheckStatus.CHECKED);
-        sendAndFormService.sendAttentionToUser(token, shortFamilyMember.getFullName(), shortFamilyMember, Attention.LINK);
-//        inline.add(OnlineUserDto.builder().externUuid(guard.getTokenUser()).sendOver(true).linkExternId(shortFamilyMember.getUuid().toString()).build());
+        sendAndFormService.sendAttentionToUser(token, shortFamilyMember.getFullName(), shortFamilyMember, Attention.LINK, localisation);
+        inline.add(OnlineUserDto.builder()
+                .externUuid(guard.getTokenUser())
+                .sendOver(true)
+                .online(true)
+                .priorityRole(UserRole.LINKED_USER)
+                .lastUpdate(new Timestamp(System.currentTimeMillis()))
+                .secretLevelEmail(shortFamilyMember.getShortFamilyMemberInfo().get(0).getSecretLevelEmail())
+                .secretLevelPhone(shortFamilyMember.getShortFamilyMemberInfo().get(0).getSecretLevelPhone())
+                .secretLevelPhoto(shortFamilyMember.getSecretLevelPhoto())
+                .mainEmail(shortFamilyMember.getShortFamilyMemberInfo().get(0).getMainEmail())
+                .mainPhone(shortFamilyMember.getShortFamilyMemberInfo().get(0).getMainPhone())
+                .primePhoto(shortFamilyMember.isPrimePhoto())
+                .linkExternId(shortFamilyMember.getUuid().toString()).build());
+
     }
 
     @Transactional
@@ -225,9 +237,7 @@ public class GuardService implements SimpleFamilyService {
 
                 }
             }
-            case LOGIC -> {
-                log.info("its logic change");
-            }
+            case LOGIC -> log.info("its logic change");
         }
     }
 

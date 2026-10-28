@@ -19,18 +19,16 @@ public class SendAndFormService {
     private final LinkedList<DirectiveGuards> guardsLetters;
     private final List<DirectiveGuards> contactDirective;
     private final LinkedList<List<ContactDto>> checkRelation;
-    private final Map<UUID, Localisation> tempLocalisation;
 
 
     SendAndFormService(@Qualifier("checkLevelDirective") LinkedList<DirectiveGuards> checkLevelDirective,
                        @Qualifier("directiveGuards") LinkedList<DirectiveGuards> guardsLetters,
                        @Qualifier("contactDirective") List<DirectiveGuards> contactDirective,
-                       LinkedList<List<ContactDto>> checkRelation, @Qualifier("tempLocalisation") Map<UUID, Localisation> tempLocalisation) {
+                       LinkedList<List<ContactDto>> checkRelation) {
         this.checkLevelDirective = checkLevelDirective;
         this.guardsLetters = guardsLetters;
         this.contactDirective = contactDirective;
         this.checkRelation = checkRelation;
-        this.tempLocalisation = tempLocalisation;
     }
 
     /***
@@ -64,13 +62,13 @@ public class SendAndFormService {
      * @param personInfo info о персоне
      * @param attention место влияния
      */
-    public void sendAttentionToUser(String userUuid, String personInfo, ShortFamilyMember person, Attention attention) {
+    public void sendAttentionToUser(String userUuid, String personInfo, ShortFamilyMember person, Attention attention, Localisation localisation) {
         DirectiveGuards directiveGuards = DirectiveGuards.builder()
                 .created(new Timestamp(System.currentTimeMillis()))
                 .tokenUser(userUuid)
                 .operation(KafkaOperation.ADD)
-                .localisation(Objects.requireNonNullElse(tempLocalisation.get(UUID.fromString(userUuid)),Localisation.RU))
-                .info2(personInfo)
+                .localisation(Objects.requireNonNullElse(localisation,Localisation.RU))
+                .info1(personInfo)
                 .build();
         switch (attention) {
             case MODERATE -> {
@@ -84,12 +82,8 @@ public class SendAndFormService {
             case LINK -> {
                 if (person == null) {
                     directiveGuards.setSubject(Subject.LINK_NEGATIVE);
-                    directiveGuards.setPerson(personInfo);
                 } else {
                     directiveGuards.setSubject(Subject.LINK_POSITIVE);
-                    directiveGuards.setPerson(personInfo);
-                    directiveGuards.setInfo1(person.getUuid().toString());
-                    directiveGuards.setPhotoExist(person.isPrimePhoto());
                 }
                 directiveGuards.setSwitchPosition(SwitchPosition.PRIME);
             }

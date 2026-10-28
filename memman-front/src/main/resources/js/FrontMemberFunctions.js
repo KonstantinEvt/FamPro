@@ -272,6 +272,7 @@ function getFormToDrop(other, otherPhones, otherEmails, reduceBio) {
         primePhoto: getExistToProfileMember("prime"),
         id: (tempPerson !== null && tempPerson.id !== null) ? tempPerson.id : null,
         localisation: currentLang.toUpperCase(),
+        alive: alive,
         secretLevelPhoto: form.elements.chooseSecure0.value,
         secretLevelEdit: form.elements.chooseSecure1.value,
         secretLevelMainInfo: form.elements.chooseSecure2.value,
@@ -281,18 +282,18 @@ function getFormToDrop(other, otherPhones, otherEmails, reduceBio) {
         middleName: form.elements.middleNameAddFM.value,
         lastName: form.elements.lastNameAddFM.value,
         birthday: form.elements.birthdayAddFM.value,
-        deathday: form.elements.deathdayAddFM.value,
+        deathday: (!alive) ? form.elements.deathdayAddFM.value : null,
         sex: form.elements.chooseSexAddFM.value,
         memberInfo: {
             mainPhone: form.elements.mainPhoneAddFM.value,
             mainEmail: form.elements.mainEmailAddFM.value,
             photoBurialExist: getExistToProfileMember("burial"),
             photoBirthExist: getExistToProfileMember("birth"),
-            secretLevelEmail: form.elements.chooseSecure5.value,
-            secretLevelPhone: form.elements.chooseSecure6.value,
+            secretLevelEmail: (alive)? form.elements.chooseSecure5.value:null,
+            secretLevelPhone: (alive)? form.elements.chooseSecure6.value:null,
             secretLevelAddress: form.elements.chooseSecure7.value,
             secretLevelBirth: form.elements.chooseSecure8.value,
-            secretLevelBurial: form.elements.chooseSecure9.value,
+            secretLevelBurial: (alive) ? form.elements.chooseSecure9.value : null,
             secretLevelBiometric: form.elements.chooseSecure10.value,
             // secretLevelDescription: form.elements.chooseSecure11.value,
             biometric: reduceBio,
@@ -305,7 +306,7 @@ function getFormToDrop(other, otherPhones, otherEmails, reduceBio) {
                 registration: form.elements.birthRegisterAddFM.value,
                 photoExist: getExistToProfileMember("birth")
             },
-            burial: {
+            burial: (!alive) ? {
                 country: form.elements.burialCountryAddFM.value,
                 region: form.elements.burialRegionAddFM.value,
                 city: form.elements.burialCityAddFM.value,
@@ -315,9 +316,9 @@ function getFormToDrop(other, otherPhones, otherEmails, reduceBio) {
                 square: form.elements.burialBuildingAddFM.value,
                 grave: form.elements.burialFlatAddFM.value,
                 photoExist: getExistToProfileMember("burial")
-            },
-            phones: otherPhones,
-            emails: otherEmails,
+            } : null,
+            phones: (alive)?otherPhones:null,
+            emails: (alive)?otherEmails:null,
             addresses: [
                 {
                     country: form.elements.countryAddFM.value,
@@ -404,8 +405,9 @@ function getAge(birthday, deathday) {
     }
     return age;
 }
-function analyzeResult(successString,stat,data){
-    let temp=``;
+
+function analyzeResult(successString, stat, data) {
+    let temp = ``;
     if (stat.person !== undefined) {
         if (stat.person) temp += `<div>${successString}</div><div style="font-weight: bold">Id</div><div style="color: darkred">${data}</div>`;
     } else throw new Error();
@@ -417,9 +419,10 @@ function analyzeResult(successString,stat,data){
         if (stat.birth) temp += `<div>${globalTexts.get(2162)}: <span style="font-style: italic">${globalTexts.get(2166)}</span></div>`;
         else temp += `<div>${globalTexts.get(2162)}: <span style="font-style: italic">${globalTexts.get(2164)}</span></div>`;
     } else temp += `<div>${globalTexts.get(2162)}: <span style="font-style: italic"> ${globalTexts.get(2165)}</span></div>`;
+    if (!stat.alive) {
     if (stat.burial !== undefined) {
         if (stat.burial) temp += `<div>${globalTexts.get(2163)}: <span style="font-style: italic">${globalTexts.get(2166)}</span></div>`;
         else temp += `<div>${globalTexts.get(2163)}: <span style="font-style: italic">${globalTexts.get(2164)}</span></div></div>`;
-    } else temp += `<div>${globalTexts.get(2163)}: <span style="font-style: italic">${globalTexts.get(2165)}</span></div>`;
+    } else temp += `<div>${globalTexts.get(2163)}: <span style="font-style: italic">${globalTexts.get(2165)}</span></div>`;}
     return temp;
 }

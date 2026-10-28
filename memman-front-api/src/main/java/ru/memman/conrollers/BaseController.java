@@ -5,8 +5,6 @@ import ru.memman.dtos.FamilyMemberDto;
 import ru.memman.dtos.SecurityDto;
 import ru.memman.enums.Localisation;
 import ru.memman.enums.SecretLevel;
-import ru.memman.models.OnlineUserHolder;
-import ru.memman.models.SimpleUserInfo;
 import ru.memman.services.BaseService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +20,6 @@ import java.util.UUID;
 @RequestMapping("/frontAPI/base")
 public class BaseController {
     private final BaseService baseService;
-    private OnlineUserHolder onlineUserHolder;
     private TokenService tokenService;
 
     @PostMapping("/{id}/{localisation}")

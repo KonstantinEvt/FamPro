@@ -38,6 +38,9 @@ public class AloneNew {
     @OneToMany(mappedBy = "mainLetter", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private List<LetterLocal> letterLocalisations;
 
+    @OneToMany(mappedBy = "letter", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    private List<Voting> voting;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "attention")
     private Attention attention;

@@ -43,30 +43,7 @@ public class OnlineUserHolder {
         onlineUsers.put(onlineUser.getExternUuid(), onlineUser);
     }
 
-    public void mergeUser(OnlineUserDto onlineUser) {
-        OnlineUserDto inHolder = onlineUsers.get(onlineUser.getExternUuid());
-        if (inHolder != null) {
-            if (onlineUser.getNewsCounts() != null) inHolder.setNewsCounts(onlineUser.getNewsCounts());
-            if (onlineUser.getEmail() != null) inHolder.setEmail(onlineUser.getEmail());
-            if (onlineUser.getPriorityRole() != null) inHolder.setPriorityRole(onlineUser.getPriorityRole());else onlineUser.setPriorityRole(inHolder.getPriorityRole());
-            if (onlineUser.getLocalisation() != null) inHolder.setLocalisation(onlineUser.getLocalisation());else onlineUser.setLocalisation(inHolder.getLocalisation());
-            if (onlineUser.getNickName() != null) inHolder.setNickName(onlineUser.getNickName());
-            if (onlineUser.getFullName() != null) inHolder.setFullName(onlineUser.getFullName());
-            if (onlineUser.getLogName() != null) inHolder.setLogName(onlineUser.getLogName());
-            if (onlineUser.getLastUpdate() != null) inHolder.setLastUpdate(onlineUser.getLastUpdate());
-            if (onlineUser.getSecretLevelPhoto() != null)
-                inHolder.setSecretLevelPhoto(onlineUser.getSecretLevelPhoto());
-            if (onlineUser.getSecretLevelEmail() != null)
-                inHolder.setSecretLevelEmail(onlineUser.getSecretLevelEmail());
-            if (onlineUser.getSecretLevelPhone() != null)
-                inHolder.setSecretLevelPhone(onlineUser.getSecretLevelPhone());
-            if (onlineUser.getMainPhone() != null) inHolder.setMainPhone(onlineUser.getMainPhone());
-            if (onlineUser.getMainEmail() != null) inHolder.setMainEmail(onlineUser.getMainPhone());
-            if (onlineUser.getLinkExternId() != null) inHolder.setLinkExternId(onlineUser.getLinkExternId());
-            if (onlineUser.isPrimePhoto()) inHolder.setPrimePhoto(true);
-        }
-        if (onlineUser.isSendOver()) inline.add(onlineUser);
-    }
+
 
     public void addGlobalMessageCount(String category) {
         if (Objects.equals(category, "system")) {

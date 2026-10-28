@@ -173,13 +173,13 @@ public class RecipientService implements SimpleStringService {
         recipientRepository.detach(recipient);
     }
 
-    @Transactional
-    public void changeRecipient(DirectiveGuards directiveGuards) {
-        Recipient requester = findRecipient(directiveGuards.getTokenUser());
-        requester.setExistPrimePhoto(directiveGuards.isPhotoExist());
-        requester.setLinkExternId(directiveGuards.getPerson());
-        recipientRepository.update(requester);
-    }
+//    @Transactional
+//    public void changeRecipient(DirectiveGuards directiveGuards) {
+//        Recipient requester = findRecipient(directiveGuards.getTokenUser());
+//        requester.setExistPrimePhoto(directiveGuards.isPhotoExist());
+//        requester.setLinkExternId(directiveGuards.getPerson());
+//        recipientRepository.update(requester);
+//    }
 
     @Transactional
     public Recipient creatRecipient(TokenUser tokenUser) {
@@ -204,14 +204,15 @@ public class RecipientService implements SimpleStringService {
         standardInfoHolder.getOnlineInfo().put(recipient.getExternUuid(), standardInfo);
         List<AloneNew> receivedLetters = recipient.getReceivedLetters();
         if (receivedLetters != null && !receivedLetters.isEmpty()) {
-            List<AloneNew> listWithSenders = notificationRepo.getLettersWithSenders(receivedLetters);
+            List<AloneNew> listWithSenders = notificationRepo.getFullLettersWithSenders(receivedLetters);
             for (AloneNew letter :
                     listWithSenders) {
                 Recipient from = letter.getSendFrom();
                 Optional<AloneNewDto> letterDto = localisationService.getLetterDtoTo(letter, recipient, from, true);
                 letterDto.ifPresent(x -> {
-                    x.setHidden(from.getSecretLevelPhoto() != SecretLevel.OPEN);
-                    standardInfoHolder.addLetterToHolderRecipient(x, recipient.getExternUuid(), from.isExistPrimePhoto() && !x.isHidden());
+                    if (from == null) x.setHidden(false);
+                    else x.setHidden(from.getSecretLevelPhoto() != SecretLevel.OPEN);
+                    standardInfoHolder.addLetterToHolderRecipient(x, recipient.getExternUuid(), from != null && from.isExistPrimePhoto() && !x.isHidden());
                 });
             }
         }

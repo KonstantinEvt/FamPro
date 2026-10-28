@@ -1,7 +1,6 @@
 package ru.memman.service;
 
 import ru.memman.dtos.TokenUser;
-import ru.memman.enums.UserRole;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -26,11 +25,4 @@ public class TokenService {
         return tokenUser;
     }
 
-    public String getPriorityUserRole(TokenUser tokenUser) {
-        for (UserRole role :
-                UserRole.values()) {
-            if (tokenUser.getRoles().contains(role.getNameSSO())) return role.getNameSSO();
-        }
-        return "you are haven't role";
-    }
 }

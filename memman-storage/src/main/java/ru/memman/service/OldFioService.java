@@ -70,10 +70,10 @@ public class OldFioService extends FioServiceImp<OldFio> {
                         enteringFio.add(oldFio);
 
                     } else {
-                        notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_OTHER).build());
+                        notifications.add(Notification.builder().attention(Attention.NEGATIVE).person(oldFio.getFullName()).subject(Subject.WRONG_INFO_OTHER).build());
                     }
                 } else {
-                    notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_OTHER).build());
+                    notifications.add(Notification.builder().attention(Attention.NEGATIVE).person(oldFio.getFullName()).subject(Subject.WRONG_INFO_OTHER).build());
                 }
                 log.info("oldFio is prepare to setup: {}", oldFio.getFullName());
             }
@@ -91,7 +91,7 @@ public class OldFioService extends FioServiceImp<OldFio> {
                             if (changeBirthday) throw new Dublicate(oldFio1.getMember().getId().toString());
                             checked.add(oldFio);
                             if (!Objects.equals(oldFio1.getMember().getUuid(), familyMember.getUuid()))
-                                notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.DUPLICATE_OTHER).id(oldFio1.getMember().getId()).build());
+                                notifications.add(Notification.builder().attention(Attention.NEGATIVE).person(oldFio1.getFullName()).subject(Subject.DUPLICATE_OTHER).id(oldFio1.getMember().getId()).build());
                         }
                     }
                 }
@@ -107,7 +107,7 @@ public class OldFioService extends FioServiceImp<OldFio> {
                             if (Objects.equals(oldFio.getUuid(), fm.getUuid())) {
                                 if (changeBirthday) throw new UncorrectedInformation(fm.getId().toString());
                                 checkedHide.add(oldFio);
-                                notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.DUPLICATE_OTHER_HIDE).id(fm.getId()).build());
+                                notifications.add(Notification.builder().attention(Attention.NEGATIVE).person(fm.getFullName()).subject(Subject.DUPLICATE_OTHER_HIDE).id(fm.getId()).build());
                             }
                         }
                     }
@@ -117,57 +117,6 @@ public class OldFioService extends FioServiceImp<OldFio> {
         log.info("first oldFio is: {}", enteringFio.stream().map(OldFio::getFullName).findFirst().orElse("empty"));
         return enteringFio;
     }
-//    public  Set<OldFio> getNewNames(Set<OldFio> otherNames,FamilyMember fm){
-//        Set<OldFio> newOthers=new HashSet<>();
-//
-//        return newOthers;
-//    }
-
-//    @Transactional
-//    public Set<OldFio> addAllNewOldNames(Set<FioDto> oldFios, FamilyMember familyMember) {
-//        Set<OldFio> enteringFio = new HashSet<>();
-//        for (FioDto oldName :
-//                oldFios) {
-//            OldFio oldFio = oldNamesMapper.fioDtoToOldFio(oldName);
-//            oldFio.setBirthday(familyMember.getBirthday());
-//            if (oldFio.getFirstName() != null && oldFio.getMiddleName() != null && oldFio.getLastName() != null) {
-//                oldFio.setUuid(generateUUIDFromFio(oldFio));
-//                oldFio.setSex(familyMember.getSex());
-//                oldFio.setFullName(generateFioStringInfo(oldFio));
-//                oldFio.setMember(familyMember);
-//                Optional<OldFio> findInOld = fioRepo.findFioByUuid(oldFio.getUuid());
-//                if (findInOld.isPresent() && !findInOld.get().getMember().getUuid().equals(familyMember.getUuid()))
-//                    throw new Dublicate("Введенное альтернативное имя уже есть в базе. Оно принадлежит человеку с ID " + findInOld.get().getMember().getId());
-//                else {
-//                    Optional<FamilyMember> findFM = fmRepo.findFioByUuid(oldFio.getUuid());
-//                    if (findFM.isPresent())
-//                        throw new Dublicate("Введенное альтернативное имя - основное имя человека с ID " + findFM.get().getId());
-//                }
-//                enteringFio.add(oldFio);
-//            }
-//        }
-//        Set<OldFio> checkedOldFio = familyMember.getOtherNames();
-//        Set<OldFio> resultSet = new HashSet<>();
-//        if (!enteringFio.isEmpty() && checkedOldFio != null && !checkedOldFio.isEmpty()) {
-//            for (OldFio o1 :
-//                    enteringFio) {
-//                for (OldFio o2 :
-//                        checkedOldFio) {
-//                    if (!o1.getUuid().equals(o2.getUuid())) resultSet.add(o1);
-//                }
-//            }
-//        } else {
-//            if (!enteringFio.isEmpty()) {
-//                fioRepo.saveAll(enteringFio);
-//                familyMember.setOtherNamesExist(true);
-//                return enteringFio;
-//            }
-//        }
-//        if (!resultSet.isEmpty()) fioRepo.saveAll(resultSet);
-//        else familyMember.setOtherNamesExist(false);
-//
-//        return resultSet;
-//    }
 
     public void changeOldFiosBirthday(FamilyMember fm) {
         for (OldFio o :

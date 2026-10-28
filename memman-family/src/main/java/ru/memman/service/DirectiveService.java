@@ -1,8 +1,6 @@
 package ru.memman.service;
 
 import ru.memman.dtos.Directive;
-import ru.memman.dtos.DirectiveGuards;
-import ru.memman.dtos.FamilyDirective;
 import ru.memman.entity.*;
 import ru.memman.enums.*;
 import ru.memman.repository.DirectiveRepo;
@@ -26,7 +24,6 @@ public class DirectiveService {
     private final DirectiveRepo directiveRepo;
     private final List<Directive> cloakDirective;
     private final SendAndFormService sendAndFormService;
-    private final Map<UUID, Localisation> tempLocalisation;
     private final FamilyRepository familyRepository;
     private final FamilyMemberLinkService familyMemberLinkService;
 
@@ -35,7 +32,7 @@ public class DirectiveService {
                             MemberService memberService,
                             DirectiveRepo directiveRepo,
                             List<Directive> cloakDirective,
-                            SendAndFormService sendAndFormService, Map<UUID, Localisation> tempLocalisation, FamilyRepository familyRepository, FamilyMemberLinkService familyMemberLinkService) {
+                            SendAndFormService sendAndFormService, FamilyRepository familyRepository, FamilyMemberLinkService familyMemberLinkService) {
         this.directiveRepository = directiveRepository;
         this.guardService = guardService;
         this.familyService = familyService;
@@ -43,7 +40,6 @@ public class DirectiveService {
         this.directiveRepo = directiveRepo;
         this.cloakDirective = cloakDirective;
         this.sendAndFormService = sendAndFormService;
-        this.tempLocalisation = tempLocalisation;
         this.familyRepository = familyRepository;
         this.familyMemberLinkService = familyMemberLinkService;
     }
@@ -475,7 +471,7 @@ public class DirectiveService {
     @Transactional
     public void setLinkGuardFromVotingDirective(String directiveUuid) {
         DeferredDirective directive = directiveRepository.getLinkingDirective(UUID.fromString(directiveUuid)).orElseThrow(() -> new RuntimeException("directive is missing"));
-        guardService.creatLinkingGuard(directive.getDirectiveMember(), directive.getTokenUser(),Localisation.EN);
+        guardService.creatLinkingGuard(directive.getDirectiveMember(), directive.getTokenUser(),directive.getLocalisation());
         log.info("New guard is created");
         cloakDirective.add(Directive.builder()
                 .operation(KafkaOperation.EDIT)
@@ -483,7 +479,7 @@ public class DirectiveService {
                 .person(directive.getTokenUser())
                 .build());
         guardService.formKinContacts(directive.getDirectiveMember());
-//        sendAndFormService.formAndSendKinContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(directive.getDirectiveMember()),true).stream().map(UUID::toString).collect(Collectors.toSet()));
+       //        sendAndFormService.formAndSendKinContacts(memberService.getGeneticTreeGuards(memberService.getAllTopAncestors(directive.getDirectiveMember()),true).stream().map(UUID::toString).collect(Collectors.toSet()));
         directiveRepo.delete(directive);
 
     }
@@ -496,16 +492,8 @@ public class DirectiveService {
         shortFamilyMember.setLastUpdate(new Timestamp(System.currentTimeMillis()));
         memberService.updateMember(shortFamilyMember);
         sendAndFormService.formDirectiveToStorageForChangeStatus(directive.getTokenUser(), shortFamilyMember.getUuid().toString(), null, KafkaOperation.RENAME, null, CheckStatus.CHECKED);
-        sendAndFormService.sendAttentionToUser(directive.getTokenUser(), shortFamilyMember.getFullName(), null, Attention.LINK);
+        sendAndFormService.sendAttentionToUser(directive.getTokenUser(), shortFamilyMember.getFullName(), null, Attention.LINK,directive.getLocalisation());
         log.info("reject request for linking");
         directiveRepo.delete(directive);
-    }
-
-    public void setLanguish(DirectiveGuards directive) {
-        tempLocalisation.put(UUID.fromString(directive.getTokenUser()), directive.getLocalisation());
-    }
-
-    public void setLanguish(FamilyDirective directive) {
-        tempLocalisation.put(UUID.fromString(directive.getTokenUser()), directive.getLocalisation());
     }
 }

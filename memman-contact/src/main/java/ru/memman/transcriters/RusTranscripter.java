@@ -71,7 +71,7 @@ public class RusTranscripter implements AbstractTranscripter {
 
     @Override
     public String getAbsent() {
-        return "(Отсутствует в базе) ";
+        return "Аноним";
     }
 
     @Override

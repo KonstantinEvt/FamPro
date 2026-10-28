@@ -42,7 +42,7 @@ public class RealManService {
     @Transactional
     public void mergeRealMen(OnlineUserDto onlineUserDto) {
         inline.add(onlineUserDto);
-        if (onlineUserDto.getExternUuid() != null) {
+        if (onlineUserDto.getExternUuid() != null&&onlineUserDto.getLinkExternId()!=null) {
             boolean change = false;
             RealMen realMen = onlineContactHolder.getOnlineManMap().get(onlineUserDto.getExternUuid());
             if (realMen == null) {
@@ -75,8 +75,8 @@ public class RealManService {
                         .mainPhone(onlineUserDto.getMainPhone())
                         .mainEmail(onlineUserDto.getMainEmail())
                         .existPrimePhoto(onlineUserDto.isPrimePhoto())
-                        .lastUpdate(onlineUserDto.getLastUpdate())
-                        .lastOnline(onlineUserDto.getLastOnline())
+                        .lastUpdate((onlineUserDto.getLastUpdate()==null)?new Timestamp(System.currentTimeMillis()):onlineUserDto.getLastUpdate())
+                        .lastOnline((onlineUserDto.getLastOnline()==null)?new Timestamp(System.currentTimeMillis()):onlineUserDto.getLastOnline())
                         .lastTimeUse(new Timestamp(System.currentTimeMillis()))
                         .online(onlineUserDto.isOnline())
                         .build();
@@ -86,7 +86,7 @@ public class RealManService {
                     onlineContactHolder.getOnlineManMap().put(onlineUserDto.getExternUuid(), realMen);
                     onlineContactHolder.getOnlineContactsMap().put(onlineUserDto.getExternUuid(), new HashSet<>());
                 }
-                realManRepository.detach(realMen);
+//                realManRepository.detach(realMen);
             } else {
                 if (onlineUserDto.getLocalisation() != null && !Objects.equals(realMen.getLocalisation(), onlineUserDto.getLocalisation())) {
                     realMen.setLocalisation(onlineUserDto.getLocalisation());
@@ -153,7 +153,6 @@ public class RealManService {
                     realMenRenew.setNickName(realMen.getNickName());
                     realMenRenew.setEmail(realMen.getEmail());
                     realManRepository.update(realMenRenew);
-
                 }
             }
         }

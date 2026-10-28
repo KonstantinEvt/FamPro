@@ -107,3 +107,6 @@
 {"choice": "find", "text": "Найти"}
 {"choice": "created", "text": "Создано"}
 {"choice": "changed", "text": "Изменено"}
+{"choice": "yes", "text": "Да"}
+{"choice": "no", "text": "Нет"}
+{"choice": "alive", "text": "Жив(а)"}

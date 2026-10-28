@@ -2,7 +2,6 @@ package ru.memman.feign;
 
 import ru.memman.config.FeignRequestIntercepter;
 import ru.memman.dtos.FamilyMemberDto;
-import ru.memman.dtos.TokenUser;
 import ru.memman.enums.CheckStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;

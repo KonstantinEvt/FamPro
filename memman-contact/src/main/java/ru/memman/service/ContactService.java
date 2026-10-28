@@ -302,7 +302,7 @@ public class ContactService {
                 .build();
         AbstractTranscripter transcripterOwner = transcriptHolder.getTranscript(owner.getLocalisation());
         contact.setInfo(transcriptHolder.getTranscript(Localisation.EN).getDefaultInfo());
-        contact.setName(transcriptHolder.getTranscript(person.getLocalisation()).transcritWordFromLocalisation(person.getNickName()));
+        if (person.getNickName()==null) contact.setName(transcriptHolder.getTranscript(person.getLocalisation()).getAbsent());else contact.setName(transcriptHolder.getTranscript(person.getLocalisation()).transcritWordFromLocalisation(person.getNickName()));
         if (owner.getLocalisation() != Localisation.EN) {
             {
                 contact.setLocals(new HashSet<>());

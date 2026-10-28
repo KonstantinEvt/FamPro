@@ -58,7 +58,7 @@ public class AloneNewDto {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AloneNewDto that = (AloneNewDto) o;
-        return existPrimePhoto == that.existPrimePhoto && alreadyRead == that.alreadyRead && existLocalisations == that.existLocalisations && Objects.equals(id, that.id) && Objects.equals(externId, that.externId) && Objects.equals(sendingFrom, that.sendingFrom) && Objects.equals(sendingFromAlt, that.sendingFromAlt) && Objects.equals(sendingTo, that.sendingTo) && Objects.equals(addressList, that.addressList) && attention == that.attention && Objects.equals(creationDate, that.creationDate) && Objects.equals(subject, that.subject) && Objects.equals(textInfo, that.textInfo) && category == that.category && localisation == that.localisation && Objects.equals(imageUrl, that.imageUrl) && Objects.equals(letterLocals, that.letterLocals);
+        return existPrimePhoto == that.existPrimePhoto && alreadyRead == that.alreadyRead && existLocalisations == that.existLocalisations && Objects.equals(id, that.id) && Objects.equals(externId, that.externId) && Objects.equals(sendingFrom, that.sendingFrom) && Objects.equals(sendingTo, that.sendingTo) && Objects.equals(addressList, that.addressList) && attention == that.attention && Objects.equals(creationDate, that.creationDate) && category == that.category && Objects.equals(imageUrl, that.imageUrl) && Objects.equals(letterLocals, that.letterLocals);
     }
 
     @Override

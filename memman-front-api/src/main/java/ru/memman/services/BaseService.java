@@ -1,13 +1,11 @@
 package ru.memman.services;
 
-import ru.memman.dtos.Directive;
 import ru.memman.dtos.FamilyMemberDto;
 import ru.memman.dtos.SecurityDto;
 import ru.memman.enums.CheckStatus;
 import ru.memman.enums.Localisation;
 import ru.memman.enums.SecretLevel;
 import ru.memman.feign.BaseClient;
-import ru.memman.feign.BaseOverClient;
 import ru.memman.feign.FamilyClient;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +17,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class BaseService {
     private final BaseClient baseClient;
-    private final BaseOverClient baseOverClient;
     private final FamilyClient familyClient;
 
     public FamilyMemberDto getFamilyMember(FamilyMemberDto familyMemberDto) {

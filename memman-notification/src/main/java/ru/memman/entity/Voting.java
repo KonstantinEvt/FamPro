@@ -19,8 +19,12 @@ public class Voting {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID uuid;
 
-    @Column(name="letter_externId")
-    private String letter;
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "letter")
+    private AloneNew letter;
+
+    @Column(name="letterId")
+    String letterId;
 
     @Column(name="guard_size")
     private int guardSize;
@@ -31,9 +35,9 @@ public class Voting {
     @Column(name="accepts")
     private int accepts;
 
-    @ManyToMany(cascade = CascadeType.MERGE)
-    @JoinTable(name = "voting_recipient",
-            joinColumns = @JoinColumn(name = "voting_id", referencedColumnName = "uuid"),
-            inverseJoinColumns = @JoinColumn(name = "recipient_id", referencedColumnName = "id"))
-    private Set<Recipient> recipients;
+//    @ManyToMany(cascade = CascadeType.MERGE)
+//    @JoinTable(name = "voting_recipient",
+//            joinColumns = @JoinColumn(name = "voting_id", referencedColumnName = "uuid"),
+//            inverseJoinColumns = @JoinColumn(name = "recipient_id", referencedColumnName = "id"))
+//    private Set<Recipient> recipients;
 }
