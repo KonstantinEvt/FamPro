@@ -11,6 +11,7 @@ import ru.memman.entity.LetterLocal;
 import ru.memman.entity.Recipient;
 import ru.memman.enums.Attention;
 import ru.memman.enums.Localisation;
+import ru.memman.enums.NewsCategory;
 import ru.memman.enums.Subject;
 import ru.memman.holders.TranscriptHolder;
 import ru.memman.mappers.LetterLocalMapper;
@@ -28,7 +29,6 @@ public class LocalisationService implements SimpleStringService {
     private final LetterLocalMapper letterLocalMapper;
     private final TranscriptHolder transcriptHolder;
     private final Recipient informerRecipientHard;
-    private final Recipient systemRecipientHard;
 
     @Transactional(readOnly = true)
     public Optional<AloneNewDto> getLetterDtoTo(AloneNew aloneNew, Recipient recipient, Recipient from, boolean toHolder) {
@@ -38,6 +38,7 @@ public class LocalisationService implements SimpleStringService {
         log.info(aloneNew.getExternId());
         if (alreadyRead && toHolder) return Optional.empty();
         AloneNewDto letterToRecipient = AloneNewDto.builder()
+                .id(aloneNew.getId())
                 .alreadyRead(alreadyRead)
                 .localisation(aloneNew.getLocalisation())
                 .category(aloneNew.getCategory())
@@ -45,6 +46,7 @@ public class LocalisationService implements SimpleStringService {
                 .creationDate(aloneNew.getCreationDate())
                 .imageUrl(aloneNew.getImageUrl())
                 .existPrimePhoto(aloneNew.isExistPrimePhoto())
+                .postProcess(aloneNew.isPostProcess())
                 .externId(aloneNew.getExternId())
                 .sendingFrom((from == null) ? informerRecipientHard.getExternUuid() : from.getExternUuid())
                 .sendingFromAlt((from == null) ? informerRecipientHard.getNickName() : from.getNickName())
@@ -67,8 +69,8 @@ public class LocalisationService implements SimpleStringService {
                 } else letterLocalDtoList.add(letterLocalMapper.entityToDto(letterLocal));
             }
         }
-        if (toHolder||from==null) letterToRecipient.setLetterLocals(letterLocalDtoList);
-        if (from != null && letterToRecipient.getAttention() != Attention.COMMON && letterToRecipient.getAttention() != Attention.SYSTEM)
+        if (toHolder || from == null) letterToRecipient.setLetterLocals(letterLocalDtoList);
+        if (from != null && letterToRecipient.getCategory() != NewsCategory.COMMON && letterToRecipient.getCategory() != NewsCategory.SYSTEM)
             transcriptNickForLetter(recipient.getLocalisation(), from.getLocalisation(), letterToRecipient.getSendingFromAlt(), letterToRecipient);
         else if (from == null && letterToRecipient.getLocalisation() != recipient.getLocalisation()) {
             getLetterDtoByInformer(letterToRecipient, recipient.getLocalisation());
@@ -105,6 +107,15 @@ public class LocalisationService implements SimpleStringService {
         return true;
     }
 
+    public Subject findSubjectByName(String name) {
+        Subject findSub = Subject.UNKNOWN;
+        for (Subject sub :
+                Subject.values()) {
+            if (Objects.equals(name, sub.name())) findSub = sub;
+        }
+        return findSub;
+    }
+
     public void getLetterDtoByInformer(AloneNewDto letterToRecipient, Localisation localisation) {
         if (letterToRecipient.getLetterLocals() == null) {
             log.warn("битое inform message. Нет reserve localisation ");
@@ -114,11 +125,7 @@ public class LocalisationService implements SimpleStringService {
         if (reserveLetter.getLocalisation() == Localisation.OTHER)
             reserveLetter.setLocalisation(letterToRecipient.getLocalisation());
         AbstractTranscripter transcripter = transcriptHolder.getTranscript(reserveLetter.getLocalisation());
-        Subject findSub = Subject.UNKNOWN;
-        for (Subject sub :
-                Subject.values()) {
-            if (Objects.equals(reserveLetter.getSubject(), sub.name())) findSub = sub;
-        }
+        Subject findSub = findSubjectByName(reserveLetter.getSubject());
         String reserveInfoString;
         if (reserveLetter.getLocalisation() != Localisation.EN)
             reserveInfoString = transcripter.transcritWordFromLocalisation(reserveLetter.getTextInfo());
@@ -128,60 +135,87 @@ public class LocalisationService implements SimpleStringService {
         letterToRecipient.setSubject(transcripter.getTextSubject(findSub));
         if (localisation != Localisation.EN)
             reserveInfoString = transcripter.transcritWordToLocalisation(reserveInfoString);
+        letterToRecipient.setTextInfo(generateTextOfLetter(reserveInfoString, transcripter, findSub, letterToRecipient.getAttention()));
+    }
+
+    public String generateTextOfLetter(String reserveInfoString, AbstractTranscripter transcripter, Subject subject, Attention attention) {
+        String formOfLetter;
+        if (subject == Subject.END_VOTING) formOfLetter = subject.name();
+        else formOfLetter = "USER_NICK";
         String[] strings = reserveInfoString.split("!");
         String info;
         if (Objects.equals(strings[6], "1")) {
             if (strings[0] == null || strings[0].isBlank())
                 info = String.join("", transcripter.getUnknown(), "&nbsp;", transcripter.getUser().toLowerCase());
-            else info = String.join("", transcripter.getMatrixOfTextGeneration().get("USER_NICK"),
+            else info = String.join("", transcripter.getMatrixOfTextGeneration().get(formOfLetter),
                     strings[0]);
             info = String.join("", info,
-                    transcripter.getMatrixOfTextGeneration().get("USER_NICK1"),
-                    (letterToRecipient.getAttention() == Attention.LINK) ? transcripter.getMatrixOfTextGeneration().get("USER_NICK2") : transcripter.getMatrixOfTextGeneration().get("USER_NICK3"),
-                    strings[2]);
-            if (letterToRecipient.getAttention() == Attention.VOTING) {
-                if (strings[4] != null && strings[3] != null)
-                    info = String.join("", info,
-                            transcripter.getAnd(),
-                            transcripter.getAbsent(),
-                            strings[3],
-                            transcripter.getAnd(),
-                            strings[4]);
-                else if (strings[3] != null)
-                    info = String.join("", transcripter.getAnd(), strings[3]);
+                    transcripter.getMatrixOfTextGeneration().get(formOfLetter.concat("1")),
+                    (attention == Attention.LINK) ? transcripter.getMatrixOfTextGeneration().get(formOfLetter.concat("2")) : transcripter.getMatrixOfTextGeneration().get(formOfLetter.concat("3")),
+                    "<em>", strings[2], "</em>");
+            if (attention != Attention.LINK) {
+                if (strings[4] != null && !strings[4].isBlank()
+                        && strings[3] != null && !strings[3].isBlank())
+                    info = formAddDoubleTextName(info, strings[3], strings[4], transcripter);
+                else if (strings[3] != null && !strings[3].isBlank())
+                    info = formAddSingleTextName(info, strings[3], transcripter);
             }
-            info = String.join("", info, "<br>", transcripter.getElection());
+            if (subject != Subject.END_VOTING) info = String.join("", info, "<br>", transcripter.getElection());
         } else {
-            info = transcripter.getMatrixOfTextGeneration().get(findSub.name().concat("1"));
-            if (strings[2] != null) info = String.join("", info, strings[2],transcripter.getMatrixOfTextGeneration().get(findSub.name().concat("2")));
-            if (letterToRecipient.getAttention() == Attention.LINK) {
-                if (strings[4] != null && strings[3] != null)
+            if (subject == Subject.END_VOTING
+                    && (attention == Attention.VOTING_REQUESTER || attention == Attention.CONTACT_REQUESTER || attention == Attention.LINK_REQUESTER)) {
+                info = transcripter.getMatrixOfTextGeneration().get(attention.name().concat("1"));
+                if (strings[2] != null && !strings[2].isBlank())
                     info = String.join("", info,
-                            transcripter.getAnd(),
-                            transcripter.getAbsent(),
-                            strings[3],
-                            transcripter.getAnd(),
-                            strings[4]);
-                else if (strings[3] != null)
-                    info = String.join("", transcripter.getAnd(), strings[3]);
+                            "<em>", strings[2], "</em>",
+                            transcripter.getMatrixOfTextGeneration().get(attention.name().concat("2")));
+            } else {
+                info = transcripter.getMatrixOfTextGeneration().get(subject.name().concat("1"));
+                if (strings[2] != null && !strings[2].isBlank())
+                    info = String.join("", info,
+                            "<em>", strings[2], "</em>",
+                            transcripter.getMatrixOfTextGeneration().get(subject.name().concat("2")));
+            }
+            if (attention == Attention.VOTING_REQUESTER) {
+                if (strings[4] != null && !strings[4].isBlank()
+                        && strings[3] != null && !strings[3].isBlank())
+                    info = formAddDoubleTextName(info, strings[3], strings[4], transcripter);
+                else if (strings[3] != null && !strings[3].isBlank())
+                    info = formAddSingleTextName(info, strings[3], transcripter);
             }
             if (!Objects.equals(strings[5], "0")) info = info.concat(String.valueOf(strings[5]));
         }
-        letterToRecipient.setTextInfo(info);
+        return info;
+    }
+
+    public String formAddSingleTextName(String info, String name, AbstractTranscripter transcripter) {
+        return String.join("", info,
+                transcripter.getAnd(),
+                "<em>", name, "</em>");
+    }
+
+    public String formAddDoubleTextName(String info, String name1, String name2, AbstractTranscripter transcripter) {
+        return String.join("", info,
+                transcripter.getAnd(),
+                transcripter.getAbsent(),
+                "<em>", name1, "</em>",
+                transcripter.getAnd(),
+                "<em>", name2, "</em>");
     }
 
     public AloneNewDto getLetterOnLocalisation(AloneNewDto letter, Localisation localisation) {
         AloneNewDto letterToRecipient = AloneNewDto.builder()
+                .id(letter.getId())
                 .alreadyRead(false)
                 .category(letter.getCategory())
                 .attention(letter.getAttention())
                 .creationDate(letter.getCreationDate())
                 .imageUrl(letter.getImageUrl())
                 .existPrimePhoto(letter.isExistPrimePhoto())
+                .postProcess(letter.isPostProcess())
                 .externId(letter.getExternId())
                 .sendingFrom(letter.getSendingFrom())
                 .sendingFromAlt(letter.getSendingFromAlt())
-//                .sendingTo(letter.getSendingTo())
                 .build();
         Optional<LetterLocalDto> letterLocal;
         if (letter.getLocalisation() != localisation
@@ -193,7 +227,7 @@ public class LocalisationService implements SimpleStringService {
                     .findFirst();
         } else letterLocal = Optional.empty();
         if (letter.getLocalisation() != localisation
-                && letter.getAttention() != Attention.SYSTEM && letter.getAttention() != Attention.COMMON
+                && letter.getCategory() != NewsCategory.SYSTEM && letter.getCategory() != NewsCategory.COMMON
                 && !Objects.equals(letter.getSendingFrom(), informerRecipientHard.getExternUuid()))
             transcriptNickForLetter(localisation, letter.getLocalisation(), letter.getSendingFromAlt(), letter);
         if (letterLocal.isPresent()) {
@@ -203,16 +237,23 @@ public class LocalisationService implements SimpleStringService {
         } else {
             letterToRecipient.setSubject(letter.getSubject());
             if (letter.getLocalisation() != localisation) {
-                if (Objects.equals(letterToRecipient.getSendingFrom(), informerRecipientHard.getExternUuid()))
+                if (Objects.equals(letterToRecipient.getSendingFrom(), informerRecipientHard.getExternUuid())) {
+                    letterToRecipient.setLocalisation(letter.getLocalisation());
+                    letterToRecipient.setLetterLocals(letter.getLetterLocals());
                     getLetterDtoByInformer(letterToRecipient, localisation);
-                else {
+                    log.info("letter from info will be translate");
+                } else {
                     if (letterToRecipient.getTextInfo() == null) letterToRecipient.setTextInfo("");
                     letterToRecipient.setTextInfo(transcriptHolder.getTranscript(localisation).getAbsentLocalisation().concat(letter.getTextInfo()));
+                    log.info("random letter translate");
                 }
-                letterToRecipient.setLocalisation(letter.getLocalisation());
-            } else letterToRecipient.setTextInfo(letter.getTextInfo());
+                letterToRecipient.setLocalisation(localisation);
+            } else {
+                letterToRecipient.setTextInfo(letter.getTextInfo());
+                log.warn("fast change fatal localisation= {}", localisation);
+            }
         }
-        letterToRecipient.setSendingFrom(informerRecipientHard.getExternUuid());
+//        letterToRecipient.setSendingFrom(informerRecipientHard.getExternUuid());
         return letterToRecipient;
     }
 }

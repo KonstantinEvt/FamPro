@@ -43,20 +43,20 @@ body {
 
 .main_title {
     text-shadow: -1px -1px 0 #f1f1f1,
-        1px -1px 0 #f1f1f1,
-        -1px  1px 0 #f1f1f1,
-        1px  1px 0 #f1f1f1,
-        0 -1px 0 #f1f1f1,
-        0  1px 0 #f1f1f1,
-        -1px  0 0 #f1f1f1,
-        1px  0 0 #f1f1f1;
+    1px -1px 0 #f1f1f1,
+    -1px 1px 0 #f1f1f1,
+    1px 1px 0 #f1f1f1,
+    0 -1px 0 #f1f1f1,
+    0 1px 0 #f1f1f1,
+    -1px 0 0 #f1f1f1,
+    1px 0 0 #f1f1f1;
     padding-right: 0;
-    padding-left:0;
+    padding-left: 0;
     text-align: center;
     color: chocolate;
-    font-family: 'Times New Roman',serif;
+    font-family: 'Times New Roman', serif;
     font-size: 20px;
-    font-weight:bold;
+    font-weight: bold;
     font-style: italic;
 }
 
@@ -64,28 +64,62 @@ body {
     text-align: center;
     color: white;
     text-shadow: -1px -1px 0 #000,
-        1px -1px 0 #000,
-        -1px  1px 0 #000,
-        1px  1px 0 #000,
-        0 -1px 0 #000,
-        0  1px 0 #000,
-        -1px  0 0 #000,
-        1px  0 0 #000;
-    font-family: 'Times New Roman',serif;
-    font-weight:500;
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000,
+    0 -1px 0 #000,
+    0 1px 0 #000,
+    -1px 0 0 #000,
+    1px 0 0 #000;
+    font-family: 'Times New Roman', serif;
+    font-weight: 500;
     font-size: 18px
 }
-.main_select{
+
+.main_select {
     font-family: 'Times New Roman', serif;
     font-size: 14px;
     text-align: center;
     color: chocolate;
     text-shadow: -1px -1px 0 #f1f1f1,
-        1px -1px 0 #f1f1f1,
-        -1px  1px 0 #f1f1f1,
-        1px  1px 0 #f1f1f1,
-        0 -1px 0 #f1f1f1,
-        0  1px 0 #f1f1f1,
-        -1px  0 0 #f1f1f1,
-        1px  0 0 #f1f1f1;
+    1px -1px 0 #f1f1f1,
+    -1px 1px 0 #f1f1f1,
+    1px 1px 0 #f1f1f1,
+    0 -1px 0 #f1f1f1,
+    0 1px 0 #f1f1f1,
+    -1px 0 0 #f1f1f1,
+    1px 0 0 #f1f1f1;
+}
+
+.col-1.block_entry {
+    min-width: 200px;
+    width: 70%;
+    max-width: 350px;
+    margin-left: 15px
+}
+.label_change {
+    display:inline-block;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: RGB(255,255,255,90%);
+    font-size:12px;
+    padding:4px;
+    color: grey;
+    max-width: 80%
+ }
+.image_place{
+    align-content: center;
+    align-items: center;
+    text-align: center;
+    min-height:150px;
+    min-width: 150px;
+    width: 100%;
+    max-height:600px;
+    max-width: 400px;
+
+}
+.def{
+    margin:0;
+    padding:0
 }

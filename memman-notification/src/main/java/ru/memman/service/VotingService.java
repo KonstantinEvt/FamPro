@@ -1,14 +1,17 @@
 package ru.memman.service;
 
+import lombok.extern.log4j.Log4j2;
 import ru.memman.dtos.AloneNewDto;
 import ru.memman.dtos.DirectiveGuards;
 import ru.memman.dtos.RecipientDto;
 import ru.memman.entity.AloneNew;
+import ru.memman.entity.LetterLocal;
 import ru.memman.entity.Recipient;
 import ru.memman.entity.Voting;
 import ru.memman.enums.Attention;
 import ru.memman.enums.KafkaOperation;
 import ru.memman.enums.NewsCategory;
+import ru.memman.enums.Subject;
 import ru.memman.holders.StandardInfoHolder;
 import ru.memman.holders.TranscriptHolder;
 import ru.memman.mappers.AloneNewMapper;
@@ -27,31 +30,37 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Log4j2
 public class VotingService implements SimpleStringService {
     private final NotificationRepo notificationRepo;
+    private final LocalisationService localisationService;
     private final MessageService messageService;
     private final StandardInfoHolder standardInfoHolder;
     private final AloneNewMapper aloneNewMapper;
     private final AloneNewRepo aloneNewRepo;
     private final RecipientRepo recipientRepo;
     private final VotingRepo votingRepo;
-    private TranscriptHolder transcriptHolder;
+    private final TranscriptHolder transcriptHolder;
     private final LinkedList<DirectiveGuards> votingDirective;
 
     public VotingService(NotificationRepo notificationRepo,
-                         MessageService messageService,
+                         LocalisationService localisationService, MessageService messageService,
                          StandardInfoHolder standardInfoHolder,
                          AloneNewMapper aloneNewMapper,
                          AloneNewRepo aloneNewRepo,
                          RecipientRepo recipientRepo,
-                         VotingRepo votingRepo, @Qualifier("directiveVoting") LinkedList<DirectiveGuards> votingDirective) {
+                         VotingRepo votingRepo,
+                         TranscriptHolder transcriptHolder,
+                         @Qualifier("directiveVoting") LinkedList<DirectiveGuards> votingDirective) {
         this.notificationRepo = notificationRepo;
+        this.localisationService = localisationService;
         this.messageService = messageService;
         this.standardInfoHolder = standardInfoHolder;
         this.aloneNewMapper = aloneNewMapper;
         this.aloneNewRepo = aloneNewRepo;
         this.recipientRepo = recipientRepo;
         this.votingRepo = votingRepo;
+        this.transcriptHolder = transcriptHolder;
         this.votingDirective = votingDirective;
     }
 
@@ -75,160 +84,55 @@ public class VotingService implements SimpleStringService {
         return voting.getGuardSize() == (voting.getAccepts() + voting.getRejects()) || voting.getGuardSize() <= 2 * Math.abs(voting.getAccepts() - voting.getRejects());
     }
 
-    private void endContactVoting(Voting voting, boolean value) {
-        List<AloneNew> lettersOfVoting = new ArrayList<>();
-//                aloneNewRepo.findAllByExternId(voting.getLetter());
-        if (lettersOfVoting == null || lettersOfVoting.isEmpty())
-            throw new RuntimeException("linked letter with voting is absent");
-        for (AloneNew alone :
-                lettersOfVoting) {
-            AloneNewDto letter = aloneNewMapper.entityToDto(alone);
-            for (Recipient recipient :
-                    alone.getSendTo()) {
-                standardInfoHolder.removeMessageFromPerson(recipient.getExternUuid(), letter);
-            }
-        }
-        if (value) {
-            List<Recipient> contactPerson = lettersOfVoting.stream().flatMap(x -> x.getSendTo().stream()).toList();
-            RecipientDto recipientDto = new RecipientDto();
-//            contactService.addContact(contactPerson.get(0), recipientDto, contactPerson.get(1));
-//            contactService.addContact(contactPerson.get(1), recipientDto, contactPerson.get(0));
-            for (int i = 0; i < 2; i++) {
-                AloneNew aloneNew = new AloneNew();
-//                aloneNew.setAlreadyRead(false);
-                aloneNew.setExternId(lettersOfVoting.get(i).getExternId().concat("i"));
-                aloneNew.setCategory(NewsCategory.PRIVATE);
-                aloneNew.setCreationDate(new Timestamp(System.currentTimeMillis()));
-                aloneNew.setTextInfo("New contact is added. This letter is send automatic");
-                aloneNew.setSubject("Contact added");
-                aloneNew.setSendFrom(contactPerson.get(i));
-                aloneNew.setImageUrl(contactPerson.get(i).isExistPrimePhoto() ? contactPerson.get(i).getLinkExternId() : "");
-                aloneNew.setSendTo(Set.of((i == 0) ? contactPerson.get(1) : contactPerson.get(0)));
-                aloneNewRepo.save(aloneNew);
-                AloneNewDto letter = aloneNewMapper.entityToDto(aloneNew);
-                letter.setSendingTo((i == 0) ? contactPerson.get(1).getExternUuid() : contactPerson.get(0).getExternUuid());
-                letter.setSendingFromAlt(contactPerson.get(i).getNickName());
-                standardInfoHolder.addNewMessageToPerson(letter, letter.getSendingTo());
-
-//                standardInfoHolder.removeMessageFromPerson(lettersOfVoting.get(i).getSendFrom().getExternId(), aloneNewMapper.entityToDto(lettersOfVoting.get(i)));
-            }
-            aloneNewRepo.deleteAll(lettersOfVoting);
-        } else {
-            int i = (lettersOfVoting.get(0).getSubject().equals("Contact request")) ? 1 : 0;
-            String nickName = (i == 0) ? lettersOfVoting.get(1).getSendTo().stream().findFirst().orElseThrow().getNickName() : lettersOfVoting.get(0).getSendTo().stream().findFirst().orElseThrow().getNickName();
-            AloneNew aloneNew = lettersOfVoting.get(i);
-//            aloneNew.setAlreadyRead(false);
-            aloneNew.setCreationDate(new Timestamp(System.currentTimeMillis()));
-            aloneNew.setTextInfo(StringUtils.join("Request for contact with ", nickName, " is rejected", ' '));
-            aloneNew.setSubject("Contact reject");
-            aloneNew.setExternId(lettersOfVoting.get(i).getExternId().concat("i"));
-            aloneNewRepo.save(aloneNew);
-            AloneNewDto letter = aloneNewMapper.entityToDto(aloneNew);
-            letter.setSendingTo(aloneNew.getSendTo().stream().findFirst().orElseThrow().getExternUuid());
-            letter.setSendingFromAlt("System");
-            standardInfoHolder.addNewMessageToPerson(letter, letter.getSendingTo());
-            if (i == 0) aloneNewRepo.delete(lettersOfVoting.get(1));
-            else aloneNewRepo.delete(lettersOfVoting.get(0));
-        }
-        votingRepo.delete(voting);
-    }
-
-
-    @Transactional
+     @Transactional
     public void endOfVoting(Voting voting) {
-        List<AloneNew> lettersOfVoting = notificationRepo.getAllAloneNewWithSendTo(voting.getLetterId());
+        List<AloneNew> lettersOfVoting = notificationRepo.getAllAloneNewWithSendTo(voting.getLetterExternId());
         if (lettersOfVoting == null || lettersOfVoting.isEmpty())
             throw new RuntimeException("linked letters with voting is absent");
-        Recipient requester = null;
-        AloneNew requestLetter = null;
-        AloneNew votingLetter = null;
-        List<Recipient> voted = new ArrayList<>();
+
+        AloneNew requestLetter = lettersOfVoting.get(0);
+        boolean isLink = requestLetter.getAttention()==Attention.LINK;
+        AbstractTranscripter transcripter = transcriptHolder.getTranscript(requestLetter.getLocalisation());
+        String subject = transcripter.getTextSubject(Subject.END_VOTING);
         for (AloneNew forLinking :
                 lettersOfVoting) {
-            if (forLinking.getAttention() == Attention.VOTING_REQUESTER) {
-                requester = forLinking.getSendTo().stream().findFirst().orElseThrow();
-                requestLetter = forLinking;
-//                requester.setLinkExternId("tyt externID");
-            } else {
-                voted.addAll(forLinking.getSendTo());
-                votingLetter = forLinking;
+            if (forLinking == null || forLinking.getTextInfo() == null)
+                throw new RuntimeException("letter(s) of voting not found");
+            Set<Recipient> recipients = forLinking.getSendTo();
+            Set<Recipient> inHolder = new HashSet<>();
+            for (Recipient guard :
+                    recipients) {
+                if (standardInfoHolder.getOnlineInfo().get(guard.getExternUuid()) != null) {
+//                    standardInfoHolder.removeMessageFromPerson(guard.getExternUuid(),forLinking);
+                    standardInfoHolder.getOnlineInfo().get(guard.getExternUuid()).removeNewMessage(aloneNewMapper.entityToDto(forLinking));
+                    inHolder.add(guard);
+                }
+            }
+            forLinking.setNotReadingString(forLinking.getSendTo().stream().map(Recipient::getExternUuid).collect(Collectors.joining(" ")));
+            forLinking.setCreationDate(new Timestamp(System.currentTimeMillis()));
+            forLinking.setAlreadyRead(false);
+            forLinking.setPostProcess(true);
+            forLinking.setSubject(subject);
+            LetterLocal reserveLocal = forLinking.getLetterLocalisations().get(0);
+            reserveLocal.setSubject(Subject.END_VOTING.name());
+            forLinking.setTextInfo(localisationService.generateTextOfLetter(reserveLocal.getTextInfo(), transcripter, Subject.END_VOTING, forLinking.getAttention()));
+            if (!inHolder.isEmpty()) for (Recipient guard :
+                    inHolder) {
+                standardInfoHolder.addNewMessageToPerson(localisationService.getLetterDtoTo(forLinking, guard, null, true).orElseThrow(), guard.getExternUuid());
             }
         }
-        if (requestLetter == null || votingLetter==null||requestLetter.getTextInfo() == null) throw new RuntimeException("letter(s) of voting not found");
-        if (standardInfoHolder.getOnlineInfo().get(requester.getExternUuid()) != null)
-            standardInfoHolder.getOnlineInfo().get(requester.getExternUuid()).removeNewMessage(aloneNewMapper.entityToDto(requestLetter));
-        for (Recipient guard :
-                voted) {
-            if (standardInfoHolder.getOnlineInfo().get(guard.getExternUuid()) != null)
-                standardInfoHolder.getOnlineInfo().get(guard.getExternUuid()).removeNewMessage(aloneNewMapper.entityToDto(votingLetter));
-        }
-        String[] parseText = requestLetter.getTextInfo().split("<br>");
-        requestLetter.setNotReadingString(requestLetter.getSendTo().stream().map(Recipient::getExternUuid).collect(Collectors.joining(" ")));
-        votingLetter.setNotReadingString(votingLetter.getSendTo().stream().map(Recipient::getExternUuid).collect(Collectors.joining(" ")));
-        requestLetter.setCreationDate(new Timestamp(System.currentTimeMillis()));
-        votingLetter.setCreationDate(new Timestamp(System.currentTimeMillis()));
-        AbstractTranscripter transcripter=transcriptHolder.getTranscript(requester.getLocalisation());
-        String subject=transcripter.getMatrixOfTextGeneration().get("end_voting");
-        requestLetter.setSubject(subject);
-        votingLetter.setSubject(subject);
-
         DirectiveGuards directive = DirectiveGuards.builder()
-                .person(lettersOfVoting.get(0).getExternId())
+                .person(requestLetter.getExternId())
                 .build();
-        for (AloneNew alone :
-                lettersOfVoting) {
-            AloneNewDto letter = aloneNewMapper.entityToDto(alone);
-            for (Recipient recipient :
-                    alone.getSendTo()) {
-                standardInfoHolder.removeMessageFromPerson(recipient.getExternUuid(), letter);
-            }
+        if (voting.getAccepts() >= voting.getRejects()) {
+            if (isLink) directive.setOperation(KafkaOperation.EDIT);
+            else directive.setOperation(KafkaOperation.ADD);
+        } else {
+            if (isLink) directive.setOperation(KafkaOperation.RENAME);
+            else directive.setOperation(KafkaOperation.REMOVE);
+
         }
-//        if (voting.getAccepts() >= voting.getRejects()) {
-//            if (requestLetter.getAttention() != Attention.LINK) {
-//                aloneNew.setTextInfo(StringUtils.join("Подтверждена "
-//                        , parseText[2]
-//                        , " между"
-//                        , "<br>"
-//                        , parseText[1]
-//                        , "<br>", "и", "<br>"
-//                        , parseText[3], " "));
-//                directive.setOperation(KafkaOperation.ADD);
-//            } else {
-//                if (requester != null) {
-//                    aloneNew.setTextInfo(StringUtils.join("User ", parseText[1], "теперь связан с человеком: ", parseText[3], " "));
-//                    recipientRepo.save(requester);
-//                    directive.setOperation(KafkaOperation.EDIT);
-//                }
-//            }
-//            requestLetter.setAttention(Attention.VOTING_POSITIVE);
-//            votingLetter.setAttention(Attention.VOTING_POSITIVE);
-//        } else {
-//            if (requestLetter.getAttention() != Attention.LINK) {
-//                aloneNew.setTextInfo(StringUtils.join("Отклонена "
-//                        , parseText[2]
-//                        , " между"
-//                        , "<br>"
-//                        , parseText[1]
-//                        , "<br>", "и", "<br>"
-//                        , parseText[3], " "));
-//                directive.setOperation(KafkaOperation.REMOVE);
-//            } else {
-//                aloneNew.setTextInfo(StringUtils.join("Связь ", parseText[1], " с человеком: ", parseText[3], " отклонена.", " "));
-//                directive.setOperation(KafkaOperation.RENAME);
-//            }
-//            requestLetter.setAttention(Attention.VOTING_NEGATIVE);
-//            votingLetter.setAttention(Attention.VOTING_NEGATIVE);
-//        }
-//        aloneNewRepo.deleteAll(lettersOfVoting);
-//        aloneNewRepo.save(aloneNew);
-//        AloneNewDto letterForGuard = aloneNewMapper.entityToDto(aloneNew);
-//        for (Recipient guard :
-//                aloneNew.getSendTo()) {
-//            letterForGuard.setSendingTo(guard.getExternUuid());
-//            letterForGuard.setSendingFromAlt("Informer");
-//            standardInfoHolder.addNewMessageToPerson(letterForGuard, guard.getExternUuid());
-//        }
-//        votingRepo.delete(voting);
-//        votingDirective.add(directive);
+        votingRepo.delete(voting);
+        votingDirective.add(directive);
     }
 }

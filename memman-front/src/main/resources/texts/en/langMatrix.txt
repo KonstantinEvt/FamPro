@@ -110,3 +110,4 @@
 {"choice": "yes", "text": "Yes"}
 {"choice": "no", "text": "No"}
 {"choice": "alive", "text": "Alive"}
+{"choice": "dead", "text": "Dead"}

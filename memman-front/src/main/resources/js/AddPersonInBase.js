@@ -19,8 +19,8 @@ function menuFunc2100() {
             <div id="mainInfoNote" class="accordion-collapse collapse show" data-bs-parent="#addPersonAccord">
                 <div class="accordion-body" style="background: rgb(255,255,255,30)">
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 20%"></span>
-                        <span class="col-8" style="min-width: 300px;margin-left:15px">
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry">
         <label for="firstNameAddFM" style="color: chocolate">${langMatrix.get("name")}</label>
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="text" id="firstNameAddFM" name="firstNameAddFM" required>
         <label for="middleNameAddFM" style="color: chocolate; padding-top: 4px">${langMatrix.get("patronymic")}</label>
@@ -28,37 +28,37 @@ function menuFunc2100() {
         <label for="lastNameAddFM" style="color: chocolate; padding-top: 4px">${langMatrix.get("surname")}</label>
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="text" id="lastNameAddFM" name="lastNameAddFM" required>
         <label for="birthdayAddFM" style="color: chocolate; padding-top: 5px">${globalTexts.get(2103)}</label>
-        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="birthdayAddFM" name="birthdayAddFM" required>
-        <label for="isAlive" style="color: chocolate; padding-top: 4px">${langMatrix.get("alive")}</label><br>        
-        <div><button type="button" class="btn btn-outline-warning" style="background:rgb(255,255,255,50%);padding-bottom:2px; padding-top:2px;" id="isAlive" name="isAlive" 
-                    onmouseover="backgroundChange('isAlive','#ffc107')"
-                    onmouseout="backgroundChange('isAlive','rgb(255,255,255,50%)')" 
-                    onclick="changeAlive()">${langMatrix.get("yes")}</button></div>
-        <label for="deathdayAddFM" id="deathdayLabel" style="color: chocolate; padding-top: 4px" hidden="hidden">${globalTexts.get(2104)}</label>        
-        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="deathdayAddFM" name="deathdayAddFM" hidden="hidden">
+        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="birthdayAddFM" name="birthdayAddFM" required>             
         <label for="chooseSexAddFM" style="color: chocolate; padding-top: 4px">${langMatrix.get("gender")}</label>
         <select class="form-select" style="padding-bottom:2px; padding-top:2px;" id="chooseSexAddFM" aria-label="chooseSexAddFM">            
             <option value="MALE" selected>${langMatrix.get("male")}</option>
             <option value="FEMALE">${langMatrix.get("female")}</option>
         </select>
+        <label for="isAlive" style="color: chocolate; padding-top: 4px">${langMatrix.get("alive")}</label><br>   
+        <div><button type="button" class="btn btn-outline-warning" style="background:rgb(255,255,255,50%);padding-bottom:2px; padding-top:2px;" id="isAlive" name="isAlive" 
+                    onmouseover="backgroundChange('isAlive','#ffc107')"
+                    onmouseout="backgroundChange('isAlive','rgb(255,255,255,50%)')" 
+                    onclick="changeAlive()">${langMatrix.get("yes")}</button></div>
+        <label for="deathdayAddFM" id="deathdayLabel" style="color: chocolate; padding-top: 4px" hidden="hidden">${globalTexts.get(2104)}</label>        
+        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="deathdayAddFM" name="deathdayAddFM" hidden="hidden">        
         <div class="card" id="primeCard" style="max-height:700px; align-items:center; border:0; margin-top: 20px">
-                     <div class="container-fluid row">
-                     <span class="col-10" style="text-align: center;padding: 0 0 0 18%" >
-                        <label for="prime" id="label_prime" style="display:inline-block; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer; background-color: RGB(255,255,255,90%);padding:4px; color: grey;" >${globalTexts.get(6)}</label>
+                     <div class="container-fluid row def">
+                     <span class="col-10 def" style="text-align: center" >
+                        <label class="label_change" for="prime" id="label_prime" >${globalTexts.get(6)}</label>
                         <input class="form-control" type="file" id="prime" name="prime" accept="image/*" style="display:none" onchange="selectInputImage('prime', 600,600)" >
                     </span>
-                    <span class="col" style="text-align: left; align-content: center">
+                    <span class="col-1 def" style="text-align: left; align-content: center">
                         <button type="button" class="btn btn-outline-danger" style="padding: 3px" onclick="removeEntered('prime')">X</button>
                     </span>
                     </div>
-                    <div id="imageDefault_prime" style="align-content: center; align-items: center; text-align: center; min-height:200px; min-width: 300px">
+                    <div id="imageDefault_prime" class="image_place">
                     <img style="max-width: 95% ;max-height:40vh;" id="pictureDef_prime" src=${noPhoto} class="card-img-top" alt="${globalTexts.get(3)}">
                     <div class="card-img-overlay" style="align-content:center;margin-top:40px;">
                         <div class="card-text" style="margin-top:-30px;">${globalTexts.get(3)}</div>
                     </div>                   
                     </div>
                     <div class="card-body" style="text-align: center; padding: 0">                        
-                        <div id="canvasBlock_prime" hidden="hidden" style="align-content: center; align-items: center; text-align: center; min-height:300px; min-width: 300px" > 
+                        <div id="canvasBlock_prime" hidden="hidden" class="image_place" > 
                         <div style="padding-top:5px; color: chocolate;">${globalTexts.get(4)}</div>
                         <canvas  style="max-width: 95% ;max-height:40vh;" id="canvas_prime"></canvas>
                         <div id="canvasBlock_little" hidden="hidden"><canvas id="canvas_little"></canvas></div>
@@ -67,7 +67,7 @@ function menuFunc2100() {
         </div>
       <div style="margin-top: 15px; font-weight: bold">${langMatrix.get("attention")}! <span style="font-style:italic;font-weight: normal; font-size:14px">${globalTexts.get(2105)}</span></div>
                         </span>
-                        <span class="col" style="width: 20%"></span>
+                        <span class="col" style="width: 15%"></span>
                     </div>
                 </div>
             </div>
@@ -201,8 +201,8 @@ function menuFunc2100() {
             <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#addPersonAccord">
                 <div class="accordion-body">
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 20%"></span>
-                        <span class="col-8" style="min-width: 300px;margin-left:15px">
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry">
         <label for="indexAddFM" style="color: chocolate">${langMatrix.get("index")}</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="indexAddFM" name="indexAddFM" >                  
         <label for="countryAddFM" style="color: chocolate; padding-top: 2px">${langMatrix.get("country")}</label>
@@ -220,7 +220,7 @@ function menuFunc2100() {
         <label for="flatAddFM" style="color: chocolate; padding-top: 4px">${globalTexts.get(2116)}</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:2px;" type="text" id="flatAddFM" name="flatAddFM" >  
                         </span>
-                        <span class="col" style="width: 20%"></span>
+                        <span class="col" style="width: 15%"></span>
                     </div>
                 </div>
             </div>
@@ -234,10 +234,10 @@ function menuFunc2100() {
             <div id="collapseSecurity" class="accordion-collapse collapse" data-bs-parent="#addPersonAccord">
                 <div class="accordion-body" style="padding-top:0">
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 30%"></span>
-                        <span class="col-6" style="min-width: 300px; margin-left: 15px"><div id="securityMenu"></div>                                
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry"><div id="securityMenu"></div>                                
                         </span>
-                        <span class="col" style="width: 30%"></span>
+                        <span class="col" style="width: 15%"></span>
                     </div>
                     <div style="margin-top: 15px; font-weight: bold">${langMatrix.get("attention")}! <span style="font-style:italic;font-weight: normal; font-size:14px">${globalTexts.get(2123)}</span></div>
                 </div>
@@ -252,8 +252,8 @@ function menuFunc2100() {
             <div id="collapseBiometric" class="accordion-collapse collapse" data-bs-parent="#addPersonAccord">
                 <div class="accordion-body">
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 30%"></span>
-                        <span class="col-6" style="min-width: 300px;margin-left:15px">                               
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry" >                               
         <label for="ageFM" style="color: chocolate; padding-top: 5px">${globalTexts.get(2124)}</label>
         <input class="form-control" style="text-align: center" type="number" id="ageFM" name="ageFM" placeholder="${globalTexts.get(2133)}">                
         <label for="heightFM" style="color: chocolate; padding-top: 5px">${globalTexts.get(2125)}</label>
@@ -308,8 +308,8 @@ function menuFunc2100() {
             <div id="birthAddressAddFM" class="accordion-collapse collapse" data-bs-parent="#addPersonAccord">
                 <div class="accordion-body">
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 20%"></span>
-                        <span class="col-8" style="min-width: 300px;margin-left:15px">
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry" >
         <label for="birthCountryAddFM" style="color: chocolate; padding-top: 5px">${langMatrix.get("country")}</label>
         <input class="form-control" type="text" id="birthCountryAddFM" name="birthCountryAddFM" >
         <label for="birthRegionAddFM" style="color: chocolate; padding-top: 5px"> ${globalTexts.get(2111)}</label>
@@ -323,30 +323,30 @@ function menuFunc2100() {
         <label for="birthRegisterAddFM" style="color: chocolate; padding-top: 5px">${globalTexts.get(2138)}</label>
         <input class="form-control" type="text" id="birthRegisterAddFM" name="birthRegisterAddFM" >
         <div class="card" id="birdCard" style="max-height:700px; align-items:center; border:0; margin-top: 20px">
-                     <div class="container-fluid row">
-                     <span class="col-10" style="text-align: center;padding: 0 0 0 18%" >
-                        <label for="birth" id="label_birth" style="display:inline-block; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer; background-color: RGB(255,255,255,90%);padding:4px; color: grey;" >${globalTexts.get(6)}</label>
+                     <div class="container-fluid row def">
+                     <span class="col-10 def" style="text-align: center" >
+                        <label class="label_change" for="birth" id="label_birth">${globalTexts.get(6)}</label>
                         <input class="form-control" type="file" id="birth" name="birth" accept="image/*" style="display:none" onchange="selectInputImage('birth', 600,600)" >
                     </span>
-                    <span class="col" style="text-align: left; align-content: center">
+                    <span class="col-1 def" style="text-align: left; align-content: center">
                         <button type="button" class="btn btn-outline-danger" style="padding: 3px" onclick="removeEntered('birth')">X</button>
                     </span>
                     </div>
-                    <div id="imageDefault_birth" style="align-content: center; align-items: center; text-align: center; min-height:200px; min-width: 300px">
+                    <div id="imageDefault_birth" class="image_place">
                     <img style="max-width: 95% ;max-height:40vh;" id="pictureDef_birth" src=${noPhoto} class="card-img-top" alt="${globalTexts.get(3)}">
                     <div class="card-img-overlay" style="align-content:center;margin-top:40px;">
                         <div class="card-text" style="margin-top:-30px;">${globalTexts.get(3)}</div>
                     </div>                   
                     </div>
                     <div class="card-body" style="text-align: center; padding: 0">                        
-                        <div id="canvasBlock_birth" hidden="hidden" style="align-content: center; align-items: center; text-align: center; min-height:300px; min-width: 300px" > 
+                        <div id="canvasBlock_birth" hidden="hidden" class="image_place"> 
                         <div style="padding-top:5px; color: chocolate;">${globalTexts.get(4)}</div>
                         <canvas  style="max-width: 95% ;max-height:40vh;" id="canvas_birth"></canvas>                        
                         </div>
                     </div>                  
         </div>
                        </span>
-                        <span class="col" style="width: 20%"></span>
+                        <span class="col" style="width: 15%"></span>
                     </div>
                 </div>
             </div>
@@ -360,8 +360,8 @@ function menuFunc2100() {
             <div id="burialAddressAddFM" class="accordion-collapse collapse" data-bs-parent="#addPersonAccord">
                 <div class="accordion-body">
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 20%"></span>
-                        <span class="col-8" style="min-width: 300px;margin-left:15px">
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry">
         <label for="burialCountryAddFM" style="color: chocolate">${langMatrix.get("country")}</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialCountryAddFM" name="burialCountryAddFM" >
         <label for="burialRegionAddFM" style="color: chocolate; padding-top: 2px">${globalTexts.get(2111)}</label>
@@ -379,30 +379,30 @@ function menuFunc2100() {
         <label for="burialFlatAddFM" style="color: chocolate; padding-top: 2px">${globalTexts.get(2142)}</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialFlatAddFM" name="burialFlatAddFM" >
                 <div class="card" id="burialCard" style="max-height:700px; align-items:center; border:0; margin-top: 20px">
-                     <div class="container-fluid row">
-                     <span class="col-10" style="text-align: center;padding: 0 0 0 18%" >
-                        <label for="burial" id="label_burial" style="display:inline-block; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer; background-color: RGB(255,255,255,90%);padding:4px; color: grey;" >${globalTexts.get(6)}</label>
+                     <div class="container-fluid row def">
+                     <span class="col-10 def" style="text-align: center" >
+                        <label class="label_change" for="burial" id="label_burial">${globalTexts.get(6)}</label>
                         <input class="form-control" type="file" id="burial" name="burial" accept="image/*" style="display:none" onchange="selectInputImage('burial', 600,600)" >
                     </span>
-                    <span class="col" style="text-align: left; align-content: center">
+                    <span class="col-1 def" style="text-align: left; align-content: center">
                         <button type="button" class="btn btn-outline-danger" style="padding: 3px" onclick="removeEntered('burial')">X</button>
                     </span>
                     </div>
-                    <div id="imageDefault_burial" style="align-content: center; align-items: center; text-align: center; min-height:200px; min-width: 300px">
+                    <div id="imageDefault_burial" class="image_place">
                     <img style="max-width: 95% ;max-height:40vh;" id="pictureDef_burial" src=${noPhoto} class="card-img-top" alt="${globalTexts.get(3)}">
                     <div class="card-img-overlay" style="align-content:center;margin-top:40px;">
                         <div class="card-text" style="margin-top:-30px;">${globalTexts.get(3)}</div>
                     </div>                   
                     </div>
                     <div class="card-body" style="text-align: center; padding: 0">                        
-                        <div id="canvasBlock_burial" hidden="hidden" style="align-content: center; align-items: center; text-align: center; min-height:300px; min-width: 300px" > 
+                        <div id="canvasBlock_burial" hidden="hidden" class="image_place"> 
                         <div style="padding-top:5px; color: chocolate;">${globalTexts.get(4)}</div>
                         <canvas  style="max-width: 95% ;max-height:40vh;" id="canvas_burial"></canvas>                        
                         </div>
                     </div>                  
                 </div> 
                         </span>
-                        <span class="col" style="width: 20%"></span>
+                        <span class="col" style="width: 15%"></span>
                     </div>
                 </div>
             </div>

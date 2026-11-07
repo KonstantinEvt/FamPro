@@ -69,11 +69,13 @@ public class LosingParentsService extends FioServiceImp<LosingParent> {
     }
 
     @Transactional
-    public Set<FamilyMember> findAdditionalChildren(Changing changing, FamilyMember familyMember, Set<OldFio> oldFios) {
+    public Set<FamilyMember> findAdditionalChildren(Changing changing, FamilyMember familyMember, Set<OldFio> oldFios, String token, Localisation localisation) {
         Set<FamilyMember> possibleChildrenOfFamilyMember = new HashSet<>();
-        Set<UUID> uuids=new HashSet<>();
-        if (changing.isChangingMain()) uuids.add(familyMember.getUuid());;
-        if (oldFios!=null&&!oldFios.isEmpty()) uuids.addAll(oldFios.stream().map(OldFio::getUuid).collect(Collectors.toSet()));
+        Set<UUID> uuids = new HashSet<>();
+        if (changing.isChangingMain()) uuids.add(familyMember.getUuid());
+        ;
+        if (oldFios != null && !oldFios.isEmpty())
+            uuids.addAll(oldFios.stream().map(OldFio::getUuid).collect(Collectors.toSet()));
         List<LosingParent> possibleLosingParent = losingParentsRepository.findLosingParentsWithFamilyMember(uuids);
         if (possibleLosingParent != null && !possibleLosingParent.isEmpty()) {
             boolean correctLosingSex = true;
@@ -85,12 +87,16 @@ public class LosingParentsService extends FioServiceImp<LosingParent> {
                 }
             }
             for (LosingParent losingParentForFamilyMember : possibleLosingParent) {
-                if (losingParentForFamilyMember.getMember().getCheckStatus() == CheckStatus.MODERATE)
+                if (losingParentForFamilyMember.getMember().getCheckStatus() == CheckStatus.MODERATE) {
+                    formAndSendService.sendNotification(token, Attention.NEGATIVE, losingParentForFamilyMember.getMember().getFullName(), losingParentForFamilyMember.getMember().getId(), Subject.MODERATION_CHILD, localisation);
                     throw new ModeratingContent(losingParentForFamilyMember.getMember().getFullName());
+                }
                 if (losingParentForFamilyMember.getSex() != familyMember.getSex() && correctLosingSex)
                     familyMember.setSex(losingParentForFamilyMember.getSex());
-                else if (!correctLosingSex)
+                else if (!correctLosingSex) {
+                    formAndSendService.sendNotification(token, Attention.NEGATIVE, losingParentForFamilyMember.getMember().getFullName(), losingParentForFamilyMember.getMember().getId(), Subject.WRONG_INFO_SEX, localisation);
                     throw new UncorrectedInformationSex(losingParentForFamilyMember.getMember().getFullName());
+                }
                 possibleChildrenOfFamilyMember.add(losingParentForFamilyMember.getMember());
             }
             losingParentsRepository.removeAllByUuids(possibleLosingParent.stream().map(LosingParent::getUuid).collect(Collectors.toSet()));
@@ -137,51 +143,46 @@ public class LosingParentsService extends FioServiceImp<LosingParent> {
     public void setUpFather(FioDto fioDto, FamilyMember fm, List<Notification> notifications, List<FamilyDirective> listToFamily) {
         if (fm.getFatherInfo() != null && fm.getFatherInfo().charAt(1) == 'A')
             removeParentByLosingUuid(generateUUIDFromFullName(fm.getFatherInfo()), fm);
-        try {
-            if (fioDto.getBirthday() != null && !checkDifBirthday(Sex.MALE, fioDto.getBirthday(), fm.getBirthday()))
-                throw new UncorrectedInformationDate(CheckStatus.UNCORRECTED.getComment());
-            FamilyMember father = getParentOfFamilyMember(fioDto);
-            if (father.getCheckStatus() == CheckStatus.MODERATE)
-                throw new ModeratingContent(father.getFullName());
-
-            if (father.getSex() == Sex.FEMALE)
-                throw new UncorrectedInformationSex("(Sex of Parent is wrong)");
-
-            if (checkDifBirthday(Sex.MALE, father.getBirthday(), fm.getBirthday())) {
-                fm.setFather(father);
-                fm.setFatherInfo(father.getFullName());
-
-                if (father.getChilds() == null) father.setChilds(new HashSet<>());
-
-                father.getChilds().add(fm);
-                listToFamily.add(FamilyDirective.builder()
-                        .familyMemberDto(familyMemberMapper.entityToDto(father))
-                        .person(String.valueOf(fm.getUuid()))
-                        .switchPosition(SwitchPosition.FATHER)
-                        .operation(KafkaOperation.EDIT).build());
-            } else
-                throw new UncorrectedInformationDate(CheckStatus.UNCORRECTED.getComment());
-
-        } catch (FamilyMemberNotFound e) {
-            log.warn(e.getMessage());
-        } catch (UncorrectedOrNewInformation e) {
-            fm.setFatherInfo(e.getMessage().concat(generateFioStringInfo(fioMapper.dtoToEntity(fioDto))));
-        } catch (UncorrectedInformation e) {
-            fm.setFatherInfo(e.getMessage());
-            fm.setFather(null);
-        } catch (UncorrectedInformationDate e) {
+        if (fioDto.getBirthday() != null && !checkDifBirthday(Sex.MALE, fioDto.getBirthday(), fm.getBirthday())) {
             notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_DATE).build());
-            fm.setFatherInfo(e.getMessage());
+            fm.setFatherInfo(CheckStatus.UNCORRECTED.getComment());
             fm.setFather(null);
-        } catch (UncorrectedInformationSex e) {
-            notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_SEX).build());
-            fm.setFatherInfo(e.getMessage());
-            fm.setFather(null);
-        } catch (ModeratingContent e) {
-            notifications.add(Notification.builder().attention(Attention.NEGATIVE).person(e.getMessage()).subject(Subject.MODERATION_FATHER).build());
-            fm.setFatherInfo(null);
-            fm.setFather(null);
-        }
+        } else
+            try {
+                FamilyMember father = getParentOfFamilyMember(fioDto);
+                if (father.getCheckStatus() == CheckStatus.MODERATE) {
+                    notifications.add(Notification.builder().attention(Attention.NEGATIVE).person(father.getFullName()).id(father.getId()).subject(Subject.MODERATION_FATHER).build());
+                    fm.setFatherInfo(null);
+                    fm.setFather(null);
+                } else if (father.getSex() == Sex.FEMALE) {
+                    notifications.add(Notification.builder().attention(Attention.NEGATIVE).id(father.getId()).subject(Subject.WRONG_INFO_SEX).build());
+                    fm.setFatherInfo("(Sex of Parent is wrong)");
+                    fm.setFather(null);
+                } else {
+                    if (checkDifBirthday(Sex.MALE, father.getBirthday(), fm.getBirthday())) {
+                        fm.setFather(father);
+                        fm.setFatherInfo(father.getFullName());
+                        if (father.getChilds() == null) father.setChilds(new HashSet<>());
+                        father.getChilds().add(fm);
+                        listToFamily.add(FamilyDirective.builder()
+                                .familyMemberDto(familyMemberMapper.entityToDto(father))
+                                .person(String.valueOf(fm.getUuid()))
+                                .switchPosition(SwitchPosition.FATHER)
+                                .operation(KafkaOperation.EDIT).build());
+                    } else {
+                        notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_DATE).build());
+                        fm.setFatherInfo(CheckStatus.UNCORRECTED.getComment());
+                        fm.setFather(null);
+                    }
+                }
+            } catch (FamilyMemberNotFound e) {
+                log.warn(e.getMessage());
+            } catch (UncorrectedOrNewInformation e) {
+                fm.setFatherInfo(e.getMessage().concat(generateFioStringInfo(fioMapper.dtoToEntity(fioDto))));
+            } catch (UncorrectedInformation e) {
+                fm.setFatherInfo(e.getMessage());
+                fm.setFather(null);
+            }
         log.info("Информация об отце установлена");
     }
 
@@ -189,49 +190,43 @@ public class LosingParentsService extends FioServiceImp<LosingParent> {
     public void setUpMother(FioDto fioDto, FamilyMember fm, List<Notification> notifications, List<FamilyDirective> listToFamily) {
         if (fm.getMotherInfo() != null && fm.getMotherInfo().charAt(1) == 'A')
             removeParentByLosingUuid(generateUUIDFromFullName(fm.getMotherInfo()), fm);
-        try {
-            if (fioDto.getBirthday() != null && !checkDifBirthday(Sex.FEMALE, fioDto.getBirthday(), fm.getBirthday()))
-                throw new UncorrectedInformationDate(CheckStatus.UNCORRECTED.getComment());
-            FamilyMember mother = getParentOfFamilyMember(fioDto);
-            if (mother.getCheckStatus() == CheckStatus.MODERATE)
-                throw new ModeratingContent(mother.getFullName());
-
-            if (mother.getSex() == Sex.MALE)
-                throw new UncorrectedInformationSex("(Sex of Parent is wrong)");
-
-            if (checkDifBirthday(Sex.FEMALE, mother.getBirthday(), fm.getBirthday())) {
-                fm.setMother(mother);
-                fm.setMotherInfo(mother.getFullName());
-                if (mother.getChilds() == null) mother.setChilds(new HashSet<>());
-                mother.getChilds().add(fm);
-                listToFamily.add(FamilyDirective.builder()
-                        .familyMemberDto(familyMemberMapper.entityToDto(mother))
-                        .person(String.valueOf(fm.getUuid()))
-                        .switchPosition(SwitchPosition.MOTHER)
-                        .operation(KafkaOperation.EDIT).build());
-            } else
-                throw new UncorrectedInformationDate(CheckStatus.UNCORRECTED.getComment());
-
-        } catch (FamilyMemberNotFound e) {
-            log.warn(e.getMessage());
-        } catch (UncorrectedOrNewInformation e) {
-            fm.setMotherInfo(e.getMessage().concat(generateFioStringInfo(fioMapper.dtoToEntity(fioDto))));
-        } catch (UncorrectedInformation e) {
-            fm.setMotherInfo(e.getMessage());
-            fm.setMother(null);
-        } catch (UncorrectedInformationDate e) {
+        if (fioDto.getBirthday() != null && !checkDifBirthday(Sex.FEMALE, fioDto.getBirthday(), fm.getBirthday())) {
             notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_DATE).build());
-            fm.setMotherInfo(e.getMessage());
+            fm.setMotherInfo(CheckStatus.UNCORRECTED.getComment());
             fm.setMother(null);
-        } catch (UncorrectedInformationSex e) {
-            notifications.add(Notification.builder().attention(Attention.NEGATIVE).subject(Subject.WRONG_INFO_SEX).build());
-            fm.setMotherInfo(e.getMessage());
-            fm.setMother(null);
-        } catch (ModeratingContent e) {
-            notifications.add(Notification.builder().attention(Attention.NEGATIVE).person(e.getMessage()).subject(Subject.MODERATION_MOTHER).build());
-            fm.setMotherInfo(null);
-            fm.setMother(null);
-        }
+        } else
+            try {
+                FamilyMember mother = getParentOfFamilyMember(fioDto);
+                if (mother.getCheckStatus() == CheckStatus.MODERATE) {
+                    notifications.add(Notification.builder().attention(Attention.NEGATIVE).person(mother.getFullName()).id(mother.getId()).subject(Subject.MODERATION_FATHER).build());
+                    fm.setMotherInfo(null);
+                    fm.setMother(null);
+                } else if (mother.getSex() == Sex.MALE) {
+                    notifications.add(Notification.builder().attention(Attention.NEGATIVE).id(mother.getId()).subject(Subject.WRONG_INFO_SEX).build());
+                    fm.setMotherInfo("(Sex of Parent is wrong)");
+                    fm.setMother(null);
+                } else {
+                    if (checkDifBirthday(Sex.FEMALE, mother.getBirthday(), fm.getBirthday())) {
+                        fm.setMother(mother);
+                        fm.setMotherInfo(mother.getFullName());
+                        if (mother.getChilds() == null) mother.setChilds(new HashSet<>());
+                        mother.getChilds().add(fm);
+                        listToFamily.add(FamilyDirective.builder()
+                                .familyMemberDto(familyMemberMapper.entityToDto(mother))
+                                .person(String.valueOf(fm.getUuid()))
+                                .switchPosition(SwitchPosition.MOTHER)
+                                .operation(KafkaOperation.EDIT).build());
+                    } else
+                        throw new UncorrectedInformationDate(CheckStatus.UNCORRECTED.getComment());
+                }
+            } catch (FamilyMemberNotFound e) {
+                log.warn(e.getMessage());
+            } catch (UncorrectedOrNewInformation e) {
+                fm.setMotherInfo(e.getMessage().concat(generateFioStringInfo(fioMapper.dtoToEntity(fioDto))));
+            } catch (UncorrectedInformation e) {
+                fm.setMotherInfo(e.getMessage());
+                fm.setMother(null);
+            }
         log.info("Информация о матери установлена");
     }
 

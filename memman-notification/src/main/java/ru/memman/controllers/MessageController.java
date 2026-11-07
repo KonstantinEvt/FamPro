@@ -33,14 +33,9 @@ public class MessageController {
 //        messageService.readOrRemoveIndividualMessage((String) tokenService.getTokenUser().getClaims().get("sub"),id,false);
 //        return ResponseEntity.status(200).body("Letter is delete");
 //    }
-    @GetMapping("/reject/{id}")
-    public ResponseEntity<String> rejectAnswerMessage(@PathVariable("id") String id){
-
-        return ResponseEntity.status(200).body(votingService.getVoting((String) tokenService.getTokenUser().getClaims().get("sub"),id,false));
-    }
-    @GetMapping("/accept/{id}")
-    public ResponseEntity<String> acceptAnswerMessage(@PathVariable("id") String id){
-        return ResponseEntity.status(200).body(votingService.getVoting((String) tokenService.getTokenUser().getClaims().get("sub"),id,true));
+     @GetMapping("/voting/{id}/{choice}")
+    public ResponseEntity<String> acceptAnswerMessage(@PathVariable("id") String id, @PathVariable("choice") boolean choice){
+        return ResponseEntity.status(200).body(votingService.getVoting((String) tokenService.getTokenUser().getClaims().get("sub"),id,choice));
     }
 //    @GetMapping("/readResult/{id}")
 //    public ResponseEntity<String> readResult(@PathVariable("id") String id){

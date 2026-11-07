@@ -70,11 +70,13 @@ public class FacadeService implements SimpleFamilyService {
         Changing changing = new Changing();
         Optional<Guard> guardFromDirective = guardService.findGuard(mainDirective.getTokenUser());
         log.info("finding guard is exist: {}", guardFromDirective.isPresent() ? guardFromDirective.get().getTokenUser() : "not linking user");
+        UserRole role=UserRole.SIMPLE_USER;
         if (guardFromDirective.isEmpty()
                 && mainMember.getCreator() != null
                 && !mainMember.getCreator().isBlank()
                 && Objects.equals(mainMember.getCreator(), mainDirective.getTokenUser()))
             guardFromDirective = Optional.of(Guard.builder().id(null).tokenUser(mainMember.getCreator()).linkedPerson(mainMember).localisation(Localisation.RU).build());
+        else if (guardFromDirective.isPresent()) role=guardFromDirective.get().getUserRole();
         Set<Family> familyToRemove = new HashSet<>();
         Set<ShortFamilyMember> ancestors;
         Set<ShortFamilyMember> potentialBloodBrothers;
@@ -87,7 +89,7 @@ public class FacadeService implements SimpleFamilyService {
         if (mainDirective.getOperation() == KafkaOperation.RENAME) {
             log.info("changing member with uuid: {}", mainMember.getUuid().toString());
             if (mainMember.getCheckStatus() == CheckStatus.MODERATE
-                    && !mainDirective.getTokenUser().equals("moderator")) {
+                    && role!=UserRole.ADMIN&&role!=UserRole.MANAGER) {
                 log.warn("Попытка изменения человека находящимся под голосованием или модерацией");
                 sendAndFormService.sendAttentionToUser(mainDirective.getTokenUser(), mainMember.getFullName(), null, Attention.MODERATE, localisation);
 // тут нужен откат в storage модуль и смена статуса там на Moderate
@@ -105,7 +107,7 @@ public class FacadeService implements SimpleFamilyService {
                 ancestors = memberService.getAllAncestors(mainMember);
                 topAncestors = ancestors.stream().filter(x -> x.getAncestors() == null || x.getAncestors().isBlank()).collect(Collectors.toSet());
             }
-            if (mainDirective.getTokenUser().equals("moderator")
+            if (role==UserRole.ADMIN||role==UserRole.MANAGER
                     || memberService.checkThemeSecretForSecretLevel(mainMember.getSecretLevelEdit(), mainMember, guardFromDirective, topAncestors)) {
                 changing.setChangeIsPresent(true);
                 changing.setChangingMain(!Objects.equals(mainMember.getUuid(), mainDto.getUuid()));
@@ -116,7 +118,7 @@ public class FacadeService implements SimpleFamilyService {
                 log.info("CHANGING_STATUS_1: {}", changing);
 
                 if (changing.getChangingFather().ordinal() > 4 || changing.getChangingMother().ordinal() > 4) {
-                    if (mainDirective.getTokenUser().equals("moderator")
+                    if (role==UserRole.ADMIN||role==UserRole.MANAGER
                             || memberService.checkThemeSecretForSecretLevel(mainMember.getSecretLevelRemove(), mainMember, guardFromDirective, topAncestors)) {
                         primeFamily = familyService.changeFamilyByRemoveParentLink(changing, primeFamily, mainMember, mainDto);
                     } else throw new RuntimeException("Haven't rights to change/remove parents");
@@ -216,7 +218,7 @@ public class FacadeService implements SimpleFamilyService {
                     if (possiblePrime.isPresent()) {
                         log.info("prime family is found");
                         potentialBloodBrothers = possiblePrime.get().getChildren();
-                        if (mainDirective.getTokenUser().equals("moderator") || checkFamilyForGuard(changing, possiblePrime.get(), guardFromDirective, potentialBloodBrothers)) {
+                        if (role==UserRole.ADMIN||role==UserRole.MANAGER || checkFamilyForGuard(changing, possiblePrime.get(), guardFromDirective, potentialBloodBrothers)) {
                             log.info("check successful happened");
 //                            mainMember.setFamilyWhereChild(possiblePrime.get());
                             primeFamily = possiblePrime.get();

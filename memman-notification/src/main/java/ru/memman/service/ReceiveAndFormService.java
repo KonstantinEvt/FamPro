@@ -38,7 +38,7 @@ public class ReceiveAndFormService implements SimpleStringService {
         boolean inHolder = standardInfoHolder.getOnlineInfo().containsKey(recipient.getExternUuid());
         if (inHolder) {
             Optional<AloneNewDto> letterDto = localisationService.getLetterDtoTo(letter, recipient, null, true);
-            letterDto.ifPresent(x -> {standardInfoHolder.addNewMessageToPerson(x, recipient.getExternUuid());messageService.sendChangeLetterCounts(recipient.getExternUuid());});
+            letterDto.ifPresent(x -> standardInfoHolder.addNewMessageToPerson(x, recipient.getExternUuid()));
         }
     }
 
@@ -47,6 +47,7 @@ public class ReceiveAndFormService implements SimpleStringService {
         Recipient recipient = recipientService.findRecipient(directiveGuards.getTokenUser());
         if (recipient == null) throw new RuntimeException("recipient is absent");
         AloneNew aloneNew = formAnswerByInformer(directiveGuards, NewsCategory.PRIVATE, recipient);
+        aloneNewRepo.save(aloneNew);
         putLetterToHolder(aloneNew, recipient);
     }
 
@@ -60,11 +61,16 @@ public class ReceiveAndFormService implements SimpleStringService {
         Recipient requester = directiveRecipients.stream().filter(x -> Objects.equals(x.getExternUuid(), directiveGuards.getTokenUser())).findFirst().orElseThrow(() -> new RuntimeException("recipient not found"));
         directiveRecipients.remove(requester);
         if (directiveRecipients.isEmpty()) throw new RuntimeException("guards not found");
-        putLetterToHolder(formAnswerByInformer(directiveGuards, NewsCategory.PRIVATE, requester), requester);
         AloneNew aloneNewGuards = formMessageToGuards(directiveGuards, directiveRecipients, requester);
+        aloneNewRepo.save(aloneNewGuards);
         for (Recipient guard : directiveRecipients) {
             putLetterToHolder(aloneNewGuards, guard);
         }
+        AloneNew aloneNewRequester = formAnswerByInformer(directiveGuards, NewsCategory.PRIVATE, requester);
+        if (aloneNewGuards.getAttention() == Attention.LINK) aloneNewRequester.setAttention(Attention.LINK_REQUESTER);
+        else aloneNewRequester.setAttention(Attention.VOTING_REQUESTER);
+        aloneNewRepo.save(aloneNewRequester);
+        putLetterToHolder(aloneNewRequester, requester);
     }
 
     @Transactional
@@ -76,7 +82,7 @@ public class ReceiveAndFormService implements SimpleStringService {
         aloneNewRepo.save(aloneNew);
         votingRepo.save(Voting.builder()
                 .letter(aloneNew)
-                .letterId(aloneNew.getExternId())
+                .letterExternId(aloneNew.getExternId())
                 .guardSize(directiveGuards.getGuards().size())
                 .accepts(0)
                 .rejects(0)
@@ -85,7 +91,7 @@ public class ReceiveAndFormService implements SimpleStringService {
     }
 
     private String formReserveInfo(DirectiveGuards directiveGuards, Recipient requester, Boolean forGuards) {
-        String info = ((requester.getNickName()==null)?"!":requester.getNickName().concat("!")).concat(requester.getExternUuid()).concat("!");
+        String info = ((requester.getNickName() == null) ? "!" : requester.getNickName().concat("!")).concat(requester.getExternUuid()).concat("!");
         if (directiveGuards.getInfo1() != null && !directiveGuards.getInfo1().isBlank())
             info = info.concat(directiveGuards.getInfo1());
         info = info.concat("!");
@@ -110,37 +116,33 @@ public class ReceiveAndFormService implements SimpleStringService {
             info = String.join("", info,
                     transcripter.getMatrixOfTextGeneration().get("USER_NICK1"),
                     (directiveGuards.getSwitchPosition() == SwitchPosition.BIRTH) ? transcripter.getMatrixOfTextGeneration().get("USER_NICK2") : transcripter.getMatrixOfTextGeneration().get("USER_NICK3"),
-                    directiveGuards.getInfo1());
+                    "<em>", directiveGuards.getInfo1(), "</em>");
             if (directiveGuards.getSwitchPosition() != SwitchPosition.BIRTH) {
-                if (directiveGuards.getInfo3() != null && directiveGuards.getInfo2() != null)
-                    info = String.join("", info,
-                            transcripter.getAnd(),
-                            transcripter.getAbsent(),
-                            directiveGuards.getInfo2(),
-                            transcripter.getAnd(),
-                            directiveGuards.getInfo3());
-                else if (directiveGuards.getInfo2() != null)
-                    info = String.join("", transcripter.getAnd(), directiveGuards.getInfo2());
+                if (directiveGuards.getInfo3() != null && !directiveGuards.getInfo3().isBlank()
+                        && directiveGuards.getInfo2() != null && !directiveGuards.getInfo2().isBlank())
+                    info = localisationService.formAddDoubleTextName(info, directiveGuards.getInfo2(), directiveGuards.getInfo3(), transcripter);
+                else if (directiveGuards.getInfo2() != null && !directiveGuards.getInfo2().isBlank())
+                    info = localisationService.formAddSingleTextName(info, directiveGuards.getInfo2(), transcripter);
             }
             info = String.join("", info, "<br>", transcripter.getElection());
         } else {
             info = transcripter.getMatrixOfTextGeneration().get(directiveGuards.getSubject().name().concat("1"));
-            if (directiveGuards.getInfo1() != null) info=String.join("", info, directiveGuards.getInfo1(),transcripter.getMatrixOfTextGeneration().get(directiveGuards.getSubject().name().concat("2")));
+            if (directiveGuards.getInfo1() != null&&!directiveGuards.getInfo1().isBlank())
+                info = String.join("", info,
+                        "<em>", directiveGuards.getInfo1(), "</em>",
+                        transcripter.getMatrixOfTextGeneration().get(directiveGuards.getSubject().name().concat("2")));
             if (directiveGuards.getSwitchPosition() != SwitchPosition.BIRTH) {
-                if (directiveGuards.getInfo3() != null && directiveGuards.getInfo2() != null)
-                    info = String.join("", info,
-                            transcripter.getAnd(),
-                            transcripter.getAbsent(),
-                            directiveGuards.getInfo2(),
-                            transcripter.getAnd(),
-                            directiveGuards.getInfo3());
-                else if (directiveGuards.getInfo2() != null)
-                    info = String.join("", transcripter.getAnd(), directiveGuards.getInfo2());
+                if (directiveGuards.getInfo3() != null && !directiveGuards.getInfo3().isBlank()
+                        && directiveGuards.getInfo2() != null && !directiveGuards.getInfo2().isBlank())
+                    info = localisationService.formAddDoubleTextName(info, directiveGuards.getInfo2(), directiveGuards.getInfo3(), transcripter);
+                else if (directiveGuards.getInfo2() != null && !directiveGuards.getInfo2().isBlank())
+                    info = localisationService.formAddSingleTextName(info, directiveGuards.getInfo2(), transcripter);
             }
-            if (directiveGuards.getNumber1()!=0L) info=info.concat(String.valueOf(directiveGuards.getNumber1()));
+            if (directiveGuards.getNumber1() != 0L) info = info.concat(String.valueOf(directiveGuards.getNumber1()));
         }
         return info;
     }
+
     private AloneNew buildInformLetter(DirectiveGuards directiveGuards, Set<Recipient> recipientSet, Recipient requester, Boolean forGuards) {
         AbstractTranscripter transcripter = transcriptHolder.getTranscript(requester.getLocalisation());
         AloneNew aloneNew = AloneNew.builder()
@@ -148,8 +150,9 @@ public class ReceiveAndFormService implements SimpleStringService {
                 .creationDate(directiveGuards.getCreated())
                 .existLocalisations(true)
                 .existPrimePhoto(false)
+                .postProcess(false)
                 .sendTo(recipientSet)
-                .notReadingString((forGuards)?getInfoStringFromStringUuids(recipientSet.stream().map(Recipient::getExternUuid).collect(Collectors.toSet())):requester.getExternUuid())
+                .notReadingString((forGuards) ? getInfoStringFromStringUuids(recipientSet.stream().map(Recipient::getExternUuid).collect(Collectors.toSet())) : requester.getExternUuid())
                 .sendFrom(null)
                 .subject(transcripter.getTextSubject(directiveGuards.getSubject()))
                 .textInfo(formInfo(transcripter, directiveGuards, requester, forGuards))
@@ -182,6 +185,8 @@ public class ReceiveAndFormService implements SimpleStringService {
                 aloneNew.setAttention(Attention.NEGATIVE);
                 aloneNew.setCategory(Objects.requireNonNullElse(category, NewsCategory.PRIVATE));
             }
+
+            // это приход с фамили об установлении link
             case PRIME -> {
                 aloneNew.setCategory(NewsCategory.PRIVATE);
                 if (directiveGuards.getPerson() != null) {
@@ -190,8 +195,9 @@ public class ReceiveAndFormService implements SimpleStringService {
                     aloneNew.setAttention(Attention.NEGATIVE);
                 }
             }
+            // это приход с фамили о voting на установление link
             case BIRTH -> {
-                if (directiveGuards.getOperation()==KafkaOperation.EDIT) aloneNew.setAttention(Attention.LINK);
+                if (directiveGuards.getOperation() == KafkaOperation.EDIT) aloneNew.setAttention(Attention.LINK);
                 else aloneNew.setAttention(Attention.POSITIVE);
                 aloneNew.setCategory(Objects.requireNonNullElse(category, NewsCategory.PRIVATE));
             }
@@ -199,15 +205,15 @@ public class ReceiveAndFormService implements SimpleStringService {
                 aloneNew.setAttention(Attention.DATE);
                 aloneNew.setCategory(NewsCategory.PRIVATE);
             }
-            case BURIAL -> {
-                aloneNew.setAttention(Attention.VOTING_REQUESTER);
-                aloneNew.setCategory(NewsCategory.PRIVATE);
-            }
+//            case BURIAL -> {
+//                aloneNew.setAttention(Attention.VOTING_REQUESTER);
+//                aloneNew.setCategory(NewsCategory.PRIVATE);
+//            }
             default -> {
                 aloneNew.setAttention(Attention.UNKNOWN);
                 aloneNew.setCategory(NewsCategory.PRIVATE);
             }
         }
-        return aloneNewRepo.save(aloneNew);
+        return aloneNew;
     }
 }

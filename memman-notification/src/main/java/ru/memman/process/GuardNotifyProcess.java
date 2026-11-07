@@ -21,7 +21,7 @@ public class GuardNotifyProcess implements Consumer<Message<DirectiveGuards>> {
         log.info("Receiving inform/voting directive: {}", directiveGuards);
         switch (directiveGuards.getOperation()) {
             case ADD -> receiveAndFormService.receiveAttentionLetter(directiveGuards);
-            case EDIT -> receiveAndFormService.receiveVotingLetter(directiveGuards);
+            case EDIT -> {log.info("Получено письма на голосование{}",directiveGuards);receiveAndFormService.receiveVotingLetter(directiveGuards);}
             default -> log.warn("Unknown directive");
         }
     }

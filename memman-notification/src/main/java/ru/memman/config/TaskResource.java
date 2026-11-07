@@ -32,7 +32,7 @@ public class TaskResource {
         return new ConcurrentHashMap<>();
     }
     @Bean("directiveRights")
-    LinkedList<DirectiveGuards> directiveRights() {
+    LinkedList<List<DirectiveGuards>> directiveRights() {
         return new LinkedList<>();
     }
     @Bean("systemGlobalMask")

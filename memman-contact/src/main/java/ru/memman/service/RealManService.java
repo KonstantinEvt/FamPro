@@ -9,6 +9,7 @@ import ru.memman.dtos.ContactDto;
 import ru.memman.dtos.OnlineUserDto;
 import ru.memman.dtos.RecipientDto;
 import ru.memman.entity.RealMen;
+import ru.memman.enums.Localisation;
 import ru.memman.holders.OnlineContactHolder;
 import ru.memman.repository.RealManRepository;
 
@@ -68,7 +69,7 @@ public class RealManService {
                         .externUuid(onlineUserDto.getExternUuid())
                         .linkExternId(onlineUserDto.getLinkExternId())
                         .nickName(onlineUserDto.getNickName())
-                        .localisation(onlineUserDto.getLocalisation())
+                        .localisation((onlineUserDto.getLocalisation()==null)? Localisation.RU:onlineUserDto.getLocalisation())
                         .secretLevelPhoto(onlineUserDto.getSecretLevelPhoto())
                         .secretLevelPhone(onlineUserDto.getSecretLevelPhone())
                         .secretLevelEmail(onlineUserDto.getSecretLevelEmail())

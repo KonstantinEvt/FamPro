@@ -52,13 +52,15 @@ public class AloneNewDto {
     private List<LetterLocalDto> letterLocals;
     @Schema(description = "Наличие дополнительных локализаций")
     private boolean existLocalisations;
+    @Schema(description = "Преобразование письма после создания")
+    private boolean postProcess;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        AloneNewDto that = (AloneNewDto) o;
-        return existPrimePhoto == that.existPrimePhoto && alreadyRead == that.alreadyRead && existLocalisations == that.existLocalisations && Objects.equals(id, that.id) && Objects.equals(externId, that.externId) && Objects.equals(sendingFrom, that.sendingFrom) && Objects.equals(sendingTo, that.sendingTo) && Objects.equals(addressList, that.addressList) && attention == that.attention && Objects.equals(creationDate, that.creationDate) && category == that.category && Objects.equals(imageUrl, that.imageUrl) && Objects.equals(letterLocals, that.letterLocals);
+        AloneNewDto dto = (AloneNewDto) o;
+        return Objects.equals(id, dto.id);
     }
 
     @Override

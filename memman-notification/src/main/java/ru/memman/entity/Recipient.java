@@ -64,7 +64,8 @@ public class Recipient {
 
     @Column (name="last_change")
     private Timestamp lastUpdate;
-
+    @Column (name="created")
+    private Timestamp created;
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

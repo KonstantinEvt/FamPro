@@ -105,8 +105,8 @@ public class NotificationRepo {
     public Optional<Voting> findVotingWithLetter(String externId) {
         Optional<Voting> voting;
         try {
-            voting = Optional.of(entityManager.createQuery("from Voting v left join fetch v.letter where v.letterId in :externId", Voting.class)
-                    .setParameter("letterId", externId)
+            voting = Optional.of(entityManager.createQuery("from Voting v left join fetch v.letter where v.letterExternId in :externId", Voting.class)
+                    .setParameter("externId", externId)
                     .getSingleResult());
         } catch (RuntimeException e) {
             log.info("voting not found");

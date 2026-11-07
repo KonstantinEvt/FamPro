@@ -21,6 +21,7 @@ function menuFunc2200(cause) {
             <label for="idLink" class="main_select">${globalTexts.get(2152)}</label>
             <input class="form-control" type="text" id="idLink" name="idLink" required>
             <button class="btn btn-outline-warning" style="color: darkred; margin-top: 24px" type="button" onclick="linkUser()">${langMatrix.get("link")}</button>
+            <button type="submit" hidden="hidden"></button>
         </form>`
     temp = (cause === 0) ? globalTexts.get(2154) : globalTexts.get(2146);
     document.getElementById("resultPart").innerHTML = `
@@ -34,12 +35,10 @@ function menuFunc2200(cause) {
             </h2>
             <div id="collapseSearchForm" class="accordion-collapse collapse show" data-bs-parent="#accordionSearch">
                 <div class="accordion-body" style="padding-right: 5px;padding-left: 10px">
-                    <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 20%"></span>
-                        <span class="col-8" style="min-width: 300px">
+                    <div class="container-fluid row mh-100 no-gutters">                        
+                        <span class="col" style="margin:0 0 0 12%;min-width: 90%">
                             <div id="formOfSearch"></div>
                         </span>
-                        <span class="col" style="width: 20%"></span>
                     </div>
                 </div>
             </div>
@@ -70,6 +69,7 @@ function menuFunc2201(cause) {
             <label for="idFindFM" style="color: chocolate; padding-top: 5px">${localMenu.get(2100)}</label>
             <input class="form-control" type="text" id="idFindFM" name="idFindFM" autocomplete="on" required> 
             <button class="btn btn-outline-warning" style="color: darkred; margin-top:24px" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" onclick="findPerson(0,${cause})">${globalTexts.get(2150)}</button>
+            <button type="submit" hidden="hidden"></button>            
         </form> 
 `
 }
@@ -90,6 +90,7 @@ function menuFunc2202(cause) {
             <input class="form-control" type="date" id="birthdayFindFM" name="birthdayFindFM" required>               
 
             <button class="btn btn-outline-warning" style="color: darkred; margin-top: 24px" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultForm" onclick="findPerson(1,${cause})">${globalTexts.get(2150)}</button>
+            <button type="submit" hidden="hidden"></button>
         </form>
  `;
 }
@@ -348,17 +349,30 @@ async function findPerson(choice, cause, externId) {
         document.getElementById("resultListFather").innerHTML = `<div style="font-size: 16px">${fatherInfo[0]}</div>`;
         if (motherInfo.length > 1) document.getElementById("resultListMother").innerHTML += `<div>${motherInfo[1]}</div>`;
         if (fatherInfo.length > 1) document.getElementById("resultListFather").innerHTML += `<div>${fatherInfo[1]}</div>`;
-
-        if (familyMember.memberInfo.secretLevelPhone !== "CLOSE") document.getElementById("resultListPhone").innerHTML = familyMember.memberInfo.mainPhone; else document.getElementById("resultListPhone").innerHTML = langMatrix.get("phone") + "&nbps;" + langMatrix.get("hidden");
-        if (familyMember.memberInfo.secretLevelAddress !== "CLOSE") document.getElementById("resultListAddress").innerHTML = familyMember.memberInfo.mainAddress; else document.getElementById("resultListAddress").innerHTML = langMatrix.get("address") + "&nbps;" + langMatrix.get("hidden");
-        if (familyMember.memberInfo.secretLevelEmail !== "CLOSE") document.getElementById("resultListEmail").innerHTML = familyMember.memberInfo.mainEmail; else document.getElementById("resultListEmail").innerHTML = langMatrix.get("email") + "&nbps;" + langMatrix.get("hidden");
+        if (familyMember.alive) {
+            document.getElementById("deathInfo").hidden = true
+            if (familyMember.memberInfo.secretLevelPhone !== "CLOSE") document.getElementById("resultListPhone").innerHTML = familyMember.memberInfo.mainPhone; else document.getElementById("resultListPhone").innerHTML = langMatrix.get("phone") + `&nbsp;` + langMatrix.get("hidden").toLowerCase();
+            if (familyMember.memberInfo.secretLevelAddress !== "CLOSE") document.getElementById("resultListAddress").innerHTML = familyMember.memberInfo.mainAddress; else document.getElementById("resultListAddress").innerHTML = langMatrix.get("address") + `&nbsp;` + langMatrix.get("hidden").toLowerCase();
+            if (familyMember.memberInfo.secretLevelEmail !== "CLOSE") document.getElementById("resultListEmail").innerHTML = familyMember.memberInfo.mainEmail; else document.getElementById("resultListEmail").innerHTML = langMatrix.get("email") + `&nbsp;` + langMatrix.get("hidden").toLowerCase();
+        } else {
+            document.getElementById("lifeInfo").hidden = true
+            if (familyMember.memberInfo.secretLevelBurial !== "CLOSE")
+                if (familyMember.deathday !== undefined && familyMember.deathday !== null) document.getElementById("deathdayResult").innerHTML = getDate(new Date(familyMember.deathday));
+                else document.getElementById("deathdayResult").innerHTML = globalTexts.get(2167);
+            else document.getElementById("deathdayResult").innerHTML = globalTexts.get(2104) + `&nbsp;` + globalTexts.get(2305).toLowerCase();
+        }
         document.getElementById("status-finding-person").innerHTML = langMatrix.get(familyMember.checkStatus);
-        if (familyMember.checkStatus === `LINKED`) if (isContact === -1 && (mainUser.role !== "SIMPLE_USER" && mainUser.role !== "BASE_USER"))
+        if (familyMember.alive){
+        if (familyMember.checkStatus === `LINKED`
+            || (familyMember.checkStatus === `MODERATE`
+                && (mainUser.role === "ADMIN"
+                    || mainUser.role === "MANAGER"
+                    || isContact === -2))) if (isContact === -1 && familyMember.alive&&(mainUser.role !== "SIMPLE_USER" && mainUser.role !== "BASE_USER"))
             document.getElementById("agree-finding-person").innerHTML += `<div><button class="btn btn-outline-warning" style="color: darkred;padding:3px; width:90px; font-size:14px" type="button" onclick="addContactBySearch('${familyMember.creator}')">${langMatrix.get("contact")}</button>
                 <br><button class="btn btn-outline-warning" style="color: darkred;padding:3px; margin-top:6px;font-size:14px; width:90px;" type="button" onclick="menuFunc3100('${familyMember.creator}', '${fullName[0]}')">${langMatrix.get("message")}</button></div>`;
         else if (isContact === -2) document.getElementById("agree-finding-person").innerHTML += `<div style="color: green;margin-right:-12px; font-size: 18px">${globalTexts.get(2157)}</div>`;
         else if (isContact === -1) document.getElementById("agree-finding-person").innerHTML += `<button class="btn btn-outline-warning" style="color: darkred;padding:3px; margin-top:6px;font-size:14px" type="button" onclick="menuFunc3100('${familyMember.creator}', '${fullName[0]}')">${langMatrix.get("message")}</button></div>`;
-        else document.getElementById("agree-finding-person").innerHTML += globalTexts.get(2159);
+        else document.getElementById("agree-finding-person").innerHTML += globalTexts.get(2159);}
         if (real) {
             pictureUrl = endPoints.get("filePrivate") + '/get/prime/' + familyMember.uuid;
             tempPerson.primePhotoImj = await loadPicture(pictureUrl).then((pic) => {
@@ -411,19 +425,19 @@ async function findPerson(choice, cause, externId) {
             }
             let tempPanel = `<form id="changePersonForm" class="form-group">
                 <div class="main_select" style="padding:0 0 0 5px; margin-top:20px">${globalTexts.get(2155)}</div>
-                <div class="btn-group-vertical" role="group" aria-label="Choose group" style="background-color:rgb(255,255,255,40%); width:85%; margin: 6px 0 0 3%;  text-align: center;">
+                <div class="btn-group-vertical" role="group" aria-label="Choose group" style="background-color:rgb(255,255,255,40%); width:80%; margin: 6px 0 0 3%;  text-align: center;">
                 <input type="radio" class="btn-check" name="person-operation" id="person-get" value="extended" autocomplete="off" checked>
-                <label class="btn btn-outline-warning" style="padding:3px; font-size: 14px; color: darkred" for="person-get">${langMatrix.get("info")}</label>`;
+                <label class="btn btn-outline-warning" style="padding:3px; font-size: 12px; color: darkred" for="person-get">${langMatrix.get("info")}</label>`;
             if (familyMember.secretLevelEdit !== "CLOSE") {
                 tempPanel += `<input type="radio" class="btn-check" name="person-operation" id="person-edit" value="edit"
                        autoComplete="off">
                     <label class="btn btn-outline-warning"
-                           style="padding:3px; font-size: 14px; color: darkred"
+                           style="padding:3px; font-size: 12px; color: darkred"
                            for="person-edit">${langMatrix.get("edit")}</label>`
             }
             if (familyMember.secretLevelRemove !== "CLOSE") {
                 tempPanel += `<input type="radio" class="btn-check" name="person-operation" id="person-remove" value="remove" autocomplete="off"> 
-                <label class="btn btn-outline-warning" style="; padding:3px; font-size: 14px; color: darkred" for="person-remove">${langMatrix.get("remove")}</label>`
+                <label class="btn btn-outline-warning" style="; padding:3px; font-size: 12px; color: darkred" for="person-remove">${langMatrix.get("remove")}</label>`
             }
             tempPanel += `</div>
                              <button class="btn btn-outline-warning" style="background-color:rgb(255,255,255,40%); padding: 3px; margin-top: 6px; color: darkred" type="button" onclick="checkAndSendStorageRequest()">${langMatrix.get("ok")}</button>
@@ -700,15 +714,15 @@ function paintBirth() {
 function paintingFindPerson() {
     document.getElementById("resultFindingPerson").innerHTML = `
         <div class="container-fluid row mh-100 no-gutters">
-            <span class="col" style="width: 30%; text-align: center"> 
+            <span class="col-1" style="margin:0 1% 0 3%;padding:0;width: 30%; text-align: center"> 
                 <div style="margin-top:6px; font-size: 18px; color: darkred;">${langMatrix.get("status")}</div>
                 <div id="status-finding-person" style="font-size: 18px; color: green;font-family: 'Times New Roman',serif"></div>
             </span>
-            <span class="col-4"> 
+            <span class="col" style="margin:0;padding:0;"> 
                 <div style="font-size: 18px;text-align: center; color: darkred;">ID: </div>
                 <div style="margin-bottom:6px; font-size: 18px;text-align: center; color: green;font-family: 'Times New Roman',serif" id="resultListId"><br></div>
             </span>
-            <span class="col" style="width: 30%;">
+            <span class="col-1" style="margin:0;padding:0;width: 30%;">
                 <div id="agree-finding-person" style="margin-top:6px; margin-bottom: 10px; text-align: center; color: black;font-family: 'Times New Roman',serif"></div>
             </span>
         </div>
@@ -721,15 +735,19 @@ function paintingFindPerson() {
 
         <div style="color: chocolate; font-size: 16px">${langMatrix.get("father")}</div>
         <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black;font-family: 'Times New Roman',serif" id="resultListFather"><br></div>
+        <div id="deathInfo">
+            <div style="color: chocolate; font-size: 16px">${langMatrix.get("dead")}</div>
+            <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="deathdayResult"><br></div>
+        </div>
+        <div id="lifeInfo">
+            <div style="color: chocolate; font-size: 16px">${langMatrix.get("phone")}</div>
+            <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListPhone"><br></div>
 
-        <div style="color: chocolate; font-size: 16px">${langMatrix.get("phone")}</div>
-        <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListPhone"><br></div>
+            <div style="color: chocolate; font-size: 16px">${langMatrix.get("email")}</div>
+            <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListEmail"><br></div>
 
-        <div style="color: chocolate; font-size: 16px">${langMatrix.get("email")}</div>
-        <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListEmail"><br></div>
-
-        <div style="color: chocolate; font-size: 16px">${langMatrix.get("address")}</div>
-        <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListAddress"><br></div>
+            <div style="color: chocolate; font-size: 16px">${langMatrix.get("address")}</div>
+            <div style="margin-bottom:2px; font-size: 14px; text-align: center; color: black; font-family: 'Times New Roman',serif" id="resultListAddress"><br></div></div>
     </em>
     `
 }

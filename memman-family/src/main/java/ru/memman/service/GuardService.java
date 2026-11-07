@@ -53,6 +53,7 @@ public class GuardService implements SimpleFamilyService {
     public Guard creatGuard(ShortFamilyMember familyMember, String uuid, Localisation localisation) {
         Guard linkGuard = Guard.builder()
                 .linkedPerson(familyMember)
+                .userRole(UserRole.LINKED_USER)
                 .localisation(localisation)
                 .tokenUser(uuid)
                 .build();
@@ -72,6 +73,7 @@ public class GuardService implements SimpleFamilyService {
                     guard.get().setLocalisation(onlineUserDto.getLocalisation());
                     guardRepository.updateGuard(guard.get());
                 }
+                if (onlineUserDto.getPriorityRole()!=guard.get().getUserRole()) guard.get().setUserRole(onlineUserDto.getPriorityRole());
                 if (member.getUuid() != null && !Objects.equals(member.getUuid().toString(), onlineUserDto.getLinkExternId()))
                     onlineUserDto.setLinkExternId(member.getUuid().toString());
                 if (member.getLastUpdate() != null && !Objects.equals(member.getLastUpdate(), onlineUserDto.getLastUpdate()))

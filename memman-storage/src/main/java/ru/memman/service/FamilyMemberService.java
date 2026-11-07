@@ -115,10 +115,26 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
     }
 
     private void getAndSetTempStatus(FamilyMemberDto familyMemberDto) {
-        String token = (String) tokenService.getTokenUser().getClaims().get("sub");
-        if (familyMemberDto.getCheckStatus() != CheckStatus.UNCHECKED && !Objects.equals(familyMemberDto.getCreator(), token) && token != null)
-            changeMemberDtoByGuardStatus(familyMemberDto);
-        else {
+        TokenUser tokenUser = tokenService.getTokenUser();
+        String token = (String) tokenUser.getClaims().get("sub");
+        SecretLevel guardStatus;
+        UserRole role = tokenService.getPriorityRole(tokenUser);
+        if (role == UserRole.ADMIN || role == UserRole.MANAGER)
+        {guardStatus = SecretLevel.CLOSE;
+            if (familyMemberDto.isPrimePhoto())
+                tempPhotoAccept.put(token.concat(String.valueOf(SwitchPosition.PRIME.ordinal())), String.valueOf(SwitchPosition.PRIME.ordinal()).concat(familyMemberDto.getUuid().toString()));
+            if (familyMemberDto.getMemberInfo().isPhotoBirthExist())
+                tempPhotoAccept.put(token.concat(String.valueOf(SwitchPosition.BIRTH.ordinal())), String.valueOf(SwitchPosition.BIRTH.ordinal()).concat(familyMemberDto.getUuid().toString()));
+            if (familyMemberDto.getMemberInfo().isPhotoBurialExist())
+                tempPhotoAccept.put(token.concat(String.valueOf(SwitchPosition.BURIAL.ordinal())), String.valueOf(SwitchPosition.BURIAL.ordinal()).concat(familyMemberDto.getUuid().toString()));
+
+        }
+        else if (familyMemberDto.getCheckStatus() != CheckStatus.UNCHECKED && !Objects.equals(familyMemberDto.getCreator(), token) && token != null) {
+            if (role == UserRole.LINKED_USER || role == UserRole.VIP)
+                guardStatus = familyConnectionClient.getGuardStatus(familyMemberDto.getUuid());
+            else guardStatus = SecretLevel.OPEN;
+            changeMemberDtoByGuardStatus(familyMemberDto, guardStatus);
+        } else {
             if (!Objects.equals(familyMemberDto.getCreator(), token) && token != null) {
                 familyMemberDto.setSecretLevelRemove(SecretLevel.CLOSE);
                 if (familyMemberDto.getSecretLevelMainInfo() != SecretLevel.OPEN)
@@ -128,6 +144,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 if (familyMemberDto.getSecretLevelPhoto() != SecretLevel.OPEN)
                     familyMemberDto.setSecretLevelPhoto(SecretLevel.CLOSE);
             }
+            guardStatus = SecretLevel.CONFIDENTIAL;
             if (familyMemberDto.getSecretLevelPhoto() != SecretLevel.CLOSE && familyMemberDto.isPrimePhoto())
                 tempPhotoAccept.put(token.concat(String.valueOf(SwitchPosition.PRIME.ordinal())), String.valueOf(SwitchPosition.PRIME.ordinal()).concat(familyMemberDto.getUuid().toString()));
             if (familyMemberDto.getMemberInfo() != null && familyMemberDto.getMemberInfo().isPhotoBirthExist())
@@ -136,7 +153,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 tempPhotoAccept.put(token.concat(String.valueOf(SwitchPosition.BURIAL.ordinal())), String.valueOf(SwitchPosition.BURIAL.ordinal()).concat(familyMemberDto.getUuid().toString()));
 
         }
-        if (familyMemberDto.getCheckStatus() == CheckStatus.MODERATE) {
+        if (familyMemberDto.getCheckStatus() == CheckStatus.MODERATE && guardStatus != SecretLevel.CLOSE) {
             familyMemberDto.setSecretLevelRemove(SecretLevel.CLOSE);
             familyMemberDto.setSecretLevelEdit(SecretLevel.CLOSE);
             familyMemberDto.setSecretLevelMainInfo(SecretLevel.CLOSE);
@@ -148,15 +165,7 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
                 familyMemberDto.getMemberInfo().getMainAddress()));
     }
 
-    private void changeMemberDtoByGuardStatus(FamilyMemberDto familyMemberDto) {
-        SecretLevel guardStatus;
-        Set<String> roles = tokenService.getTokenUser().getRoles();
-        if (roles.contains(UserRole.ADMIN.getNameSSO()) || roles.contains(UserRole.MANAGER.getNameSSO()))
-            guardStatus = SecretLevel.CONFIDENTIAL;
-        else if (roles.contains(UserRole.LINKED_USER.getNameSSO()))
-            guardStatus = familyConnectionClient.getGuardStatus(familyMemberDto.getUuid());
-        else guardStatus = SecretLevel.OPEN;
-
+    private void changeMemberDtoByGuardStatus(FamilyMemberDto familyMemberDto, SecretLevel guardStatus) {
         log.info(StringUtils.join("status user: ", guardStatus.name(), " photo status person: ", familyMemberDto.getSecretLevelPhoto().name(), ' '));
         if (familyMemberDto.isPrimePhoto() && guardStatus.ordinal() < familyMemberDto.getSecretLevelPhoto().ordinal())
             familyMemberDto.setSecretLevelPhoto(SecretLevel.CLOSE);
@@ -344,12 +353,10 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
 
         Set<FamilyMember> children;
         try {
-            children = new HashSet<>(losingParentsService.findAdditionalChildren(changing, familyMember, otherNames));
+            children = new HashSet<>(losingParentsService.findAdditionalChildren(changing, familyMember, otherNames, token, localisation));
         } catch (ModeratingContent e) {
-            formAndSendService.sendNotification(token, Attention.POSITIVE, e.getMessage(), 0L, Subject.MODERATION_CHILD, localisation);
             throw new ModeratingContent("Linking person child is under moderation");
         } catch (UncorrectedInformationSex e) {
-            formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.WRONG_INFO_SEX, localisation);
             throw new UncorrectedInformationSex("Linking children have another sex of parent");
         }
         familyMember.setChilds(children);
@@ -569,12 +576,10 @@ public class FamilyMemberService extends FioServiceImp<FamilyMember> {
             }
             try {
                 if (!otherNames.isEmpty() || (changing.isChangingMain() && !changeOnPseudonym))
-                    children.addAll(losingParentsService.findAdditionalChildren(changing, fm, otherNames));
+                    children.addAll(losingParentsService.findAdditionalChildren(changing, fm, otherNames, token, localisation));
             } catch (ModeratingContent e) {
-                formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.MODERATION_CHILD, localisation);
                 throw new ModeratingContent("Linking person child is under moderation");
             } catch (UncorrectedInformationSex e) {
-                formAndSendService.sendNotification(token, Attention.NEGATIVE, e.getMessage(), 0L, Subject.WRONG_INFO_SEX, localisation);
                 throw new UncorrectedInformationSex("Linking children have another sex of parent");
             }
             if (!otherNames.isEmpty()) {

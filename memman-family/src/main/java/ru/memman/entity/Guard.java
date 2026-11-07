@@ -6,6 +6,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import ru.memman.enums.Localisation;
 import ru.memman.enums.SecretLevel;
+import ru.memman.enums.UserRole;
 
 import java.sql.Timestamp;
 import java.util.Objects;
@@ -37,6 +38,10 @@ public class Guard {
     @Enumerated(EnumType.STRING)
     @Column(name = "localisation")
     private Localisation localisation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    private UserRole userRole;
 
     @Override
     public boolean equals(Object o) {

@@ -3,24 +3,16 @@ package ru.memman.controllers;
 import org.springframework.http.MediaType;
 //import ru.memman.converter.NameConverter;
 import ru.memman.enam.BucketCategory;
-import ru.memman.enums.SwitchPosition;
-import ru.memman.feign.StorageConnectionClient;
 import ru.memman.holders.BarrierInputPhotoHolder;
 import ru.memman.holders.NameBucketHolder;
-import ru.memman.holders.SystemPhotoHolder;
 import ru.memman.services.BarrierGetService;
 import ru.memman.services.FileStorageService;
 import ru.memman.services.TokenService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 
 @Log4j2

@@ -96,6 +96,7 @@ function getTime(datetime) {
 }
 
 function getDate(datetime) {
+    if (datetime===undefined||datetime===null) return globalTexts.get(2302);
     let year = datetime.getFullYear();
     let month = new Intl.NumberFormat("en", {minimumIntegerDigits: 2}).format(datetime.getMonth() + 1);
     let day = new Intl.NumberFormat("en", {minimumIntegerDigits: 2}).format(datetime.getDate());
@@ -192,11 +193,11 @@ function loadStandardMainPanel() {
     <tbody>
     <tr>
     <td class="col-1" style=" vertical-align: top; padding-right:3px; margin-right: 10px; text-align: center ">
-    <div id="taskPart" style="height: 81vh; min-width: 81px; text-align: center" role="tablist" >
+    <div id="taskPart" style="height: 78vh; min-width: 81px; text-align: center" role="tablist" >
     </div>
     </td>
     <td class="col" style="background-color:rgb(255,255,255,30%); horiz-align: center; text-align: center;vertical-align: top">
-    <div id="resultPart" style="height: 81vh; margin: 10px 3px 0 10px;text-align: center;vert-align: top ">
+    <div id="resultPart" style="height: 78vh; margin: 10px 3px 0 10px;text-align: center;vert-align: top ">
     </div>
     </td>
     </tr>

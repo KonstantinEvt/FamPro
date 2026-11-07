@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import ru.memman.dtos.AloneNewDto;
 import ru.memman.dtos.DirectiveGuards;
+import ru.memman.dtos.OnlineUserDto;
 import ru.memman.entity.AloneNew;
 import ru.memman.entity.Recipient;
 import ru.memman.enums.Attention;
@@ -42,8 +43,8 @@ public class StandardInfoHolder {
     private final List<Integer> commonGlobalMask;
     private final LocalisationService localisationService;
     private final Map<String, Set<String>> rightsMap;
-    private final LinkedList<DirectiveGuards> directiveRights;
-
+    private final LinkedList<List<DirectiveGuards>> directiveRights;
+    private final LinkedList<OnlineUserDto> inline;
     @Value("${spring.application.names.system}")
     private String systemName;
     @Value("${spring.application.names.common}")
@@ -66,7 +67,10 @@ public class StandardInfoHolder {
             List<Integer> systemGlobalMask,
             List<Integer> commonGlobalMask,
             LocalisationService localisationService,
-            Map<String, Set<String>> rightsMap, LinkedList<DirectiveGuards> directiveRights, @Qualifier("systemRecipientHard") Recipient systemRecipientHard,
+            Map<String, Set<String>> rightsMap,
+            LinkedList<List<DirectiveGuards>> directiveRights,
+            LinkedList<OnlineUserDto> inline,
+            @Qualifier("systemRecipientHard") Recipient systemRecipientHard,
             @Qualifier("commonRecipientHard") Recipient commonRecipientHard,
             @Qualifier("informerRecipientHard") Recipient informerRecipientHard
     ) {
@@ -82,6 +86,7 @@ public class StandardInfoHolder {
         this.localisationService = localisationService;
         this.rightsMap = rightsMap;
         this.directiveRights = directiveRights;
+        this.inline = inline;
         this.systemRecipientHard = systemRecipientHard;
         this.commonRecipientHard = commonRecipientHard;
         this.informerRecipientHard = informerRecipientHard;
@@ -150,12 +155,16 @@ public class StandardInfoHolder {
     public void addNewMessageToPerson(AloneNewDto aloneNewDto, String externUuid) {
         if (onlineInfo.containsKey(externUuid)) {
             onlineInfo.get(externUuid).addNewMessage(aloneNewDto);
+            sendChangeLetterCounts(externUuid);
         }
     }
 
-    public void removeMessageFromPerson(String user, AloneNewDto aloneNewDto) {
+    public void removeMessageFromPerson(String externUuid, AloneNew aloneNew) {
         System.out.println("delete from holder");
-        if (onlineInfo.containsKey(user)) onlineInfo.get(user).removeNewMessage(aloneNewDto);
+        if (onlineInfo.containsKey(externUuid)) {
+            onlineInfo.get(externUuid).removeNewMessage(aloneNewMapper.entityToDto(aloneNew));
+            sendChangeLetterCounts(externUuid);
+        }
     }
 
     public List<AloneNewDto> getGlobalSystemNewsOfPerson(String user, boolean all, Localisation localisation) {
@@ -166,6 +175,7 @@ public class StandardInfoHolder {
             int localMask = systemGlobalMask.get(i) + standardInfo.getSystemGlobalRead().get(i);
             if ((!all && localMask == 0) || (all && localMask < 3)) {
                 AloneNewDto letter = localisationService.getLetterOnLocalisation(systemNewsGlobal.get(i), localisation);
+                if (letter.getCreationDate().before(standardInfo.getCreated())) letter.setCreationDate(standardInfo.getCreated());
                 if (all && localMask != 0)
                     letter.setAlreadyRead(true);
                 result.add(letter);
@@ -182,6 +192,7 @@ public class StandardInfoHolder {
             int localMask = commonGlobalMask.get(i) + standardInfo.getCommonGlobalRead().get(i);
             if ((!all && localMask == 0) || (all && localMask < 3)) {
                 AloneNewDto letter = localisationService.getLetterOnLocalisation(commonNewsGlobal.get(i), localisation);
+                if (letter.getCreationDate().before(standardInfo.getCreated())) letter.setCreationDate(standardInfo.getCreated());
                 if (all && localMask != 0)
                     letter.setAlreadyRead(true);
                 result.add(letter);
@@ -190,13 +201,25 @@ public class StandardInfoHolder {
         return result;
     }
 
-    public void addLetterToHolderRecipient(AloneNewDto aloneNewDto, String externUuid, boolean rightPrime) {
-        log.info("letter {} is entered to holder", aloneNewDto.getSubject());
-        rightsConfirm(aloneNewDto, externUuid, rightPrime);
-        if (onlineInfo.containsKey(externUuid)) onlineInfo.get(externUuid).addNewMessage(aloneNewDto);
+    public void addLetterPackToHolderRecipient(List<AloneNewDto> aloneNewDto, String externUuid) {
+        log.info("letters added to holder");
+        if (onlineInfo.containsKey(externUuid)) {
+            StandardInfo standardInfo=onlineInfo.get(externUuid);
+            aloneNewDto.forEach(standardInfo::addNewMessage);
+        }
     }
 
-    public void rightsConfirm(AloneNewDto aloneNewDto, String externUuid, boolean rightPrime) {
+    public void addLetterToHolderRecipient(AloneNewDto aloneNewDto, String externUuid, boolean rightPrime) {
+        log.info("letter {} is entered to holder", aloneNewDto.getSubject());
+        if (onlineInfo.containsKey(externUuid)) {
+            DirectiveGuards dr=rightsConfirm(aloneNewDto, externUuid, rightPrime);
+            if (dr!=null) directiveRights.add(List.of(dr));
+            onlineInfo.get(externUuid).addNewMessage(aloneNewDto);
+            sendChangeLetterCounts(externUuid);
+        }
+    }
+
+    public DirectiveGuards rightsConfirm(AloneNewDto aloneNewDto, String externUuid, boolean rightPrime) {
         if (aloneNewDto.getSendingFrom() != null && !Objects.equals(aloneNewDto.getSendingFrom(), informerRecipientHard.getExternUuid()) && aloneNewDto.getAttention() != Attention.COMMON) {
             Set<String> rightAgree = new HashSet<>();
             rightsMap.putIfAbsent(externUuid, new HashSet<>());
@@ -211,7 +234,21 @@ public class StandardInfoHolder {
                 rightAgree.add(accessMain);
                 log.info(accessMain);
             }
-            directiveRights.add(DirectiveGuards.builder().tokenUser(externUuid).guards(rightAgree).operation(KafkaOperation.ADD).build());
+//            directiveRights.add(DirectiveGuards.builder().tokenUser(externUuid).guards(rightAgree).operation(KafkaOperation.ADD).build());
+        return DirectiveGuards.builder().tokenUser(externUuid).guards(rightAgree).operation(KafkaOperation.ADD).build();
         }
+        return null;
+    }
+
+    public void sendChangeLetterCounts(String externUuid) {
+        StandardInfo standardInfo = getOnlineInfo().get(externUuid);
+        int com = standardInfo.viewNewGlobalMessage(getCommonGlobalMask(), standardInfo.getCommonGlobalRead());
+        int sys = standardInfo.viewNewGlobalMessage(getSystemGlobalMask(), standardInfo.getSystemGlobalRead());
+        inline.add(OnlineUserDto.builder().externUuid(externUuid).newsCounts(new int[]{
+                standardInfo.getCounts()[0] + com + sys,
+                standardInfo.getCounts()[1] + sys,
+                com,
+                standardInfo.getCounts()[3],
+                standardInfo.getCounts()[4]}).online(true).build());
     }
 }

@@ -67,12 +67,12 @@ public class NewsController {
         return ResponseEntity.ok(messageService.getFreshNewsByCategory(NewsCategory.PRIVATE,token,loc));
     }
     @GetMapping("/read/{category}/{id}")
-    public void readNews(@PathVariable("category") Attention category, @PathVariable("id") String id) {
+    public void readNews(@PathVariable("category") NewsCategory category, @PathVariable("id") String id) {
         messageService.readOrRemoveGlobalMessage((String) tokenService.getTokenUser().getClaims().get("sub"), category, id, true);
     }
 
     @GetMapping("/remove/{category}/{id}")
-    public void removeNews(@PathVariable("category") Attention category, @PathVariable("id") String id) {
+    public void removeNews(@PathVariable("category") NewsCategory category, @PathVariable("id") String id) {
         messageService.readOrRemoveGlobalMessage((String) tokenService.getTokenUser().getClaims().get("sub"), category, id, false);
     }
     @GetMapping("/rights/{externUuid}")

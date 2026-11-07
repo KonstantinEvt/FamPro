@@ -16,6 +16,7 @@
 {"choice": 1302, "text": "Family news are absent"}
 {"choice": 1401, "text": "Private news"}
 {"choice": 1402, "text": "Private news are absent"}
+{"choice": 1403, "text": "Voting in process"}
 {"choice": 2101, "text": "Adding person"}
 {"choice": 2102, "text": "Main information"}
 {"choice": 2103, "text": "Birthday"}
@@ -62,7 +63,7 @@
 {"choice": 2144, "text": "Entered ages"}
 {"choice": 2145, "text": "Bookmarks with unspecified ages will not be saved (they are marked with the ! symbol)"}
 {"choice": 2146, "text": "Search of person"}
-{"choice": 2147, "text": "Data of chosen criteria"}
+{"choice": 2147, "text": "Data of criteria"}
 {"choice": 2148, "text": "Result of search"}
 {"choice": 2149, "text": "The request has not been fulfilled"}
 {"choice": 2150, "text": "Find person"}
@@ -82,6 +83,7 @@
 {"choice": 2164, "text": "is not selected"}
 {"choice": 2165, "text": "is not saved"}
 {"choice": 2166, "text": "is saved"}
+{"choice": 2167, "text": "Date of death not entered"}
 {"choice": 2200, "text": "Photo visibility"}
 {"choice": 2201, "text": "Possibility of common editing"}
 {"choice": 2202, "text": "Possibility of main editing"}

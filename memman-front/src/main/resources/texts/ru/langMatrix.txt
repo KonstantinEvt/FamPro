@@ -110,3 +110,4 @@
 {"choice": "yes", "text": "Да"}
 {"choice": "no", "text": "Нет"}
 {"choice": "alive", "text": "Жив(а)"}
+{"choice": "dead", "text": "Умер(ла)"}

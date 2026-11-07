@@ -28,7 +28,7 @@ public class ContactService {
     private final OnlineContactHolder onlineContactHolder;
     private final TranscriptHolder transcriptHolder;
     private final LinkedList<List<ContactDto>> checkRelation;
-    private final LinkedList<DirectiveGuards> directiveRights;
+    private final LinkedList<List<DirectiveGuards>> directiveRights;
 
 
     public ContactService(ContactRepository contactRepository,
@@ -36,7 +36,7 @@ public class ContactService {
                           OnlineContactHolder onlineContactHolder,
                           TranscriptHolder transcriptHolder,
                           LinkedList<List<ContactDto>> checkRelation,
-                          LinkedList<DirectiveGuards> directiveRights) {
+                          LinkedList<List<DirectiveGuards>> directiveRights) {
         this.contactRepository = contactRepository;
         this.realManRepository = realManRepository;
         this.onlineContactHolder = onlineContactHolder;
@@ -99,10 +99,10 @@ public class ContactService {
             if (!listToResetRelation.isEmpty())
                 checkRelation.add(generateSimpleContactListDto(listToResetRelation, realMen.getExternUuid()));
         }
-        if (!rightAgree.isEmpty()) directiveRights.add(DirectiveGuards.builder()
+        if (!rightAgree.isEmpty()) directiveRights.add(List.of(DirectiveGuards.builder()
                 .tokenUser(realMen.getExternUuid())
                 .operation(KafkaOperation.ADD)
-                .guards(rightAgree).build());
+                .guards(rightAgree).build()));
     }
 
     private ContactLocal generateContactLocal(AbstractTranscripter transcripter, Contact contact, Localisation localisation) {
@@ -150,7 +150,6 @@ public class ContactService {
             Collection<Contact> contactsInHolder = onlineContactHolder.getOnlineContactsMap().get(contactsDtos.get(0).getOwnerId());
             if (contactsInHolder.isEmpty()) return;
             Map<UUID, Contact> contacts = contactsInHolder.stream().collect(Collectors.toMap(Contact::getUuid, x -> x));
-
             contactsDtos.forEach(x -> {
                 Contact contact = contacts.get(x.getUuid());
                 contact.setRelation(getSecretLevel(x.getRelation()));
@@ -164,14 +163,14 @@ public class ContactService {
                 }
             });
         }
-        if (!rightsAgree.isEmpty()) directiveRights.add(DirectiveGuards.builder()
+        if (!rightsAgree.isEmpty()) directiveRights.add(List.of(DirectiveGuards.builder()
                 .tokenUser(contactsDtos.get(0).getOwnerId())
                 .operation(KafkaOperation.ADD)
-                .guards(rightsAgree).build());
-        if (!rightsDecline.isEmpty()) directiveRights.add(DirectiveGuards.builder()
+                .guards(rightsAgree).build()));
+        if (!rightsDecline.isEmpty()) directiveRights.add(List.of(DirectiveGuards.builder()
                 .tokenUser(contactsDtos.get(0).getOwnerId())
                 .operation(KafkaOperation.REMOVE)
-                .guards(rightsDecline).build());
+                .guards(rightsDecline).build()));
     }
 
     public List<ContactDto> getContactsDto(String ownerId) {
@@ -209,7 +208,7 @@ public class ContactService {
                     .personLocalisation(person.getLocalisation())
                     .primePhoto(person.isExistPrimePhoto())
                     .contactPhoto(con.isContactPhoto())
-                    .specify(transcripter.getSpecify(con.getSpecify()))
+                    .specify((con.getSpecify()==null)?transcripter.getSpecify(Relation.OTHER):transcripter.getSpecify(con.getSpecify()))
                     .preferContact(con.isPreferContact())
                     .lastOnline(person.getLastOnline())
                     .online(person.isOnline())

@@ -21,7 +21,7 @@ public class AloneNew {
 
     @Column(name = "extern_id")
     private String externId;
-
+// каскады все наверно удалить
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "sending_from")
     private Recipient sendFrom;
@@ -54,7 +54,7 @@ public class AloneNew {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "text_info", length = 2043)
+    @Column(name = "text_info", length = 16383)
     private String textInfo;
 
     @Column(name = "category")
@@ -72,6 +72,8 @@ public class AloneNew {
 
     @Enumerated(EnumType.STRING)
     private Localisation localisation;
+    @Column(name = "postProcess")
+    private boolean postProcess;
 
     @Override
     public boolean equals(Object o) {

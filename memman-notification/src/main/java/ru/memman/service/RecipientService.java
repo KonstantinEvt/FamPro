@@ -18,8 +18,8 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Getter
@@ -30,7 +30,7 @@ public class RecipientService implements SimpleStringService {
     private final StandardInfoHolder standardInfoHolder;
     private final AloneNewMapper letterMapper;
     private final NotificationRepo notificationRepo;
-    private final LinkedList<DirectiveGuards> directiveRights;
+    private final LinkedList<List<DirectiveGuards>> directiveRights;
     private final RecipientRepository recipientRepository;
     private final LinkedList<OnlineUserDto> inline;
     private final LocalisationService localisationService;
@@ -39,7 +39,7 @@ public class RecipientService implements SimpleStringService {
                             StandardInfoHolder standardInfoHolder,
                             AloneNewMapper letterMapper,
                             NotificationRepo notificationRepo,
-                            LinkedList<DirectiveGuards> directiveRights,
+                            LinkedList<List<DirectiveGuards>> directiveRights,
                             RecipientRepository recipientRepository,
                             LinkedList<OnlineUserDto> inline,
                             LocalisationService localisationService) {
@@ -92,6 +92,7 @@ public class RecipientService implements SimpleStringService {
                         .nickName(onlineUserDto.getNickName())
                         .commonReading("")
                         .systemReading("")
+                        .created(new Timestamp(System.currentTimeMillis()))
                         .localisation(onlineUserDto.getLocalisation())
                         .existPrimePhoto(onlineUserDto.isPrimePhoto())
                         .secretLevelPhoto(onlineUserDto.getSecretLevelPhoto())
@@ -142,6 +143,7 @@ public class RecipientService implements SimpleStringService {
                 if ((standardInfo == null || onlineChange) && onlineUserDto.isOnline()) {
                     StandardInfo reloadInfo = new StandardInfo();
                     reloadInfo.setLocalisation(onlineUserDto.getLocalisation());
+                    reloadInfo.setCreated(recipient.get().getCreated());
                     reloadOnlineRecipient(recipient.get(), reloadInfo);
                     standardInfo = reloadInfo;
                 }
@@ -157,9 +159,9 @@ public class RecipientService implements SimpleStringService {
                         standardInfo.getCounts()[4]
                 });
                 inline.add(onlineUserDto);
-            } else recipient.ifPresent(x -> directiveRights.add(DirectiveGuards.builder().operation(KafkaOperation.EXIT)
+            } else recipient.ifPresent(x -> directiveRights.add(List.of(DirectiveGuards.builder().operation(KafkaOperation.EXIT)
                     .tokenUser(x.getExternUuid())
-                    .build()));
+                    .build())));
         }
     }
 
@@ -172,14 +174,6 @@ public class RecipientService implements SimpleStringService {
     public void detachRecipient(Recipient recipient) {
         recipientRepository.detach(recipient);
     }
-
-//    @Transactional
-//    public void changeRecipient(DirectiveGuards directiveGuards) {
-//        Recipient requester = findRecipient(directiveGuards.getTokenUser());
-//        requester.setExistPrimePhoto(directiveGuards.isPhotoExist());
-//        requester.setLinkExternId(directiveGuards.getPerson());
-//        recipientRepository.update(requester);
-//    }
 
     @Transactional
     public Recipient creatRecipient(TokenUser tokenUser) {
@@ -205,6 +199,8 @@ public class RecipientService implements SimpleStringService {
         List<AloneNew> receivedLetters = recipient.getReceivedLetters();
         if (receivedLetters != null && !receivedLetters.isEmpty()) {
             List<AloneNew> listWithSenders = notificationRepo.getFullLettersWithSenders(receivedLetters);
+            List<AloneNewDto> dtoList=new ArrayList<>();
+            List<DirectiveGuards> list=new ArrayList<>();
             for (AloneNew letter :
                     listWithSenders) {
                 Recipient from = letter.getSendFrom();
@@ -212,9 +208,13 @@ public class RecipientService implements SimpleStringService {
                 letterDto.ifPresent(x -> {
                     if (from == null) x.setHidden(false);
                     else x.setHidden(from.getSecretLevelPhoto() != SecretLevel.OPEN);
-                    standardInfoHolder.addLetterToHolderRecipient(x, recipient.getExternUuid(), from != null && from.isExistPrimePhoto() && !x.isHidden());
+                    dtoList.add(x);
+                    DirectiveGuards dr= standardInfoHolder.rightsConfirm(x, recipient.getExternUuid(), from != null && from.isExistPrimePhoto() && !x.isHidden());
+                    if (dr!=null) list.add(dr);
                 });
             }
+            directiveRights.add(list);
+            standardInfoHolder.addLetterPackToHolderRecipient(dtoList,recipient.getExternUuid());
         }
         standardInfo.getSystemGlobalRead().addAll(recipient.getSystemReading().chars().map(x -> x - 48).boxed().toList());
         standardInfo.getCommonGlobalRead().addAll(recipient.getCommonReading().chars().map(x -> x - 48).boxed().toList());

@@ -18,14 +18,14 @@ function editPerson() {
                 <div class="accordion-body" style="background: rgb(255,255,255,30)">
                     <div class="container-fluid row mh-100 no-gutters">
                                 <span class="col" style="width: 20%"></span>
-                                <span class="col-6" style="width: 250px">
+                                <span class="col-1 block_entry def">
                                     <div id="frontPhoto" style="margin-bottom:2px; font-size: 18px; text-align: center; color: black;font-family: 'Times New Roman',serif"></div>
                                 </span>
                                 <span class="col" style="width: 20%"></span>
                             </div>  
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 20%"></span>
-                        <span class="col-8" style="min-width: 300px;margin-left:15px">
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry">
         <label for="firstNameAddFM" style="color: chocolate">${langMatrix.get("name")}</label>
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="text" id="firstNameAddFM" name="firstNameAddFM" value="${tempPerson.firstName}"required>
         <label for="middleNameAddFM" style="color: chocolate; padding-top: 4px">${langMatrix.get("patronymic")}</label>
@@ -34,36 +34,36 @@ function editPerson() {
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="text" id="lastNameAddFM" name="lastNameAddFM" value="${tempPerson.lastName}"required>
         <label for="birthdayAddFM" style="color: chocolate; padding-top: 5px">${globalTexts.get(2103)}</label>
         <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="birthdayAddFM" name="birthdayAddFM" required>
+        <label for="chooseSexAddFM" style="color: chocolate; padding-top: 4px">${langMatrix.get("gender")}</label>
+        <select class="form-select" style="padding-bottom:2px; padding-top:2px;" id="chooseSexAddFM" aria-label="chooseSexAddFM">            
+            <option value="MALE" selected>${langMatrix.get("male")}</option>
+            <option value="FEMALE">${langMatrix.get("female")}</option>
+        </select>
         <label for="isAlive" style="color: chocolate; padding-top: 4px">${langMatrix.get("alive")}</label><br>        
         <div><button type="button" class="btn btn-outline-warning" style="padding-bottom:2px; padding-top:2px;" id="isAlive" name="isAlive" 
                     onmouseover="backgroundChange('isAlive','#ffc107')"
                     onmouseout="backgroundChange('isAlive','rgb(255,255,255,50%)')" 
                     onclick="changeAliveEdit()">${langMatrix.get("yes")}</button></div>
         <label for="deathdayAddFM" id="deathdayLabel" style="color: chocolate; padding-top: 4px" hidden="hidden">${globalTexts.get(2104)}</label>        
-        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="deathdayAddFM" name="deathdayAddFM" hidden="hidden">
-        <label for="chooseSexAddFM" style="color: chocolate; padding-top: 4px">${langMatrix.get("gender")}</label>
-        <select class="form-select" style="padding-bottom:2px; padding-top:2px;" id="chooseSexAddFM" aria-label="chooseSexAddFM">            
-            <option value="MALE" selected>${langMatrix.get("male")}</option>
-            <option value="FEMALE">${langMatrix.get("female")}</option>
-        </select>
+        <input class="form-control" style="padding-bottom:2px; padding-top:2px;" type="date" id="deathdayAddFM" name="deathdayAddFM" hidden="hidden">        
         <div class="card" id="primeCard" style="max-height:700px; align-items:center; border:0; margin-top: 20px" hidden="hidden">
-                     <div class="container-fluid row">
-                     <span class="col-10" style="text-align: center;padding: 0 0 0 18%" >
-                        <label for="prime" id="label_prime" style="display:inline-block; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer; background-color: RGB(255,255,255,90%);padding:4px; color: grey;" >${globalTexts.get(6)}</label>
+                     <div class="container-fluid row def">
+                     <span class="col-10 def" style="text-align: center" >
+                        <label for="prime" id="label_prime" class="label_change">${globalTexts.get(6)}</label>
                         <input class="form-control" type="file" id="prime" name="prime" accept="image/*" style="display:none" onchange="selectInputImage('prime', 600,600)" >
                     </span>
-                    <span class="col" style="text-align: left; align-content: center">
+                    <span class="col-1 def" style="text-align: left; align-content: center">
                         <button type="button" class="btn btn-outline-danger" style="padding: 3px" onclick="removeEntered('prime')">X</button>
                     </span>
                     </div>
-                    <div id="imageDefault_prime" style="align-content: center; align-items: center; text-align: center; min-height:200px; min-width: 300px">
+                    <div id="imageDefault_prime" class="image_place">
                     <img style="max-width: 95% ;max-height:40vh;" id="pictureDef_prime" src=${noPhoto} class="card-img-top" alt="${globalTexts.get(3)}">
                     <div class="card-img-overlay" style="align-content:center;margin-top:40px;">
                         <div class="card-text" style="margin-top:-30px;">${globalTexts.get(2312)}</div>
                     </div>                   
                     </div>
                     <div class="card-body" style="text-align: center; padding: 0">                        
-                        <div id="canvasBlock_prime" hidden="hidden" style="align-content: center; align-items: center; text-align: center; min-height:300px; min-width: 300px" > 
+                        <div class="image_place" id="canvasBlock_prime" hidden="hidden" > 
                         <div style="padding-top:5px; color: chocolate;">${globalTexts.get(4)}</div>
                         <canvas  style="max-width: 95% ;max-height:40vh;" id="canvas_prime"></canvas>
                         <div id="canvasBlock_little" hidden="hidden"><canvas id="canvas_little"></canvas></div>
@@ -71,7 +71,7 @@ function editPerson() {
                     </div>                  
         </div>
                         </span>
-                        <span class="col" style="width: 20%"></span>
+                        <span class="col" style="width: 15%"></span>
                     </div>
                 </div>
             </div>
@@ -206,8 +206,8 @@ function editPerson() {
             <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#addPersonAccord">
                 <div class="accordion-body">
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 20%"></span>
-                        <span class="col-8" style="min-width: 300px;margin-left:15px">
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry">
         <label for="indexAddFM" style="color: chocolate">${langMatrix.get("index")}</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="indexAddFM" name="indexAddFM" >                  
         <label for="countryAddFM" style="color: chocolate; padding-top: 2px">${langMatrix.get("country")}</label>
@@ -225,7 +225,7 @@ function editPerson() {
         <label for="flatAddFM" style="color: chocolate; padding-top: 4px">${globalTexts.get(2116)}</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:2px;" type="text" id="flatAddFM" name="flatAddFM" >  
                         </span>
-                        <span class="col" style="width: 20%"></span>
+                        <span class="col" style="width: 15%"></span>
                     </div>
                 </div>
             </div>
@@ -239,10 +239,10 @@ function editPerson() {
             <div id="collapseSecurity" class="accordion-collapse collapse" data-bs-parent="#addPersonAccord">
             <div class="accordion-body" style="padding-top:0">
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 30%"></span>
-                        <span class="col-6" style="min-width: 300px; margin-left: 15px"><div id="securityMenu"></div>                                
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry"><div id="securityMenu"></div>                                
                         </span>
-                        <span class="col" style="width: 30%"></span>
+                        <span class="col" style="width: 15%"></span>
                     </div>
                     <div style="margin-top: 15px; font-weight: bold">${langMatrix.get("attention")}! <span style="font-style:italic;font-weight: normal; font-size:14px">${globalTexts.get(2123)}</span></div>
                 </div></div>
@@ -256,8 +256,8 @@ function editPerson() {
             <div id="collapseBiometric" class="accordion-collapse collapse" data-bs-parent="#addPersonAccord">
                 <div class="accordion-body">
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 30%"></span>
-                        <span class="col-6" style="min-width: 300px;margin-left:15px">                               
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry">                               
         <label for="ageFM" style="color: chocolate; padding-top: 5px">${globalTexts.get(2124)}</label>
         <input class="form-control" style="text-align: center" type="number" id="ageFM" name="ageFM" placeholder="${globalTexts.get(2133)}">                
         <label for="heightFM" style="color: chocolate; padding-top: 5px">${globalTexts.get(2125)}</label>
@@ -291,7 +291,7 @@ function editPerson() {
         <label for="descriptionFM" style="color: chocolate; padding-top: 5px">${langMatrix.get("description")}</label>
         <input class="form-control" style="text-align: center" type="text" id="descriptionFM" name="descriptionFM" placeholder="${globalTexts.get(2134)}">
         </span>
-        <span class="col" style="width: 30%"></span>
+        <span class="col" style="width: 15%"></span>
                     </div>
                     <div id="addAndRemoveBio" style="margin-top: 15px">        
         <button class="btn btn-outline-success" type="button" style="margin-top: 5px; font-size:12px" onclick="addBiometricField()">${globalTexts.get(2131)}</button>
@@ -311,16 +311,17 @@ function editPerson() {
             <div id="birthAddressAddFM" class="accordion-collapse collapse" data-bs-parent="#addPersonAccord">
                 <div class="accordion-body">
                     <div class="container-fluid row mh-100 no-gutters">
-                        <span class="col" style="width: 20%"></span>
-                        <span class="col-8" style="min-width: 300px">
-                        <div class="container-fluid row mh-100 no-gutters">
-                                <span class="col" style="width: 20%"></span>
-                                <span class="col-6" style="width: 250px">
+                    <span class="col" style="width: 15%"></span>
+                                <span class="col-1 block_entry def">
                                     <div id="frontBirthPhoto" style="margin-bottom:2px; font-size: 18px; text-align: center; color: black;font-family: 'Times New Roman',serif"></div>
                                 </span>
-                                <span class="col" style="width: 20%"></span>
-                        </div>
-         <label for="birthCountryAddFM" style="color: chocolate; padding-top: 5px">${langMatrix.get("country")}</label>
+                                <span class="col" style="width: 15%"></span>
+                    </div>
+                    <div class="container-fluid row mh-100 no-gutters">
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry">
+                        
+        <label for="birthCountryAddFM" style="color: chocolate; padding-top: 5px">${langMatrix.get("country")}</label>
         <input class="form-control" type="text" id="birthCountryAddFM" name="birthCountryAddFM" >
         <label for="birthRegionAddFM" style="color: chocolate; padding-top: 5px"> ${globalTexts.get(2111)}</label>
         <input class="form-control" type="text" id="birthRegionAddFM" name="birthRegionAddFM" >
@@ -333,30 +334,30 @@ function editPerson() {
         <label for="birthRegisterAddFM" style="color: chocolate; padding-top: 5px">${globalTexts.get(2138)}</label>
         <input class="form-control" type="text" id="birthRegisterAddFM" name="birthRegisterAddFM" >
         <div class="card" id="birdCard" style="max-height:700px; align-items:center; border:0; margin-top: 20px">
-                     <div class="container-fluid row">
-                     <span class="col-10" style="text-align: center;padding: 0 0 0 18%" >
-                        <label for="birth" id="label_birth" style="display:inline-block; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer; background-color: RGB(255,255,255,90%);padding:4px; color: grey;" >${globalTexts.get(6)}</label>
+                     <div class="container-fluid row def">
+                     <span class="col-10 def" style="text-align: center" >
+                        <label for="birth" id="label_birth" class="label_change">${globalTexts.get(6)}</label>
                         <input class="form-control" type="file" id="birth" name="birth" accept="image/*" style="display:none" onchange="selectInputImage('birth', 600,600)" >
                     </span>
-                    <span class="col" style="text-align: left; align-content: center">
+                    <span class="col-1 def" style="text-align: left; align-content: center">
                         <button type="button" class="btn btn-outline-danger" style="padding: 3px" onclick="removeEntered('birth')">X</button>
                     </span>
                     </div>
-                    <div id="imageDefault_birth" style="align-content: center; align-items: center; text-align: center; min-height:200px; min-width: 300px">
+                    <div id="imageDefault_birth" class="image_place">
                     <img style="max-width: 95% ;max-height:40vh;" id="pictureDef_birth" src=${noPhoto} class="card-img-top" alt="${globalTexts.get(3)}">
                     <div class="card-img-overlay" style="align-content:center;margin-top:40px;">
                         <div class="card-text" style="margin-top:-30px;">${globalTexts.get(2312)}</div>
                     </div>                   
                     </div>
                     <div class="card-body" style="text-align: center; padding: 0">                        
-                        <div id="canvasBlock_birth" hidden="hidden" style="align-content: center; align-items: center; text-align: center; min-height:300px; min-width: 300px" > 
+                        <div id="canvasBlock_birth" hidden="hidden" class="image_place"> 
                         <div style="padding-top:5px; color: chocolate;">${globalTexts.get(4)}</div>
                         <canvas  style="max-width: 95% ;max-height:40vh;" id="canvas_birth"></canvas>                        
                         </div>
                     </div>                  
         </div>
                        </span>
-                        <span class="col" style="width: 20%"></span>
+                        <span class="col" style="width: 15%"></span>
                     </div>
                 </div>
             </div>
@@ -371,14 +372,14 @@ function editPerson() {
                 <div class="accordion-body">
                     <div class="container-fluid row mh-100 no-gutters">
                         <span class="col" style="width: 20%"></span>
-                        <span class="col-8" style="min-width: 300px">
-                        <div class="container-fluid row mh-100 no-gutters">
-                                <span class="col" style="width: 20%"></span>
-                                <span class="col-6" style="width: 250px">
-                                    <div id="frontBurialPhoto" style="margin-bottom:2px; font-size: 18px; text-align: center; color: black;font-family: 'Times New Roman',serif"></div>
-                                </span>
-                                <span class="col" style="width: 20%"></span>
-                        </div>
+                        <span class="col-1 block_entry def">
+                            <div id="frontBurialPhoto" style="margin-bottom:2px; font-size: 18px; text-align: center; color: black;font-family: 'Times New Roman',serif"></div>
+                        </span>
+                        <span class="col" style="width: 20%"></span>
+                    </div>
+                    <div class="container-fluid row mh-100 no-gutters">
+                        <span class="col" style="width: 15%"></span>
+                        <span class="col-1 block_entry">                        
         <label for="burialCountryAddFM" style="color: chocolate">${langMatrix.get("country")}</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialCountryAddFM" name="burialCountryAddFM" >
         <label for="burialRegionAddFM" style="color: chocolate; padding-top: 2px">${globalTexts.get(2111)}</label>
@@ -396,30 +397,30 @@ function editPerson() {
         <label for="burialFlatAddFM" style="color: chocolate; padding-top: 2px">${globalTexts.get(2142)}</label>
         <input class="form-control" style="padding-bottom:1px; padding-top:1px;" type="text" id="burialFlatAddFM" name="burialFlatAddFM" >
                 <div class="card" id="burialCard" style="max-height:700px; align-items:center; border:0; margin-top: 20px">
-                     <div class="container-fluid row">
-                     <span class="col-10" style="text-align: center;padding: 0 0 0 18%" >
-                        <label for="burial" id="label_burial" style="display:inline-block; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer; background-color: RGB(255,255,255,90%);padding:4px; color: grey;" >${globalTexts.get(6)}</label>
+                     <div class="container-fluid row def">
+                     <span class="col-10 def" style="text-align: center" >
+                        <label for="burial" id="label_burial" class="label_change">${globalTexts.get(6)}</label>
                         <input class="form-control" type="file" id="burial" name="burial" accept="image/*" style="display:none" onchange="selectInputImage('burial', 600,600)" >
                     </span>
-                    <span class="col" style="text-align: left; align-content: center">
+                    <span class="col-1 def" style="text-align: left; align-content: center">
                         <button type="button" class="btn btn-outline-danger" style="padding: 3px" onclick="removeEntered('burial')">X</button>
                     </span>
                     </div>
-                    <div id="imageDefault_burial" style="align-content: center; align-items: center; text-align: center; min-height:200px; min-width: 300px">
+                    <div id="imageDefault_burial" class="image_place">
                     <img style="max-width: 95% ;max-height:40vh;" id="pictureDef_burial" src=${noPhoto} class="card-img-top" alt="${globalTexts.get(3)}">
                     <div class="card-img-overlay" style="align-content:center;margin-top:40px;">
                         <div class="card-text" style="margin-top:-30px;">${globalTexts.get(2312)}</div>
                     </div>                   
                     </div>
                     <div class="card-body" style="text-align: center; padding: 0">                        
-                        <div id="canvasBlock_burial" hidden="hidden" style="align-content: center; align-items: center; text-align: center; min-height:300px; min-width: 300px" > 
+                        <div id="canvasBlock_burial" hidden="hidden" class="image_place"> 
                         <div style="padding-top:5px; color: chocolate;">${globalTexts.get(4)}</div>
                         <canvas  style="max-width: 95% ;max-height:40vh;" id="canvas_burial"></canvas>                        
                         </div>
                     </div>                  
                 </div> 
                         </span>
-                        <span class="col" style="width: 20%"></span>
+                        <span class="col" style="width: 15%"></span>
                     </div>
                 </div>
             </div>
@@ -435,7 +436,7 @@ function editPerson() {
     if (tempPerson.secretLevelPhoto !== "CLOSE") {
         let tempURL = URL.createObjectURL(tempPerson.primePhotoImj)
         document.getElementById("frontPhoto").innerHTML = `
-                    <div class="card text-bg-dark" style="width: 250px">
+                    <div class="card text-bg-dark image_place">
                         <img src="${tempURL}" class="card-img" alt="loading...">
                         <div class="card-img-overlay">
                             <div class="card-text" style="padding-top: 35%">${tempTextPhoto}</div>
@@ -444,6 +445,7 @@ function editPerson() {
         URL.revokeObjectURL(tempPerson.primePhotoImj);
     } else document.getElementById("frontPhoto").hidden = true;
     if (tempPerson.birthday !== null) document.getElementById("birthdayAddFM").value = getDateToFull(new Date(tempPerson.birthday));
+    if (tempPerson.deathday !== null) document.getElementById("deathdayAddFM").value = getDateToFull(new Date(tempPerson.deathday));
     document.getElementById("chooseSexAddFM").value = tempPerson.sex;
     if (tempPerson.motherFio !== null && tempPerson.motherFio.firstName !== null) document.getElementById("firstNameMotherAddFM").value = tempPerson.motherFio.firstName;
     if (tempPerson.motherFio !== null && tempPerson.motherFio.middleName !== null) document.getElementById("middleNameMotherAddFM").value = tempPerson.motherFio.middleName;
@@ -656,13 +658,13 @@ function editPerson() {
         if (countBio > 0) createCurrentPagination(0);
 
     }
-    if (tempPerson.memberInfo.secretLevelBurial !== "CLOSE") {
+    if (tempPerson.memberInfo.secretLevelBurial !== "CLOSE" && !tempPerson.alive) {
         document.getElementById("burialItem").hidden = false;
         if (tempPerson.memberInfo.photoBurialExist !== false && tempPerson.memberInfo.burImj !== undefined && tempPerson.memberInfo.burImj !== "") {
             let tempURL = URL.createObjectURL(tempPerson.memberInfo.burImj)
 
             document.getElementById("frontBurialPhoto").innerHTML = `
-                    <div class="card text-bg-dark" style="width: 250px">
+                    <div class="card text-bg-dark image_place">
                         <img src="${tempURL}" class="card-img" alt="loading...">                        
                     </div>`
 
@@ -685,7 +687,7 @@ function editPerson() {
             let tempURL = URL.createObjectURL(tempPerson.memberInfo.birthImj)
 
             document.getElementById("frontBirthPhoto").innerHTML = `
-                    <div class="card text-bg-dark" style="width: 250px">
+                    <div class="card text-bg-dark image_place">
                         <img src="${tempURL}" class="card-img" alt="loading...">                        
                     </div>`
             URL.revokeObjectURL(tempPerson.memberInfo.birthImj);
@@ -701,6 +703,7 @@ function editPerson() {
     }
     if (!tempPerson.alive) changeAliveEdit();
 }
+
 function changeAliveEdit() {
     changeAlive();
     if (tempPerson.memberInfo.secretLevelBurial === "CLOSE")
@@ -710,6 +713,7 @@ function changeAliveEdit() {
         document.getElementById("contactItem").hidden = true;
 
 }
+
 function lockMother() {
     document.getElementById("firstNameMotherAddFM").disabled = "disabled";
     document.getElementById("middleNameMotherAddFM").disabled = "disabled";

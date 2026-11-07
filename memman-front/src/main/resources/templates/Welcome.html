@@ -69,9 +69,9 @@
 <nav class="navbar navbar-nav " style="background-color:rgb(255,255,255,60%); padding: 0;margin: 0">
     <div class="container-fluid row mh-100 no-gutters" >
         <span id="cabinetFront" class="navbar-brand col-1"
-              style="color: white;font-family: 'Times New Roman',serif; font-size: 16px; min-width: 15%;margin: 0 10px 0 5px;padding: 0"> </span>
-        <span id="nav0" class="navbar-brand col-6"
-              style="padding:0; color: chocolate; margin: 0 10px 0 5px;
+              style="color: white;font-family: 'Times New Roman',serif; font-size: 16px; min-width: 15%;margin: 0 5px 0 0;padding: 0"> </span>
+        <span id="nav0" class="navbar-brand col"
+              style="padding:0 5px 0 10px; color: chocolate; margin: 0 5px 0 5px;
               text-shadow: -1px -1px 0 #a1a1a1,
        1px -1px 0 #a1a1a1,
       -1px  1px 0 #a1a1a1,
@@ -80,13 +80,14 @@
        0px  1px 0 #a1a1a1,
       -1px  0px 0 #a1a1a1,
        1px  0px 0 #a1a1a1;font-family: 'Times New Roman',serif; font-size: 18px"></span>
-        <span class="navbar-brand col"></span>
-        <button class="btn btn-outline-warning col-1 no-gutters" aria-current="page"
+        <span class="navbar-brand col-1"
+        style="margin: 0 5px 0 0; padding: 0 5px 0 0;text-align:center;min-width:50px">
+        <button class="btn btn-outline-warning no-gutters" aria-current="page"
                 style="color: darkred; background-color: rgb(255,255,255,80%);font-family: 'Times New Roman',serif; font-size: 12px; margin-bottom:3px; margin-top: 3px; padding:3px 0px 3px ;width: 50px; align-content: center"
                 id="langButton"
                 type="button" data-bs-toggle="offcanvas" data-bs-target="#langTab"
                 aria-controls="offcanvasRight">
-        </button>
+        </button></span>
     </div>
 </nav>
 
@@ -102,6 +103,7 @@
             <div>
                 <button id="selectLang" type="button" class="btn btn-outline-warning" data-bs-dismiss="offcanvas"
                         aria-label="Close" onclick="changeLang(loc.value,false)"></button>
+                <button type="submit" hidden="hidden"></button>
             </div>
             <br>
             <div id="localisationList"></div>
@@ -133,6 +135,7 @@
                     </div>
                 </div>
             </div>
+            <button type="submit" hidden="hidden"></button>
         </form>
 
     </div>
@@ -153,22 +156,21 @@
         </div>
     </div>
 </nav>
-<div id="mainPanel" style="padding:0; margin: 0; max-width: 100%; min-height: 82%; overflow: auto"
+<div id="mainPanel" style="padding:0; margin: 0; max-width: 100%; min-height: 78%; overflow: auto"
      class="container-fluid row mh-100 no-gutters">
 </div>
-<nav class="navbar navbar-expand-lg"
-     style="background-color:rgb(255,255,255,60%); font-family: 'Times New Roman',serif; font-size: 16px; padding:0; align-content: center; ">
+<div style="background-color:rgb(255,255,255,60%); font-family: 'Times New Roman',serif; padding:0; align-content: center; ">
     <div class="container-fluid row">
-        <span id="onlineUsers" class="navbar-brand col-1" style="color: darkred; text-align:right; font-style: italic; font-size: 16px; padding: 0; margin-right: 10px; min-width: 60px"></span>
-        <span id="onlineUsersCount" class="navbar-brand col-1" style="color: black; font-size: 16px; padding: 0; margin: 0 0 0 5px; min-width: 30px"></span>
-        <span class="navbar-brand col" style="padding: 0; margin: 0; min-width: 5px"></span>
-        <span id="usersInBase" class="navbar-brand col-1" style="color: darkred; text-align:right; font-style: italic; font-size: 16px; padding: 0; margin-right: 10px; min-width: 100px"></span>
-        <span id="usersInBaseCount" class="navbar-brand col-1" style="color: black; font-size: 16px; padding: 0; margin: 0 0 0 5px;min-width: 30px"></span>
-        <span class="navbar-brand col" style="padding: 0; margin: 0; min-width: 5px"></span>
-        <span id="personsInBase" class="navbar-brand col-1" style="color: darkred; text-align:right; font-style: italic; font-size: 16px; padding: 0; margin-right: 10px; min-width: 60px"></span>
-        <span id="personsInBaseCount" class="navbar-brand col-1" style="color: black; font-size: 16px; padding: 0; margin: 0 0 0 5px; min-width: 40px"></span>
+        <span id="onlineUsers" class="navbar-brand col" style="color: darkred; text-align:center; font-style: italic; font-size: 14px; padding: 0; margin-right: 5px; width: 33%"></span>
+       <span id="usersInBase" class="navbar-brand col" style="color: darkred; text-align:center; font-style: italic; font-size: 14px; padding: 0; margin-right: 5px;width: 33%"></span>
+       <span id="personsInBase" class="navbar-brand col" style="color: darkred; text-align:center; font-style: italic; font-size: 14px; padding: 0; margin-right: 5px; width: 33%"></span>
     </div>
-</nav>
+    <div class="container-fluid row">
+        <span id="onlineUsersCount" class="navbar-brand col" style="color: black; font-size: 14px;text-align:center; padding: 0; margin: 0 0 0 5px; width: 33%"></span>
+        <span id="usersInBaseCount" class="navbar-brand col" style="color: black; font-size: 14px;text-align:center; padding: 0; margin: 0 0 0 5px;width: 33%"></span>
+        <span id="personsInBaseCount" class="navbar-brand col" style="color: black; font-size: 14px;text-align:center; padding: 0; margin: 0 0 0 5px; width: 33%"></span>
+    </div>
+</div>
 <script>
 
     window.onload = function () {

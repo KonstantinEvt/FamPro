@@ -3,7 +3,6 @@ package ru.memman.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -23,8 +22,8 @@ public class Voting {
     @JoinColumn(name = "letter")
     private AloneNew letter;
 
-    @Column(name="letterId")
-    String letterId;
+    @Column(name="letter_extern_id")
+    String letterExternId;
 
     @Column(name="guard_size")
     private int guardSize;

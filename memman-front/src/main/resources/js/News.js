@@ -60,9 +60,8 @@ async function menuFunc1000(chapter) {
 function drawHatOfNews(chapter, category) {
     document.getElementById("resultPart").innerHTML = `<div class="container-fluid row" style=" margin-right: 0; margin-bottom: 10px; padding:0">
         <span class="col main_title">${globalTexts.get(1001 + chapter * 100)}</span>
-        <span class="col-1" style="padding-right: 0;padding-left:0"></span>
         <span class="col-4" style="padding-left:0; padding-right: 0">
-           <div class="btn-group-horizontal" role="group" aria-label="Vertical button group" style="margin-left: 5px; text-align: right">
+           <div class="btn-group-horizontal" role="group" aria-label="Vertical button group" style="margin-left: 5px; text-align: right; align-content: center">
                 <input type="radio" class="btn-check" name="news-choice"  id="news-choice1" autoComplete="off">
                 <label class="btn btn-outline-warning" style="padding: 2px 5px 2px 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice1" onclick="refreshGlobalNews(${chapter}, '${category}', true)">${langMatrix.get("all")}</label>
                 <input type="radio" class="btn-check" name="news-choice"  id="news-choice2" autoComplete="off" checked>
@@ -164,6 +163,7 @@ function drawNewsGlobal(rawNews, chapter, cards, choice) {
     document.getElementById("dropdown-message-list").innerHTML = tempNav;
     for (let i = 0; i < cards.length; i++) {
         if (cards[i] !== undefined) {
+            if (rawNews[i].sendingFrom === informerRecipientID) selectDefaultPicture(rawNews[i], i, chapter, choice);
             drawNewsButtons(rawNews[i], i, chapter, choice)
         }
     }
@@ -195,6 +195,7 @@ async function loadCategoryNews(category, choice) {
             letters.forEach(aloneNew => {
                     let creationDate = new Date(aloneNew.creationDate);
                     let fetchData = {
+                        id: aloneNew.id,
                         externId: aloneNew.externId,
                         timeMessage: getTime(creationDate),
                         dateMessage: getDate(creationDate),
@@ -210,6 +211,7 @@ async function loadCategoryNews(category, choice) {
                         imageUrl: aloneNew.imageUrl,
                         existPrimePhoto: aloneNew.existPrimePhoto,
                         hidden: aloneNew.hidden,
+                        postProcess: aloneNew.postProcess,
                         primePhoto: ``,
                         primePhotoText: ``,
                         img: ``,
@@ -225,6 +227,18 @@ async function loadCategoryNews(category, choice) {
     })
     console.log("news begin loading");
     return promise;
+}
+
+function selectDefaultPicture(rawNew) {
+    if ((rawNew.attention === "VOTING_POSITIVE" || rawNew.attention === "POSITIVE") && defaultPhotos.approved !== null) rawNew.img = defaultPhotos.approved;
+    if ((rawNew.attention === "VOTING_NEGATIVE" || rawNew.attention === "NEGATIVE") && defaultPhotos.rejected !== null) rawNew.img = defaultPhotos.rejected;
+    if ((rawNew.attention === "VOTING" || rawNew.attention === "VOTING_REQUESTER") && defaultPhotos.election !== null) rawNew.img = defaultPhotos.election;
+    if ((rawNew.attention === "CONTACT" || rawNew.attention === "CONTACT_REQUESTER") && defaultPhotos.contact !== null) rawNew.img = defaultPhotos.contact;
+    if ((rawNew.attention === "LINK" || rawNew.attention === "LINK_REQUESTER") && defaultPhotos.linking !== null) rawNew.img = defaultPhotos.linking;
+    if (rawNew.img !== ``) {
+        rawNew.imgLoading = true;
+        rawNew.imageUrl = "1";
+    }
 }
 
 async function loadPicturesToNews(rawNews, category) {
@@ -328,16 +342,16 @@ function drawSystemCards(rawNews, chapter, choice) {
                 <div class="card" id="card${i}" style="max-height:730px; width: 290px; min-width: 290px;  max-width: 350px; margin: 0 5px 15px 5px">
                 <div style="font-family: 'Times New Roman', serif; font-size: 14px; text-align: center; color: chocolate; font-style: italic">${langMatrix.get("date")}:&nbsp;${rawNews[i].dateMessage}</div>
                     <img style="padding: 5px; max-height:50vh; object-fit: contain" src=${pictureUrl} id="img-container${i}" class="card-img-top" alt="${globalTexts.get(3)}">
-                    <div class="card-img-overlay" style="height: 50%">
+                    <div class="card-img-overlay" style="z-index: 200;height: 50%">
                             <div class="card-text" id="overText${i}" style="padding-top: 40%">${tempTextPhoto}</div>
                         </div>                   
                         
                     <div class="card-body" style="background: url(${pictureUrl5}) right top 0/ contain no-repeat; text-align: center; padding: 0 5px 0 0">
-                        <h5 class="card-title" style="text-align: left; margin: 10px 50px 8px 10px">${rawNews[i].subject}</h5>
-                        <hr style="color:#a12121; width: 40%; margin:0 0 0 10px" >
-                        <p class="card-text" style="font-size: 14px; width: 80%; min-height:120px; margin: 10px 5px 5px 5px">${rawNews[i].textInfo}</p>
+                        <h5 class="card-title" style="text-align: left; margin: 10px 50px 12px 10px">${rawNews[i].subject}</h5>
+                        <hr style="color:#a12121; width: 40%; margin:0 0 0 12px" >
+                        <div class="card-text" style="z-index: 300;overflow-y:auto; font-size: 14px; width: 80%; height:16vh; margin: 10px 5px 5px 5px">${rawNews[i].textInfo}</div>
                     </div> 
-                    <div class="card-footer">
+                    <div class="card-footer" style="margin-left:16px; padding: 5px">
                         <div class="container-fluid row mh-100 no-gutters" id="cardButtons${i}">                           
                         </div>
                     </div>                    
@@ -351,11 +365,22 @@ function drawSystemCards(rawNews, chapter, choice) {
 
 function drawNewsButtons(rawNew, i, chapter, choice) {
     let temp = ``
-    if (!rawNew.alreadyRead) {
-        temp += `<span class="col-5" style="color: darkred; text-shadow: none"><a style="padding: 3px 6px 3px 6px;" type="button" class="btn btn-outline-warning" onclick="readOrRemoveCategoryMessage('${rawNew.sendingFrom}',${i},${chapter},true,${choice})">${langMatrix.get("read")}</a></span>`
-        temp += `<span class="col-1"></span>`
+    let voting = rawNew.attention === "VOTING" || rawNew.attention === "LINK" || rawNew.attention === "CONTACT"
+    let voting_requester = rawNew.attention === "VOTING_REQUESTER" || rawNew.attention === "LINK_REQUESTER" || rawNew.attention === "CONTACT_REQUESTER"
+    if (voting && !rawNew.postProcess && !rawNew.alreadyRead) {
+        temp += `<span class="col" style="padding:0; color: darkred; text-shadow: none"><a style="padding: 3px 6px 3px 6px;" type="button" class="btn btn-outline-warning" onclick="acceptOrRejectMessage('${rawNew.externId}',${i},${chapter},true,${choice})">${langMatrix.get("accept")}</a></span>`
+        // temp += `<span class="col-1" style="padding:0;"></span>`
+        temp += `<span class="col"  style="padding:0; color: darkred; text-shadow: none"><a style="padding: 3px 6px 3px 6px;" type="button" class="btn btn-outline-danger" href="#" onclick="acceptOrRejectMessage('${rawNew.externId}',${i},${chapter},false,${choice})">${langMatrix.get("decline")}</a></span>`
+
+    } else {
+        let sendId = (chapter === 1 || chapter === 2) ? rawNew.sendingFrom : rawNew.id;
+        if (!rawNew.alreadyRead) {
+            temp += `<span class="col" style="padding:0;color: darkred; text-shadow: none"><a style="padding: 3px 6px 3px 6px;" type="button" class="btn btn-outline-warning" onclick="readOrRemoveCategoryMessage('${sendId}',${i},${chapter},true,${choice})">${langMatrix.get("read")}</a></span>`
+        }
+        // if (!rawNew.postProcess && !rawNew.alreadyRead && (!voting && !voting_requester)) temp += `<span class="col-1" style="padding:0;"></span>`
+        if (!rawNew.postProcess && (!voting && !voting_requester)) temp += `<span class="col"  style="padding:0; color: darkred; text-shadow: none"><a style="padding: 3px 6px 3px 6px;" type="button" class="btn btn-outline-danger" href="#" onclick="readOrRemoveCategoryMessage('${sendId}',${i},${chapter},false,${choice})">${langMatrix.get("remove")}</a></span>`
+        if (rawNew.alreadyRead && (voting || voting_requester)) temp += `<span class="col"  style="color: darkred; text-shadow: none">${globalTexts.get(1403)}</span>`
     }
-    temp += `<span class="col"  style="color: darkred; text-shadow: none"><a style="padding: 3px 6px 3px 6px;" type="button" class="btn btn-outline-danger" href="#" onclick="readOrRemoveCategoryMessage('${rawNew.sendingFrom}',${i},${chapter},false,${choice})">${langMatrix.get("remove")}</a></span>`
     document.getElementById(`cardButtons${i}`).innerHTML = temp;
 }
 
@@ -386,8 +411,48 @@ async function readOrRemoveCategoryMessage(id, i, chapter, operation, choice) {
     console.log("do: {}", stringOperation)
 }
 
+async function acceptOrRejectMessage(id, i, chapter, operation, choice) {
+    let url = endPoints.get('newsPrivate') + "/voting/" + id + "/" + operation;
+    fetch(url, {
+        method: 'GET',
+        headers: {},
+    }).then(r => r).then(() => {
+            rawNewsMap.get(chapter).splice(i, 1);
+            counts[0] = counts[0] - 1;
+            counts[chapter] = counts[chapter] - 1;
+            tempCount = counts;
+            drawNewsCounts();
+            refreshGlobalNews(chapter, getCategory(chapter), choice);
+        }
+    )
+}
+
+// async function acceptOrRejectMessage(id, num, category) {
+//     fetch(endPoints.get('newsPrivate') + "/accept/" + id, {method: "GET"}).then(r => r.text())
+//         .then(r => console.log(r));
+//     rawNews.forEach(letter => {
+//         if (letter.externIdJS === id) letter.alreadyRead = true;
+//     })
+//     changeCountsByRead(category);
+//     delete rawNews[num];
+//     delete cards[num];
+//     await loadNewNews(category, false);
+// }
+//
+// async function rejectMessage(id, num, category) {
+//     fetch(endPoints.get('newsPrivate') + "/reject/" + id, {method: "GET"}).then(r => r.text())
+//         .then(r => console.log(r));
+//     rawNews.forEach(letter => {
+//         if (letter.externIdJS === id) letter.alreadyRead = true;
+//     })
+//     changeCountsByRead(category);
+//     delete rawNews[num];
+//     delete cards[num];
+//     await loadNewNews(category, false);
+// }
+
 function drawPrivateCards(rawNews, chapter, choice) {
-    let unknown=false;
+    let unknown = false;
     let cards = [];
     let tempTextPhoto = `<div class="spinner-border" role="status"> 
         <span class="visually-hidden">Loading...</span></div>`;
@@ -398,6 +463,7 @@ function drawPrivateCards(rawNews, chapter, choice) {
     let nick;
     let lastTimeOnline = null;
     for (let i = 0; i < rawNews.length; i++) {
+        unknown=false;
         if (choice || !rawNews[i].alreadyRead) {
             let con = contacts.get(rawNews[i].sendingFrom);
             if (con !== undefined && con !== null) {
@@ -413,7 +479,7 @@ function drawPrivateCards(rawNews, chapter, choice) {
             } else {
                 nick = rawNews[i].sendingFromAlt;
                 relation = langMatrix.get("unknown");
-                unknown=true;
+                unknown = true;
             }
             cards[i] = `
                 <div class="card" id="card${i}" style="max-height:730px; width: 290px; min-width: 290px;  max-width: 350px; margin: 0 5px 15px 5px">
@@ -437,13 +503,13 @@ function drawPrivateCards(rawNews, chapter, choice) {
             cards[i] += `</div>
                     </div>
                     
-                    <img style="padding: 10px; height:30vh;max-height:35vh; object-fit: contain" src=${pictureUrl} id="img-container${i}" class="card-img-top" alt="${globalTexts.get(3)}">
-                    <div class="card-body" style="background: url(${pictureUrl5}) right top 0/ contain no-repeat; text-align: center; padding: 0 5px 0 0">
-                        <h5 class="card-title" style="text-align: left; margin: 10px 50px 8px 10px">${rawNews[i].subject}</h5>
-                        <hr style="color:#a12121; width: 40%; margin:0 0 0 10px" >
-                        <p class="card-text" style="font-size: 14px; width: 80%; min-height:120px; margin: 10px 5px 5px 5px">${rawNews[i].textInfo}</p>
+                    <img style="padding: 10px; height:28vh;max-height:30vh; object-fit: contain" src=${pictureUrl} id="img-container${i}" class="card-img-top" alt="${globalTexts.get(3)}">
+                    <div class="card-body" style="background: url(${pictureUrl5}) right top 0/ contain no-repeat; z-index: 300; text-align: center; padding: 0 5px 0 0">
+                        <h5 class="card-title" style="text-align: left; margin: 10px 50px 12px 10px">${rawNews[i].subject}</h5>
+                        <hr style="color:#a12121; width: 40%; margin:0 0 0 12px" >
+                        <div class="card-text" style="overflow-y:auto; font-size: 14px; width: 80%; height:16vh; margin: 10px 5px 5px 5px">${rawNews[i].textInfo}</div>
                     </div> 
-                    <div class="card-footer" style="z-index: 300;">
+                    <div class="card-footer" style="z-index: 300; margin-left:16px; padding: 5px">
                         <div class="container-fluid row mh-100 no-gutters" id="cardButtons${i}">                           
                         </div>
                     </div>                    
@@ -470,344 +536,321 @@ function ifLoadPictureError(i, defPhoto) {
                         </div>`
 }
 
-function drawPrivateCard2(rawNews, chapter, choice) {
-
-    let pictureUrl = URL.createObjectURL(defaultPhotos.photono);
-    let cards = [];
-    let operation = choice ? 'Remove' : 'Read'
-    for (let i = 0; i < newsForm.length; i++) {
-        cards[i] = `
-                <div class="card" style="max-height:700px; min-width:290px; max-width: 290px; margin-bottom: 10px">
-                    <img src=${pictureUrl} id="img-conteiner${i}" class="card-img-top" width="290px" alt="tytPhoto">                    
-                    <div class="card-body" style="text-align: center">
-                        <h5 class="card-title">${newsForm[i].subjectJS}</h5>
-                        <p class="card-text">${newsForm[i].textInfoJS}</p>
-                        <br>                        
-                        <a class="btn btn-outline-warning" onclick="readOrRemoveCategoryMessage('${newsForm[i].sendingFromJS}','${i}','${chapter}','${operation}')" href="#">${operation}</a>   
-                        
-                    </div> 
-                    <div class="card-footer">
-                        <small class="text-body-secondary">
-                           ${newsForm[i].dateMessage}
-                        </small>
-                    </div>                    
-                </div>
-                <div id="mar${newsForm[i].sendingFromJS}" class="card" style="border:0;max-height:0; min-width:10px; max-width: 10px">
-                </div>                
-               `
-        URL.revokeObjectURL(defaultPhotos.photono)
-    }
-    return cards;
-}
-
-
-async function loadingIndividualNews(category, choice) {
-    let num = 0;
-    let lets = [];
-    let url = endPoints.get('newsPortal') + "/" + category;
-    if (choice) url += "All";
-    await fetch(url, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        },
-    }).then(response => response.json()).then(letters => {
-        if (letters !== null && !letters.isEmpty) {
-            let temp0 = ``;
-            let temp1 = ``;
-            letters.forEach(aloneNew => {
-                let from = "Anonymous";
-                let contactImage = ``;
-                let i = 0;
-                if (contacts !== null) {
-                    while (i < contacts.length) {
-                        if (contacts[i].externId === aloneNew.sendingFrom) {
-                            from = contacts[i].name;
-                            i = contacts.length;
-                            if (contacts.imj !== null && contacts.imj !== ``) contactImage = contacts.imj;
-                        }
-                        i++;
-                    }
-                }
-                if (from === "Anonymous" && aloneNew.sendingFromAlt !== null) from = aloneNew.sendingFromAlt;
-
-                let creationDateJS = new Date(aloneNew.creationDate);
-                let fetchData = {
-                    idJS: aloneNew.id,
-                    externIdJS: aloneNew.externId,
-                    timeMessage: getTime(creationDateJS),
-                    dateMessage: getDate(creationDateJS),
-                    sendingFromJS: from,
-                    subjectJS: aloneNew.subject,
-                    textInfoJS: aloneNew.textInfo,
-                    attention: aloneNew.attention,
-                    categoryJS: aloneNew.category.toLowerCase(),
-                    imj: ``,
-                    alreadyRead: aloneNew.alreadyRead,
-                    num: num
-                }
-
-                if ((fetchData.attention === "VOTING_POSITIVE" || fetchData.attention === "POSITIVE" || fetchData.subjectJS === "Contact added" || fetchData.subjectJS === "Accept change") && defaultPhotos.approved !== null) fetchData.imj = defaultPhotos.approved;
-                if ((fetchData.attention === "VOTING_NEGATIVE" || fetchData.attention === "NEGATIVE" || fetchData.subjectJS === "Reject change" || fetchData.subjectJS === "Contact reject") && defaultPhotos.rejected !== null) fetchData.imj = defaultPhotos.rejected;
-                if ((fetchData.attention === "VOTING" || fetchData.attention === "VOTING_REQUESTER") && defaultPhotos.election !== null) fetchData.imj = defaultPhotos.election;
-                if ((fetchData.subjectJS === "Request for contact" || fetchData.subjectJS === "Contact request") && defaultPhotos.contact !== null) fetchData.imj = defaultPhotos.contact;
-                if ((fetchData.attention === "LINK") && defaultPhotos.linking !== null) fetchData.imj = defaultPhotos.linking;
-                if (fetchData.imj === ``) fetchData.imj = contactImage;
-                if (fetchData.imj === `` && defaultPhotos.person !== null) fetchData.imj = defaultPhotos.person;
-
-                if (fetchData.externIdJS === null) fetchData.externIdJS = fetchData.idJS;
-
-                lets[num] = fetchData;
-                cards[num] = drawCard(fetchData, choice);
-                temp0 += cards[num].top;
-                temp1 += cards[num].body;
-                num += 1;
-            });
-            rawNews = Array.from(lets);
-            paintIndividualNews(category, temp0, temp1);
+// function drawPrivateCard2(rawNews, chapter, choice) {
+//
+//     let pictureUrl = URL.createObjectURL(defaultPhotos.photono);
+//     let cards = [];
+//     let operation = choice ? 'Remove' : 'Read'
+//     for (let i = 0; i < newsForm.length; i++) {
+//         cards[i] = `
+//                 <div class="card" style="max-height:700px; min-width:290px; max-width: 290px; margin-bottom: 10px">
+//                     <img src=${pictureUrl} id="img-conteiner${i}" class="card-img-top" width="290px" alt="tytPhoto">
+//                     <div class="card-body" style="text-align: center">
+//                         <h5 class="card-title">${newsForm[i].subjectJS}</h5>
+//                         <p class="card-text">${newsForm[i].textInfoJS}</p>
+//                         <br>
+//                         <a class="btn btn-outline-warning" onclick="readOrRemoveCategoryMessage('${newsForm[i].sendingFromJS}','${i}','${chapter}','${operation}')" href="#">${operation}</a>
+//
+//                     </div>
+//                     <div class="card-footer">
+//                         <small class="text-body-secondary">
+//                            ${newsForm[i].dateMessage}
+//                         </small>
+//                     </div>
+//                 </div>
+//                 <div id="mar${newsForm[i].sendingFromJS}" class="card" style="border:0;max-height:0; min-width:10px; max-width: 10px">
+//                 </div>
+//                `
+//         URL.revokeObjectURL(defaultPhotos.photono)
+//     }
+//     return cards;
+// }
 
 
-        }
-    });
-    return lets;
-}
+// async function loadingIndividualNews(category, choice) {
+//     let num = 0;
+//     let lets = [];
+//     let url = endPoints.get('newsPortal') + "/" + category;
+//     if (choice) url += "All";
+//     await fetch(url, {
+//         method: "GET",
+//         headers: {
+//             "Content-Type": "application/json"
+//         },
+//     }).then(response => response.json()).then(letters => {
+//         if (letters !== null && !letters.isEmpty) {
+//             let temp0 = ``;
+//             let temp1 = ``;
+//             letters.forEach(aloneNew => {
+//                 let from = "Anonymous";
+//                 let contactImage = ``;
+//                 let i = 0;
+//                 if (contacts !== null) {
+//                     while (i < contacts.length) {
+//                         if (contacts[i].externId === aloneNew.sendingFrom) {
+//                             from = contacts[i].name;
+//                             i = contacts.length;
+//                             if (contacts.imj !== null && contacts.imj !== ``) contactImage = contacts.imj;
+//                         }
+//                         i++;
+//                     }
+//                 }
+//                 if (from === "Anonymous" && aloneNew.sendingFromAlt !== null) from = aloneNew.sendingFromAlt;
+//
+//                 let creationDateJS = new Date(aloneNew.creationDate);
+//                 let fetchData = {
+//                     idJS: aloneNew.id,
+//                     externIdJS: aloneNew.externId,
+//                     timeMessage: getTime(creationDateJS),
+//                     dateMessage: getDate(creationDateJS),
+//                     sendingFromJS: from,
+//                     subjectJS: aloneNew.subject,
+//                     textInfoJS: aloneNew.textInfo,
+//                     attention: aloneNew.attention,
+//                     categoryJS: aloneNew.category.toLowerCase(),
+//                     imj: ``,
+//                     alreadyRead: aloneNew.alreadyRead,
+//                     num: num
+//                 }
+//
+//                 if ((fetchData.attention === "VOTING_POSITIVE" || fetchData.attention === "POSITIVE" || fetchData.subjectJS === "Contact added" || fetchData.subjectJS === "Accept change") && defaultPhotos.approved !== null) fetchData.imj = defaultPhotos.approved;
+//                 if ((fetchData.attention === "VOTING_NEGATIVE" || fetchData.attention === "NEGATIVE" || fetchData.subjectJS === "Reject change" || fetchData.subjectJS === "Contact reject") && defaultPhotos.rejected !== null) fetchData.imj = defaultPhotos.rejected;
+//                 if ((fetchData.attention === "VOTING" || fetchData.attention === "VOTING_REQUESTER") && defaultPhotos.election !== null) fetchData.imj = defaultPhotos.election;
+//                 if ((fetchData.subjectJS === "Request for contact" || fetchData.subjectJS === "Contact request") && defaultPhotos.contact !== null) fetchData.imj = defaultPhotos.contact;
+//                 if ((fetchData.attention === "LINK") && defaultPhotos.linking !== null) fetchData.imj = defaultPhotos.linking;
+//                 if (fetchData.imj === ``) fetchData.imj = contactImage;
+//                 if (fetchData.imj === `` && defaultPhotos.person !== null) fetchData.imj = defaultPhotos.person;
+//
+//                 if (fetchData.externIdJS === null) fetchData.externIdJS = fetchData.idJS;
+//
+//                 lets[num] = fetchData;
+//                 cards[num] = drawCard(fetchData, choice);
+//                 temp0 += cards[num].top;
+//                 temp1 += cards[num].body;
+//                 num += 1;
+//             });
+//             rawNews = Array.from(lets);
+//             paintIndividualNews(category, temp0, temp1);
+//
+//
+//         }
+//     });
+//     return lets;
+// }
 
-function changeCountsByRead(category) {
-    counts[0] = counts[0] - 1;
-    if (counts[0] !== 0) document.getElementById("newsCount").innerHTML = counts[0] + "";
-    else document.getElementById("badge0").innerHTML = "";
-    if (category === "family") {
-        counts[3] = counts[3] - 1;
-        if (counts[3] !== 0) document.getElementById("countNew3").innerHTML = counts[3] + "";
-        else {
-            document.getElementById("badge3").innerHTML = "";
-            document.getElementById("message-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Семейных сообщений нет</div>`;
-        }
-    } else if (category === "private") {
-        counts[4] = counts[4] - 1;
-        if (counts[4] !== 0) document.getElementById("countNew4").innerHTML = counts[4] + "";
-        else {
-            document.getElementById("badge4").innerHTML = "";
-            document.getElementById("message-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Messages are absent</div>`;
-        }
-    }
-}
+// function changeCountsByRead(category) {
+//     counts[0] = counts[0] - 1;
+//     if (counts[0] !== 0) document.getElementById("newsCount").innerHTML = counts[0] + "";
+//     else document.getElementById("badge0").innerHTML = "";
+//     if (category === "family") {
+//         counts[3] = counts[3] - 1;
+//         if (counts[3] !== 0) document.getElementById("countNew3").innerHTML = counts[3] + "";
+//         else {
+//             document.getElementById("badge3").innerHTML = "";
+//             document.getElementById("message-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Семейных сообщений нет</div>`;
+//         }
+//     } else if (category === "private") {
+//         counts[4] = counts[4] - 1;
+//         if (counts[4] !== 0) document.getElementById("countNew4").innerHTML = counts[4] + "";
+//         else {
+//             document.getElementById("badge4").innerHTML = "";
+//             document.getElementById("message-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Messages are absent</div>`;
+//         }
+//     }
+// }
+//
+// function paintIndividualNews(category, temp0, temp1) {
+//     document.getElementById("dropdown-message-list").innerHTML = temp0;
+//     document.getElementById("message-list").innerHTML = temp1;
+//     if (temp1 === ``) document.getElementById("message-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Messages are absent</div>`;
+//     return "ok";
+// }
+//
+// function drawCardBody(letter, choice) {
+//     let pictureUrl = URL.createObjectURL(letter.imj);
+//     let temp = `
+//     <div class="card" id="message${letter.idJS}" style="vertical-align:middle; horiz-align: center; margin-bottom: 10px; padding: 0">
+//         <div class="card-header" style="text-align: center; color: darkred;font-family: 'Times New Roman',serif">${letter.subjectJS}
+//         <div class="flex-row" style="text-align: center;font-family: 'Times New Roman',serif; font-size: 12px;color: black;margin-right: 0;padding-right: 10px">
+//                                 <span class="col-6" style="text-align:left; min-width: 50px;margin: 0;padding: 0">${letter.dateMessage}  </span>
+//                                 <span class="col" style="margin: 0;padding: 0"></span>
+//                                 <span class="col-5" style="text-align:right; min-width: 50px;margin: 0;padding: 0">${letter.timeMessage}</span>
+//                         </div>
+//         </div>
+//         <div class="row g-0 no-gutters" style="vertical-align:middle; align-items:center;">
+//              <div class="col-3" style="padding: 10px 10px 0;max-width: 150px">
+//                 <img src=${pictureUrl} class="card-img" width="100px" alt="tytPhoto">
+//                 <div style="text-align: center; font-size: 14px; color: darkgreen;padding-left: 5px;padding-right: 0;margin: 0"> ${letter.sendingFromJS}</div>
+//             </div>
+//             <div class="col-9" >
+//                 <div class="card-body" style="vertical-align: top; text-align: center;padding: 5px">
+//                     <div class="card-title" style="margin: 0">
+//                     </div>
+//                     <div class="card-text" style="text-align: center; color: black;font-family: 'Times New Roman',serif; font-size: 14px">${letter.textInfoJS} </div>
+//                 </div>
+//             </div>
+//         </div>
+//         <div class="card-footer" style=" text-align: center">
+//                 <div class="container-fluid row" style="font-size: 16px; margin-right: 0; text-align: center">
+//                     ` + drawButtons(letter, choice) + `
+//                 </div>
+//         </div>
+//     </div>`;
+//     URL.revokeObjectURL(letter.imj);
+//     return temp;
+// }
 
-function paintIndividualNews(category, temp0, temp1) {
-    document.getElementById("dropdown-message-list").innerHTML = temp0;
-    document.getElementById("message-list").innerHTML = temp1;
-    if (temp1 === ``) document.getElementById("message-list").innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Messages are absent</div>`;
-    return "ok";
-}
+// function drawButtons(letter, choice) {
+//     let temp;
+//     if (choice && letter.alreadyRead && letter.sendingFromJS !== "Informer") temp = `<span class="col" style=" text-align: center;color:chocolate">Letter is already read"</span>
+//                 <span class="col-2" style="text-align:right; padding-right: 10px">
+//                     <a href="#" type="button" class="btn btn-outline-danger" onClick="deleteMessage('${letter.idJS}','${letter.categoryJS}', ${letter.num}, ${choice})">Delete</a></span>`;
+//     else if (choice && letter.alreadyRead) {
+//         temp = `<span class="col" style=" text-align: center;color:chocolate">Letter is already read"</span>`
+//     } else {
+//         if (letter.sendingFromJS === "Informer")
+//             switch (letter.attention) {
+//                 case "VOTING":
+//                 case "LINK":
+//                     temp = `<span class="col-2">
+//                             <a type="button" class="btn btn-outline-success"
+//                                 onClick="acceptMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">Accept</a></span>
+//                         <span class="col"></span>
+//                         <span class="col-2" style="text-align:right; padding-right: 10px">
+//                             <a type="button" class="btn btn-outline-danger" onClick="rejectMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')"
+//                                 href="#">Reject</a></span>`;
+//                     break;
+//                 case "RIGHTS":
+//                 case "MODERATE":
+//                 case "NEGATIVE":
+//                 case "DATE":
+//                 case "POSITIVE":
+//                     temp = `<span class="col-4"></span>
+//                         <span class="col">
+//                             <a type="button" class="btn btn-outline-warning"
+//                                 onClick="seeMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">See</a></span>
+//                         <span class="col-4"></span>`;
+//                     break;
+//                 case "VOTING_NEGATIVE":
+//                 case "VOTING_POSITIVE":
+//                 case "VOTING_REQUESTER":
+//                     temp = `<span class="col-4"></span>
+//                         <span class="col">
+//                             <a type="button" class="btn btn-outline-warning"
+//                                 onClick="readResult('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">See</a></span>
+//                         <span class="col-4"></span>`;
+//                     break;
+//                 default:
+//                     temp = "This is poltergeist";
+//             }
+//         else temp = `<span class="col-2">
+//                     <a href="#" type="button" class="btn btn-outline-success" onClick="seeMessage('${letter.idJS}','${letter.categoryJS}', ${letter.num}, ${choice})">See</a></span>
+//                 <span class="col"></span>
+//                 <span class="col-2" style="text-align:right; padding-right: 10px">
+//                     <a href="#" type="button" class="btn btn-outline-danger" onClick="deleteMessage('${letter.idJS}','${letter.categoryJS}', ${letter.num}, ${choice})">Delete</a></span>`
+//     }
+//     return temp;
+// }
+//
+// function drawCard(letter, choice) {
+//     let letterBody = drawCardBody(letter, choice);
+//
+//     return {
+//         top: `<li><a class="dropdown-item" style="color: goldenrod;font-family: 'Times New Roman',serif; font-size: 10px" href="#message${letter.idJS}">
+//                       <div class="container-fluid row" style="width: 99%; margin: 0;padding: 0">
+//                          <span class="col-5" style="text-align: left;padding: 0;margin-left: 5px">${letter.dateMessage}</span>
+//                          <span class="col-6" style="text-align: right;padding: 0;margin-right: 5px">${letter.sendingFromJS}</span>
+//                       </div></a></li>`,
+//         body: letterBody
+//     }
+// }
 
-function drawCardBody(letter, choice) {
-    let pictureUrl = URL.createObjectURL(letter.imj);
-    let temp = ` 
-    <div class="card" id="message${letter.idJS}" style="vertical-align:middle; horiz-align: center; margin-bottom: 10px; padding: 0">        
-        <div class="card-header" style="text-align: center; color: darkred;font-family: 'Times New Roman',serif">${letter.subjectJS}
-        <div class="flex-row" style="text-align: center;font-family: 'Times New Roman',serif; font-size: 12px;color: black;margin-right: 0;padding-right: 10px">
-                                <span class="col-6" style="text-align:left; min-width: 50px;margin: 0;padding: 0">${letter.dateMessage}  </span>                         
-                                <span class="col" style="margin: 0;padding: 0"></span>
-                                <span class="col-5" style="text-align:right; min-width: 50px;margin: 0;padding: 0">${letter.timeMessage}</span>
-                        </div>
-        </div>
-        <div class="row g-0 no-gutters" style="vertical-align:middle; align-items:center;">
-             <div class="col-3" style="padding: 10px 10px 0;max-width: 150px">
-                <img src=${pictureUrl} class="card-img" width="100px" alt="tytPhoto">
-                <div style="text-align: center; font-size: 14px; color: darkgreen;padding-left: 5px;padding-right: 0;margin: 0"> ${letter.sendingFromJS}</div>
-            </div>
-            <div class="col-9" >
-                <div class="card-body" style="vertical-align: top; text-align: center;padding: 5px">
-                    <div class="card-title" style="margin: 0">                        
-                    </div>
-                    <div class="card-text" style="text-align: center; color: black;font-family: 'Times New Roman',serif; font-size: 14px">${letter.textInfoJS} </div>
-                </div>
-            </div>
-        </div>
-        <div class="card-footer" style=" text-align: center">            
-                <div class="container-fluid row" style="font-size: 16px; margin-right: 0; text-align: center">
-                    ` + drawButtons(letter, choice) + `
-                </div>            
-        </div>      
-    </div>`;
-    URL.revokeObjectURL(letter.imj);
-    return temp;
-}
+// async function refreshNews(category, choice) {
+//     rawNews = null;
+//     cards = [];
+//     await loadNewNews(category, choice)
+// }
+//
+// async function loadNewNews(category, choice) {
+//     if (rawNews === null) {
+//         let raw = await loadingIndividualNews(category, choice);
+//         console.log(raw);
+//     } else {
+//         console.log(rawNews);
+//         let temp0 = ``;
+//         let temp1 = ``;
+//         for (let i = 0; i < rawNews.length; i++) {
+//             if (rawNews[i] !== null && rawNews[i] !== undefined && (choice || !rawNews[i].alreadyRead)) {
+//                 temp0 += cards[i].top;
+//                 temp1 += cards[i].body;
+//             }
+//         }
+//         console.log("prepare to painting");
+//         paintIndividualNews(category, temp0, temp1);
+//     }
+// }
 
-function drawButtons(letter, choice) {
-    let temp;
-    if (choice && letter.alreadyRead && letter.sendingFromJS !== "Informer") temp = `<span class="col" style=" text-align: center;color:chocolate">Letter is already read"</span>
-                <span class="col-2" style="text-align:right; padding-right: 10px">
-                    <a href="#" type="button" class="btn btn-outline-danger" onClick="deleteMessage('${letter.idJS}','${letter.categoryJS}', ${letter.num}, ${choice})">Delete</a></span>`;
-    else if (choice && letter.alreadyRead) {
-        temp = `<span class="col" style=" text-align: center;color:chocolate">Letter is already read"</span>`
-    } else {
-        if (letter.sendingFromJS === "Informer")
-            switch (letter.attention) {
-                case "VOTING":
-                case "LINK":
-                    temp = `<span class="col-2">
-                            <a type="button" class="btn btn-outline-success"
-                                onClick="acceptMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">Accept</a></span>
-                        <span class="col"></span>
-                        <span class="col-2" style="text-align:right; padding-right: 10px">
-                            <a type="button" class="btn btn-outline-danger" onClick="rejectMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')"
-                                href="#">Reject</a></span>`;
-                    break;
-                case "RIGHTS":
-                case "MODERATE":
-                case "NEGATIVE":
-                case "DATE":
-                case "POSITIVE":
-                    temp = `<span class="col-4"></span>
-                        <span class="col">
-                            <a type="button" class="btn btn-outline-warning"
-                                onClick="seeMessage('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">See</a></span>
-                        <span class="col-4"></span>`;
-                    break;
-                case "VOTING_NEGATIVE":
-                case "VOTING_POSITIVE":
-                case "VOTING_REQUESTER":
-                    temp = `<span class="col-4"></span>
-                        <span class="col">
-                            <a type="button" class="btn btn-outline-warning"
-                                onClick="readResult('${letter.externIdJS}', '${letter.num}', '${letter.categoryJS}')" href="#">See</a></span>
-                        <span class="col-4"></span>`;
-                    break;
-                default:
-                    temp = "This is poltergeist";
-            }
-        else temp = `<span class="col-2">
-                    <a href="#" type="button" class="btn btn-outline-success" onClick="seeMessage('${letter.idJS}','${letter.categoryJS}', ${letter.num}, ${choice})">See</a></span>
-                <span class="col"></span>
-                <span class="col-2" style="text-align:right; padding-right: 10px">
-                    <a href="#" type="button" class="btn btn-outline-danger" onClick="deleteMessage('${letter.idJS}','${letter.categoryJS}', ${letter.num}, ${choice})">Delete</a></span>`
-    }
-    return temp;
-}
+// async function getPrivateNews(category) {
+//     cards = [];
+//     rawNews = null;
+//     let categoryUp = (category + '').toUpperCase();
+//     document.getElementById("resultPart").innerHTML = `
+//             <div class="container-fluid row" style=" margin-right: 0">
+//             <span class="col" style="padding-right: 0;padding-left:0;text-align: right; color: chocolate;font-family: 'Times New Roman',serif; font-size: 20px">${categoryUp} NEWS</span>
+//             <span class="col-1" style="padding-right: 0;padding-left:0"></span>
+//            <span class="col-5" style="padding-left:0; padding-right: 0">
+//            <div class="btn-group-horizontal" role="group" aria-label="Vertical button group" style="margin-left: 5px; text-align: right">
+//                 <input type="radio" class="btn-check" name="news-choice"  id="news-choice1" autoComplete="off">
+//                 <label class="btn btn-outline-warning" style="padding: 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice1" onclick="refreshNews('${category}',true)">Все</label>
+//                 <input type="radio" class="btn-check" name="news-choice"  id="news-choice2" autoComplete="off" checked>
+//                 <label class="btn btn-outline-warning" style="padding: 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice2" onclick="refreshNews('${category}',false)">Новые </label>
+//             </div></span>
+//             </div>
+//             <nav id="navbar-${category}" class="navbar bg-body-tertiary no-gutters">
+//                 <ul class="nav nav-pills" >
+//                     <li class="nav-item">
+//                         <a class="nav-link bg-dark-red" role="button" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 12px" href="#first-message">Начало</a>
+//                     </li>
+//                     <li class="nav-item dropdown" >
+//                         <a class="nav-link dropdown-toggle" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 12px" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Список</a>
+//                         <ul class="dropdown-menu" >
+//                              <span id="dropdown-message-list">
+//                             </span>
+//                             <li><hr class="dropdown-divider"></li>
+//                             <li><a class="dropdown-item" style="color: goldenrod;font-family: 'Times New Roman',serif; font-size: 12px;text-align: center" href="#last-message">Last</a></li>
+//                         </ul>
+//                     </li>
+//                     <li class="nav-item">
+//                         <a class="nav-link bg-dark-red" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 12px" role="button" href="#last-message">Конец</a>
+//                     </li>
+//                 </ul>
+//             </nav>
+//             <div data-bs-spy="scroll" style="height: 72vh; overflow: auto" data-bs-target="#navbar-${category}" data-bs-smooth-scroll="true" class="scrollspy-example bg-body-tertiary" tabindex="0">
+//                 <div id="first-message"></div>
+//                 <div id="message-list">  </div>
+//                 <div id="last-message"></div>
+//             </div>`
+//     if ((category === "private" && counts[4] !== null && counts[4] !== 0) || (category === "family" && counts[3] !== null && counts[3] !== 0)) {
+//         await loadNewNews(category, false);
+//     } else {
+//         document.getElementById(`message-list`).innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Messages are absent</div>`;
+//     }
+// }
 
-function drawCard(letter, choice) {
-    let letterBody = drawCardBody(letter, choice);
 
-    return {
-        top: `<li><a class="dropdown-item" style="color: goldenrod;font-family: 'Times New Roman',serif; font-size: 10px" href="#message${letter.idJS}">
-                      <div class="container-fluid row" style="width: 99%; margin: 0;padding: 0">
-                         <span class="col-5" style="text-align: left;padding: 0;margin-left: 5px">${letter.dateMessage}</span>
-                         <span class="col-6" style="text-align: right;padding: 0;margin-right: 5px">${letter.sendingFromJS}</span>
-                      </div></a></li>`,
-        body: letterBody
-    }
-}
-
-async function refreshNews(category, choice) {
-    rawNews = null;
-    cards = [];
-    await loadNewNews(category, choice)
-}
-
-async function loadNewNews(category, choice) {
-    if (rawNews === null) {
-        let raw = await loadingIndividualNews(category, choice);
-        console.log(raw);
-    } else {
-        console.log(rawNews);
-        let temp0 = ``;
-        let temp1 = ``;
-        for (let i = 0; i < rawNews.length; i++) {
-            if (rawNews[i] !== null && rawNews[i] !== undefined && (choice || !rawNews[i].alreadyRead)) {
-                temp0 += cards[i].top;
-                temp1 += cards[i].body;
-            }
-        }
-        console.log("prepare to painting");
-        paintIndividualNews(category, temp0, temp1);
-    }
-}
-
-async function getPrivateNews(category) {
-    cards = [];
-    rawNews = null;
-    let categoryUp = (category + '').toUpperCase();
-    document.getElementById("resultPart").innerHTML = `
-            <div class="container-fluid row" style=" margin-right: 0">
-            <span class="col" style="padding-right: 0;padding-left:0;text-align: right; color: chocolate;font-family: 'Times New Roman',serif; font-size: 20px">${categoryUp} NEWS</span>
-            <span class="col-1" style="padding-right: 0;padding-left:0"></span>
-           <span class="col-5" style="padding-left:0; padding-right: 0">
-           <div class="btn-group-horizontal" role="group" aria-label="Vertical button group" style="margin-left: 5px; text-align: right">
-                <input type="radio" class="btn-check" name="news-choice"  id="news-choice1" autoComplete="off">
-                <label class="btn btn-outline-warning" style="padding: 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice1" onclick="refreshNews('${category}',true)">Все</label>
-                <input type="radio" class="btn-check" name="news-choice"  id="news-choice2" autoComplete="off" checked>
-                <label class="btn btn-outline-warning" style="padding: 5px; text-align:center; font-size: 14px; color: darkred" for="news-choice2" onclick="refreshNews('${category}',false)">Новые </label>
-            </div></span>
-            </div>
-            <nav id="navbar-${category}" class="navbar bg-body-tertiary no-gutters">
-                <ul class="nav nav-pills" >
-                    <li class="nav-item">
-                        <a class="nav-link bg-dark-red" role="button" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 12px" href="#first-message">Начало</a>
-                    </li>  
-                    <li class="nav-item dropdown" >
-                        <a class="nav-link dropdown-toggle" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 12px" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Список</a>
-                        <ul class="dropdown-menu" >
-                             <span id="dropdown-message-list"> 
-                            </span>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" style="color: goldenrod;font-family: 'Times New Roman',serif; font-size: 12px;text-align: center" href="#last-message">Last</a></li> 
-                        </ul>
-                    </li>    
-                    <li class="nav-item">
-                        <a class="nav-link bg-dark-red" style="color: darkred;font-family: 'Times New Roman',serif; font-size: 12px" role="button" href="#last-message">Конец</a>
-                    </li>
-                </ul>
-            </nav>            
-            <div data-bs-spy="scroll" style="height: 72vh; overflow: auto" data-bs-target="#navbar-${category}" data-bs-smooth-scroll="true" class="scrollspy-example bg-body-tertiary" tabindex="0">
-                <div id="first-message"></div>
-                <div id="message-list">  </div>
-                <div id="last-message"></div>
-            </div>`
-    if ((category === "private" && counts[4] !== null && counts[4] !== 0) || (category === "family" && counts[3] !== null && counts[3] !== 0)) {
-        await loadNewNews(category, false);
-    } else {
-        document.getElementById(`message-list`).innerHTML = `<div style="color: darkred;font-family: 'Times New Roman',serif; font-size: 24px;text-align: center">Messages are absent</div>`;
-    }
-}
-
-async function acceptMessage(id, num, category) {
-    fetch(endPoints.get('newsPrivate') + "/accept/" + id, {method: "GET"}).then(r => r.text())
-        .then(r => console.log(r));
-    rawNews.forEach(letter => {
-        if (letter.externIdJS === id) letter.alreadyRead = true;
-    })
-    changeCountsByRead(category);
-    delete rawNews[num];
-    delete cards[num];
-    await loadNewNews(category, false);
-}
-
-async function rejectMessage(id, num, category) {
-    fetch(endPoints.get('newsPrivate') + "/reject/" + id, {method: "GET"}).then(r => r.text())
-        .then(r => console.log(r));
-    rawNews.forEach(letter => {
-        if (letter.externIdJS === id) letter.alreadyRead = true;
-    })
-    changeCountsByRead(category);
-    delete rawNews[num];
-    delete cards[num];
-    await loadNewNews(category, false);
-}
-
-async function readResult(id, num, category) {
-    let url = endPoints.get('newsPrivate') + "/readResult/" + id;
-    fetch(url, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        },
-    }).then(r => console.log("Answer:", r))
-    changeCountsByRead(category);
-    delete rawNews[num];
-    delete cards[num];
-    await loadNewNews(category, false);
-}
+// async function readResult(id, num, category) {
+//     let url = endPoints.get('newsPrivate') + "/readResult/" + id;
+//     fetch(url, {
+//         method: "GET",
+//         headers: {
+//             "Content-Type": "application/json"
+//         },
+//     }).then(r => console.log("Answer:", r))
+//     changeCountsByRead(category);
+//     delete rawNews[num];
+//     delete cards[num];
+//     await loadNewNews(category, false);
+// }
 
 // private String sendingFrom;
 // private String sendingTo;
@@ -817,111 +860,111 @@ async function readResult(id, num, category) {
 // private String textInfo;
 // private NewsCategory category;
 // private boolean alreadyRead;
-function loadPrivateNews(choice) {
-    let temp0 = ``;
-    let temp1 = ``;
-    let url;
-    if (choice === 0) url = endPoints.get('newsPrivate') + "/individual"; else url = endPoints.get("newsPrivate") + "/individualAll";
-    fetch(url, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        },
-    }).then(response => response.json()).then(letters => {
-        if (letters !== null && !letters.isEmpty) {
-            letters.forEach(aloneNew => {
-                let creationDate = new Date(aloneNew.creationDate);
-                let timeMessage = getTime(creationDate);
-                let dateMessage = getDate(creationDate);
-                let from = "Anonymous";
-                let i = 0;
-                if (contacts !== null) {
-                    while (i < contacts.length) {
-                        if (contacts[i].externId === aloneNew.sendingFrom) {
-                            from = contacts[i].name;
-                            i = contacts.length;
-                        }
-                        i++;
-                    }
-                }
-                if (from === "Anonymous" && aloneNew.sendingFromAlt !== null) from = aloneNew.sendingFromAlt;
-                temp0 += `
-                         <li >
-                         <a class="dropdown-item" style="width: 95%; color: goldenrod;font-family: 'Times New Roman',serif; font-size: 11px; margin: 2px;padding: 2px" href="#message${aloneNew.id}">
-                         <div class="container-fluid row" style="width: 99%; margin: 0;padding: 0">
-                         <span class="col-5" style="text-align: left;padding: 0;margin-left: 5px">${dateMessage}</span>
-                         <span class="col-6" style="text-align: right;padding: 0;margin-right: 5px">${from}</span>
-                         </div>
-                         </a>
-                         </li>`
-
-                temp1 += `
-                        <div style="text-align: center;font-size: 20px">------ ***** ------</div>
-                        <div id="message${aloneNew.id}">           
-                            <div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px">${aloneNew.subject}</div>
-                            <div class="container-fluid row" style="text-align: center; color: darkred;font-family: 'Times New Roman',serif; font-size: 16px">
-                                <span class="col-2">${dateMessage}  </span>                         
-                                <span class="col"></span>
-                                <span class="col-2">${timeMessage}</span>
-                            </div>
-                            <div style="text-align: center; color: darkred;">Отправитель: </div>
-                            <div style="text-align: center; color: darkgreen"> ${from}</div>
-                            <br>
-                            <div style="text-align: center; color: darkred">Сообщение:</div> 
-                            <div style=" text-align: center; color: black;font-family: 'Times New Roman',serif; font-size: 14px">${aloneNew.textInfo} </div>
-                            <br>
-                            <div class="container-fluid row" style="font-size: 16px">
-                            <span class="col-2">
-                                <button type="button" class="btn btn-outline-success" data-toggle="modal" onclick="seeMessage('${aloneNew.id}', '${choice}')" data-target="#see${aloneNew.id}">See</button></span>
-                            <span class="col"></span>
-                            <span class="col-2" ><button type="button" class="btn btn-outline-danger" data-toggle="modal" onclick="deleteMessage('${aloneNew.id}', '${choice}')" data-target="#delete${aloneNew.id}">Delete</button></span>
-                            <span class="col-1" style="width: 40px"></span>
-                            </div>
-                            <br>
-                        </div>`;
-                document.getElementById("dropdown-message-list").innerHTML = temp0;
-                document.getElementById("message-list").innerHTML = temp1;
-
-            })
-        } else {
-            document.getElementById("dropdown-message-list").innerHTML = 'пусто';
-            document.getElementById("message-list").innerHTML = "Больше сообщений нет";
-        }
-    });
-    console.log("Value", temp1)
-}
-
-async function seeMessage(id, category, num, choice) {
-    // choice = choice === "true";
-    let url = endPoints.get('newsPrivate') + "/readMessage/" + id;
-    fetch(url, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        },
-    }).then(r => console.log("Answer:", r))
-    changeCountsByRead(category);
-    if (choice) {
-        rawNews[num].alreadyRead = true;
-        cards[num] = drawCard(rawNews[num], choice);
-    } else {
-        delete rawNews[num];
-        delete cards[num];
-    }
-    await loadNewNews(category, choice)
-}
-
-async function deleteMessage(id, category, num, choice) {
-    // choice = choice === "true";
-    let url = endPoints.get('newsPrivate') + "/deleteMessage/" + id;
-    await fetch(url, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        },
-    });
-    if (!rawNews[num].alreadyRead) changeCountsByRead(category);
-    delete rawNews[num];
-    delete cards[num];
-    await loadNewNews(category, choice)
-}
+// function loadPrivateNews(choice) {
+//     let temp0 = ``;
+//     let temp1 = ``;
+//     let url;
+//     if (choice === 0) url = endPoints.get('newsPrivate') + "/individual"; else url = endPoints.get("newsPrivate") + "/individualAll";
+//     fetch(url, {
+//         method: "GET",
+//         headers: {
+//             "Content-Type": "application/json"
+//         },
+//     }).then(response => response.json()).then(letters => {
+//         if (letters !== null && !letters.isEmpty) {
+//             letters.forEach(aloneNew => {
+//                 let creationDate = new Date(aloneNew.creationDate);
+//                 let timeMessage = getTime(creationDate);
+//                 let dateMessage = getDate(creationDate);
+//                 let from = "Anonymous";
+//                 let i = 0;
+//                 if (contacts !== null) {
+//                     while (i < contacts.length) {
+//                         if (contacts[i].externId === aloneNew.sendingFrom) {
+//                             from = contacts[i].name;
+//                             i = contacts.length;
+//                         }
+//                         i++;
+//                     }
+//                 }
+//                 if (from === "Anonymous" && aloneNew.sendingFromAlt !== null) from = aloneNew.sendingFromAlt;
+//                 temp0 += `
+//                          <li >
+//                          <a class="dropdown-item" style="width: 95%; color: goldenrod;font-family: 'Times New Roman',serif; font-size: 11px; margin: 2px;padding: 2px" href="#message${aloneNew.id}">
+//                          <div class="container-fluid row" style="width: 99%; margin: 0;padding: 0">
+//                          <span class="col-5" style="text-align: left;padding: 0;margin-left: 5px">${dateMessage}</span>
+//                          <span class="col-6" style="text-align: right;padding: 0;margin-right: 5px">${from}</span>
+//                          </div>
+//                          </a>
+//                          </li>`
+//
+//                 temp1 += `
+//                         <div style="text-align: center;font-size: 20px">------ ***** ------</div>
+//                         <div id="message${aloneNew.id}">
+//                             <div style="text-align: center; color: chocolate;font-family: 'Times New Roman',serif; font-size: 18px">${aloneNew.subject}</div>
+//                             <div class="container-fluid row" style="text-align: center; color: darkred;font-family: 'Times New Roman',serif; font-size: 16px">
+//                                 <span class="col-2">${dateMessage}  </span>
+//                                 <span class="col"></span>
+//                                 <span class="col-2">${timeMessage}</span>
+//                             </div>
+//                             <div style="text-align: center; color: darkred;">Отправитель: </div>
+//                             <div style="text-align: center; color: darkgreen"> ${from}</div>
+//                             <br>
+//                             <div style="text-align: center; color: darkred">Сообщение:</div>
+//                             <div style=" text-align: center; color: black;font-family: 'Times New Roman',serif; font-size: 14px">${aloneNew.textInfo} </div>
+//                             <br>
+//                             <div class="container-fluid row" style="font-size: 16px">
+//                             <span class="col-2">
+//                                 <button type="button" class="btn btn-outline-success" data-toggle="modal" onclick="seeMessage('${aloneNew.id}', '${choice}')" data-target="#see${aloneNew.id}">See</button></span>
+//                             <span class="col"></span>
+//                             <span class="col-2" ><button type="button" class="btn btn-outline-danger" data-toggle="modal" onclick="deleteMessage('${aloneNew.id}', '${choice}')" data-target="#delete${aloneNew.id}">Delete</button></span>
+//                             <span class="col-1" style="width: 40px"></span>
+//                             </div>
+//                             <br>
+//                         </div>`;
+//                 document.getElementById("dropdown-message-list").innerHTML = temp0;
+//                 document.getElementById("message-list").innerHTML = temp1;
+//
+//             })
+//         } else {
+//             document.getElementById("dropdown-message-list").innerHTML = 'пусто';
+//             document.getElementById("message-list").innerHTML = "Больше сообщений нет";
+//         }
+//     });
+//     console.log("Value", temp1)
+// }
+//
+// async function seeMessage(id, category, num, choice) {
+//     // choice = choice === "true";
+//     let url = endPoints.get('newsPrivate') + "/readMessage/" + id;
+//     fetch(url, {
+//         method: "GET",
+//         headers: {
+//             "Content-Type": "application/json"
+//         },
+//     }).then(r => console.log("Answer:", r))
+//     changeCountsByRead(category);
+//     if (choice) {
+//         rawNews[num].alreadyRead = true;
+//         cards[num] = drawCard(rawNews[num], choice);
+//     } else {
+//         delete rawNews[num];
+//         delete cards[num];
+//     }
+//     await loadNewNews(category, choice)
+// }
+//
+// async function deleteMessage(id, category, num, choice) {
+//     // choice = choice === "true";
+//     let url = endPoints.get('newsPrivate') + "/deleteMessage/" + id;
+//     await fetch(url, {
+//         method: "GET",
+//         headers: {
+//             "Content-Type": "application/json"
+//         },
+//     });
+//     if (!rawNews[num].alreadyRead) changeCountsByRead(category);
+//     delete rawNews[num];
+//     delete cards[num];
+//     await loadNewNews(category, choice)
+// }

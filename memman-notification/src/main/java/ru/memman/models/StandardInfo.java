@@ -5,6 +5,7 @@ import ru.memman.enums.Localisation;
 import lombok.*;
 import lombok.extern.log4j.Log4j2;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class StandardInfo {
     private List<Integer> systemGlobalRead = new ArrayList<>();
     private List<Integer> commonGlobalRead = new ArrayList<>();
     private Localisation localisation;
+    private Timestamp created;
 
     public void addNewMessage(AloneNewDto aloneNewDto) {
         boolean success = false;
@@ -60,6 +62,7 @@ public class StandardInfo {
             }
             default -> log.warn("try to remove unknown letter");
         }
+        log.info(success);
         if (success) this.counts[0] = this.counts[1] + this.counts[3] + this.counts[4];
     }
 

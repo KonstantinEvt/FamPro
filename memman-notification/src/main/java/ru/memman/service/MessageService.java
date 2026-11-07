@@ -1,6 +1,7 @@
 package ru.memman.service;
 
 import ru.memman.dtos.AloneNewDto;
+import ru.memman.dtos.DirectiveGuards;
 import ru.memman.dtos.OnlineUserDto;
 import ru.memman.dtos.TokenUser;
 import ru.memman.entity.*;
@@ -8,7 +9,6 @@ import ru.memman.enums.*;
 import ru.memman.holders.StandardInfoHolder;
 import ru.memman.mappers.AloneNewMapper;
 import ru.memman.mappers.LetterLocalMapper;
-import ru.memman.models.StandardInfo;
 import ru.memman.repository.AloneNewRepo;
 import ru.memman.repository.AloneNewRepository;
 import ru.memman.repository.NotificationRepo;
@@ -37,6 +37,7 @@ public class MessageService implements SimpleStringService {
     private final LetterLocalMapper letterLocalMapper;
     private final AloneNewRepository aloneNewRepository;
     private final Map<String, Set<String>> rightsMap;
+    private final LinkedList<List<DirectiveGuards>> directiveRights;
 
     @Transactional
     public String sendMessage(AloneNewDto aloneNewDto, boolean fromController) {
@@ -120,7 +121,7 @@ public class MessageService implements SimpleStringService {
                     for (Recipient recipient :
                             onlineRecipients) {
                         aloneNewDto.setHidden(false);
-                        addLetterToHolderRecipient(localisationService.getLetterDtoTo(aloneNew, recipient, standardInfoHolder.getSystemRecipientHard(), true).orElseThrow(), recipient.getExternUuid(), false);
+                        standardInfoHolder.addLetterToHolderRecipient(localisationService.getLetterDtoTo(aloneNew, recipient, standardInfoHolder.getSystemRecipientHard(), true).orElseThrow(), recipient.getExternUuid(), false);
                     }
                 }
             }
@@ -137,30 +138,11 @@ public class MessageService implements SimpleStringService {
                 for (Recipient recipient :
                         onlineRecipients) {
                     aloneNewDto.setHidden(from.getSecretLevelPhoto() != SecretLevel.OPEN);
-                    addLetterToHolderRecipient(localisationService.getLetterDtoTo(aloneNew, recipient, from, true).orElseThrow(), recipient.getExternUuid(), from.isExistPrimePhoto() && !aloneNewDto.isHidden());
+                    standardInfoHolder.addLetterToHolderRecipient(localisationService.getLetterDtoTo(aloneNew, recipient, from, true).orElseThrow(), recipient.getExternUuid(), from.isExistPrimePhoto() && !aloneNewDto.isHidden());
                 }
             }
         }
         return aloneNew.getImageUrl();
-    }
-
-    private void addLetterToHolderRecipient(AloneNewDto aloneNewDto, String externUuid, boolean rightPrime) {
-        standardInfoHolder.addLetterToHolderRecipient(aloneNewDto, externUuid, rightPrime);
-        log.info("letter ${} is entered to holder", aloneNewDto);
-        sendChangeLetterCounts(externUuid);
-    }
-
-    public void sendChangeLetterCounts(String externUuid) {
-        StandardInfo standardInfo = standardInfoHolder.getOnlineInfo().get(externUuid);
-
-        int com = standardInfo.viewNewGlobalMessage(standardInfoHolder.getCommonGlobalMask(), standardInfo.getCommonGlobalRead());
-        int sys = standardInfo.viewNewGlobalMessage(standardInfoHolder.getSystemGlobalMask(), standardInfo.getSystemGlobalRead());
-        inline.add(OnlineUserDto.builder().externUuid(externUuid).newsCounts(new int[]{
-                standardInfo.getCounts()[0] + com + sys,
-                standardInfo.getCounts()[1] + sys,
-                com,
-                standardInfo.getCounts()[3],
-                standardInfo.getCounts()[4]}).online(true).build());
     }
 
     public List<AloneNewDto> getCommonMessages(String user, boolean all, Localisation localisation) {
@@ -173,39 +155,37 @@ public class MessageService implements SimpleStringService {
         return global.stream().sorted(Comparator.comparing(AloneNewDto::getCreationDate)).toList();
     }
 
-
     @Transactional
-    public void readOrRemoveGlobalMessage(String externUuid, Attention category, String id, boolean rr) {
+    public void readOrRemoveGlobalMessage(String externUuid, NewsCategory category, String id, boolean rr) {
         Recipient recipient = recipientService.findRecipient(externUuid);
-        if (category == Attention.SYSTEM) {
+        if (category == NewsCategory.SYSTEM) {
             int element = Integer.parseInt(id);
             List<Integer> reading = standardInfoHolder.getOnlineInfo().get(externUuid).getSystemGlobalRead();
             if (rr) reading.set(element, 1);
             else reading.set(element, 3);
             recipient.setSystemReading(StringUtils.join(reading, ""));
-            sendChangeLetterCounts(externUuid);
-        } else if (category == Attention.COMMON) {
+            standardInfoHolder.sendChangeLetterCounts(externUuid);
+        } else if (category == NewsCategory.COMMON) {
             int element = Integer.parseInt(id);
             List<Integer> reading = standardInfoHolder.getOnlineInfo().get(externUuid).getCommonGlobalRead();
             if (rr) reading.set(element, 1);
             else reading.set(element, 3);
             recipient.setCommonReading(StringUtils.join(reading, ""));
-            sendChangeLetterCounts(externUuid);
+            standardInfoHolder.sendChangeLetterCounts(externUuid);
         } else {
             readOrRemoveIndividualMessage(externUuid, UUID.fromString(id), rr);
         }
-
         recipientService.saveRecipient(recipient);
     }
 
     @Transactional
     public void readOrRemoveIndividualMessage(String externUuid, UUID id, boolean rr) {
         AloneNew letter = aloneNewRepo.findById(id).orElseThrow(() -> new RuntimeException("Letter not found"));
-        if (standardInfoHolder.getOnlineInfo().get(externUuid) != null)
-            standardInfoHolder.getOnlineInfo().get(externUuid).removeNewMessage(aloneNewMapper.entityToDto(letter));
-        sendChangeLetterCounts(externUuid);
+        standardInfoHolder.removeMessageFromPerson(externUuid, letter);
         if (rr) {
-            removeUuidFromInfo(letter.getNotReadingString(), externUuid);
+            Optional<String> notReading=removeUuidFromInfo(letter.getNotReadingString(), externUuid);
+            if (notReading.isEmpty()) {letter.setAlreadyRead(true);letter.setNotReadingString(null);}
+            else letter.setNotReadingString(notReading.get());
             aloneNewRepo.save(letter);
         } else {
             Set<Recipient> recipientList = letter.getSendTo();
@@ -227,17 +207,20 @@ public class MessageService implements SimpleStringService {
             List<AloneNewDto> resultList = new ArrayList<>();
             recipientService.detachRecipient(recipient);
             recipient.setLocalisation(tokenService.getLocalisation(loc));
+            List<DirectiveGuards> list=new ArrayList<>();
             for (AloneNew letter :
                     aloneNewList) {
                 Optional<AloneNewDto> letterDto = localisationService.getLetterDtoTo(letter, recipient, letter.getSendFrom(), false);
                 letterDto.ifPresent(x -> {
                     if (letter.getSendFrom() != null && x.getSendingFrom() != null && !x.getSendingFrom().equals(standardInfoHolder.getInformerRecipientHard().getExternUuid())) {
                         x.setHidden(letter.getSendFrom().getSecretLevelPhoto() != SecretLevel.OPEN);
-                        standardInfoHolder.rightsConfirm(x, recipient.getExternUuid(), letter.getSendFrom() != null && letter.getSendFrom().isExistPrimePhoto() && !x.isHidden());
+                        DirectiveGuards dr= standardInfoHolder.rightsConfirm(x, recipient.getExternUuid(), letter.getSendFrom() != null && letter.getSendFrom().isExistPrimePhoto() && !x.isHidden());
+                        if (dr!=null) list.add(dr);
                     }
                     resultList.add(x);
                 });
             }
+            directiveRights.add(list);
             return resultList;
         } else return new ArrayList<>();
     }
@@ -259,18 +242,6 @@ public class MessageService implements SimpleStringService {
             return covertDtoList;
         }
         return aloneNewDtoList;
-    }
-
-    @Transactional
-    public String acceptForMessage(String user, UUID uuid) {
-
-
-        return "Accept is counting";
-    }
-
-    @Transactional
-    public String rejectForMessage(String user, UUID uuid) {
-        return "Reject is counting";
     }
 
     public boolean checkRights(String usedUuid, String senderUuid) {

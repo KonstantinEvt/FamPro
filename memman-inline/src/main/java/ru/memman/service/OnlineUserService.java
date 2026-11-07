@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.annotation.Transactional;
 import ru.memman.dtos.OnlineUserDto;
 import ru.memman.dtos.TokenUser;
 import ru.memman.entity.BaseUser;
@@ -103,7 +104,7 @@ public class OnlineUserService {
             if (onlineUser.isPrimePhoto()) inHolder.setPrimePhoto(true);
         }
         if (onlineUser.getPriorityRole() != null && (inHolder == null || onlineUser.getPriorityRole() != inHolder.getPriorityRole()))
-            instantlyUpdateUser(onlineUser);
+            actualUserService.instantlyUpdateUser(onlineUser);
         if (onlineUser.isSendOver()) inline.add(onlineUser);
     }
 
@@ -119,10 +120,6 @@ public class OnlineUserService {
         onlineUserHolder.removeMenFromOnlineCount();
         actualUserService.addActualUser(baseUser);
         inline.add(onlineUserDto);
-    }
-
-    private void instantlyUpdateUser(OnlineUserDto onlineUserDto) {
-        actualUserService.getOnlineUserRepository().update(onlineUserMapper.dtoToEntity(onlineUserDto));
     }
 
     public OnlineUserDto getOnlineUser(String externUuid) {

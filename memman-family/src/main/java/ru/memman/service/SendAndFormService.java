@@ -83,6 +83,7 @@ public class SendAndFormService {
                 if (person == null) {
                     directiveGuards.setSubject(Subject.LINK_NEGATIVE);
                 } else {
+                    directiveGuards.setPerson(personInfo);
                     directiveGuards.setSubject(Subject.LINK_POSITIVE);
                 }
                 directiveGuards.setSwitchPosition(SwitchPosition.PRIME);

@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.memman.dtos.OnlineUserDto;
 import ru.memman.dtos.TokenUser;
 import ru.memman.entity.BaseUser;
 import ru.memman.enums.Localisation;
@@ -119,7 +120,29 @@ public class ActualUserService {
         }
         return actualUser;
     }
-
+    @Transactional
+    public void instantlyUpdateUser(OnlineUserDto user) {
+        BaseUser fromBaseUser = onlineUserRepository.getOnlineUserByExternUuid(user.getExternUuid()).orElseThrow(()->new RuntimeException("user not found"));
+        if (user.getEmail()!=null) fromBaseUser.setEmail(user.getEmail());
+        if (user.isPrimePhoto()) fromBaseUser.setPrimePhoto(true);
+        if (user.getNickName()!=null) fromBaseUser.setNickName(user.getNickName());
+        if (user.getLinkExternId()!=null) fromBaseUser.setLinkExternId(user.getLinkExternId());
+        if (user.getLocalisation()!=null) fromBaseUser.setLocalisation(user.getLocalisation());
+        if (user.getPriorityRole()!=null) fromBaseUser.setPriorityRole(user.getPriorityRole());
+        if (user.getLastOnline()!=null) fromBaseUser.setLastOnline(user.getLastOnline());
+        if (user.getLastUpdate()!=null) fromBaseUser.setLastUpdate(user.getLastUpdate());
+        if (user.getFullName() != null) fromBaseUser.setFullName(user.getFullName());
+        if (user.getLogName() != null) fromBaseUser.setLogName(user.getLogName());
+        if (user.getSecretLevelPhoto() != null)
+            fromBaseUser.setSecretLevelPhoto(user.getSecretLevelPhoto());
+        if (user.getSecretLevelEmail() != null)
+            fromBaseUser.setSecretLevelEmail(user.getSecretLevelEmail());
+        if (user.getSecretLevelPhone() != null)
+            fromBaseUser.setSecretLevelPhone(user.getSecretLevelPhone());
+        if (user.getMainPhone() != null) fromBaseUser.setMainPhone(user.getMainPhone());
+        if (user.getMainEmail() != null) fromBaseUser.setMainEmail(user.getMainPhone());
+        onlineUserRepository.update(fromBaseUser);
+    }
     @Transactional
     public void addActualUser(BaseUser baseUser) {
         actualUserHolder.addActualUser(baseUser);
@@ -175,6 +198,14 @@ public class ActualUserService {
             fromBaseUser.setLocalisation(user.getLocalisation());
             fromBaseUser.setPriorityRole(user.getPriorityRole());
             fromBaseUser.setLastOnline(user.getLastOnline());
+            fromBaseUser.setLastUpdate(user.getLastUpdate());
+            fromBaseUser.setFullName(user.getFullName());
+            fromBaseUser.setLogName(user.getLogName());
+            fromBaseUser.setSecretLevelPhoto(user.getSecretLevelPhoto());
+            fromBaseUser.setSecretLevelEmail(user.getSecretLevelEmail());
+            fromBaseUser.setSecretLevelPhone(user.getSecretLevelPhone());
+            fromBaseUser.setMainPhone(user.getMainPhone());
+            fromBaseUser.setMainEmail(user.getMainPhone());
         }
     }
 }
